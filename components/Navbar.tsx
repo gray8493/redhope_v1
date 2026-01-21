@@ -1,5 +1,6 @@
 import React from 'react';
 import { RedHopeLogo } from './icons';
+import { NameRedHope } from './icons';
 
 const Navbar = () => {
     return (
@@ -9,7 +10,7 @@ const Navbar = () => {
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer">
                         <RedHopeLogo className="w-16 h-16" />
-                        <span className="font-display font-extrabold text-2xl tracking-tight text-red-900">REDHOPE</span>
+                        <NameRedHope />
                     </div>
 
                     {/* Navigation Links */}

@@ -23,134 +23,28 @@ import {
     Heart
 } from "lucide-react";
 import Link from "next/link";
+import { Sidebar } from "@/components/Sidebar";
+import { TopNav } from "@/components/TopNav";
+import { DashboardHeader } from "@/components/DashboardHeader";
 
 export default function DashboardPage() {
     return (
         <div className="flex min-h-screen bg-[#f6f6f8] dark:bg-[#161121] font-sans text-slate-900 dark:text-slate-100">
 
             {/* Sidebar Navigation */}
-            <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between p-4 sticky top-0 h-screen hidden md:flex">
-                <div className="flex flex-col gap-8">
-                    <div className="flex items-center gap-3 px-2">
-                        <div className="bg-[#6324eb] size-10 rounded-lg flex items-center justify-center text-white">
-                            <RedHopeLogo className="w-24 h-24 fill-current" />
-                        </div>
-                        <div className="flex flex-col">
-
-                            <NameRedHope className="text-slate-900 dark:text-white text-lg font-bold leading-tight" />
-                        </div>
-                    </div>
-                    <nav className="flex flex-col gap-2">
-                        <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#6324eb]/10 text-[#6324eb]">
-                            <LayoutDashboard className="w-6 h-6" />
-                            <p className="text-sm font-semibold">Dashboard</p>
-                        </Link>
-                        <Link href="/donations" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                            <History className="w-6 h-6" />
-                            <p className="text-sm font-medium">Lịch sử hiến máu</p>
-                        </Link>
-                        <Link href="/requests" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                            <Search className="w-6 h-6" />
-                            <p className="text-sm font-medium">Tìm điểm hiến máu</p>
-                        </Link>
-                        <Link href="/rewards" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                            <Award className="w-6 h-6" />
-                            <p className="text-sm font-medium">Đổi quà</p>
-                        </Link>
-                        <Link href="/donate" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                            <Heart className="w-6 h-6" />
-                            <p className="text-sm font-medium">Quyên góp</p>
-                        </Link>
-                        <Link href="/settings" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                            <Settings className="w-6 h-6" />
-                            <p className="text-sm font-medium">Cài đặt</p>
-                        </Link>
-
-                    </nav>
-                </div>
-                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="size-8 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-900">
-                            <Star className="w-5 h-5 fill-current" />
-                        </div>
-                        <div className="flex flex-col">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Điểm tích lũy</p>
-                            <p className="text-lg font-black text-slate-900 dark:text-white">750 pts</p>
-                        </div>
-                    </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-[#6324eb] h-full w-3/4"></div>
-                    </div>
-                    <p className="text-[10px] mt-2 text-slate-500">Còn 250 pts để lên hạng Platinum</p>
-                </div>
-            </aside>
+            <Sidebar />
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0">
 
-                {/* Top Navbar */}
-                <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 sticky top-0 z-10">
-                    <div className="flex items-center gap-8 flex-1">
-                        <h2 className="text-slate-900 dark:text-white text-xl font-bold">Tổng quan</h2>
-                        <div className="hidden md:flex flex-1 max-w-md items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-2 border border-transparent focus-within:border-[#6324eb]/50 transition-all">
-                            <Search className="text-slate-400 w-5 h-5" />
-                            <input
-                                className="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-slate-500 px-2 outline-none"
-                                placeholder="Tìm bệnh viện hoặc điểm hiến máu..."
-                                type="text"
-                            />
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button className="bg-[#6324eb] text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-[#6324eb]/90 transition-colors shadow-lg shadow-[#6324eb]/20">
-                            <HeartHandshake className="w-5 h-5" />
-                            Đăng ký hiến máu
-                        </button>
-                        <button className="relative p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                            <Bell className="w-5 h-5" />
-                            <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
-                        </button>
-                        <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
-                        <div className="flex items-center gap-3">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white">Alex Rivera</p>
-                                <p className="text-xs text-slate-500">Nhóm máu O+</p>
-                            </div>
-                            <div className="size-10 rounded-full bg-slate-200 border-2 border-[#6324eb]/20 overflow-hidden">
-                                <img
-                                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-                                    alt="Avatar"
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </header>
+              
+                <TopNav />
 
                 <div className="p-8 flex flex-col gap-8 max-w-7xl mx-auto w-full">
 
                     {/* Welcome & Page Heading */}
-                    <div className="flex flex-wrap justify-between items-end gap-6">
-                        <div className="flex flex-col gap-2">
-                            <h1 className="text-slate-900 dark:text-white text-4xl font-black tracking-tight">Chào Alex!</h1>
-                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                                <AlertCircle className="text-red-500 w-5 h-5" />
-                                <p className="text-base font-medium">Nhóm máu O+ của bạn đang <span className="text-red-500 font-bold">khan hiếm</span> tại TP.HCM.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="flex flex-col items-end px-4 py-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900 rounded-lg">
-                                <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Trạng thái</p>
-                                <div className="flex items-center gap-2">
-                                    <span className="size-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">Đủ điều kiện hiến máu</p>
-                                </div>
-                            </div>
-                            <button className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors">
-                                Xem lịch sử
-                            </button>
-                        </div>
-                    </div>
+                    {/* Welcome & Page Heading */}
+                    <DashboardHeader />
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
