@@ -26,6 +26,8 @@ import Link from "next/link";
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
 import { DashboardHeader } from "@/components/DashboardHeader";
+import { DashboardCarousel } from "@/components/DashboardCarousel";
+
 
 export default function DashboardPage() {
     return (
@@ -37,12 +39,12 @@ export default function DashboardPage() {
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0">
 
-              
+
                 <TopNav />
 
                 <div className="p-8 flex flex-col gap-8 max-w-7xl mx-auto w-full">
 
-                    {/* Welcome & Page Heading */}
+
                     {/* Welcome & Page Heading */}
                     <DashboardHeader />
 
@@ -83,35 +85,15 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
+                    <DashboardCarousel />
+
+
                     {/* Main Section Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                         {/* Left Column: Status & Map */}
                         <div className="lg:col-span-2 flex flex-col gap-6">
 
-                            {/* Blood Status Card */}
-                            <div className="relative overflow-hidden flex items-stretch justify-between gap-6 rounded-2xl bg-slate-900 dark:bg-slate-950 p-8 text-white shadow-xl">
-                                <div className="absolute top-0 right-0 w-64 h-full bg-[#6324eb]/20 blur-[100px] -mr-32"></div>
-                                <div className="flex flex-col justify-between relative z-10">
-                                    <div>
-                                        <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
-                                            <span className="size-2 bg-red-500 rounded-full"></span> Cần máu khẩn cấp
-                                        </div>
-                                        <h3 className="text-2xl font-bold mb-2">Trạng thái Nhóm máu O+</h3>
-                                        <p className="text-slate-300 text-sm mb-6 max-w-sm">Các bệnh viện tại TP.HCM đang thiếu hụt nhóm máu của bạn. Một lần hiến máu của bạn có thể cứu sống 3 người hôm nay.</p>
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <button className="bg-[#6324eb] text-white px-6 py-3 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-[#6324eb]/90 transition-all shadow-lg shadow-[#6324eb]/25">
-                                            <MapPin className="w-4 h-4" />
-                                            Tìm điểm hiến máu gần nhất
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="hidden sm:flex flex-col items-center justify-center bg-white/5 rounded-xl px-8 py-4 border border-white/10 backdrop-blur-md">
-                                    <p className="text-5xl font-black text-white">O+</p>
-                                    <p className="text-slate-400 text-[10px] uppercase font-bold mt-2">Nhóm của bạn</p>
-                                </div>
-                            </div>
 
                             {/* Active Requests List */}
                             <div className="flex flex-col gap-4">
