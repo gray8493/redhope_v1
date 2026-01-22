@@ -47,14 +47,12 @@ const Hero = () => {
                                 {/* Decorative placeholder content since we don't have the image file */}
                                 <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
                                     <img
-                                        src="/hero-image.png"
+                                        src="/homepage.jpg"
                                         alt="Đội ngũ y tế"
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
                             </div>
-
-
                         </div>
 
                         {/* Decorative Background Elements behind image */}

@@ -66,7 +66,7 @@ export default function DonatePage() {
                                                     <button className="py-3 px-4 rounded-lg border-2 border-red-200 dark:border-red-900/30 hover:border-[#7f1d1d] hover:bg-[#7f1d1d]/10 hover:text-[#7f1d1d] font-bold transition-all text-[#450a0a] dark:text-red-200">
                                                         50.000đ
                                                     </button>
-                                                    <button className="py-3 px-4 rounded-lg bg-[#7f1d1d] text-white border-2 border-[#7f1d1d] font-bold transition-all shadow-lg shadow-[#7f1d1d]/40 transform hover:scale-105 hover:bg-[#450a0a]">
+                                                    <button className="py-3 px-4 rounded-lg border-2 border-red-200 dark:border-red-900/30 hover:border-[#7f1d1d] hover:bg-[#7f1d1d]/10 hover:text-[#7f1d1d] font-bold transition-all text-[#450a0a] dark:text-red-200">
                                                         100.000đ
                                                     </button>
                                                     <button className="py-3 px-4 rounded-lg border-2 border-red-200 dark:border-red-900/30 hover:border-[#7f1d1d] hover:bg-[#7f1d1d]/10 hover:text-[#7f1d1d] font-bold transition-all text-[#450a0a] dark:text-red-200">

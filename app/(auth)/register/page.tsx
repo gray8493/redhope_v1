@@ -1,5 +1,4 @@
 import React from 'react';
-import { RedHopeLogo } from '../../components/icons';
 
 const RegisterPage = () => {
     return (

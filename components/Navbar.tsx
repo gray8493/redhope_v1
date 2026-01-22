@@ -9,7 +9,7 @@ const Navbar = () => {
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer">
-                        <RedHopeLogo className="w-16 h-16" />
+                        <RedHopeLogo />
                         <NameRedHope />
                     </div>
 
