@@ -27,6 +27,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { DashboardCarousel } from "@/components/DashboardCarousel";
+import { BloodDropChatbot } from "@/components/BloodDropChatbot";
 
 
 export default function DashboardPage() {
@@ -221,6 +222,9 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </main>
+
+            {/* Floating Chatbot */}
+            <BloodDropChatbot />
         </div>
     );
 }

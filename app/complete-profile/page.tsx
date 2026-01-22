@@ -7,10 +7,15 @@ import {
     Mail,
     User,
     Phone,
-    CreditCard
+    CreditCard,
+    Calendar as CalendarIcon
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 
 export default function CreateProfilePage() {
     const [formData, setFormData] = useState({
@@ -23,6 +28,8 @@ export default function CreateProfilePage() {
     const [gender, setGender] = useState("Nam");
     const [bloodGroup, setBloodGroup] = useState("A+");
     const [progress, setProgress] = useState(25); // Baseline for readonly fields (email) + defaults
+    const [selectedDob, setSelectedDob] = useState<Date | undefined>(undefined);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -173,16 +180,39 @@ export default function CreateProfilePage() {
                                         <p className="text-[#4c669a] dark:text-gray-400 text-sm">Các thông tin bổ sung giúp hoàn thiện hồ sơ.</p>
                                     </div>
 
-                                    <label className="flex flex-col gap-2">
-                                        <span className="text-sm font-medium">Ngày sinh</span>
-                                        <input
-                                            type="date"
-                                            name="dob"
-                                            value={formData.dob}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] focus:border-[#2b6cee] focus:ring-2 focus:ring-[#2b6cee]/20 outline-none transition-all text-sm"
-                                        />
-                                    </label>
+                                    <div className="flex flex-col gap-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ngày sinh</span>
+                                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                                            <PopoverTrigger asChild>
+                                                <button
+                                                    type="button"
+                                                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] hover:border-[#2b6cee] focus:border-[#2b6cee] focus:ring-2 focus:ring-[#2b6cee]/20 outline-none transition-all text-sm text-left"
+                                                >
+                                                    <span className={selectedDob ? "text-gray-900 dark:text-white" : "text-gray-400"}>
+                                                        {selectedDob ? format(selectedDob, "dd/MM/yyyy", { locale: vi }) : "Chọn ngày sinh"}
+                                                    </span>
+                                                    <CalendarIcon className="text-gray-400 w-5 h-5" />
+                                                </button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={selectedDob}
+                                                    onSelect={(date) => {
+                                                        setSelectedDob(date);
+                                                        if (date) {
+                                                            setFormData(prev => ({ ...prev, dob: format(date, "yyyy-MM-dd") }));
+                                                        }
+                                                        setIsCalendarOpen(false);
+                                                    }}
+                                                    captionLayout="dropdown"
+                                                    fromYear={1940}
+                                                    toYear={2010}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
 
                                     <div className="flex flex-col gap-2">
                                         <span className="text-sm font-medium">Giới tính</span>

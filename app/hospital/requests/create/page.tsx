@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import {
     Search,
-    Calendar,
+    Calendar as CalendarIcon,
     MapPin,
     Send,
     Save,
@@ -12,8 +13,14 @@ import {
 } from "lucide-react";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 
 export default function CreateRequestPage() {
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <div className="flex h-full grow flex-row">
@@ -111,10 +118,27 @@ export default function CreateRequestPage() {
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-[#120e1b] dark:text-white text-sm font-bold">Ngày giờ tiếp nhận / Thời hạn</label>
-                                                <div className="relative">
-                                                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                                                    <input className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 px-4 text-base outline-none transition-all placeholder:text-slate-400" placeholder="Chọn ngày và giờ" type="text" />
-                                                </div>
+                                                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                                                    <PopoverTrigger asChild>
+                                                        <button className="flex w-full items-center justify-between rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white hover:border-[#6324eb] focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 px-4 text-base outline-none transition-all">
+                                                            <span className={selectedDate ? "" : "text-slate-400"}>
+                                                                {selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: vi }) : "Chọn ngày và giờ"}
+                                                            </span>
+                                                            <CalendarIcon className="text-slate-400 w-5 h-5" />
+                                                        </button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={selectedDate}
+                                                            onSelect={(date) => {
+                                                                setSelectedDate(date);
+                                                                setIsCalendarOpen(false);
+                                                            }}
+                                                            initialFocus
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
                                             </div>
                                         </div>
                                     </div>
