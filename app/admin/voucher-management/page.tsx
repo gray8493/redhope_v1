@@ -48,18 +48,37 @@ export default function VoucherManagementPage() {
         try {
             const data = await voucherService.getAll();
             // Map DB fields to UI fields
-            const uiVouchers = data.map(v => ({
-                ...v,
-                name: v.partner_name || 'Unnamed Voucher',
-                points: v.point_cost || 0,
-                stock: 100, // Mock
-                category: 'General', // Mock
-                expiryDate: '2024-12-31', // Mock
-                image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=200' // Mock
-            }));
+            const uiVouchers = data.map(v => {
+                // Logic to compute expiry: if v has an expiry field (check as any), use it,
+                // otherwise default to created_at + 90 days, or now + 90 days.
+                let expiry = '';
+                if ((v as any).expiry_date) {
+                    expiry = new Date((v as any).expiry_date).toISOString().split('T')[0];
+                } else if (v.created_at) {
+                    const created = new Date(v.created_at);
+                    created.setDate(created.getDate() + 90);
+                    expiry = created.toISOString().split('T')[0];
+                } else {
+                    const now = new Date();
+                    now.setDate(now.getDate() + 90);
+                    expiry = now.toISOString().split('T')[0];
+                }
+
+                return {
+                    ...v,
+                    name: v.partner_name || 'Unnamed Voucher',
+                    points: v.point_cost || 0,
+                    stock: 100, // Mock
+                    category: 'All', // Mock
+                    expiryDate: expiry,
+                    image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=200' // Mock
+                };
+            });
             setVouchers(uiVouchers);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to load vouchers:', error);
+            // Simple alert for now as per previous patterns in this admin section
+            alert('Không thể tải danh sách mã ưu đãi: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -249,8 +268,8 @@ export default function VoucherManagementPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${voucher.status === 'Active' ? 'bg-green-50 text-green-700 border-green-100' :
-                                            voucher.status === 'Inactive' ? 'bg-gray-50 text-gray-600 border-gray-200' :
-                                                'bg-yellow-50 text-yellow-700 border-yellow-100'
+                                        voucher.status === 'Inactive' ? 'bg-gray-50 text-gray-600 border-gray-200' :
+                                            'bg-yellow-50 text-yellow-700 border-yellow-100'
                                         }`}>
                                         {voucher.status === 'Active' ? 'Hoạt động' : voucher.status === 'Inactive' ? 'Không hoạt động' : 'Nháp'}
                                     </span>

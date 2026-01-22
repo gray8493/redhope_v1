@@ -200,8 +200,7 @@ export default function GlobalAnalyticsPage() {
                             </div>
                             <div>
                                 <h4 className="font-bold text-sm text-green-900">Tăng trưởng Người dùng</h4>
-                                <p className="text-xs text-green-700 mt-1">Hệ thống đang nghi nhận {stats.totalDonors} người hiến máu thường xuyên. Tỷ lệ xác minh đạt {stats.totalDonors > 0 ? '100%' : '0%'}.</p>
-                            </div>
+                                <p className="text-xs text-green-700 mt-1">Hệ thống đang ghi nhận {stats.totalDonors} người hiến máu đã đăng ký.</p>                            </div>
                         </div>
 
                         <div className="flex items-start gap-4 p-4 rounded-xl bg-blue-50 border border-blue-100">

@@ -50,7 +50,7 @@ export function BloodDropChatbot() {
         scrollToBottom();
     }, [messages]);
 
-    const handleSend = (text?: string) => {
+    const handleSend = async (text?: string) => {
         const messageText = text || inputValue.trim();
         if (!messageText) return;
 
@@ -61,28 +61,46 @@ export function BloodDropChatbot() {
             isBot: false,
             timestamp: new Date()
         };
-        setMessages(prev => [...prev, userMessage]);
+        const newMessages = [...messages, userMessage];
+        setMessages(newMessages);
         setInputValue("");
-
-        // Simulate bot typing
         setIsTyping(true);
-        setTimeout(() => {
-            const botResponses: { [key: string]: string } = {
-                "Tôi muốn hiến máu": "Tuyệt vời! 🎉 Bạn có thể đặt lịch hiến máu ngay trên ứng dụng. Hãy vào mục 'Tìm điểm hiến' để xem các địa điểm gần bạn và chọn thời gian phù hợp.",
-                "Điều kiện hiến máu?": "Để hiến máu, bạn cần: \n• Tuổi từ 18-60\n• Cân nặng ≥ 45kg (nữ), ≥ 50kg (nam)\n• Sức khỏe tốt, không mắc bệnh truyền nhiễm\n• Không hiến máu trong 84 ngày gần đây\n• Không xăm mình trong 6 tháng gần đây",
-                "Tìm điểm hiến gần tôi": "📍 Tôi tìm thấy 8 điểm hiến gần bạn trong bán kính 10km. Điểm gần nhất là Bệnh viện Chợ Rẫy (2.4km). Bạn muốn xem chi tiết không?",
-                "Nhóm máu của tôi": "🩸 Theo hồ sơ, nhóm máu của bạn là A+. Nhóm máu này có thể hiến cho A+ và AB+, và nhận từ A+, A-, O+, O-."
-            };
+
+        try {
+            // Call API
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: messageText,
+                    // Send last few messages ascontext if needed, for now just simple
+                    history: messages.slice(-5) // Send last 5 messages context
+                })
+            });
+
+            if (!response.ok) throw new Error('Network response was not ok');
+
+            const data = await response.json();
 
             const botReply: Message = {
                 id: messages.length + 2,
-                text: botResponses[messageText] || "Cảm ơn bạn đã liên hệ! Tôi sẽ chuyển câu hỏi của bạn đến đội ngũ hỗ trợ. Họ sẽ phản hồi trong thời gian sớm nhất. 💌",
+                text: data.text || "Xin lỗi, tôi đang gặp chút sự cố kết nối. Vui lòng thử lại sau!",
                 isBot: true,
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, botReply]);
+        } catch (error) {
+            console.error('Chat error:', error);
+            const errorReply: Message = {
+                id: messages.length + 2,
+                text: "⚠️ Có lỗi xảy ra khi kết nối với máy chủ. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.",
+                isBot: true,
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, errorReply]);
+        } finally {
             setIsTyping(false);
-        }, 1200);
+        }
     };
 
     return (
@@ -93,11 +111,11 @@ export function BloodDropChatbot() {
                 className={`fixed bottom-6 right-6 z-50 group transition-all duration-300 ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}
             >
                 {/* Pulse rings */}
-                <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-25"></div>
-                <div className="absolute inset-0 rounded-full bg-red-500 animate-pulse opacity-40"></div>
+                <div className="absolute inset-0 rounded-full bg-red-600 animate-ping opacity-25"></div>
+                <div className="absolute inset-0 rounded-full bg-red-600 animate-pulse opacity-40"></div>
 
                 {/* Main button */}
-                <div className="relative size-16 rounded-full bg-gradient-to-br from-red-500 to-red-600 shadow-xl shadow-red-500/40 flex items-center justify-center hover:scale-110 hover:shadow-red-500/60 transition-all duration-300 group-hover:from-red-400 group-hover:to-red-500">
+                <div className="relative size-16 rounded-full bg-gradient-to-br from-red-600 to-red-700 shadow-xl shadow-red-600/40 flex items-center justify-center hover:scale-110 hover:shadow-red-600/60 transition-all duration-300 group-hover:from-red-500 group-hover:to-red-600">
                     <BloodDropIcon className="w-8 h-8 text-white drop-shadow-lg" />
 
                     {/* Sparkle effect */}
@@ -115,7 +133,7 @@ export function BloodDropChatbot() {
             <div className={`fixed bottom-6 right-6 z-50 w-[380px] h-[550px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
 
                 {/* Header */}
-                <div className="bg-gradient-to-r from-red-500 to-red-600 p-4 flex items-center justify-between">
+                <div className="bg-gradient-to-r from-red-600 to-red-700 p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="size-10 rounded-full bg-white/20 flex items-center justify-center">
                             <BloodDropIcon className="w-6 h-6 text-white" />
@@ -144,8 +162,8 @@ export function BloodDropChatbot() {
                             className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}
                         >
                             <div className={`max-w-[80%] p-3 rounded-2xl ${message.isBot
-                                    ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-sm shadow-sm'
-                                    : 'bg-gradient-to-r from-red-500 to-red-600 text-white rounded-tr-sm'
+                                ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-sm shadow-sm'
+                                : 'bg-gradient-to-r from-red-600 to-red-700 text-white rounded-tr-sm'
                                 }`}>
                                 <p className="text-sm whitespace-pre-line">{message.text}</p>
                                 <p className={`text-[10px] mt-1 ${message.isBot ? 'text-slate-400' : 'text-white/70'}`}>
@@ -199,7 +217,7 @@ export function BloodDropChatbot() {
                         <button
                             onClick={() => handleSend()}
                             disabled={!inputValue.trim()}
-                            className="size-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white flex items-center justify-center hover:from-red-400 hover:to-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-500/30 hover:shadow-red-500/50 active:scale-95"
+                            className="size-12 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white flex items-center justify-center hover:from-red-500 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-600/30 hover:shadow-red-600/50 active:scale-95"
                         >
                             <Send className="w-5 h-5" />
                         </button>

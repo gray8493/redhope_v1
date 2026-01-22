@@ -142,7 +142,7 @@ const LoginPage = () => {
                             <div className="space-y-2">
                                 <div className="flex justify-between">
                                     <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
-                                    <a className="text-sm font-semibold text-[#6324eb] hover:underline" href="#">Quên mật khẩu?</a>
+                                    {/* <a className="text-sm font-semibold text-[#6324eb] hover:underline" href="#">Quên mật khẩu?</a> */}
                                 </div>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

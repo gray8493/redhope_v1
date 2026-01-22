@@ -45,6 +45,7 @@ export default function DonorManagementPage() {
             setDonors(data);
         } catch (error) {
             console.error('Search failed:', error);
+            alert('Tìm kiếm thất bại');
         } finally {
             setLoading(false);
         }
@@ -172,24 +173,28 @@ export default function DonorManagementPage() {
                         <p className="text-xl font-bold text-[#120e1b]">{totalDonors}</p>
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                {/* 
+                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 opacity-50">
                     <div className="size-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
                         <span className="material-symbols-outlined">pending_actions</span>
                     </div>
                     <div>
                         <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Đang chờ xác minh</p>
-                        <p className="text-xl font-bold text-[#120e1b]">{pendingDonors}</p>
+                        <p className="text-xl font-bold text-[#120e1b]">-</p>
+                        <p className="text-[10px] text-gray-400 italic">Tính năng đang phát triển</p>
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 opacity-50">
                     <div className="size-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
                         <span className="material-symbols-outlined">verified</span>
                     </div>
                     <div>
                         <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Người hiến đã xác minh</p>
-                        <p className="text-xl font-bold text-[#120e1b]">{verifiedDonors}</p>
+                        <p className="text-xl font-bold text-[#120e1b]">-</p>
+                         <p className="text-[10px] text-gray-400 italic">Tính năng đang phát triển</p>
                     </div>
-                </div>
+                </div> 
+                */}
             </div>
 
             {/* Table */}
