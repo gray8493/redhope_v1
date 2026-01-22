@@ -48,11 +48,11 @@ export type BloodGroup = typeof BLOOD_GROUPS[number];
 export interface Hospital {
     id: string;
     user_id: string | null;
-    name: string | null;
+    name: string;
     license_number: string | null;
     address: string | null;
     is_verified: boolean | null;
-    created_at?: string;
+    created_at: string;
 }
 
 export interface InsertHospital {

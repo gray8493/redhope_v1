@@ -1,8 +1,13 @@
 // Test connection with users table
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://vmqeknrfbaazaxqhsdib.supabase.co';
-const supabaseAnonKey = 'sb_publishable_ipq1XqukHL2o-2d4bg69tw_olY5kgNO';
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('ERROR: Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables.');
+    process.exit(1);
+}
 
 async function testUsersTable() {
     console.log('');
@@ -30,7 +35,9 @@ async function testUsersTable() {
             if (users && users.length > 0) {
                 console.log('   Users:');
                 users.forEach((u, i) => {
-                    console.log(`   ${i + 1}. ${u.full_name} (${u.email}) - ${u.blood_group || 'N/A'}`);
+                    const maskedEmail = u.email ? u.email.replace(/(.{2})(.*)(@.*)/, '$1***$3') : 'N/A';
+                    const maskedBlood = '***';
+                    console.log(`   ${i + 1}. ${u.full_name} (${maskedEmail}) - ${maskedBlood}`);
                 });
             }
         }

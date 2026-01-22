@@ -1,10 +1,10 @@
 -- ============================================
 -- REDHOPE DATABASE SETUP - SUPABASE
--- Chạy code này trong Supabase SQL Editor
+-- Run this in Supabase SQL Editor
 -- ============================================
 
 -- ============================================
--- 1. BẢNG USERS
+-- 1. USERS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -18,73 +18,64 @@ CREATE TABLE IF NOT EXISTS public.users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
+-- Enable RLS for production security
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- Dữ liệu mẫu Users
-INSERT INTO public.users (full_name, email, blood_group, city, district, current_points)
-VALUES 
-    ('Nguyễn Văn An', 'donora@example.com', 'O+', 'Hồ Chí Minh', 'Quận 1', 1500),
-    ('Trần Thị Bích', 'donorb@example.com', 'A+', 'Hồ Chí Minh', 'Quận 7', 2300),
-    ('Lê Hoàng Nam', 'donorc@example.com', 'B+', 'Hà Nội', 'Cầu Giấy', 800),
-    ('Phạm Minh Tuấn', 'donord@example.com', 'AB-', 'Đà Nẵng', 'Hải Châu', 450),
-    ('Võ Thị Hương', 'donore@example.com', 'O-', 'Hồ Chí Minh', 'Bình Thạnh', 3200)
-ON CONFLICT (email) DO NOTHING;
-
+-- Policies for Users
+CREATE POLICY "Users can view own data" ON public.users FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can update own data" ON public.users FOR UPDATE USING (auth.uid() = id);
 
 -- ============================================
--- 2. BẢNG HOSPITALS
+-- 2. HOSPITALS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.hospitals (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES public.users(id), -- Có thể link với tài khoản user quản trị
-    name VARCHAR(255),
-    license_number VARCHAR(100),
+    user_id UUID REFERENCES public.users(id) ON DELETE SET NULL, -- Prevent orphaned data
+    name VARCHAR(255) NOT NULL,
+    license_number VARCHAR(100) NOT NULL UNIQUE,
     address TEXT,
     is_verified BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-ALTER TABLE public.hospitals DISABLE ROW LEVEL SECURITY;
+-- Enable RLS
+ALTER TABLE public.hospitals ENABLE ROW LEVEL SECURITY;
 
--- Dữ liệu mẫu Hospitals
-INSERT INTO public.hospitals (name, license_number, address, is_verified)
-VALUES
-    ('Bệnh viện Chợ Rẫy', 'HL-8829-HCM', '201B Nguyễn Chí Thanh, Phường 12, Quận 5, TP.HCM', true),
-    ('Bệnh viện Đại học Y Dược', 'HL-4412-HCM', '215 Hồng Bàng, Phường 11, Quận 5, TP.HCM', true),
-    ('Bệnh viện Bạch Mai', 'HL-3291-HN', '78 Giải Phóng, Phương Mai, Đống Đa, Hà Nội', true),
-    ('Bệnh viện Đa khoa Quốc tế Vinmec', 'HL-1055-HN', '458 Minh Khai, Khu đô thị Times City, Hai Bà Trưng, Hà Nội', false),
-    ('Bệnh viện Từ Dũ', 'HL-9921-HCM', '284 Cống Quỳnh, Phường Phạm Ngũ Lão, Quận 1, TP.HCM', true);
-
+-- Policies for Hospitals
+CREATE POLICY "Everyone can view verified hospitals" ON public.hospitals 
+    FOR SELECT USING (true); -- Public read
+CREATE POLICY "Admins can manage hospitals" ON public.hospitals 
+    FOR ALL USING (auth.role() = 'service_role'); -- Simplified admin check using service role or specific claim
 
 -- ============================================
--- 3. BẢNG VOUCHERS
+-- 3. VOUCHERS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS public.vouchers (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    code VARCHAR(100),
+    code VARCHAR(100) NOT NULL UNIQUE,
     partner_name VARCHAR(255),
-    point_cost INTEGER DEFAULT 0,
-    imported_by UUID REFERENCES public.users(id),
-    status VARCHAR(50) DEFAULT 'Active', -- Active, Inactive, Draft
+    point_cost INTEGER DEFAULT 0 CHECK (point_cost >= 0),
+    imported_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
+    status VARCHAR(50) DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive', 'Draft')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-ALTER TABLE public.vouchers DISABLE ROW LEVEL SECURITY;
+-- Enable RLS
+ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;
 
--- Dữ liệu mẫu Vouchers
-INSERT INTO public.vouchers (code, partner_name, point_cost, status)
-VALUES
-    ('COFFEE-FREE', 'Highlands Coffee', 500, 'Active'),
-    ('CGV-2024', 'CGV Cinemas', 1200, 'Active'),
-    ('GRAB-50', 'Grab', 800, 'Active'),
-    ('SHOPEE-VOUCHER', 'Shopee', 1500, 'Inactive'),
-    ('GYM-1-MONTH', 'City Gym', 5000, 'Draft');
-
+-- Policies for Vouchers
+CREATE POLICY "Everyone can view active vouchers" ON public.vouchers 
+    FOR SELECT USING (status = 'Active');
+    
 -- ============================================
--- CHECK DATA
+-- 4. RPC FUNCTIONS
 -- ============================================
-SELECT 'Users count: ' || count(*) FROM public.users
-UNION ALL
-SELECT 'Hospitals count: ' || count(*) FROM public.hospitals
-UNION ALL
-SELECT 'Vouchers count: ' || count(*) FROM public.vouchers;
+-- Atomic increment for points
+CREATE OR REPLACE FUNCTION increment_points(row_id UUID, count INTEGER)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE public.users
+  SET current_points = COALESCE(current_points, 0) + count
+  WHERE id = row_id;
+END;
+$$ LANGUAGE plpgsql;

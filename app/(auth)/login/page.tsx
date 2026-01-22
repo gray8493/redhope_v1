@@ -21,9 +21,16 @@ const LoginPage = () => {
         setLoading(true);
 
         try {
-            await authService.signIn(formData.email, formData.password);
-            // Redirect based on role or default to dashboard
-            router.push('/dashboard');
+            await authService.signIn(formData.email, formData.password, formData.role);
+            // Redirect based on role
+            // In a real app we might check the actual user role from the response, but for now we follow the user's selection/intent
+            if (formData.role === 'admin') {
+                router.push('/admin/global-ana'); // Example admin route
+            } else if (formData.role === 'hospital') {
+                router.push('/hospital');
+            } else {
+                router.push('/dashboard');
+            }
         } catch (err: any) {
             console.error('Login failed:', err);
             let message = err.message;
@@ -217,8 +224,8 @@ const LoginPage = () => {
 
                     {/* Footer Small Print */}
                     <div className="mt-8 text-center text-xs text-gray-400 space-x-4">
-                        <a className="hover:text-[#6324eb] transition-colors" href="#">Chính sách bảo mật</a>
-                        <a className="hover:text-[#6324eb] transition-colors" href="#">Điều khoản dịch vụ</a>
+                        <Link className="hover:text-[#6324eb] transition-colors" href="/privacy-policy">Chính sách bảo mật</Link>
+                        <Link className="hover:text-[#6324eb] transition-colors" href="/terms-of-service">Điều khoản dịch vụ</Link>
                         <span>© 2026 REDHOPE Global</span>
                     </div>
                 </div>

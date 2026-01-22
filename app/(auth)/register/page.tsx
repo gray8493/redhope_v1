@@ -38,7 +38,7 @@ const RegisterPage = () => {
             // In a real app, you should add a Full Name field to the form
             const fullName = formData.email.split('@')[0];
 
-            await authService.signUp(formData.email, formData.password, fullName);
+            await authService.signUp(formData.email, formData.password, fullName, formData.role);
 
             // Redirect to completion or login
             // For better UX, maybe auto-login? But signUp usually requires email confirmation if configured

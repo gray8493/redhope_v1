@@ -136,7 +136,7 @@ export default function VoucherManagementPage() {
                 // Update
                 const updated = await voucherService.update(editingVoucher.id, {
                     partner_name: formData.name || undefined,
-                    point_cost: formData.points || undefined,
+                    point_cost: formData.points ?? undefined,
                     status: formData.status || undefined,
                     // Note: stock, category, date are NOT saved to DB as they don't exist in schema
                 });
@@ -152,9 +152,9 @@ export default function VoucherManagementPage() {
                 // Create
                 const created = await voucherService.create({
                     partner_name: formData.name || undefined,
-                    point_cost: formData.points || undefined,
+                    point_cost: formData.points ?? undefined,
                     status: formData.status || undefined,
-                    code: Math.random().toString(36).substring(7).toUpperCase() // Generate random code
+                    code: crypto.randomUUID().substring(0, 8).toUpperCase() // Better random code
                 });
 
                 // Add to local state (mixin with ui fields)

@@ -13,6 +13,7 @@ export default function HospitalDirectoryPage() {
     const [currentHospital, setCurrentHospital] = useState<Partial<Hospital>>({});
     const [mode, setMode] = useState<'add' | 'edit'>('add');
     const [isSaving, setIsSaving] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     useEffect(() => {
         loadHospitals();
@@ -20,11 +21,13 @@ export default function HospitalDirectoryPage() {
 
     const loadHospitals = async () => {
         setLoading(true);
+        setLoadError(null);
         try {
             const data = await hospitalService.getAll();
             setHospitals(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to load hospitals:', error);
+            setLoadError(error.message || 'Failed to load hospitals');
         } finally {
             setLoading(false);
         }
@@ -146,6 +149,22 @@ export default function HospitalDirectoryPage() {
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 <tr><td colSpan={4} className="text-center py-10"><Loader2 className="animate-spin w-6 h-6 mx-auto" /></td></tr>
+                            ) : loadError ? (
+                                <tr>
+                                    <td colSpan={4} className="text-center py-10 text-red-500">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <span className="material-symbols-outlined text-4xl">error</span>
+                                            <p>{loadError}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : filteredHospitals.length === 0 ? (
+                                <tr>
+                                    <td colSpan={4} className="text-center py-10 text-gray-500">
+                                        <span className="material-symbols-outlined text-4xl block mb-2 opacity-50">search_off</span>
+                                        <p>Không tìm thấy bệnh viện nào.</p>
+                                    </td>
+                                </tr>
                             ) : filteredHospitals.map(hospital => (
                                 <tr key={hospital.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4">
@@ -164,8 +183,8 @@ export default function HospitalDirectoryPage() {
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${hospital.is_verified
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-orange-100 text-orange-700'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-orange-100 text-orange-700'
                                             }`}>
                                             {hospital.is_verified ? 'Đã xác minh' : 'Chưa xác minh'}
                                         </span>

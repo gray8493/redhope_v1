@@ -85,7 +85,7 @@ export default function DonorManagementPage() {
                     city: currentUser.city || undefined,
                     district: currentUser.district || undefined,
                     current_points: Number(currentUser.current_points) || 0,
-                    password_hash: '123456' // Default password for test
+                    password_hash: crypto.randomUUID() // Generate secure temporary credential
                 });
 
                 setDonors([newUser, ...donors]);
@@ -257,20 +257,20 @@ export default function DonorManagementPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-600">
-                                            {new Date(donor.created_at).toLocaleDateString('vi-VN')}
+                                            {donor.created_at ? new Date(donor.created_at).toLocaleDateString('vi-VN') : '-'}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto transition-opacity">
                                                 <button
                                                     onClick={() => openEditModal(donor)}
-                                                    className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"
+                                                    className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                     title="Sửa"
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(donor.id)}
-                                                    className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+                                                    className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
                                                     title="Xóa"
                                                 >
                                                     <Trash2 className="w-4 h-4" />

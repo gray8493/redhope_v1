@@ -50,11 +50,15 @@ export const voucherService = {
     },
 
     async delete(id: string): Promise<void> {
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('vouchers')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .select();
 
         if (error) throw error;
+        if (!data || data.length === 0) {
+            throw new Error('Voucher not found or already deleted');
+        }
     }
 };

@@ -105,21 +105,28 @@ export const userService = {
 
     // Update user points
     async addPoints(id: string, points: number): Promise<User> {
-        // First get current points
-        const user = await this.getById(id);
-        if (!user) throw new Error('User not found');
+        // Use atomic RPC call to avoid race conditions
+        const { data, error } = await supabase.rpc('increment_points', {
+            row_id: id,
+            count: points
+        });
 
-        const newPoints = (user.current_points || 0) + points;
-
-        return this.update(id, { current_points: newPoints });
+        if (error) throw error;
+        // Return updated user (assuming RPC returns the user record or we fetch it)
+        // If RPC returns void/simple, we might need to fetch the user. 
+        // Let's assume the RPC returns the updated row or we fetch it again.
+        return this.getById(id) as Promise<User>;
     },
 
     // Search users
     async search(query: string): Promise<User[]> {
+        // Sanitize query to prevent injection
+        const sanitizedQuery = query.replace(/[%\(\)\.]/g, '');
+
         const { data, error } = await supabase
             .from('users')
             .select('*')
-            .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
+            .or(`full_name.ilike.%${sanitizedQuery}%,email.ilike.%${sanitizedQuery}%`)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
