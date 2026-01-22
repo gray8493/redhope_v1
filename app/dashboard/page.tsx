@@ -84,8 +84,41 @@ export default function DashboardPage() {
                             <p className="text-slate-400 text-xs mt-2">Cần máu gấp tại 8 bệnh viện</p>
                         </div>
                     </div>
-
-                    <DashboardCarousel />
+                    {/* Carousel + Rewards Row */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2">
+                            <DashboardCarousel />
+                        </div>
+                        {/* Rewards Card - đẩy lên ngang carousel */}
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm h-44 flex flex-col">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-3">Quà tặng sắp tới</h3>
+                            <div className="flex flex-col gap-2 flex-1">
+                                <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                                    <div className="size-10 rounded-lg bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center text-orange-600">
+                                        <Coffee className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Voucher Cafe</p>
+                                        <p className="text-xs text-slate-500">Highlands / Starbucks</p>
+                                    </div>
+                                    <p className="text-xs font-black text-slate-400 uppercase">250 pts</p>
+                                </div>
+                                <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg opacity-60">
+                                    <div className="size-10 rounded-lg bg-blue-100 dark:bg-blue-950/30 flex items-center justify-center text-blue-600">
+                                        <Film className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Vé xem phim</p>
+                                        <p className="text-xs text-slate-500">CGV / Lotte</p>
+                                    </div>
+                                    <p className="text-xs font-black text-slate-400 uppercase">1000 pts</p>
+                                </div>
+                            </div>
+                            <button className="w-full py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors mt-2">
+                                Xem kho quà tặng
+                            </button>
+                        </div>
+                    </div>
 
 
                     {/* Main Section Grid */}
@@ -157,35 +190,6 @@ export default function DashboardPage() {
 
                         {/* Right Column: Personal Achievements & Info */}
                         <div className="flex flex-col gap-6">
-                            {/* Rewards Card */}
-                            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Quà tặng sắp tới</h3>
-                                <div className="flex flex-col gap-4">
-                                    <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                                        <div className="size-12 rounded-lg bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center text-orange-600">
-                                            <Coffee className="w-6 h-6" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-bold text-slate-900 dark:text-white">Voucher Cafe</p>
-                                            <p className="text-xs text-slate-500">Highlands / Starbucks</p>
-                                        </div>
-                                        <p className="text-xs font-black text-slate-400 uppercase">250 pts</p>
-                                    </div>
-                                    <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg opacity-60">
-                                        <div className="size-12 rounded-lg bg-blue-100 dark:bg-blue-950/30 flex items-center justify-center text-blue-600">
-                                            <Film className="w-6 h-6" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-bold text-slate-900 dark:text-white">Vé xem phim</p>
-                                            <p className="text-xs text-slate-500">CGV / Lotte</p>
-                                        </div>
-                                        <p className="text-xs font-black text-slate-400 uppercase">1000 pts</p>
-                                    </div>
-                                    <button className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors mt-2">
-                                        Xem kho quà tặng
-                                    </button>
-                                </div>
-                            </div>
 
                             {/* Eligibility Timer */}
                             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">

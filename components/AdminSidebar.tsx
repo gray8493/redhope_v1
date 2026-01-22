@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { RedHopeLogo, NameRedHope } from "@/components/icons";
 
 export const AdminSidebar = () => {
     const pathname = usePathname();
@@ -20,9 +21,13 @@ export const AdminSidebar = () => {
         <aside className="w-64 border-r border-gray-200 bg-white flex flex-col h-screen sticky top-0">
             <div className="p-6 flex flex-col h-full justify-between">
                 <div className="flex flex-col gap-8">
-                    <div className="flex items-center justify-center gap-3 w-full py-4 mb-2">
-                        <img src="/logo.png" alt="REDHOPE Logo" className="h-12 w-auto object-contain" />
-                        <h1 className="text-2xl font-extrabold text-[#7f1d1d] tracking-wider">REDHOPE</h1>
+                    <div className="flex items-center gap-3 px-2">
+                        <div className="bg-[#7f1d1d] size-10 rounded-lg flex items-center justify-center text-white">
+                            <RedHopeLogo className="w-24 h-24 fill-current" />
+                        </div>
+                        <div className="flex flex-col">
+                            <NameRedHope className="text-[#7f1d1d] text-lg font-bold leading-tight" />
+                        </div>
                     </div>
                     <nav className="flex flex-col gap-1">
                         {menuItems.map((item) => {

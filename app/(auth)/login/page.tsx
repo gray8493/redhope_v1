@@ -1,6 +1,6 @@
+"use client";
 import React from 'react';
-import { RedHopeLogo } from '../../components/icons';
-
+import Link from 'next/link';
 const LoginPage = () => {
     return (
         <div className="min-h-screen flex flex-col bg-white">
@@ -115,9 +115,11 @@ const LoginPage = () => {
                             </div>
 
                             {/* Submit Button */}
-                            <button className="w-full flex items-center justify-center px-4 py-3.5 border border-transparent text-base font-bold rounded-xl text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/30 transition-all transform active:scale-[0.98]" type="submit">
-                                Đăng nhập
-                            </button>
+                            <Link href={'/dashboard'}>
+                                <button className="w-full flex items-center justify-center px-4 py-3.5 border border-transparent text-base font-bold rounded-xl text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/30 transition-all transform active:scale-[0.98]" type="submit">
+                                    Đăng nhập
+                                </button>
+                            </Link>
                         </form>
 
                         {/* Divider */}

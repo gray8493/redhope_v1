@@ -64,11 +64,17 @@ export const RedHopeLogo = ({ className }: { className?: string }) => (
     <img
         src="/logo.png"
         alt="RedHope Logo"
-        className={`${className} object-contain`}
+        className={`w-70 h-auto object-contain ${className}`}
     />
-)
+);
+
+
 export const NameRedHope = ({ className }: { className?: string }) => (
-    <span className={`font-bold tracking-tight ${className}`}>
-        Red<span className="text-[#6324eb]">Hope</span>
+    <span
+        className={`font-heading font-extrabold tracking-tight ${className}`}
+    >
+        <span className="text-red-700">Red</span>
+        <span className="text-[#6324eb]">Hope</span>
     </span>
 );
+

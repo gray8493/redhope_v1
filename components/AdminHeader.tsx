@@ -19,7 +19,7 @@ const AdminHeader = () => {
     <header className="bg-white shadow-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#7f1d1d] tracking-wider">Quản lý hệ thống</h1>
+          {/* Placeholder để giữ bố cục */}
         </div>
         <div className="flex items-center gap-4">
           <button
