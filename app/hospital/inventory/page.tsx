@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
+import MiniFooter from "@/components/MiniFooter";
 
 export default function InventoryPage() {
     return (
@@ -120,9 +121,9 @@ export default function InventoryPage() {
                                                     <td className="px-6 py-4 font-bold text-[#120e1b] dark:text-white">{row.count}</td>
                                                     <td className="px-6 py-4">
                                                         <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${row.color === 'green' ? 'bg-green-100 text-green-700' :
-                                                                row.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                                                                    row.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
-                                                                        'bg-red-100 text-red-700'
+                                                            row.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                                                                row.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
+                                                                    'bg-red-100 text-red-700'
                                                             }`}>
                                                             {row.status}
                                                         </span>
@@ -143,9 +144,7 @@ export default function InventoryPage() {
                         </div>
                     </main>
 
-                    <footer className="border-t border-[#ebe7f3] dark:border-[#2d263d] bg-white dark:bg-[#1c162e] py-8 px-10 text-center">
-                        <p className="text-slate-400 text-sm">© 2024 BloodLink Inventory Management</p>
-                    </footer>
+                    <MiniFooter />
                 </div>
             </div>
         </div>

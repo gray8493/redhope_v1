@@ -1,70 +1,36 @@
 "use client";
 
-import React, { useState } from 'react';
-import { AdminSidebar } from '@/components/AdminSidebar';
+import React, { useEffect, useState } from 'react';
+import { voucherService } from '@/services/voucher.service';
+import { Voucher } from '@/lib/database.types';
+import { Loader2 } from 'lucide-react';
 
-interface Voucher {
-    id: string;
-    name: string;
-    points: number;
-    stock: number;
-    category: string;
-    status: 'Active' | 'Inactive' | 'Draft';
-    expiryDate: string;
-    image: string;
+// Extend the DB type for UI purposes (mocking missing fields)
+interface SentinelVoucher extends Voucher {
+    name?: string; // mapped from partner_name
+    points?: number; // mapped from point_cost
+    stock?: number;
+    category?: string;
+    expiryDate?: string;
+    image?: string;
 }
 
-const initialVouchers: Voucher[] = [
-    {
-        id: '1',
-        name: 'Free Coffee @ Starbucks',
-        points: 1200,
-        stock: 450,
-        category: 'Thực phẩm & Đồ uống',
-        status: 'Active',
-        expiryDate: '2024-12-31',
-        image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=200',
-    },
-    {
-        id: '2',
-        name: '$10 Amazon Gift Card',
-        points: 5000,
-        stock: 12,
-        category: 'Mua sắm',
-        status: 'Active',
-        expiryDate: '2024-06-30',
-        image: 'https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?auto=format&fit=crop&q=80&w=200',
-    },
-    {
-        id: '3',
-        name: 'Cinema Ticket - CGV',
-        points: 2500,
-        stock: 880,
-        category: 'Giải trí',
-        status: 'Active',
-        expiryDate: '2024-09-15',
-        image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=200',
-    },
-    {
-        id: '4',
-        name: '1 Month Gym Membership',
-        points: 10000,
-        stock: 5,
-        category: 'Sức khỏe & Thể hình',
-        status: 'Inactive',
-        expiryDate: '2024-03-01',
-        image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=200',
-    },
-];
-
-const VoucherManagementPage = () => {
-    const [vouchers, setVouchers] = useState<Voucher[]>(initialVouchers);
+export default function VoucherManagementPage() {
+    const [vouchers, setVouchers] = useState<SentinelVoucher[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingVoucher, setEditingVoucher] = useState<Voucher | null>(null);
+    const [editingVoucher, setEditingVoucher] = useState<SentinelVoucher | null>(null);
 
     // Form State
-    const [formData, setFormData] = useState<Partial<Voucher>>({
+    const [formData, setFormData] = useState<{
+        name: string;
+        points: number;
+        stock: number;
+        category: string;
+        status: string;
+        expiryDate: string;
+    }>({
         name: '',
         points: 0,
         stock: 0,
@@ -73,23 +39,61 @@ const VoucherManagementPage = () => {
         expiryDate: '',
     });
 
+    useEffect(() => {
+        loadVouchers();
+    }, []);
+
+    const loadVouchers = async () => {
+        setLoading(true);
+        try {
+            const data = await voucherService.getAll();
+            // Map DB fields to UI fields
+            const uiVouchers = data.map(v => ({
+                ...v,
+                name: v.partner_name || 'Unnamed Voucher',
+                points: v.point_cost || 0,
+                stock: 100, // Mock
+                category: 'General', // Mock
+                expiryDate: '2024-12-31', // Mock
+                image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=200' // Mock
+            }));
+            setVouchers(uiVouchers);
+        } catch (error) {
+            console.error('Failed to load vouchers:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
     };
 
     const filteredVouchers = vouchers.filter((v) =>
-        v.name.toLowerCase().includes(searchTerm.toLowerCase())
+        v.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleDelete = (id: string) => {
-        if (confirm('Bạn có chắc chắn muốn xóa mã ưu đãi này không?')) {
-            setVouchers(vouchers.filter((v) => v.id !== id));
+    const handleDelete = async (id: string) => {
+        if (!confirm('Bạn có chắc chắn muốn xóa mã ưu đãi này không?')) return;
+        try {
+            await voucherService.delete(id);
+            setVouchers(prev => prev.filter(v => v.id !== id));
+        } catch (error) {
+            console.error('Delete failed:', error);
+            alert('Xóa thất bại');
         }
     };
 
-    const handleEdit = (voucher: Voucher) => {
+    const handleEdit = (voucher: SentinelVoucher) => {
         setEditingVoucher(voucher);
-        setFormData(voucher);
+        setFormData({
+            name: voucher.name || '',
+            points: voucher.points || 0,
+            stock: voucher.stock || 0,
+            category: voucher.category || '',
+            status: voucher.status || 'Active',
+            expiryDate: voucher.expiryDate || '',
+        });
         setIsModalOpen(true);
     };
 
@@ -102,29 +106,51 @@ const VoucherManagementPage = () => {
             category: 'Chung',
             status: 'Draft',
             expiryDate: '',
-            image: 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&q=80&w=200', // Default placeholder
         });
         setIsModalOpen(true);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (editingVoucher) {
-            // Update existing
-            setVouchers(
-                vouchers.map((v) =>
-                    v.id === editingVoucher.id ? { ...v, ...formData } as Voucher : v
-                )
-            );
-        } else {
-            // Create new
-            const newVoucher: Voucher = {
-                ...(formData as Omit<Voucher, 'id'>),
-                id: Math.random().toString(36).substr(2, 9),
-            };
-            setVouchers([...vouchers, newVoucher]);
+        try {
+            if (editingVoucher) {
+                // Update
+                const updated = await voucherService.update(editingVoucher.id, {
+                    partner_name: formData.name || undefined,
+                    point_cost: formData.points || undefined,
+                    status: formData.status || undefined,
+                    // Note: stock, category, date are NOT saved to DB as they don't exist in schema
+                });
+
+                // Update local state
+                setVouchers(prev => prev.map(v => v.id === updated.id ? {
+                    ...v, ...formData,
+                    partner_name: updated.partner_name,
+                    point_cost: updated.point_cost,
+                    status: updated.status
+                } : v));
+            } else {
+                // Create
+                const created = await voucherService.create({
+                    partner_name: formData.name || undefined,
+                    point_cost: formData.points || undefined,
+                    status: formData.status || undefined,
+                    code: Math.random().toString(36).substring(7).toUpperCase() // Generate random code
+                });
+
+                // Add to local state (mixin with ui fields)
+                setVouchers(prev => [{
+                    ...created, ...formData,
+                    name: created.partner_name || formData.name,
+                    points: created.point_cost || formData.points,
+                    image: 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&q=80&w=200'
+                } as SentinelVoucher, ...prev]);
+            }
+            setIsModalOpen(false);
+        } catch (error: any) {
+            console.error('Save failed:', error);
+            alert('Có lỗi xảy ra: ' + error.message);
         }
-        setIsModalOpen(false);
     };
 
     return (
@@ -170,7 +196,7 @@ const VoucherManagementPage = () => {
                     </div>
                     <div>
                         <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Kho đang hoạt động</p>
-                        <p className="text-2xl font-bold">{vouchers.reduce((acc, v) => acc + v.stock, 0)}</p>
+                        <p className="text-2xl font-bold">{vouchers.reduce((acc, v) => acc + (v.stock || 0), 0)}</p>
                     </div>
                 </div>
             </div>
@@ -189,7 +215,9 @@ const VoucherManagementPage = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {filteredVouchers.map((voucher) => (
+                        {loading ? (
+                            <tr><td colSpan={6} className="text-center py-10"><Loader2 className="animate-spin w-6 h-6 mx-auto" /></td></tr>
+                        ) : filteredVouchers.map((voucher) => (
                             <tr key={voucher.id} className="hover:bg-gray-50 transition-colors group">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-4">
@@ -205,24 +233,24 @@ const VoucherManagementPage = () => {
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-1 text-[#6324eb] font-bold">
                                         <span className="material-symbols-outlined text-sm">stars</span>
-                                        {voucher.points.toLocaleString()}
+                                        {(voucher.points || 0).toLocaleString()}
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
                                         <div className="w-20 bg-gray-200 rounded-full h-1.5 overflow-hidden">
                                             <div
-                                                className={`h-full rounded-full ${voucher.stock < 20 ? 'bg-red-500' : 'bg-green-500'}`}
-                                                style={{ width: `${Math.min((voucher.stock / 100) * 100, 100)}%` }}
+                                                className={`h-full rounded-full ${(voucher.stock || 0) < 20 ? 'bg-red-500' : 'bg-green-500'}`}
+                                                style={{ width: `${Math.min(((voucher.stock || 0) / 100) * 100, 100)}%` }}
                                             ></div>
                                         </div>
-                                        <span className={`text-xs font-bold ${voucher.stock < 20 ? 'text-red-500' : 'text-gray-600'}`}>{voucher.stock} còn lại</span>
+                                        <span className={`text-xs font-bold ${(voucher.stock || 0) < 20 ? 'text-red-500' : 'text-gray-600'}`}>{voucher.stock} còn lại</span>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${voucher.status === 'Active' ? 'bg-green-50 text-green-700 border-green-100' :
-                                        voucher.status === 'Inactive' ? 'bg-gray-50 text-gray-600 border-gray-200' :
-                                            'bg-yellow-50 text-yellow-700 border-yellow-100'
+                                            voucher.status === 'Inactive' ? 'bg-gray-50 text-gray-600 border-gray-200' :
+                                                'bg-yellow-50 text-yellow-700 border-yellow-100'
                                         }`}>
                                         {voucher.status === 'Active' ? 'Hoạt động' : voucher.status === 'Inactive' ? 'Không hoạt động' : 'Nháp'}
                                     </span>
@@ -250,7 +278,7 @@ const VoucherManagementPage = () => {
                         ))}
                     </tbody>
                 </table>
-                {filteredVouchers.length === 0 && (
+                {!loading && filteredVouchers.length === 0 && (
                     <div className="p-12 text-center text-gray-500">
                         <span className="material-symbols-outlined text-4xl block mb-2 opacity-50">search_off</span>
                         <p>Không tìm thấy mã ưu đãi nào phù hợp.</p>
@@ -302,6 +330,7 @@ const VoucherManagementPage = () => {
                                         onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
                                         className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
                                     />
+                                    <p className="text-[10px] text-gray-400 mt-1">*Chỉ lưu giao diện</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -323,7 +352,7 @@ const VoucherManagementPage = () => {
                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Trạng thái</label>
                                     <select
                                         value={formData.status}
-                                        onChange={e => setFormData({ ...formData, status: e.target.value as any })}
+                                        onChange={e => setFormData({ ...formData, status: e.target.value })}
                                         className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
                                     >
                                         <option value="Active">Hoạt động</option>
@@ -340,6 +369,7 @@ const VoucherManagementPage = () => {
                                     onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all text-gray-500"
                                 />
+                                <p className="text-[10px] text-gray-400 mt-1">*Chỉ lưu giao diện</p>
                             </div>
                             <div className="pt-4 flex gap-3">
                                 <button
@@ -362,6 +392,4 @@ const VoucherManagementPage = () => {
             )}
         </div>
     );
-};
-
-export default VoucherManagementPage;
+}

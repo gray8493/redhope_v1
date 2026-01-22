@@ -44,3 +44,6 @@ next-env.d.ts
 # User excluded folders
 docs/
 .agent/
+app/test-supabase/
+.env.local
+.scripts/*

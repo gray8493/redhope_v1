@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
+import MiniFooter from "@/components/MiniFooter";
 
 export default function SettingsPage() {
     return (
@@ -119,9 +120,7 @@ export default function SettingsPage() {
                         </div>
                     </main>
 
-                    <footer className="border-t border-[#ebe7f3] dark:border-[#2d263d] bg-white dark:bg-[#1c162e] py-8 px-10 text-center">
-                        <p className="text-slate-400 text-sm">© 2024 BloodLink Settings</p>
-                    </footer>
+                    <MiniFooter />
                 </div>
             </div>
         </div>

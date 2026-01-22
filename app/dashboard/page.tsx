@@ -1,4 +1,5 @@
 "use client";
+import MiniFooter from '@/components/MiniFooter';
 import { NameRedHope } from "@/components/icons";
 import { RedHopeLogo } from "@/components/icons";
 import {
@@ -225,6 +226,8 @@ export default function DashboardPage() {
 
             {/* Floating Chatbot */}
             <BloodDropChatbot />
+
         </div>
+
     );
 }

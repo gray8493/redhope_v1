@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
+import MiniFooter from "@/components/MiniFooter";
 
 export default function HospitalDashboard() {
     return (
@@ -170,9 +171,7 @@ export default function HospitalDashboard() {
                         </div>
                     </main>
 
-                    <footer className="border-t border-[#ebe7f3] dark:border-[#2d263d] bg-white dark:bg-[#1c162e] py-8 px-10 text-center">
-                        <p className="text-slate-400 dark:text-gray-600 text-sm">© 2024 BloodLink Hospital Portal. Authorized Personnel Only.</p>
-                    </footer>
+                    <MiniFooter />
                 </div>
             </div>
         </div>

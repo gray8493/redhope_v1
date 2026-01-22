@@ -1,13 +1,63 @@
-import React from 'react';
+"use client";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { authService } from '@/services/auth.service';
+import { Loader2 } from 'lucide-react';
 
 const RegisterPage = () => {
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+        confirmPassword: '',
+        role: 'Donor' // Default role
+    });
+
+    const handleRegister = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        // Basic validation
+        if (formData.password !== formData.confirmPassword) {
+            setError('Mật khẩu nhập lại không khớp.');
+            return;
+        }
+
+        if (formData.password.length < 6) {
+            setError('Mật khẩu phải có ít nhất 6 ký tự.');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            // For now, full name is extracted from email user part as a placeholder
+            // In a real app, you should add a Full Name field to the form
+            const fullName = formData.email.split('@')[0];
+
+            await authService.signUp(formData.email, formData.password, fullName);
+
+            // Redirect to completion or login
+            // For better UX, maybe auto-login? But signUp usually requires email confirmation if configured
+            // Assuming no email confirmation required for demo:
+            alert('Đăng ký thành công! Vui lòng đăng nhập.');
+            router.push('/login');
+        } catch (err: any) {
+            console.error('Registration failed:', err);
+            setError(err.message || 'Đăng ký thất bại. Vui lòng thử lại.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen flex flex-col bg-white">
-
-
             <main className="flex-grow flex items-stretch overflow-hidden">
                 {/* Left Side: Visual/Mission (Hidden on mobile) */}
-                <div className="hidden lg:flex lg:w-1/2 relative bg-primary items-center justify-center p-20 overflow-hidden">
+                <div className="hidden lg:flex lg:w-1/2 relative bg-[#6324eb] items-center justify-center p-20 overflow-hidden">
                     {/* Background Pattern */}
                     <div className="absolute inset-0 opacity-10">
                         <svg width="100%" height="100%">
@@ -32,9 +82,9 @@ const RegisterPage = () => {
                         <div className="flex items-center gap-4">
                             <div className="flex -space-x-3">
                                 {/* Mock Avatars */}
-                                <div className="w-10 h-10 rounded-full border-2 border-primary bg-gray-200 overflow-hidden flex items-center justify-center text-xs font-bold text-gray-500 bg-white">A</div>
-                                <div className="w-10 h-10 rounded-full border-2 border-primary bg-gray-200 overflow-hidden flex items-center justify-center text-xs font-bold text-gray-500 bg-white">B</div>
-                                <div className="w-10 h-10 rounded-full border-2 border-primary bg-gray-200 overflow-hidden flex items-center justify-center text-xs font-bold text-gray-500 bg-white">C</div>
+                                <div className="w-10 h-10 rounded-full border-2 border-[#6324eb] bg-gray-200 overflow-hidden flex items-center justify-center text-xs font-bold text-gray-500 bg-white">A</div>
+                                <div className="w-10 h-10 rounded-full border-2 border-[#6324eb] bg-gray-200 overflow-hidden flex items-center justify-center text-xs font-bold text-gray-500 bg-white">B</div>
+                                <div className="w-10 h-10 rounded-full border-2 border-[#6324eb] bg-gray-200 overflow-hidden flex items-center justify-center text-xs font-bold text-gray-500 bg-white">C</div>
                             </div>
                             <span className="text-sm font-medium">Tham gia cùng 50k+ người hùng đã đăng ký năm nay</span>
                         </div>
@@ -52,28 +102,32 @@ const RegisterPage = () => {
                         {/* Role Selector */}
                         <div className="flex py-1">
                             <div className="grid grid-cols-3 gap-1 w-full p-1 bg-gray-100 rounded-xl">
-                                <label className="cursor-pointer">
-                                    <input type="radio" name="role_selector" className="peer sr-only" value="Donor" defaultChecked />
-                                    <div className="flex items-center justify-center py-2 px-3 rounded-lg text-sm font-semibold text-gray-500 transition-all peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm">
-                                        Người hiến
-                                    </div>
-                                </label>
-                                <label className="cursor-pointer">
-                                    <input type="radio" name="role_selector" className="peer sr-only" value="Hospital" />
-                                    <div className="flex items-center justify-center py-2 px-3 rounded-lg text-sm font-semibold text-gray-500 transition-all peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm">
-                                        Bệnh viện
-                                    </div>
-                                </label>
-                                <label className="cursor-pointer">
-                                    <input type="radio" name="role_selector" className="peer sr-only" value="Admin" />
-                                    <div className="flex items-center justify-center py-2 px-3 rounded-lg text-sm font-semibold text-gray-500 transition-all peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm">
-                                        Quản trị
-                                    </div>
-                                </label>
+                                {['Donor', 'Hospital', 'Admin'].map((role) => (
+                                    <label key={role} className="cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="role_selector"
+                                            className="peer sr-only"
+                                            value={role}
+                                            checked={formData.role === role}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                        />
+                                        <div className="flex items-center justify-center py-2 px-3 rounded-lg text-sm font-semibold text-gray-500 transition-all peer-checked:bg-white peer-checked:text-[#6324eb] peer-checked:shadow-sm capitalize">
+                                            {role === 'Donor' ? 'Người hiến' : role === 'Hospital' ? 'Bệnh viện' : 'Quản trị'}
+                                        </div>
+                                    </label>
+                                ))}
                             </div>
                         </div>
 
-                        <form action="#" className="space-y-5">
+                        {error && (
+                            <div className="p-3 text-sm text-red-500 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm">error</span>
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleRegister} className="space-y-5">
                             {/* Email Field */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700">Địa chỉ Email</label>
@@ -83,7 +137,14 @@ const RegisterPage = () => {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
                                     </div>
-                                    <input className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="name@example.com" required type="email" />
+                                    <input
+                                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all outline-none"
+                                        placeholder="name@example.com"
+                                        required
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    />
                                 </div>
                             </div>
 
@@ -96,13 +157,14 @@ const RegisterPage = () => {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                         </svg>
                                     </div>
-                                    <input className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="••••••••" required type="password" />
-                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-primary transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    </div>
+                                    <input
+                                        className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all outline-none"
+                                        placeholder="••••••••"
+                                        required
+                                        type="password"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    />
                                 </div>
                             </div>
 
@@ -115,25 +177,36 @@ const RegisterPage = () => {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                         </svg>
                                     </div>
-                                    <input className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="••••••••" required type="password" />
+                                    <input
+                                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all outline-none"
+                                        placeholder="••••••••"
+                                        required
+                                        type="password"
+                                        value={formData.confirmPassword}
+                                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                    />
                                 </div>
                             </div>
 
                             {/* Terms Checkbox */}
                             <div className="flex items-start">
                                 <div className="flex items-center h-5">
-                                    <input id="terms" name="terms" type="checkbox" required className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
+                                    <input id="terms" name="terms" type="checkbox" required className="h-4 w-4 text-[#6324eb] focus:ring-[#6324eb] border-gray-300 rounded" />
                                 </div>
                                 <div className="ml-3 text-xs text-gray-500">
                                     <label htmlFor="terms" className="font-medium text-gray-700">
-                                        Tôi đồng ý với <a href="#" className="text-primary hover:underline">Điều khoản dịch vụ</a> và <a href="#" className="text-primary hover:underline">Chính sách bảo mật</a>.
+                                        Tôi đồng ý với <a href="#" className="text-[#6324eb] hover:underline">Điều khoản dịch vụ</a> và <a href="#" className="text-[#6324eb] hover:underline">Chính sách bảo mật</a>.
                                     </label>
                                 </div>
                             </div>
 
                             {/* Submit Button */}
-                            <button className="w-full flex items-center justify-center px-4 py-3.5 border border-transparent text-base font-bold rounded-xl text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/30 transition-all transform active:scale-[0.98]" type="submit">
-                                Đăng ký
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full flex items-center justify-center px-4 py-3.5 border border-transparent text-base font-bold rounded-xl text-white bg-[#6324eb] hover:bg-[#501ac2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6324eb] shadow-lg shadow-[#6324eb]/30 transition-all transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Đăng ký'}
                             </button>
                         </form>
 
@@ -175,16 +248,16 @@ const RegisterPage = () => {
                         {/* Footer */}
                         <p className="text-center text-sm text-gray-500">
                             Đã có tài khoản?{' '}
-                            <a className="font-bold text-primary hover:underline hover:text-primary-dark" href="/login">
+                            <Link className="font-bold text-[#6324eb] hover:underline hover:text-[#501ac2]" href="/login">
                                 Đăng nhập tại đây
-                            </a>
+                            </Link>
                         </p>
                     </div>
 
                     {/* Footer Small Print */}
                     <div className="mt-8 text-center text-xs text-gray-400 space-x-4">
-                        <a className="hover:text-primary transition-colors" href="#">Chính sách bảo mật</a>
-                        <a className="hover:text-primary transition-colors" href="#">Điều khoản dịch vụ</a>
+                        <a className="hover:text-[#6324eb] transition-colors" href="#">Chính sách bảo mật</a>
+                        <a className="hover:text-[#6324eb] transition-colors" href="#">Điều khoản dịch vụ</a>
                         <span>© 2026 REDHOPE Global</span>
                     </div>
                 </div>
@@ -194,3 +267,4 @@ const RegisterPage = () => {
 };
 
 export default RegisterPage;
+

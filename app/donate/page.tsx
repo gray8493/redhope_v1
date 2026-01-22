@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
+import MiniFooter from "@/components/MiniFooter";
 
 export default function DonatePage() {
     return (
@@ -238,9 +239,7 @@ export default function DonatePage() {
                         </div>
                     </main>
 
-                    <footer className="border-t border-red-100 dark:border-red-900/30 bg-white dark:bg-[#1c162e] py-8 px-10 text-center">
-                        <p className="text-[#7f1d1d] dark:text-red-300/60 text-sm">© 2024 BloodLink Smart Donation Platform. Ensuring donor privacy and community health.</p>
-                    </footer>
+                    <MiniFooter />
                 </div>
             </div>
         </div>

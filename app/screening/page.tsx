@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
+import MiniFooter from "@/components/MiniFooter";
 import { useRouter } from "next/navigation";
 
 export default function ScreeningPage() {
@@ -216,9 +217,7 @@ export default function ScreeningPage() {
                         </div>
                     </main>
 
-                    <footer className="border-t border-[#ebe7f3] dark:border-[#2d263d] bg-white dark:bg-[#1c162e] py-8 px-10 text-center">
-                        <p className="text-[#654d99] dark:text-[#a594c9] text-sm">© 2024 BloodLink Smart Donation Platform. Ensuring donor privacy and community health.</p>
-                    </footer>
+                    <MiniFooter />
                 </div>
             </div>
         </div>
