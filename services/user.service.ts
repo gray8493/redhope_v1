@@ -112,16 +112,24 @@ export const userService = {
         });
 
         if (error) throw error;
-        // Return updated user (assuming RPC returns the user record or we fetch it)
-        // If RPC returns void/simple, we might need to fetch the user. 
-        // Let's assume the RPC returns the updated row or we fetch it again.
-        return this.getById(id) as Promise<User>;
+
+
+        // RPC returns void, so allow refetching the updated record to return valid User object
+        const updatedUser = await this.getById(id);
+        if (!updatedUser) {
+            throw new Error('User not found after updating points');
+        }
+        return updatedUser;
     },
 
     // Search users
     async search(query: string): Promise<User[]> {
-        // Sanitize query to prevent injection
-        const sanitizedQuery = query.replace(/[%\(\)\.]/g, '');
+        if (!query) return [];
+        // Sanitize query to prevent injection and filter breakage
+        // Remove: % ( ) . * , \
+        const sanitizedQuery = query.replace(/[%\(\)\.\,\*\\\\]/g, '').trim();
+
+        if (!sanitizedQuery) return [];
 
         const { data, error } = await supabase
             .from('users')

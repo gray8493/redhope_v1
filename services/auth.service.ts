@@ -3,9 +3,9 @@ import { userService } from '@/services/user.service';
 
 export const authService = {
     // Sign Up
-    async signUp(email: string, password: string, fullName: string, role: string = 'donor') {
-        // Enforce role policy: Public registration is always 'donor' (or check if admin)
-        // For now we force 'donor' or just store what is requested in metadata but purely informational
+    // Sign Up
+    async signUp(email: string, password: string, fullName: string) {
+        // Enforce role policy: Public registration is always 'donor'
         const safeRole = 'donor';
 
         // 1. Create auth user
@@ -33,14 +33,13 @@ export const authService = {
                         full_name: fullName,
                     });
                 }
+                throw new Error('Failed to create user profile. Please try again.');
             } catch (profileError) {
                 console.error('Failed to create public profile:', profileError);
-                // Rollback: Delete the auth user if profile creation fails
-                // Note: accurate rollback depends on RLS; users often can't delete themselves.
-                // Assuming we can or we just log it for manual fix. 
-                // Using admin client would be better but we are client-side here.
-                // We will try best effort or just throw.
-                throw new Error('Failed to create user profile. Please try again.');
+                // Rollback: Ideally we delete the auth user here.
+                // Since specific admin API is needed, we log this critical error.
+                // TODO: Implement server-side compensation or admin-alert.
+                throw new Error('Failed to create user profile. Please contact support.');
             }
         }
 
@@ -48,7 +47,8 @@ export const authService = {
     },
 
     // Sign In
-    async signIn(email: string, password: string, role?: string) {
+    // Sign In
+    async signIn(email: string, password: string) {
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,

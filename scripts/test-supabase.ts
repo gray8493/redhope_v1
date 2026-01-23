@@ -35,8 +35,9 @@ async function testUsersTable() {
             if (users && users.length > 0) {
                 console.log('   Users:');
                 users.forEach((u, i) => {
-                    const maskedEmail = u.email ? u.email.replace(/(.{2})(.*)(@.*)/, '$1***$3') : 'N/A';
-                    const maskedBlood = '***';
+                    // MASKING Logic update
+                    const maskedEmail = u.email ? u.email.replace(/^(.)(.*)(@.*)$/, '$1***$3') : 'N/A';
+                    const maskedBlood = u.blood_group || 'N/A';
                     console.log(`   ${i + 1}. ${u.full_name} (${maskedEmail}) - ${maskedBlood}`);
                 });
             }

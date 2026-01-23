@@ -42,9 +42,9 @@ export function HospitalSidebar() {
                         <Droplet className="w-6 h-6" />
                         <p className="text-sm font-medium">Yêu cầu máu</p>
                     </Link>
-                    <Link href="/hospital/inventory" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                    <Link href="/hospital/campaign" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                         <Package className="w-6 h-6" />
-                        <p className="text-sm font-medium">Kho lưu trữ</p>
+                        <p className="text-sm font-medium">Chiến dịch</p>
                     </Link>
                     <Link href="/hospital/reports" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                         <BarChart className="w-6 h-6" />

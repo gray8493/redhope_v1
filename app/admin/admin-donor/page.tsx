@@ -85,7 +85,7 @@ export default function DonorManagementPage() {
                     city: currentUser.city || undefined,
                     district: currentUser.district || undefined,
                     current_points: Number(currentUser.current_points) || 0,
-                    password_hash: crypto.randomUUID() // Generate secure temporary credential
+                    password_hash: undefined // Password managed by Supabase Auth / Invite flow
                 });
 
                 setDonors([newUser, ...donors]);

@@ -21,12 +21,16 @@ const LoginPage = () => {
         setLoading(true);
 
         try {
-            await authService.signIn(formData.email, formData.password, formData.role);
-            // Redirect based on role
-            // In a real app we might check the actual user role from the response, but for now we follow the user's selection/intent
-            if (formData.role === 'admin') {
-                router.push('/admin/global-ana'); // Example admin route
-            } else if (formData.role === 'hospital') {
+            await authService.signIn(formData.email, formData.password);
+
+            // Fetch the actual authenticated user role
+            const user = await authService.getCurrentUser();
+            const role = user?.user_metadata?.role || 'donor';
+            // Note: In a real app, rely on the public profile role if it differs/is managed there.
+
+            if (role === 'admin') {
+                router.push('/admin/global-ana');
+            } else if (role === 'hospital') {
                 router.push('/hospital');
             } else {
                 router.push('/dashboard');
