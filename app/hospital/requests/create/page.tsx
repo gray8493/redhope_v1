@@ -21,6 +21,8 @@ import { vi } from "date-fns/locale";
 export default function CreateRequestPage() {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [selectedBloodType, setSelectedBloodType] = useState<string | null>(null);
+    const [isUrgent, setIsUrgent] = useState(false);
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <div className="flex h-full grow flex-row">
@@ -62,7 +64,14 @@ export default function CreateRequestPage() {
                                             <p className="text-[#120e1b] dark:text-white text-sm font-bold mb-3">Chọn Nhóm máu</p>
                                             <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                                                 {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
-                                                    <button key={type} className={`flex h-12 items-center justify-center rounded-lg font-bold transition-all border-2 ${type === 'A+' ? 'bg-[#6324eb] text-white border-[#6324eb]' : 'bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white border-transparent hover:border-[#6324eb]/30 hover:bg-[#6324eb]/5'}`}>
+                                                    <button
+                                                        key={type}
+                                                        onClick={() => setSelectedBloodType(type)}
+                                                        className={`flex h-12 items-center justify-center rounded-lg font-bold transition-all border-2 ${selectedBloodType === type
+                                                            ? 'bg-[#6324eb] text-white border-[#6324eb] shadow-lg shadow-[#6324eb]/30 scale-105'
+                                                            : 'bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white border-transparent hover:border-[#6324eb]/30 hover:bg-[#6324eb]/5'
+                                                            }`}
+                                                    >
                                                         {type}
                                                     </button>
                                                 ))}
@@ -76,8 +85,24 @@ export default function CreateRequestPage() {
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-[#120e1b] dark:text-white text-sm font-bold">Mức độ Khẩn cấp</label>
                                                 <div className="flex p-1 bg-slate-100 dark:bg-[#251e36] rounded-xl h-12">
-                                                    <button className="flex-1 rounded-lg text-sm font-bold bg-white dark:bg-[#1c162e] shadow-sm text-[#6324eb] dark:text-white border border-slate-200 dark:border-slate-700">Tiêu chuẩn</button>
-                                                    <button className="flex-1 rounded-lg text-sm font-bold text-slate-500 hover:text-red-500 transition-colors">Khẩn cấp</button>
+                                                    <button
+                                                        onClick={() => setIsUrgent(false)}
+                                                        className={`flex-1 rounded-lg text-sm font-bold transition-all ${!isUrgent
+                                                            ? 'bg-white dark:bg-[#1c162e] shadow-sm text-[#6324eb] dark:text-white border border-slate-200 dark:border-slate-700'
+                                                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                                                            }`}
+                                                    >
+                                                        Tiêu chuẩn
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setIsUrgent(true)}
+                                                        className={`flex-1 rounded-lg text-sm font-bold transition-all ${isUrgent
+                                                            ? 'bg-white dark:bg-[#1c162e] shadow-sm text-red-500 border border-slate-200 dark:border-slate-700'
+                                                            : 'text-slate-500 hover:text-red-500/70 dark:text-slate-400'
+                                                            }`}
+                                                    >
+                                                        Khẩn cấp
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
