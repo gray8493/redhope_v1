@@ -35,7 +35,21 @@ const LoginPage = () => {
                 return;
             }
 
-            const redirectRole = actualRole; // Use actual role for redirection
+            const redirectRole = actualRole;
+            const isStep1Complete = !!user?.profile?.phone;
+            const isStep2Complete = redirectRole === 'hospital' || !!user?.profile?.weight;
+
+            if (redirectRole !== 'admin') {
+                if (!isStep1Complete) {
+                    // Go to Step 1
+                    router.push(redirectRole === 'hospital' ? '/hospital/complete-profile' : '/complete-profile');
+                    return;
+                } else if (!isStep2Complete) {
+                    // Donor finished Step 1 but not Step 2
+                    router.push('/complete-profile/verification');
+                    return;
+                }
+            }
 
             if (redirectRole === 'admin') {
                 router.push('/admin/global-ana');

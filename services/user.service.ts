@@ -63,10 +63,26 @@ export const userService = {
             .update(updates)
             .eq('id', id)
             .select()
+            .maybeSingle(); // Better for handling non-existent rows
+
+        if (error) throw error;
+        if (!data) throw new Error("User record not found to update.");
+        return data;
+    },
+
+    // Upsert user (Update or Create)
+    async upsert(id: string, data: InsertUser): Promise<User> {
+        const { data: result, error } = await supabase
+            .from('users')
+            .upsert(
+                { ...data, id },
+                { onConflict: 'email' } // Quan trọng: Nếu trùng email thì cập nhật thay vì báo lỗi
+            )
+            .select()
             .single();
 
         if (error) throw error;
-        return data;
+        return result;
     },
 
     // Delete user

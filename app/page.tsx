@@ -138,7 +138,7 @@ const Page = () => {
                 <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Droplet className="w-7 h-7 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Cho Người hiến máu</h3>
+                <Link href="/login" className="text-xl font-bold text-gray-900 mb-3">Cho Người hiến máu</Link>
                 <p className="text-gray-500 leading-relaxed mb-8">
                   Tìm điểm hiến máu gần bạn, đặt lịch trong vài giây và theo dõi chính xác bao nhiêu mạng sống bạn đã cứu.
                 </p>
@@ -152,13 +152,13 @@ const Page = () => {
                 <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Hospital className="w-7 h-7 text-accent-red" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Cho Bệnh viện</h3>
+                <Link href="/login" className="text-xl font-bold text-gray-900 mb-3">Cho Bệnh viện</Link>
                 <p className="text-gray-500 leading-relaxed mb-8">
                   Yêu cầu nhóm máu khẩn cấp ngay lập tức với cảnh báo tự động. Quản lý kho máu với cập nhật thời gian thực.
                 </p>
-                <a href="#" className="inline-flex items-center font-bold text-accent-red group-hover:gap-2 transition-all">
+                <Link href="/login" className="inline-flex items-center font-bold text-accent-red group-hover:gap-2 transition-all">
                   Đăng ký Cơ sở <ArrowRight className="w-4 h-4 ml-1" />
-                </a>
+                </Link>
               </div>
 
               {/* Card 3 */}
@@ -166,13 +166,13 @@ const Page = () => {
                 <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <Users className="w-7 h-7 text-indigo-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Cho Người đóng góp</h3>
+                <Link href="/login" className="text-xl font-bold text-gray-900 mb-3">Cho Người đóng góp</Link>
                 <p className="text-gray-500 leading-relaxed mb-8">
                   Chung tay tổ chức các sự kiện hiến máu, hỗ trợ hậu cần và lan tỏa giá trị nhân văn đến cộng đồng.
                 </p>
-                <a href="#" className="inline-flex items-center font-bold text-indigo-600 group-hover:gap-2 transition-all">
+                <Link href="/login" className="inline-flex items-center font-bold text-indigo-600 group-hover:gap-2 transition-all">
                   Tham gia Ngay <ArrowRight className="w-4 h-4 ml-1" />
-                </a>
+                </Link>
               </div>
             </div>
           </div>
