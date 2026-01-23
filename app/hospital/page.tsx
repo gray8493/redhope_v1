@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
     Droplet,
     ClipboardList,
@@ -18,6 +19,7 @@ import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
 
 export default function HospitalDashboard() {
+    const router = useRouter();
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <div className="flex h-full grow flex-row">
@@ -91,7 +93,9 @@ export default function HospitalDashboard() {
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <h2 className="text-xl font-bold text-[#120e1b] dark:text-white">Yêu cầu Máu Đang Xử lý</h2>
-                                        <button className="text-sm text-slate-500 font-bold hover:text-[#120e1b] hover:underline flex items-center gap-1 transition-colors">
+                                        <button 
+                                            onClick={() => router.push("/hospital/requests")}
+                                            className="text-sm text-slate-500 font-bold hover:text-[#120e1b] hover:underline flex items-center gap-1 transition-colors">
                                             Xem tất cả <ChevronRight className="w-4 h-4" />
                                         </button>
                                     </div>
