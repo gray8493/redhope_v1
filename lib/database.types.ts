@@ -1,27 +1,47 @@
 // Database Types for Supabase
-// Auto-generated based on database schema
+// Auto-generated based on database schema (Unified Tables)
+
+export type UserRole = 'donor' | 'hospital' | 'admin';
 
 export interface User {
     id: string;                    // uuid - Primary Key
     full_name: string;             // varchar - NOT NULL
     email: string;                 // varchar - NOT NULL
     password_hash: string | null;  // varchar
+    role: UserRole;                // role indicator
+
+    // Donor specific fields
     blood_group: string | null;    // varchar (A+, A-, B+, B-, O+, O-, AB+, AB-)
     city: string | null;           // varchar
     district: string | null;       // varchar
     current_points: number | null; // int
+
+    // Hospital specific fields
+    hospital_name: string | null;
+    license_number: string | null;
+    hospital_address: string | null;
+    is_verified: boolean | null;
+
     created_at: string;            // timestamp
 }
 
-// Type for inserting new user (without id and created_at)
+// Type for inserting new user
 export interface InsertUser {
+    id?: string;                   // Explicitly allow providing ID (matching Auth UI)
     full_name: string;
     email: string;
     password_hash?: string;
+    role?: UserRole;
+
     blood_group?: string;
     city?: string;
     district?: string;
     current_points?: number;
+
+    hospital_name?: string;
+    license_number?: string;
+    hospital_address?: string;
+    is_verified?: boolean;
 }
 
 // Type for updating user
@@ -29,10 +49,17 @@ export interface UpdateUser {
     full_name?: string;
     email?: string;
     password_hash?: string;
+    role?: UserRole;
+
     blood_group?: string;
     city?: string;
     district?: string;
     current_points?: number;
+
+    hospital_name?: string;
+    license_number?: string;
+    hospital_address?: string;
+    is_verified?: boolean;
 }
 
 // Blood group options
@@ -44,32 +71,6 @@ export const BLOOD_GROUPS = [
 ] as const;
 
 export type BloodGroup = typeof BLOOD_GROUPS[number];
-
-export interface Hospital {
-    id: string;
-    user_id: string | null;
-    name: string;
-    license_number: string | null;
-    address: string | null;
-    is_verified: boolean | null;
-    created_at: string;
-}
-
-export interface InsertHospital {
-    user_id?: string;
-    name?: string;
-    license_number?: string;
-    address?: string;
-    is_verified?: boolean;
-}
-
-export interface UpdateHospital {
-    user_id?: string;
-    name?: string;
-    license_number?: string;
-    address?: string;
-    is_verified?: boolean;
-}
 
 export interface Voucher {
     id: string;

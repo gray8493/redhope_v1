@@ -4,9 +4,8 @@ import { userService } from '@/services/user.service';
 export const authService = {
     // Sign Up
     // Sign Up
-    async signUp(email: string, password: string, fullName: string) {
-        // Enforce role policy: Public registration is always 'donor'
-        const safeRole = 'donor';
+    async signUp(email: string, password: string, fullName: string, role: string = 'donor') {
+        const safeRole = role.toLowerCase();
 
         // 1. Create auth user
         const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -15,7 +14,7 @@ export const authService = {
             options: {
                 data: {
                     full_name: fullName,
-                    role: safeRole // Store safe role in metadata
+                    role: safeRole
                 },
             },
         });
@@ -29,16 +28,15 @@ export const authService = {
                 const existing = await userService.getByEmail(email);
                 if (!existing) {
                     await userService.create({
+                        id: authData.user.id, // Ensure IDs match
                         email: email,
                         full_name: fullName,
+                        role: safeRole as any
                     });
                 }
-                throw new Error('Failed to create user profile. Please try again.');
+                return authData; // Return success here
             } catch (profileError) {
                 console.error('Failed to create public profile:', profileError);
-                // Rollback: Ideally we delete the auth user here.
-                // Since specific admin API is needed, we log this critical error.
-                // TODO: Implement server-side compensation or admin-alert.
                 throw new Error('Failed to create user profile. Please contact support.');
             }
         }
