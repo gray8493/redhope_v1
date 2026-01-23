@@ -29,9 +29,9 @@ export interface User {
     is_verified: boolean | null;
 
     // Health & Verification (Step 2)
-    weight?: number | null;
-    last_donation_date?: string | null;
-    health_history?: string | null;
+    weight: number | null;
+    last_donation_date: string | null;
+    health_history: string | null;
 
     created_at: string;            // timestamp
 }

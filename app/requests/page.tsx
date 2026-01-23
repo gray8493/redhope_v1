@@ -195,7 +195,7 @@ export default function RequestsPage() {
 
                             {/* Grid of Requests */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {REQUESTS_DATA.map((request) => (
+                                {(paginatedData ?? []).map((request) => (
                                     <div
                                         key={request.id}
                                         onClick={() => setSelectedRequest(request)}
@@ -236,16 +236,35 @@ export default function RequestsPage() {
                                 ))}
                             </div>
 
-                            {/* Pagination Placeholder */}
+                            {/* Pagination */}
                             <div className="mt-12 flex justify-center">
                                 <nav className="flex items-center gap-2">
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors">
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                        className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors disabled:opacity-50"
+                                    >
                                         <ChevronLeft className="w-5 h-5" />
                                     </button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg bg-[#6324eb] text-white font-bold">1</button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors text-[#120e1b] dark:text-white">2</button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors text-[#120e1b] dark:text-white">3</button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors">
+
+                                    {Array.from({ length: totalPages }).map((_, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => setCurrentPage(i + 1)}
+                                            className={`h-10 w-10 flex items-center justify-center rounded-lg font-bold transition-all ${currentPage === i + 1
+                                                    ? "bg-[#6324eb] text-white shadow-lg shadow-[#6324eb]/30"
+                                                    : "border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] text-[#120e1b] dark:text-white"
+                                                }`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages || totalPages === 0}
+                                        className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors disabled:opacity-50"
+                                    >
                                         <ChevronRight className="w-5 h-5" />
                                     </button>
                                 </nav>

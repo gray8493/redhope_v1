@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS public.users (
     
     -- Donor specific fields
     blood_group VARCHAR(10),
-    citizen_id VARCHAR(20) UNIQUE, -- CCCD
+    citizen_id_encrypted BYTEA, -- Strong AES/GCM encrypted value
+    citizen_id_hash VARCHAR(64) UNIQUE, -- Deterministic HMAC_SHA256 for uniqueness checks
     dob DATE,
     gender VARCHAR(10),
     current_points INTEGER DEFAULT 0,
@@ -46,7 +47,9 @@ DROP POLICY IF EXISTS "Allow public to view hospitals" ON public.users;
 DROP POLICY IF EXISTS "Admin full access" ON public.users;
 DROP POLICY IF EXISTS "Allow signup inserts" ON public.users;
 
-CREATE POLICY "Enable email search for all" ON public.users FOR SELECT USING (true);
+-- RLS policies follow least-privilege principle.
+-- REPLACED: CREATE POLICY "Enable email search for all" ON public.users FOR SELECT USING (true);
+-- Note: Use a specific RPC with restricted access to look up users by email for search functionality.
 CREATE POLICY "Allow users to view own profile" ON public.users FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Allow users to update own profile" ON public.users FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Allow public to view hospitals" ON public.users FOR SELECT USING (role = 'hospital' AND is_verified = true);

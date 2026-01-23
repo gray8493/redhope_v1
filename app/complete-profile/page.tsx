@@ -7,8 +7,7 @@ import {
     Droplet,
     Calendar,
     ArrowRight,
-    Loader2,
-    Save
+    Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -55,8 +54,9 @@ export default function DonorProfileStep1() {
                     district: user.profile?.district || "",
                     address: user.profile?.address || ""
                 }));
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Error fetching user:", err);
+                setError("Không thể tải thông tin người dùng. Vui lòng làm mới trang.");
             } finally {
                 setLoading(false);
             }
@@ -93,17 +93,11 @@ export default function DonorProfileStep1() {
             await userService.upsert(userId, cleanData);
             router.push("/complete-profile/verification");
         } catch (err: any) {
+            // Log full error internally for diagnostics
             console.error("Update failed detailed:", err);
 
-            // Lấy thông báo lỗi chi tiết nhất có thể
-            let msg = "Lỗi không xác định";
-            if (err.message) msg = err.message;
-            else if (err.details) msg = err.details;
-            else if (err.hint) msg = err.hint;
-            else if (typeof err === 'string') msg = err;
-            else msg = JSON.stringify(err);
-
-            setError("Lỗi: " + msg);
+            // Return a user-safe message
+            setError("Lỗi: Có lỗi xảy ra. Vui lòng thử lại sau.");
         } finally {
             setSubmitting(false);
         }

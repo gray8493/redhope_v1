@@ -159,8 +159,8 @@ export default function HospitalRequestsPage() {
     });
 
     // Pagination logic
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-    const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
+    const paginatedData = filteredData.length === 0 ? [] : filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const handleFilterChange = (filter: string) => {
         setActiveFilter(filter);
@@ -185,7 +185,7 @@ export default function HospitalRequestsPage() {
                                         Tất cả các yêu cầu máu từ bệnh viện. Quản lý và theo dõi tiến độ của từng yêu cầu.
                                     </p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => router.push("/hospital")}
                                     className="flex items-center gap-2 px-6 h-12 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] rounded-lg text-[#120e1b] dark:text-white font-semibold hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors"
                                 >
@@ -209,7 +209,6 @@ export default function HospitalRequestsPage() {
                                         }`}
                                 >
                                     <span className="text-sm font-medium">Nguy kịch</span>
-                                    <ChevronDown className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => handleFilterChange("Cao")}
@@ -217,7 +216,6 @@ export default function HospitalRequestsPage() {
                                         }`}
                                 >
                                     <span className="text-sm font-medium">Cao</span>
-                                    <ChevronDown className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => handleFilterChange("Trung bình")}
@@ -225,7 +223,6 @@ export default function HospitalRequestsPage() {
                                         }`}
                                 >
                                     <span className="text-sm font-medium">Trung bình</span>
-                                    <ChevronDown className="w-4 h-4" />
                                 </button>
                                 <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
                                     <span className="text-sm font-medium">Bộ lọc khác</span>
@@ -248,44 +245,52 @@ export default function HospitalRequestsPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#ebe7f3] dark:divide-[#2d263d]">
-                                            {paginatedData.map((request) => (
-                                                <tr key={request.id} className="hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors">
-                                                    <td className="px-6 py-5 text-sm font-bold text-[#120e1b] dark:text-white">{request.patientCode}</td>
-                                                    <td className="px-6 py-5">
-                                                        <span className="px-3 py-1.5 bg-slate-100 dark:bg-[#251e36] text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold">{request.bloodType}</span>
-                                                    </td>
-                                                    <td className="px-6 py-5 text-sm font-medium text-slate-600 dark:text-slate-400">{request.quantity} Đơn vị</td>
-                                                    <td className="px-6 py-5">
-                                                        <span className={`px-2.5 py-1 ${request.urgencyClass} rounded-md text-[10px] font-bold uppercase tracking-wide`}>
-                                                            {request.urgency}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-24 bg-slate-200 dark:bg-[#2d263d] rounded-full h-2">
-                                                                <div
-                                                                    className="bg-[#6324eb] h-2 rounded-full transition-all"
-                                                                    style={{ width: `${request.progress}%` }}
-                                                                ></div>
-                                                            </div>
-                                                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-8">{request.progress}%</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex items-center gap-2">
-                                                            <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-[#6324eb]">
-                                                                <Eye className="w-4 h-4" />
-                                                            </button>
-                                                            <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-[#6324eb]">
-                                                                <Edit2 className="w-4 h-4" />
-                                                            </button>
-                                                            <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-red-500">
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
+                                            {paginatedData.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={6} className="px-6 py-10 text-center text-slate-500 dark:text-slate-400 font-medium">
+                                                        Không tìm thấy yêu cầu máu nào phù hợp với bộ lọc này.
                                                     </td>
                                                 </tr>
-                                            ))}
+                                            ) : (
+                                                paginatedData.map((request) => (
+                                                    <tr key={request.id} className="hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors">
+                                                        <td className="px-6 py-5 text-sm font-bold text-[#120e1b] dark:text-white">{request.patientCode}</td>
+                                                        <td className="px-6 py-5">
+                                                            <span className="px-3 py-1.5 bg-slate-100 dark:bg-[#251e36] text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold">{request.bloodType}</span>
+                                                        </td>
+                                                        <td className="px-6 py-5 text-sm font-medium text-slate-600 dark:text-slate-400">{request.quantity} Đơn vị</td>
+                                                        <td className="px-6 py-5">
+                                                            <span className={`px-2.5 py-1 ${request.urgencyClass} rounded-md text-[10px] font-bold uppercase tracking-wide`}>
+                                                                {request.urgency}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-5">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-24 bg-slate-200 dark:bg-[#2d263d] rounded-full h-2">
+                                                                    <div
+                                                                        className="bg-[#6324eb] h-2 rounded-full transition-all"
+                                                                        style={{ width: `${request.progress}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-8">{request.progress}%</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-5">
+                                                            <div className="flex items-center gap-2">
+                                                                <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-[#6324eb]">
+                                                                    <Eye className="w-4 h-4" />
+                                                                </button>
+                                                                <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-[#6324eb]">
+                                                                    <Edit2 className="w-4 h-4" />
+                                                                </button>
+                                                                <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-red-500">
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -294,7 +299,7 @@ export default function HospitalRequestsPage() {
                             {/* Pagination */}
                             <div className="mt-8 flex justify-between items-center">
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    Hiển thị {(currentPage - 1) * itemsPerPage + 1} đến {Math.min(currentPage * itemsPerPage, filteredData.length)} của {filteredData.length} yêu cầu
+                                    Hiển thị {filteredData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} đến {Math.min(currentPage * itemsPerPage, filteredData.length)} của {filteredData.length} yêu cầu
                                 </p>
                                 <nav className="flex items-center gap-2">
                                     <button
