@@ -84,12 +84,46 @@ const REQUESTS_DATA: BloodRequest[] = [
         image: "https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&q=80&w=600",
         unitsNeeded: 10,
         patientCondition: "Dự trữ cho các ca phẫu thuật định kỳ trong tuần.",
+    },
+    {
+        id: 4,
+        bloodType: "O Negative (O-)",
+        urgency: "Cần gấp",
+        urgencyClass: "bg-red-500",
+        urgencyColor: "red",
+        distance: "0.5 Km",
+        timeLeft: "Hết hạn trong 1h",
+        description: "Bệnh nhân cấp cứu cần nhóm máu hiếm O Negative ngay lập tức.",
+        hospitalName: "Bệnh viện Việt Đức",
+        address: "40 Tràng Thi, Hoàn Kiếm, Hà Nội",
+        image: "https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?auto=format&fit=crop&q=80&w=600",
+        unitsNeeded: 2,
+        patientCondition: "Mất máu cấp do chấn thương bụng.",
     }
 ];
 
 export default function RequestsPage() {
     const router = useRouter();
     const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
+    const [activeFilter, setActiveFilter] = useState("Tất cả");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 6;
+    // Filter logic
+    const filteredData = REQUESTS_DATA.filter(item => {
+        if (activeFilter === "Tất cả") return true;
+        if (activeFilter === "O-Negative") return item.bloodType.toLowerCase().includes("o negative") || item.bloodType.includes("(O-)") || item.bloodType.includes("O-");
+        if (activeFilter === "Khẩn cấp") return item.urgency === "Cần gấp";
+        return true;
+    });
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+    const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    const handleFilterChange = (filter: string) => {
+        setActiveFilter(filter);
+        setCurrentPage(1); // Reset to first page on filter change
+    };
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
