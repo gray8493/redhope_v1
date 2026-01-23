@@ -135,7 +135,7 @@ export default function DashboardPage() {
                             <div className="flex flex-col gap-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">Yêu cầu khẩn cấp gần đây</h3>
-                                    <Link href="#" className="text-[#6324eb] text-sm font-bold hover:underline">Xem bản đồ</Link>
+
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {/* Request Item 1 */}

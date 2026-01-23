@@ -13,8 +13,31 @@ import {
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
+import { useState } from "react";
+import { X, CheckCircle2, Copy } from "lucide-react";
 
 export default function DonatePage() {
+    const [amount, setAmount] = useState<string>("100.000");
+    const [paymentMethod, setPaymentMethod] = useState<string>("momo");
+    const [showQRModal, setShowQRModal] = useState(false);
+    const [showCardModal, setShowCardModal] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const donationPresets = ["50.000", "100.000", "200.000", "500.000"];
+
+    const handleConfirmDonation = () => {
+        setIsProcessing(true);
+        // Simulate a small delay for "processing"
+        setTimeout(() => {
+            setIsProcessing(false);
+            if (paymentMethod === "momo") {
+                setShowQRModal(true);
+            } else {
+                setShowCardModal(true);
+            }
+        }, 800);
+    };
+
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#fff5f5] dark:bg-[#1f1212] font-sans text-[#450a0a] dark:text-red-50">
             <div className="flex h-full grow flex-row">
@@ -64,18 +87,18 @@ export default function DonatePage() {
                                             <div>
                                                 <label className="block text-sm font-bold text-[#7f1d1d] dark:text-red-400 mb-3 uppercase tracking-wider">Chọn mức đóng góp</label>
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                    <button className="py-3 px-4 rounded-lg border-2 border-red-200 dark:border-red-900/30 hover:border-[#7f1d1d] hover:bg-[#7f1d1d]/10 hover:text-[#7f1d1d] font-bold transition-all text-[#450a0a] dark:text-red-200">
-                                                        50.000đ
-                                                    </button>
-                                                    <button className="py-3 px-4 rounded-lg border-2 border-red-200 dark:border-red-900/30 hover:border-[#7f1d1d] hover:bg-[#7f1d1d]/10 hover:text-[#7f1d1d] font-bold transition-all text-[#450a0a] dark:text-red-200">
-                                                        100.000đ
-                                                    </button>
-                                                    <button className="py-3 px-4 rounded-lg border-2 border-red-200 dark:border-red-900/30 hover:border-[#7f1d1d] hover:bg-[#7f1d1d]/10 hover:text-[#7f1d1d] font-bold transition-all text-[#450a0a] dark:text-red-200">
-                                                        200.000đ
-                                                    </button>
-                                                    <button className="py-3 px-4 rounded-lg border-2 border-red-200 dark:border-red-900/30 hover:border-[#7f1d1d] hover:bg-[#7f1d1d]/10 hover:text-[#7f1d1d] font-bold transition-all text-[#450a0a] dark:text-red-200">
-                                                        500.000đ
-                                                    </button>
+                                                    {donationPresets.map((preset) => (
+                                                        <button
+                                                            key={preset}
+                                                            onClick={() => setAmount(preset)}
+                                                            className={`py-3 px-4 rounded-lg border-2 font-bold transition-all ${amount === preset
+                                                                ? "border-[#7f1d1d] bg-[#7f1d1d]/10 text-[#7f1d1d]"
+                                                                : "border-red-200 dark:border-red-900/30 text-[#450a0a] dark:text-red-200 hover:border-[#7f1d1d]"
+                                                                }`}
+                                                        >
+                                                            {preset}đ
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             </div>
 
@@ -86,6 +109,8 @@ export default function DonatePage() {
                                                         type="text"
                                                         className="w-full bg-[#fef2f2] dark:bg-[#1f1212] border-none rounded-xl py-4 px-4 text-xl font-bold text-[#450a0a] dark:text-white focus:ring-2 focus:ring-[#7f1d1d] placeholder:text-red-400"
                                                         placeholder="Nhập số tiền (VNĐ)"
+                                                        value={amount}
+                                                        onChange={(e) => setAmount(e.target.value)}
                                                     />
                                                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7f1d1d] font-bold">VNĐ</span>
                                                 </div>
@@ -94,29 +119,50 @@ export default function DonatePage() {
                                             <div>
                                                 <label className="block text-sm font-bold text-[#7f1d1d] dark:text-red-400 mb-3 uppercase tracking-wider">Phương thức thanh toán</label>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <button className="flex items-center gap-4 p-4 rounded-xl border border-red-200 dark:border-red-900/30 hover:border-[#7f1d1d] bg-white dark:bg-[#2a1a1a] transition-all group text-left hover:shadow-md hover:shadow-[#7f1d1d]/10">
-                                                        <div className="size-10 rounded-full bg-pink-50 flex items-center justify-center text-pink-600 group-hover:bg-pink-100 transition-colors">
+                                                    <button
+                                                        onClick={() => setPaymentMethod("momo")}
+                                                        className={`flex items-center gap-4 p-4 rounded-xl border transition-all group text-left hover:shadow-md ${paymentMethod === "momo"
+                                                            ? "border-[#7f1d1d] bg-[#7f1d1d]/5 shadow-md shadow-[#7f1d1d]/10"
+                                                            : "border-red-200 dark:border-red-900/30 bg-white dark:bg-[#2a1a1a]"
+                                                            }`}
+                                                    >
+                                                        <div className={`size-10 rounded-full flex items-center justify-center transition-colors ${paymentMethod === "momo" ? "bg-pink-600 text-white" : "bg-pink-50 text-pink-600 group-hover:bg-pink-100"
+                                                            }`}>
                                                             <QrCode className="w-6 h-6" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-bold text-[#450a0a] dark:text-white group-hover:text-[#7f1d1d] transition-colors">Ví MoMo</p>
+                                                            <p className={`font-bold transition-colors ${paymentMethod === "momo" ? "text-[#7f1d1d]" : "text-[#450a0a] dark:text-white group-hover:text-[#7f1d1d]"}`}>Ví MoMo</p>
                                                             <p className="text-xs text-[#7f1d1d] dark:text-red-300">Quét mã QR nhanh chóng</p>
                                                         </div>
                                                     </button>
-                                                    <button className="flex items-center gap-4 p-4 rounded-xl border border-red-200 dark:border-red-900/30 hover:border-[#7f1d1d] bg-white dark:bg-[#2a1a1a] transition-all group text-left hover:shadow-md hover:shadow-[#7f1d1d]/10">
-                                                        <div className="size-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition-colors">
+                                                    <button
+                                                        onClick={() => setPaymentMethod("card")}
+                                                        className={`flex items-center gap-4 p-4 rounded-xl border transition-all group text-left hover:shadow-md ${paymentMethod === "card"
+                                                            ? "border-[#7f1d1d] bg-[#7f1d1d]/5 shadow-md shadow-[#7f1d1d]/10"
+                                                            : "border-red-200 dark:border-red-900/30 bg-white dark:bg-[#2a1a1a]"
+                                                            }`}
+                                                    >
+                                                        <div className={`size-10 rounded-full flex items-center justify-center transition-colors ${paymentMethod === "card" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
+                                                            }`}>
                                                             <CreditCard className="w-6 h-6" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-bold text-[#450a0a] dark:text-white group-hover:text-[#7f1d1d] transition-colors">Thẻ Ngân hàng / Visa</p>
+                                                            <p className={`font-bold transition-colors ${paymentMethod === "card" ? "text-[#7f1d1d]" : "text-[#450a0a] dark:text-white group-hover:text-[#7f1d1d]"}`}>Thẻ Ngân hàng / Visa</p>
                                                             <p className="text-xs text-[#7f1d1d] dark:text-red-300">Chuyển khoản trực tiếp</p>
                                                         </div>
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <button className="w-full py-4 bg-[#7f1d1d] hover:bg-[#450a0a] text-white text-lg font-black rounded-xl shadow-xl shadow-[#7f1d1d]/30 transition-all active:scale-[0.98] mt-2 ring-offset-2 focus:ring-2 ring-[#7f1d1d]">
-                                                Tiến hành Quyên góp
+                                            <button
+                                                onClick={handleConfirmDonation}
+                                                disabled={isProcessing}
+                                                className="w-full py-4 bg-[#7f1d1d] hover:bg-[#450a0a] text-white text-lg font-black rounded-xl shadow-xl shadow-[#7f1d1d]/30 transition-all active:scale-[0.98] mt-2 ring-offset-2 focus:ring-2 ring-[#7f1d1d] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                            >
+                                                {isProcessing ? (
+                                                    <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                ) : null}
+                                                {isProcessing ? "Đang xử lý..." : `Tiến hành Quyên góp ${amount && `${amount}đ`}`}
                                             </button>
                                         </div>
                                     </div>
@@ -215,9 +261,7 @@ export default function DonatePage() {
                                             ))}
                                         </div>
 
-                                        <div className="p-4 bg-red-50 dark:bg-[#251e36] text-center border-t border-red-100 dark:border-red-900/30">
-                                            <button className="text-sm font-bold text-[#7f1d1d] hover:underline">Xem tất cả bảng xếp hạng</button>
-                                        </div>
+
                                     </div>
 
                                     {/* Motivation Card */}
@@ -242,6 +286,104 @@ export default function DonatePage() {
                     <MiniFooter />
                 </div>
             </div>
+
+            {/* QR Code Modal (MoMo) */}
+            {showQRModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                    <div className="absolute inset-0 bg-[#450a0a]/80 backdrop-blur-sm" onClick={() => setShowQRModal(false)}></div>
+                    <div className="bg-white dark:bg-[#1f1212] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="bg-pink-600 p-6 text-center text-white relative">
+                            <button onClick={() => setShowQRModal(false)} className="absolute right-4 top-4 hover:bg-black/10 p-1 rounded-full transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
+                            <QrCode className="w-12 h-12 mx-auto mb-2" />
+                            <h3 className="text-xl font-black">Thanh toán qua MoMo</h3>
+                            <p className="text-white/80 text-sm">Quét mã để quyên góp {amount}đ</p>
+                        </div>
+                        <div className="p-8 text-center flex flex-col items-center">
+                            <div className="bg-white p-4 rounded-2xl shadow-inner border-4 border-pink-50 mb-6">
+                                {/* Simulated QR Image */}
+                                <div className="size-48 bg-[#fdf2f8] rounded-xl flex items-center justify-center relative overflow-hidden ring-1 ring-pink-100">
+                                    <div className="grid grid-cols-4 gap-2 opacity-20">
+                                        {Array.from({ length: 16 }).map((_, i) => <div key={i} className="size-8 bg-pink-900 rounded-sm"></div>)}
+                                    </div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="size-32 bg-white rounded-lg shadow-sm border border-pink-100 flex items-center justify-center p-2">
+                                            <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="MoMo" className="w-full opacity-80" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="w-full space-y-3 mb-6">
+                                <div className="flex justify-between text-sm py-2 border-b border-red-50 dark:border-red-900/20">
+                                    <span className="text-red-400 font-medium">Số tiền:</span>
+                                    <span className="text-[#450a0a] dark:text-white font-black">{amount} VNĐ</span>
+                                </div>
+                                <div className="flex justify-between text-sm py-2 border-b border-red-50 dark:border-red-900/20">
+                                    <span className="text-red-400 font-medium">Nội dung:</span>
+                                    <span className="text-[#450a0a] dark:text-white font-black">QH {Math.floor(Math.random() * 100000)}</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowQRModal(false)}
+                                className="w-full py-4 bg-pink-600 hover:bg-pink-700 text-white font-black rounded-xl transition-all shadow-lg shadow-pink-600/20"
+                            >
+                                Tôi đã thanh toán
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bank Card Modal */}
+            {showCardModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                    <div className="absolute inset-0 bg-[#450a0a]/80 backdrop-blur-sm" onClick={() => setShowCardModal(false)}></div>
+                    <div className="bg-white dark:bg-[#1f1212] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="bg-blue-600 p-6 text-center text-white relative">
+                            <button onClick={() => setShowCardModal(false)} className="absolute right-4 top-4 hover:bg-black/10 p-1 rounded-full transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
+                            <CreditCard className="w-12 h-12 mx-auto mb-2" />
+                            <h3 className="text-xl font-black">Chuyển khoản Ngân hàng</h3>
+                            <p className="text-white/80 text-sm">Vui lòng chuyển chính xác {amount}đ</p>
+                        </div>
+                        <div className="p-8">
+                            <div className="space-y-4 mb-8">
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/30">
+                                    <p className="text-[10px] uppercase font-black text-blue-400 mb-1 tracking-widest">Số tài khoản</p>
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-xl font-black text-blue-900 dark:text-blue-200 tracking-wider">1234 5678 9012</p>
+                                        <button className="text-blue-600 p-2 hover:bg-blue-100 rounded-lg transition-colors"><Copy className="w-4 h-4" /></button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                        <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-widest">Ngân hàng</p>
+                                        <p className="font-black text-[#450a0a] dark:text-white">Vietcombank</p>
+                                    </div>
+                                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                        <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-widest">Chủ TK</p>
+                                        <p className="font-black text-[#450a0a] dark:text-white">REDHOPE VN</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 flex items-start gap-3 mb-6">
+                                <CheckCircle2 className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                                <p className="text-xs text-yellow-800 dark:text-yellow-200 leading-relaxed font-medium">
+                                    Ghi chú chuyển khoản: <span className="font-black">REDHOPE {Math.floor(Math.random() * 100000)}</span>. Tiền sẽ được cập nhật sau 1-3 phút.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowCardModal(false)}
+                                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-all shadow-lg shadow-blue-600/20"
+                            >
+                                Hoàn tất chuyển khoản
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

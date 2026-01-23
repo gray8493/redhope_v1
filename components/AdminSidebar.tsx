@@ -11,6 +11,7 @@ export const AdminSidebar = () => {
     const menuItems = [
         { href: '/admin', icon: 'dashboard', label: 'Bảng điều khiển' },
         { href: '/admin/admin-donor', icon: 'person', label: 'Quản lý người hiến' },
+        { href: '/admin/campaign-management', icon: 'campaign', label: 'Quản lý chiến dịch' },
         { href: '/admin/admin-hospitals', icon: 'domain', label: 'Bệnh viện' },
         { href: '/admin/voucher-management', icon: 'confirmation_number', label: 'Quản lý Voucher' },
         { href: '/admin/global-ana', icon: 'analytics', label: 'Phân tích toàn cầu' },

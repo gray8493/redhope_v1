@@ -13,12 +13,7 @@ const Navbar = () => {
                         <NameRedHope />
                     </div>
 
-                    {/* Navigation Links */}
-                    <div className="hidden md:flex items-center space-x-8">
-                        <a href="#" className="text-gray-600 hover:text-primary font-medium transition-colors">Cách thức hoạt động</a>
-                        <a href="#" className="text-gray-600 hover:text-primary font-medium transition-colors">Tác động</a>
-                        <a href="#" className="text-gray-600 hover:text-primary font-medium transition-colors">Chia sẻ</a>
-                    </div>
+
 
                     <div className="flex items-center gap-4">
                         <a href="/login" className="hidden md:block text-gray-900 font-medium px-4 py-2 hover:bg-gray-50 rounded-full transition-colors">

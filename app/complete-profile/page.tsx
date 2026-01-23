@@ -8,7 +8,8 @@ import {
     User,
     Phone,
     CreditCard,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    MapPin
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -23,7 +24,8 @@ export default function CreateProfilePage() {
         email: "admin@example.com",
         phone: "",
         idCard: "",
-        dob: ""
+        dob: "",
+        address: ""
     });
     const [gender, setGender] = useState("Nam");
     const [bloodGroup, setBloodGroup] = useState("A+");
@@ -47,9 +49,10 @@ export default function CreateProfilePage() {
         if (formData.phone.length > 8) filledCount++;
         if (formData.idCard.length > 8) filledCount++;
         if (formData.dob) filledCount++;
+        if (formData.address.length > 10) filledCount++;
 
-        const calculated = 10 + (filledCount * 10); // 10, 20, 30, 40, 50
-        setProgress(calculated);
+        const calculated = 10 + (filledCount * 8); // Scaled to reach ~50%
+        setProgress(Math.min(calculated, 50));
     }, [formData]);
 
     return (
@@ -232,6 +235,22 @@ export default function CreateProfilePage() {
                                             ))}
                                         </div>
                                     </div>
+
+                                    {/* Địa chỉ cư trú */}
+                                    <label className="flex flex-col gap-2 col-span-1 md:col-span-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Địa chỉ hiện tại</span>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                name="address"
+                                                value={formData.address}
+                                                onChange={handleChange}
+                                                placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] focus:ring-2 focus:ring-[#2b6cee]/20 outline-none transition-all text-sm"
+                                            />
+                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                        </div>
+                                    </label>
 
                                     {/* Grid Selection (Blood Group) */}
                                     <div className="col-span-1 md:col-span-2 flex flex-col gap-3">

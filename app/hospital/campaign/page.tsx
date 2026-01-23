@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
-
+import Link from 'next/link';
 export default function CampaignManagementPage() {
     return (
         <>
@@ -104,7 +104,7 @@ export default function CampaignManagementPage() {
                                             <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
                                                 <span className="material-symbols-outlined text-sm">schedule</span> 4h nữa
                                             </span>
-                                            <a className="text-[11px] font-bold text-[#137fec] hover:text-[#137fec]/80 transition-colors uppercase tracking-tight" href="#">Xem chi tiết</a>
+                                            <Link className="text-[11px] font-bold text-[#137fec] hover:text-[#137fec]/80 transition-colors uppercase tracking-tight" href="/hospital/campaign/1">Xem chi tiết</Link>
                                         </div>
                                     </div>
                                 </div>
@@ -133,7 +133,7 @@ export default function CampaignManagementPage() {
                                             <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
                                                 <span className="material-symbols-outlined text-sm">schedule</span> 12h nữa
                                             </span>
-                                            <a className="text-[11px] font-bold text-[#137fec] hover:text-[#137fec]/80 transition-colors uppercase tracking-tight" href="#">Xem chi tiết</a>
+                                            <Link className="text-[11px] font-bold text-[#137fec] hover:text-[#137fec]/80 transition-colors uppercase tracking-tight" href="/hospital/campaign/1">Xem chi tiết</Link>
                                         </div>
                                     </div>
                                 </div>
@@ -162,7 +162,7 @@ export default function CampaignManagementPage() {
                                             <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
                                                 <span className="material-symbols-outlined text-sm">schedule</span> 2 ngày nữa
                                             </span>
-                                            <a className="text-[11px] font-bold text-[#137fec] hover:text-[#137fec]/80 transition-colors uppercase tracking-tight" href="#">Xem chi tiết</a>
+                                            <Link className="text-[11px] font-bold text-[#137fec] hover:text-[#137fec]/80 transition-colors uppercase tracking-tight" href="/hospital/campaign/1">Xem chi tiết</Link>
                                         </div>
                                     </div>
                                 </div>
@@ -191,7 +191,7 @@ export default function CampaignManagementPage() {
                                             <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
                                                 <span className="material-symbols-outlined text-sm">calendar_today</span> Tuần tới
                                             </span>
-                                            <a className="text-[11px] font-bold text-[#137fec] hover:text-[#137fec]/80 transition-colors uppercase tracking-tight" href="#">Xem chi tiết</a>
+                                            <Link className="text-[11px] font-bold text-[#137fec] hover:text-[#137fec]/80 transition-colors uppercase tracking-tight" href="/hospital/campaign/1">Xem chi tiết</Link>
                                         </div>
                                     </div>
                                 </div>
@@ -240,7 +240,7 @@ export default function CampaignManagementPage() {
                                                 </td>
                                                 <td className="px-6 py-4 text-sm font-bold text-center">542</td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <a className="text-[#137fec] text-sm font-bold hover:underline" href="#">Xem chi tiết</a>
+                                                    <Link className="text-[#137fec] text-sm font-bold hover:underline" href="/hospital/campaign/1">Xem chi tiết</Link>
                                                 </td>
                                             </tr>
                                             <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
@@ -260,7 +260,7 @@ export default function CampaignManagementPage() {
                                                 </td>
                                                 <td className="px-6 py-4 text-sm font-bold text-center">184</td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <a className="text-[#137fec] text-sm font-bold hover:underline" href="#">Xem chi tiết</a>
+                                                    <Link className="text-[#137fec] text-sm font-bold hover:underline" href="/hospital/campaign/1">Xem chi tiết</Link>
                                                 </td>
                                             </tr>
                                             <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
@@ -280,7 +280,7 @@ export default function CampaignManagementPage() {
                                                 </td>
                                                 <td className="px-6 py-4 text-sm font-bold text-center">300</td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <a className="text-[#137fec] text-sm font-bold hover:underline" href="#">Xem chi tiết</a>
+                                                    <Link className="text-[#137fec] text-sm font-bold hover:underline" href="/hospital/campaign/1">Xem chi tiết</Link>
                                                 </td>
                                             </tr>
                                         </tbody>

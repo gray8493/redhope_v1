@@ -16,8 +16,28 @@ import {
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState("profile");
+
+    // Create refs for sections
+    const profileRef = useRef<HTMLDivElement>(null);
+    const notificationsRef = useRef<HTMLDivElement>(null);
+    const securityRef = useRef<HTMLDivElement>(null);
+
+    const scrollToSection = (section: string, ref: React.RefObject<HTMLDivElement | null>) => {
+        setActiveTab(section);
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const handleLogout = () => {
+        // Here you would typically clear session/cookies
+        router.push("/login");
+    };
+
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <div className="flex h-full grow flex-row">
@@ -65,21 +85,42 @@ export default function SettingsPage() {
                                         <p className="text-sm text-[#654d99] dark:text-[#a594c9] mb-4">Nhóm máu O+</p>
 
                                         <div className="flex flex-col gap-2">
-                                            <button className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] text-[#120e1b] dark:text-white font-medium hover:bg-[#ebe7f3] dark:hover:bg-[#3d335a] transition-colors text-left">
-                                                <User className="w-5 h-5 text-[#6324eb]" /> Hồ sơ cá nhân
+                                            <button
+                                                onClick={() => scrollToSection("profile", profileRef)}
+                                                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${activeTab === "profile"
+                                                        ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
+                                                        : "bg-[#f6f6f8] dark:bg-[#251e36] text-[#120e1b] dark:text-white hover:bg-[#ebe7f3] dark:hover:bg-[#3d335a]"
+                                                    }`}
+                                            >
+                                                <User className={`w-5 h-5 ${activeTab === "profile" ? "text-white" : "text-[#6324eb]"}`} /> Hồ sơ cá nhân
                                             </button>
-                                            <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#f6f6f8] dark:hover:bg-[#251e36] text-[#654d99] dark:text-[#a594c9] font-medium transition-colors text-left">
-                                                <Bell className="w-5 h-5" /> Thông báo
+                                            <button
+                                                onClick={() => scrollToSection("notifications", notificationsRef)}
+                                                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${activeTab === "notifications"
+                                                        ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
+                                                        : "text-[#654d99] dark:text-[#a594c9] hover:bg-[#f6f6f8] dark:hover:bg-[#251e36]"
+                                                    }`}
+                                            >
+                                                <Bell className={`w-5 h-5 ${activeTab === "notifications" ? "text-white" : ""}`} /> Thông báo
                                             </button>
-                                            <button className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#f6f6f8] dark:hover:bg-[#251e36] text-[#654d99] dark:text-[#a594c9] font-medium transition-colors text-left">
-                                                <Lock className="w-5 h-5" /> Bảo mật
+                                            <button
+                                                onClick={() => scrollToSection("security", securityRef)}
+                                                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${activeTab === "security"
+                                                        ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
+                                                        : "text-[#654d99] dark:text-[#a594c9] hover:bg-[#f6f6f8] dark:hover:bg-[#251e36]"
+                                                    }`}
+                                            >
+                                                <Lock className={`w-5 h-5 ${activeTab === "security" ? "text-white" : ""}`} /> Bảo mật
                                             </button>
                                         </div>
                                     </div>
 
                                     {/* Danger Zone Mini */}
                                     <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm">
-                                        <button className="flex items-center gap-3 text-red-500 font-bold w-full hover:bg-red-50 dark:hover:bg-red-900/10 p-2 rounded-lg transition-colors">
+                                        <button
+                                            onClick={handleLogout}
+                                            className="flex items-center gap-3 text-red-500 font-bold w-full hover:bg-red-50 dark:hover:bg-red-900/10 p-2 rounded-lg transition-colors"
+                                        >
                                             <LogOut className="w-5 h-5" /> Đăng xuất
                                         </button>
                                     </div>
@@ -89,7 +130,7 @@ export default function SettingsPage() {
                                 <div className="lg:col-span-2 flex flex-col gap-8">
 
                                     {/* Personal Info */}
-                                    <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm">
+                                    <div ref={profileRef} className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm scroll-mt-24">
                                         <h3 className="text-lg font-bold mb-6 pb-2 border-b border-[#ebe7f3] dark:border-[#2d263d] flex items-center gap-2">
                                             <User className="w-5 h-5 text-[#6324eb]" /> Thông tin cá nhân
                                         </h3>
@@ -122,7 +163,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     {/* Notifications */}
-                                    <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm">
+                                    <div ref={notificationsRef} className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm scroll-mt-24">
                                         <h3 className="text-lg font-bold mb-6 pb-2 border-b border-[#ebe7f3] dark:border-[#2d263d] flex items-center gap-2">
                                             <Bell className="w-5 h-5 text-[#6324eb]" /> Cài đặt thông báo
                                         </h3>
@@ -151,7 +192,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     {/* Security */}
-                                    <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm">
+                                    <div ref={securityRef} className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm scroll-mt-24">
                                         <h3 className="text-lg font-bold mb-6 pb-2 border-b border-[#ebe7f3] dark:border-[#2d263d] flex items-center gap-2">
                                             <Shield className="w-5 h-5 text-[#6324eb]" /> Bảo mật
                                         </h3>

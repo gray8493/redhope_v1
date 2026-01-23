@@ -1,4 +1,5 @@
 "use client";
+import React, { useState } from 'react';
 import MiniFooter from '@/components/MiniFooter';
 import {
     Droplet,
@@ -16,7 +17,77 @@ import {
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
 
+const ALL_DONATIONS = [
+    {
+        id: 1,
+        fullDate: "2023-10-24",
+        date: "24 Th10",
+        year: "2023",
+        time: "10:30 Sáng",
+        hospital: "Bệnh viện Chợ Rẫy",
+        units: "1.0",
+        points: 250,
+        status: "Đã xác minh",
+        icon: Hospital,
+        iconColor: "text-red-600 dark:text-red-400",
+        iconBg: "bg-red-100 dark:bg-red-900/30"
+    },
+    {
+        id: 2,
+        fullDate: "2023-08-12",
+        date: "12 Th08",
+        year: "2023",
+        time: "02:15 Chiều",
+        hospital: "Bệnh viện Nhân Dân 115",
+        units: "0.5",
+        points: 150,
+        status: "Hoàn thành",
+        icon: Hospital,
+        iconColor: "text-red-600 dark:text-red-400",
+        iconBg: "bg-red-100 dark:bg-red-900/30"
+    },
+    {
+        id: 3,
+        fullDate: "2023-05-30",
+        date: "30 Th05",
+        year: "2023",
+        time: "09:00 Sáng",
+        hospital: "Ngân hàng Máu Trung ương",
+        units: "1.0",
+        points: 300,
+        status: "Đã xác minh",
+        icon: Activity,
+        iconColor: "text-blue-600 dark:text-blue-400",
+        iconBg: "bg-blue-100 dark:bg-blue-900/30"
+    },
+    {
+        id: 4,
+        fullDate: "2022-02-15",
+        date: "15 Th02",
+        year: "2022",
+        time: "08:45 Sáng",
+        hospital: "Bệnh viện Thống Nhất",
+        units: "1.0",
+        points: 250,
+        status: "Đã xác minh",
+        icon: Hospital,
+        iconColor: "text-red-600 dark:text-red-400",
+        iconBg: "bg-red-100 dark:bg-red-900/30"
+    }
+];
+
 export default function DonationsPage() {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("Tất cả");
+    const [dateFilter, setDateFilter] = useState("");
+
+    const filteredDonations = ALL_DONATIONS.filter(item => {
+        const matchesSearch = item.hospital.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === "Tất cả" || item.status === statusFilter;
+        const matchesDate = !dateFilter || item.fullDate === dateFilter;
+        return matchesSearch && matchesStatus && matchesDate;
+    });
+
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <div className="flex h-full grow flex-row">
@@ -60,7 +131,6 @@ export default function DonationsPage() {
                                 </div>
                             </div>
 
-                            {/* Search & Filter Bar */}
                             <div className="flex flex-col md:flex-row gap-4 mb-6">
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -68,17 +138,38 @@ export default function DonationsPage() {
                                         type="text"
                                         placeholder="Tìm kiếm theo bệnh viện, địa điểm..."
                                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#d7d0e7] dark:border-[#2d263d] bg-white dark:bg-[#1c162e] text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none transition-all placeholder:text-[#654d99]/50"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                 </div>
                                 <div className="flex gap-3">
-                                    <button className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-[#1c162e] border border-[#d7d0e7] dark:border-[#2d263d] text-[#120e1b] dark:text-white rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-[#251e36] transition-colors whitespace-nowrap">
-                                        <Calendar className="w-5 h-5 text-[#6324eb]" />
-                                        <span>Theo Năm</span>
-                                    </button>
-                                    <button className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-[#1c162e] border border-[#d7d0e7] dark:border-[#2d263d] text-[#120e1b] dark:text-white rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-[#251e36] transition-colors whitespace-nowrap">
-                                        <Filter className="w-5 h-5 text-[#6324eb]" />
-                                        <span>Lọc Trạng thái</span>
-                                    </button>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6324eb] w-5 h-5 pointer-events-none" />
+                                        <input
+                                            type="date"
+                                            className="pl-10 pr-10 py-3 bg-white dark:bg-[#1c162e] border border-[#d7d0e7] dark:border-[#2d263d] text-[#120e1b] dark:text-white rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-[#251e36] transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#6324eb] [color-scheme:light] dark:[color-scheme:dark]"
+                                            value={dateFilter}
+                                            onChange={(e) => setDateFilter(e.target.value)}
+                                        />
+                                        {dateFilter && (
+                                            <button
+                                                onClick={() => setDateFilter("")}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 hover:text-red-500 transition-colors"
+                                            >
+                                                Xóa
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <select
+                                        className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-[#1c162e] border border-[#d7d0e7] dark:border-[#2d263d] text-[#120e1b] dark:text-white rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-[#251e36] transition-colors appearance-none cursor-pointer outline-none focus:ring-2 focus:ring-[#6324eb]"
+                                        value={statusFilter}
+                                        onChange={(e) => setStatusFilter(e.target.value)}
+                                    >
+                                        <option value="Tất cả">Trạng thái</option>
+                                        <option value="Đã xác minh">Đã xác minh</option>
+                                        <option value="Hoàn thành">Hoàn thành</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -97,93 +188,49 @@ export default function DonationsPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#ebe7f3] dark:divide-[#2d263d]">
-                                            <tr className="hover:bg-gray-50 dark:hover:bg-[#241c38] transition-colors">
-                                                <td className="px-6 py-5 whitespace-nowrap">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[#120e1b] dark:text-white font-bold">24 Th10, 2023</span>
-                                                        <span className="text-[#654d99] dark:text-[#a594c9] text-xs">10:30 Sáng</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg text-red-600 dark:text-red-400">
-                                                            <Hospital className="w-5 h-5" />
-                                                        </div>
-                                                        <span className="text-[#120e1b] dark:text-white font-medium">Bệnh viện Chợ Rẫy</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-center text-[#120e1b] dark:text-white font-semibold">1.0 Đơn vị</td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-center font-bold text-[#10b981]">+250</td>
-                                                <td className="px-6 py-5 whitespace-nowrap">
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                                        <span className="size-1.5 rounded-full bg-green-600 dark:bg-green-400"></span>
-                                                        Đã xác minh
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-right">
-                                                    <button className="text-[#6324eb] hover:text-[#6324eb]/80 font-bold text-sm flex items-center gap-1 ml-auto">
-                                                        <FileText className="w-4 h-4" /> Chứng nhận
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr className="hover:bg-gray-50 dark:hover:bg-[#241c38] transition-colors">
-                                                <td className="px-6 py-5 whitespace-nowrap">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[#120e1b] dark:text-white font-bold">12 Th08, 2023</span>
-                                                        <span className="text-[#654d99] dark:text-[#a594c9] text-xs">02:15 Chiều</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg text-red-600 dark:text-red-400">
-                                                            <Hospital className="w-5 h-5" />
-                                                        </div>
-                                                        <span className="text-[#120e1b] dark:text-white font-medium">Bệnh viện Nhân Dân 115</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-center text-[#120e1b] dark:text-white font-semibold">0.5 Đơn vị</td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-center font-bold text-[#10b981]">+150</td>
-                                                <td className="px-6 py-5 whitespace-nowrap">
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                                        <span className="size-1.5 rounded-full bg-green-600 dark:bg-green-400"></span>
-                                                        Hoàn thành
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-right">
-                                                    <button className="text-[#6324eb] hover:text-[#6324eb]/80 font-bold text-sm flex items-center gap-1 ml-auto">
-                                                        <FileText className="w-4 h-4" /> Chứng nhận
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr className="hover:bg-gray-50 dark:hover:bg-[#241c38] transition-colors">
-                                                <td className="px-6 py-5 whitespace-nowrap">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[#120e1b] dark:text-white font-bold">30 Th05, 2023</span>
-                                                        <span className="text-[#654d99] dark:text-[#a594c9] text-xs">09:00 Sáng</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-lg text-red-600 dark:text-red-400">
-                                                            <Activity className="w-5 h-5" />
-                                                        </div>
-                                                        <span className="text-[#120e1b] dark:text-white font-medium">Ngân hàng Máu Trung ương</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-center text-[#120e1b] dark:text-white font-semibold">1.0 Đơn vị</td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-center font-bold text-[#10b981]">+300</td>
-                                                <td className="px-6 py-5 whitespace-nowrap">
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                                        <span className="size-1.5 rounded-full bg-green-600 dark:bg-green-400"></span>
-                                                        Đã xác minh
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-5 whitespace-nowrap text-right">
-                                                    <button className="text-[#6324eb] hover:text-[#6324eb]/80 font-bold text-sm flex items-center gap-1 ml-auto">
-                                                        <FileText className="w-4 h-4" /> Chứng nhận
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                            {filteredDonations.length > 0 ? (
+                                                filteredDonations.map((item) => (
+                                                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-[#241c38] transition-colors">
+                                                        <td className="px-6 py-5 whitespace-nowrap">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[#120e1b] dark:text-white font-bold">{item.date}, {item.year}</span>
+                                                                <span className="text-[#654d99] dark:text-[#a594c9] text-xs">{item.time}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-5 whitespace-nowrap">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`${item.iconBg} p-2 rounded-lg ${item.iconColor}`}>
+                                                                    <item.icon className="w-5 h-5" />
+                                                                </div>
+                                                                <span className="text-[#120e1b] dark:text-white font-medium">{item.hospital}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-5 whitespace-nowrap text-center text-[#120e1b] dark:text-white font-semibold">{item.units} Đơn vị</td>
+                                                        <td className="px-6 py-5 whitespace-nowrap text-center font-bold text-[#10b981]">+{item.points}</td>
+                                                        <td className="px-6 py-5 whitespace-nowrap">
+                                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${item.status === "Đã xác minh"
+                                                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                                                                : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                                                                }`}>
+                                                                <span className={`size-1.5 rounded-full ${item.status === "Đã xác minh" ? "bg-green-600 dark:bg-green-400" : "bg-blue-600 dark:bg-blue-400"
+                                                                    }`}></span>
+                                                                {item.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-5 whitespace-nowrap text-right">
+                                                            <button className="text-[#6324eb] hover:text-[#6324eb]/80 font-bold text-sm flex items-center gap-1 ml-auto">
+                                                                <FileText className="w-4 h-4" /> Chứng nhận
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={6} className="px-6 py-10 text-center text-[#654d99] dark:text-[#a594c9]">
+                                                        Không tìm thấy dữ liệu phù hợp.
+                                                    </td>
+                                                </tr>
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>

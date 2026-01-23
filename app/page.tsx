@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { PlayIcon, HeartPulse, Users, Hospital, Droplet, ArrowRight, Quote } from '../components/icons';
@@ -33,13 +34,13 @@ const Page = () => {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button className="bg-primary text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-primary-dark transition-all shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5">
+                  <Link href="/login" className="bg-primary text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-primary-dark transition-all shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5">
                     Hiến máu ngay
-                  </button>
-                  <button className="flex items-center justify-center gap-3 bg-white text-gray-700 px-8 py-4 rounded-xl font-bold text-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all shadow-sm hover:shadow-md">
+                  </Link>
+                  <Link href="*" className="flex items-center justify-center gap-3 bg-white text-gray-700 px-8 py-4 rounded-xl font-bold text-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all shadow-sm hover:shadow-md">
                     <PlayIcon className="w-5 h-5 fill-current" />
                     <span>Video giới thiệu</span>
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -243,12 +244,12 @@ const Page = () => {
                   Tham gia cùng hàng ngàn người hiến máu và hàng trăm bệnh viện ngay hôm nay. Chỉ mất chưa đầy 2 phút để bắt đầu.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <button className="w-full sm:w-auto bg-white text-primary px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-colors shadow-lg">
+                  <Link href="/register" className="w-full sm:w-auto bg-white text-primary px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-colors shadow-lg">
                     Trở thành Người hiến máu
-                  </button>
-                  <button className="w-full sm:w-auto bg-transparent border-2 border-white/30 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-colors">
+                  </Link>
+                  <Link href="/register" className="w-full sm:w-auto bg-transparent border-2 border-white/30 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-colors">
                     Đăng ký Bệnh viện
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
