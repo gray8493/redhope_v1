@@ -23,14 +23,23 @@ const LoginPage = () => {
         try {
             await authService.signIn(formData.email, formData.password);
 
-            // Fetch the actual authenticated user role
+            // Fetch the actual authenticated user role from profile or metadata
             const user = await authService.getCurrentUser();
-            const role = user?.user_metadata?.role || 'donor';
-            // Note: In a real app, rely on the public profile role if it differs/is managed there.
+            const actualRole = user?.profile?.role || user?.user_metadata?.role || 'donor';
 
-            if (role === 'admin') {
+            // Optional: If you want to force the user to login to the role they selected:
+            if (formData.role !== actualRole && actualRole !== 'admin') {
+                setError(`Tài khoản này có vai trò là "${actualRole === 'donor' ? 'Người hiến' : 'Bệnh viện'}", không phải "${formData.role === 'donor' ? 'Người hiến' : 'Bệnh viện'}".`);
+                await authService.signOut(); // Sign out if role mismatch
+                setLoading(false);
+                return;
+            }
+
+            const redirectRole = actualRole; // Use actual role for redirection
+
+            if (redirectRole === 'admin') {
                 router.push('/admin/global-ana');
-            } else if (role === 'hospital') {
+            } else if (redirectRole === 'hospital') {
                 router.push('/hospital');
             } else {
                 router.push('/dashboard');

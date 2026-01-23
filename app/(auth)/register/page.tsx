@@ -13,7 +13,7 @@ const RegisterPage = () => {
         email: '',
         password: '',
         confirmPassword: '',
-        role: 'Donor' // Default role
+        role: 'donor' // Default role
     });
 
     const handleRegister = async (e: React.FormEvent) => {
@@ -38,7 +38,7 @@ const RegisterPage = () => {
             // In a real app, you should add a Full Name field to the form
             const fullName = formData.email.split('@')[0];
 
-            await authService.signUp(formData.email, formData.password, fullName);
+            await authService.signUp(formData.email, formData.password, fullName, formData.role);
 
             // Redirect to completion or login
             // For better UX, maybe auto-login? But signUp usually requires email confirmation if configured
@@ -102,7 +102,7 @@ const RegisterPage = () => {
                         {/* Role Selector */}
                         <div className="flex py-1">
                             <div className="grid grid-cols-3 gap-1 w-full p-1 bg-gray-100 rounded-xl">
-                                {['Donor', 'Hospital', 'Admin'].map((role) => (
+                                {['donor', 'hospital', 'admin'].map((role) => (
                                     <label key={role} className="cursor-pointer">
                                         <input
                                             type="radio"
@@ -113,7 +113,7 @@ const RegisterPage = () => {
                                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                         />
                                         <div className="flex items-center justify-center py-2 px-3 rounded-lg text-sm font-semibold text-gray-500 transition-all peer-checked:bg-white peer-checked:text-[#6324eb] peer-checked:shadow-sm capitalize">
-                                            {role === 'Donor' ? 'Người hiến' : role === 'Hospital' ? 'Bệnh viện' : 'Quản trị'}
+                                            {role === 'donor' ? 'Người hiến' : role === 'hospital' ? 'Bệnh viện' : 'Quản trị'}
                                         </div>
                                     </label>
                                 ))}

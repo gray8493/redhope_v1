@@ -2,15 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { hospitalService } from '@/services/hospital.service';
-import { Hospital } from '@/lib/database.types';
+import { User } from '@/lib/database.types';
 import { Loader2, Plus, Search, Trash2, Edit, X, Save } from 'lucide-react';
 
 export default function HospitalDirectoryPage() {
-    const [hospitals, setHospitals] = useState<Hospital[]>([]);
+    const [hospitals, setHospitals] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentHospital, setCurrentHospital] = useState<Partial<Hospital>>({});
+    const [currentHospital, setCurrentHospital] = useState<Partial<User>>({});
     const [mode, setMode] = useState<'add' | 'edit'>('add');
     const [isSaving, setIsSaving] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export default function HospitalDirectoryPage() {
         setLoadError(null);
         try {
             const data = await hospitalService.getAll();
-            setHospitals(data);
+            setHospitals(data as any);
         } catch (error: any) {
             console.error('Failed to load hospitals:', error);
             setLoadError(error.message || 'Failed to load hospitals');
@@ -50,21 +50,21 @@ export default function HospitalDirectoryPage() {
         try {
             if (mode === 'add') {
                 const newHospital = await hospitalService.create({
-                    name: currentHospital.name || undefined,
-                    address: currentHospital.address || undefined,
+                    hospital_name: currentHospital.hospital_name || undefined,
+                    hospital_address: currentHospital.hospital_address || undefined,
                     license_number: currentHospital.license_number || undefined,
-                    is_verified: currentHospital.is_verified || false, // boolean doesn't need undefined check usually, but safely handling
-                });
-                setHospitals([newHospital, ...hospitals]);
+                    is_verified: currentHospital.is_verified || false,
+                } as any);
+                setHospitals([newHospital as any, ...hospitals]);
             } else {
                 if (!currentHospital.id) return;
                 const updatedHospital = await hospitalService.update(currentHospital.id, {
-                    name: currentHospital.name || undefined,
-                    address: currentHospital.address || undefined,
+                    hospital_name: currentHospital.hospital_name || undefined,
+                    hospital_address: currentHospital.hospital_address || undefined,
                     license_number: currentHospital.license_number || undefined,
                     is_verified: currentHospital.is_verified || false,
                 });
-                setHospitals(prev => prev.map(h => h.id === updatedHospital.id ? updatedHospital : h));
+                setHospitals(prev => prev.map(h => h.id === updatedHospital.id ? updatedHospital as any : h));
             }
             setIsModalOpen(false);
         } catch (error: any) {
@@ -81,7 +81,7 @@ export default function HospitalDirectoryPage() {
         setIsModalOpen(true);
     };
 
-    const openEditModal = (hospital: Hospital) => {
+    const openEditModal = (hospital: User) => {
         setMode('edit');
         setCurrentHospital({ ...hospital });
         setIsModalOpen(true);
@@ -173,13 +173,13 @@ export default function HospitalDirectoryPage() {
                                                 <span className="material-symbols-outlined text-2xl">local_hospital</span>
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-[#1f1f1f]">{hospital.name}</span>
+                                                <span className="text-sm font-bold text-[#1f1f1f]">{hospital.hospital_name}</span>
                                                 <span className="text-[10px] text-gray-500 font-medium">ID: {hospital.license_number || 'N/A'}</span>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="text-sm text-gray-700">{hospital.address}</span>
+                                        <span className="text-sm text-gray-700">{hospital.hospital_address}</span>
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${hospital.is_verified
@@ -225,8 +225,8 @@ export default function HospitalDirectoryPage() {
                                 <input
                                     required
                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
-                                    value={currentHospital.name || ''}
-                                    onChange={e => setCurrentHospital({ ...currentHospital, name: e.target.value })}
+                                    value={currentHospital.hospital_name || ''}
+                                    onChange={e => setCurrentHospital({ ...currentHospital, hospital_name: e.target.value })}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -241,8 +241,8 @@ export default function HospitalDirectoryPage() {
                                 <label className="text-sm font-medium text-gray-700">Địa chỉ</label>
                                 <input
                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
-                                    value={currentHospital.address || ''}
-                                    onChange={e => setCurrentHospital({ ...currentHospital, address: e.target.value })}
+                                    value={currentHospital.hospital_address || ''}
+                                    onChange={e => setCurrentHospital({ ...currentHospital, hospital_address: e.target.value })}
                                 />
                             </div>
                             <div className="flex items-center gap-2">

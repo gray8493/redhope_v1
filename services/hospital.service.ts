@@ -1,60 +1,36 @@
-import { supabase } from '@/lib/supabase';
-import { Hospital, InsertHospital, UpdateHospital } from '@/lib/database.types';
+import { userService } from '@/services/user.service';
+import { User, UpdateUser } from '@/lib/database.types';
 
 export const hospitalService = {
-    async getAll(): Promise<Hospital[]> {
-        const { data, error } = await supabase
-            .from('hospitals')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        return data || [];
+    async getAll(): Promise<User[]> {
+        const users = await userService.getAll();
+        return users.filter(u => u.role === 'hospital');
     },
 
-    async getById(id: string): Promise<Hospital | null> {
-        const { data, error } = await supabase
-            .from('hospitals')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (error) {
-            if (error.code === 'PGRST116') return null;
-            throw error;
-        }
-        return data;
+    async getById(id: string): Promise<User | null> {
+        const user = await userService.getById(id);
+        return user?.role === 'hospital' ? user : null;
     },
 
-    async create(hospital: InsertHospital): Promise<Hospital> {
-        const { data, error } = await supabase
-            .from('hospitals')
-            .insert(hospital)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data;
+    // Note: Creating a hospital now means creating a user with 'hospital' role
+    // This usually happens through registration or admin invite.
+    async create(hospitalData: Partial<User>): Promise<User> {
+        return userService.create({
+            full_name: hospitalData.hospital_name || 'Hospital',
+            email: `hospital_${Date.now()}@redhope.vn`, // Placeholder email
+            role: 'hospital',
+            hospital_name: hospitalData.hospital_name,
+            hospital_address: hospitalData.hospital_address,
+            license_number: hospitalData.license_number,
+            is_verified: hospitalData.is_verified || false
+        } as any);
     },
 
-    async update(id: string, updates: UpdateHospital): Promise<Hospital> {
-        const { data, error } = await supabase
-            .from('hospitals')
-            .update(updates)
-            .eq('id', id)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data;
+    async update(id: string, updates: UpdateUser): Promise<User> {
+        return userService.update(id, updates);
     },
 
     async delete(id: string): Promise<void> {
-        const { error } = await supabase
-            .from('hospitals')
-            .delete()
-            .eq('id', id);
-
-        if (error) throw error;
+        return userService.delete(id);
     }
 };

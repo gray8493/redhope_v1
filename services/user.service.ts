@@ -29,16 +29,16 @@ export const userService = {
         return data;
     },
 
-    // Get user by email
+    // Get user by email - Use maybeSingle to avoid 406/404 errors when not found
     async getByEmail(email: string): Promise<User | null> {
         const { data, error } = await supabase
             .from('users')
             .select('*')
             .eq('email', email)
-            .single();
+            .maybeSingle(); // Returns null instead of error if not found
 
         if (error) {
-            if (error.code === 'PGRST116') return null;
+            console.error('Error in getByEmail:', error);
             throw error;
         }
         return data;
