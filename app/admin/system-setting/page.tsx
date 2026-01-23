@@ -1,10 +1,22 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
 const SystemSettingsPage = () => {
+    const [lowStockWarning, setLowStockWarning] = useState(true);
+    const [donationReminder, setDonationReminder] = useState(true);
+    const [emergencyBroadcast, setEmergencyBroadcast] = useState(true);
+    const [showToast, setShowToast] = useState(false);
+
+    const handleSave = () => {
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
+
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="max-w-6xl mx-auto space-y-8 pb-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                 <div className="flex flex-col gap-1">
                     <h2 className="text-2xl font-bold text-[#1f1f1f]">Cài đặt Hệ thống</h2>
@@ -12,7 +24,12 @@ const SystemSettingsPage = () => {
                 </div>
                 <div className="flex items-center gap-4">
                     <button className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-[#1f1f1f] transition-colors">Khôi phục mặc định</button>
-                    <button className="px-6 py-2 bg-[#6324eb] text-white text-sm font-bold rounded-lg hover:bg-opacity-90 shadow-sm transition-all">Lưu thay đổi</button>
+                    <button
+                        onClick={handleSave}
+                        className="px-6 py-2 bg-[#6324eb] text-white text-sm font-bold rounded-lg hover:bg-opacity-90 shadow-sm transition-all"
+                    >
+                        Lưu thay đổi
+                    </button>
                 </div>
             </div>
 
@@ -101,8 +118,11 @@ const SystemSettingsPage = () => {
                                     <p className="text-sm font-semibold">Cảnh báo Kho thấp</p>
                                     <p className="text-xs text-gray-500">Thông báo cho bệnh viện khi lượng máu thấp</p>
                                 </div>
-                                <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-[#6324eb] cursor-pointer">
-                                    <span className="translate-x-6 inline-block h-4 w-4 rounded-full bg-white transition"></span>
+                                <div
+                                    onClick={() => setLowStockWarning(!lowStockWarning)}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer transition-colors ${lowStockWarning ? 'bg-[#6324eb]' : 'bg-gray-200'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${lowStockWarning ? 'translate-x-6' : 'translate-x-1'}`}></span>
                                 </div>
                             </div>
                             <div className="flex items-center justify-between border-t border-gray-50 pt-4">
@@ -110,8 +130,11 @@ const SystemSettingsPage = () => {
                                     <p className="text-sm font-semibold">Nhắc nhở Hiến máu</p>
                                     <p className="text-xs text-gray-500">SMS/Email tự động mỗi 56 ngày</p>
                                 </div>
-                                <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-[#6324eb] cursor-pointer">
-                                    <span className="translate-x-6 inline-block h-4 w-4 rounded-full bg-white transition"></span>
+                                <div
+                                    onClick={() => setDonationReminder(!donationReminder)}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer transition-colors ${donationReminder ? 'bg-[#6324eb]' : 'bg-gray-200'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${donationReminder ? 'translate-x-6' : 'translate-x-1'}`}></span>
                                 </div>
                             </div>
                             <div className="flex items-center justify-between border-t border-gray-50 pt-4">
@@ -119,8 +142,11 @@ const SystemSettingsPage = () => {
                                     <p className="text-sm font-semibold">Phát sóng Khẩn cấp</p>
                                     <p className="text-xs text-gray-500">Thông báo đẩy khu vực về nhu cầu máu O-</p>
                                 </div>
-                                <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-[#6324eb] cursor-pointer">
-                                    <span className="translate-x-6 inline-block h-4 w-4 rounded-full bg-white transition"></span>
+                                <div
+                                    onClick={() => setEmergencyBroadcast(!emergencyBroadcast)}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer transition-colors ${emergencyBroadcast ? 'bg-[#6324eb]' : 'bg-gray-200'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${emergencyBroadcast ? 'translate-x-6' : 'translate-x-1'}`}></span>
                                 </div>
                             </div>
                         </div>
@@ -167,9 +193,25 @@ const SystemSettingsPage = () => {
                     <p className="text-sm font-medium">Mọi thay đổi được thực hiện tại đây sẽ được ghi lại và kiểm toán để tuân thủ bảo mật. Những thay đổi ngưỡng đáng kể có thể yêu cầu xem xét thủ công.</p>
                 </div>
                 <div className="flex gap-4">
-                    <button className="px-10 py-2.5 bg-[#6324eb] text-white font-bold rounded-lg hover:shadow-lg hover:shadow-[#6324eb]/20 transition-all">Lưu tất cả thay đổi</button>
+                    <button
+                        onClick={handleSave}
+                        className="px-10 py-2.5 bg-[#6324eb] text-white font-bold rounded-lg hover:shadow-lg hover:shadow-[#6324eb]/20 transition-all"
+                    >
+                        Lưu tất cả thay đổi
+                    </button>
                 </div>
             </div>
+
+            {/* Success Toast Notification */}
+            {showToast && (
+                <div className="fixed bottom-8 right-8 bg-[#6324eb] text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-right fade-in duration-300 z-50">
+                    <span className="material-symbols-outlined">check_circle</span>
+                    <div>
+                        <h4 className="font-bold text-sm">Thành công</h4>
+                        <p className="text-xs opacity-90">Đã lưu tất cả thay đổi hệ thống.</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

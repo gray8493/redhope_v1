@@ -1,10 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables. Check .env.local file.');
+    // Warn instead of throwing so Next.js prerender/build doesn't fail during static export.
+    // Developers should provide a valid .env.local with Supabase values for full functionality.
+    // Runtime calls to Supabase will fail if these are not provided.
+    // eslint-disable-next-line no-console
+    console.warn('Supabase environment variables are missing. Provide NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local for full functionality.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

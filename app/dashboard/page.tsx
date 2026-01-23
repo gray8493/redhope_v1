@@ -29,6 +29,7 @@ import { TopNav } from "@/components/TopNav";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { DashboardCarousel } from "@/components/DashboardCarousel";
 import { BloodDropChatbot } from "@/components/BloodDropChatbot";
+import MiniFooter from "@/components/MiniFooter";
 
 
 export default function DashboardPage() {
@@ -224,7 +225,7 @@ export default function DashboardPage() {
                 </div>
 
             </main >
-            <MiniFooter />
+            
 
             {/* Floating Chatbot */}
             <BloodDropChatbot />
