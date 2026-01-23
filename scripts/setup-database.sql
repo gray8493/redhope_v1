@@ -1,22 +1,29 @@
 -- ============================================
--- REDHOPE DATABASE SETUP - SUPABASE (UNIFIED USERS TABLE)
+-- REDHOPE DATABASE SETUP - SUPABASE (COMPREHENSIVE UNIFIED USERS TABLE)
 -- Run this in Supabase SQL Editor
 -- ============================================
 
--- ============================================
--- 1. USERS TABLE (Donor, Hospital, Admin)
--- ============================================
+-- 1. Buộc Supabase cập nhật lại sơ đồ bảng (Khắc phục lỗi 406)
+NOTIFY pgrst, 'reload schema';
+
+-- 2. USERS TABLE (Donor, Hospital, Admin)
 CREATE TABLE IF NOT EXISTS public.users (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    id UUID PRIMARY KEY, -- Matches Auth UID
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255),
     role VARCHAR(20) DEFAULT 'donor' CHECK (role IN ('donor', 'hospital', 'admin')),
+    phone VARCHAR(20),
+    
+    -- Common profile fields
+    city VARCHAR(100),
+    district VARCHAR(100),
+    address TEXT,
     
     -- Donor specific fields
     blood_group VARCHAR(10),
-    city VARCHAR(100),
-    district VARCHAR(100),
+    citizen_id VARCHAR(20) UNIQUE, -- CCCD
+    dob DATE,
+    gender VARCHAR(10),
     current_points INTEGER DEFAULT 0,
     
     -- Hospital specific fields
@@ -32,14 +39,21 @@ CREATE TABLE IF NOT EXISTS public.users (
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
 -- Policies for Users
-CREATE POLICY "Users can view own data" ON public.users FOR SELECT USING (auth.uid() = id OR (auth.jwt() ->> 'role') = 'admin');
-CREATE POLICY "Users can update own data" ON public.users FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users can insert own data" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Admins can view all" ON public.users FOR SELECT USING ((auth.jwt() ->> 'role') = 'admin');
+DROP POLICY IF EXISTS "Enable email search for all" ON public.users;
+DROP POLICY IF EXISTS "Allow users to view own profile" ON public.users;
+DROP POLICY IF EXISTS "Allow users to update own profile" ON public.users;
+DROP POLICY IF EXISTS "Allow public to view hospitals" ON public.users;
+DROP POLICY IF EXISTS "Admin full access" ON public.users;
+DROP POLICY IF EXISTS "Allow signup inserts" ON public.users;
 
--- ============================================
--- 2. VOUCHERS TABLE
--- ============================================
+CREATE POLICY "Enable email search for all" ON public.users FOR SELECT USING (true);
+CREATE POLICY "Allow users to view own profile" ON public.users FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Allow users to update own profile" ON public.users FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Allow public to view hospitals" ON public.users FOR SELECT USING (role = 'hospital' AND is_verified = true);
+CREATE POLICY "Admin full access" ON public.users FOR ALL USING ((auth.jwt() ->> 'role') = 'admin');
+CREATE POLICY "Allow signup inserts" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- 3. VOUCHERS TABLE
 CREATE TABLE IF NOT EXISTS public.vouchers (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     code VARCHAR(100) NOT NULL UNIQUE,
@@ -50,17 +64,14 @@ CREATE TABLE IF NOT EXISTS public.vouchers (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable RLS
 ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Everyone can view active vouchers" ON public.vouchers;
+DROP POLICY IF EXISTS "Admins can manage vouchers" ON public.vouchers;
 
-CREATE POLICY "Everyone can view active vouchers" ON public.vouchers 
-    FOR SELECT USING (status = 'Active');
-CREATE POLICY "Admins can manage vouchers" ON public.vouchers 
-    FOR ALL USING ((auth.jwt() ->> 'role') = 'admin' OR auth.role() = 'service_role');
+CREATE POLICY "Everyone can view active vouchers" ON public.vouchers FOR SELECT USING (status = 'Active');
+CREATE POLICY "Admins can manage vouchers" ON public.vouchers FOR ALL USING ((auth.jwt() ->> 'role') = 'admin' OR auth.role() = 'service_role');
 
--- ============================================
--- 3. RPC FUNCTIONS
--- ============================================
+-- 4. RPC FUNCTIONS
 CREATE OR REPLACE FUNCTION increment_points(row_id UUID, count INTEGER)
 RETURNS VOID AS $$
 BEGIN
