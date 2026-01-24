@@ -154,25 +154,7 @@ export default function RequestsPage() {
                                 </div>
                             </div>
 
-                            {/* Eligibility Action Panel */}
-                            <div className="mb-8">
-                                <div className="flex flex-col md:flex-row items-center justify-between gap-4 rounded-xl border border-[#d7d0e7] dark:border-[#3d335a] bg-white dark:bg-[#1c162e] p-6 shadow-sm">
-                                    <div className="flex gap-4 items-center">
-                                        <div className="bg-[#6324eb]/10 p-3 rounded-full text-[#6324eb]">
-                                            <ShieldCheck className="w-8 h-8" />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <p className="text-[#120e1b] dark:text-white text-lg font-bold leading-tight">Kiểm tra điều kiện hiến máu</p>
-                                            <p className="text-[#654d99] dark:text-[#a594c9] text-sm font-normal leading-normal">
-                                                Sau khi xác minh, bạn sẽ thấy vị trí chính xác, chi tiết liên hệ và có thể đặt lịch hẹn ngay lập tức.
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button className="w-full md:w-auto flex min-w-[160px] cursor-pointer items-center justify-center rounded-lg h-10 px-6 bg-[#6324eb] text-white text-sm font-semibold transition-colors">
-                                        <span>Xác minh ngay</span>
-                                    </button>
-                                </div>
-                            </div>
+
 
                             {/* Filter Chips */}
                             <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
@@ -265,8 +247,8 @@ export default function RequestsPage() {
                                             key={page}
                                             onClick={() => setCurrentPage(page)}
                                             className={`h-10 w-10 flex items-center justify-center rounded-lg font-bold transition-colors ${currentPage === page
-                                                    ? 'bg-[#6324eb] text-white'
-                                                    : 'border border-[#ebe7f3] dark:border-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'
+                                                ? 'bg-[#6324eb] text-white'
+                                                : 'border border-[#ebe7f3] dark:border-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'
                                                 }`}
                                         >
                                             {page}
