@@ -11,11 +11,15 @@ import {
     MapPin,
     Lock
 } from "lucide-react";
+import { useState } from "react";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
 
 export default function SettingsPage() {
+    const [emailAlert, setEmailAlert] = useState(true);
+    const [newDonorAlert, setNewDonorAlert] = useState(false);
+
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <div className="flex h-full grow flex-row">
@@ -101,8 +105,11 @@ export default function SettingsPage() {
                                             <p className="font-bold text-[#120e1b] dark:text-white">Cảnh báo Tồn kho Nguy cấp</p>
                                             <p className="text-xs text-slate-500">Gửi email khi lượng máu nhóm bất kỳ xuống dưới 10%</p>
                                         </div>
-                                        <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out bg-[#6324eb] rounded-full cursor-pointer">
-                                            <span className="absolute left-6 top-1 bg-white w-4 h-4 rounded-full transition-transform"></span>
+                                        <div
+                                            className={`relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer ${emailAlert ? 'bg-[#6324eb]' : 'bg-slate-300 dark:bg-slate-600'}`}
+                                            onClick={() => setEmailAlert(!emailAlert)}
+                                        >
+                                            <span className={`absolute top-1 bg-white w-4 h-4 rounded-full transition-transform ${emailAlert ? 'left-6' : 'left-1'}`}></span>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-[#251e36] rounded-xl">
@@ -110,8 +117,11 @@ export default function SettingsPage() {
                                             <p className="font-bold text-[#120e1b] dark:text-white">Thông báo Người hiến mới</p>
                                             <p className="text-xs text-slate-500">Nhận thông báo khi có người hiến đăng ký yêu cầu của bạn</p>
                                         </div>
-                                        <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out bg-slate-300 rounded-full cursor-pointer">
-                                            <span className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform"></span>
+                                        <div
+                                            className={`relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer ${newDonorAlert ? 'bg-[#6324eb]' : 'bg-slate-300 dark:bg-slate-600'}`}
+                                            onClick={() => setNewDonorAlert(!newDonorAlert)}
+                                        >
+                                            <span className={`absolute top-1 bg-white w-4 h-4 rounded-full transition-transform ${newDonorAlert ? 'left-6' : 'left-1'}`}></span>
                                         </div>
                                     </div>
                                 </div>

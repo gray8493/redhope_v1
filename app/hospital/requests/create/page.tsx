@@ -21,8 +21,16 @@ import { vi } from "date-fns/locale";
 export default function CreateRequestPage() {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-    const [selectedBloodType, setSelectedBloodType] = useState<string | null>(null);
+    const [selectedBloodTypes, setSelectedBloodTypes] = useState<string[]>([]);
     const [isUrgent, setIsUrgent] = useState(false);
+
+    const toggleBloodType = (type: string) => {
+        setSelectedBloodTypes(prev =>
+            prev.includes(type)
+                ? prev.filter(t => t !== type)
+                : [...prev, type]
+        );
+    };
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <div className="flex h-full grow flex-row">
@@ -66,8 +74,8 @@ export default function CreateRequestPage() {
                                                 {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
                                                     <button
                                                         key={type}
-                                                        onClick={() => setSelectedBloodType(type)}
-                                                        className={`flex h-12 items-center justify-center rounded-lg font-bold transition-all border-2 ${selectedBloodType === type
+                                                        onClick={() => toggleBloodType(type)}
+                                                        className={`flex h-12 items-center justify-center rounded-lg font-bold transition-all border-2 ${selectedBloodTypes.includes(type)
                                                             ? 'bg-[#6324eb] text-white border-[#6324eb] shadow-lg shadow-[#6324eb]/30 scale-105'
                                                             : 'bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white border-transparent hover:border-[#6324eb]/30 hover:bg-[#6324eb]/5'
                                                             }`}
