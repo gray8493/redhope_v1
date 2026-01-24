@@ -73,6 +73,91 @@ const ALL_DONATIONS = [
         icon: Hospital,
         iconColor: "text-red-600 dark:text-red-400",
         iconBg: "bg-red-100 dark:bg-red-900/30"
+    },
+    // Adding more mock data for pagination testing
+    {
+        id: 5,
+        fullDate: "2021-12-10",
+        date: "10 Th12",
+        year: "2021",
+        time: "07:30 Sáng",
+        hospital: "Bệnh viện Bạch Mai",
+        units: "1.0",
+        points: 250,
+        status: "Đã xác minh",
+        icon: Hospital,
+        iconColor: "text-red-600 dark:text-red-400",
+        iconBg: "bg-red-100 dark:bg-red-900/30"
+    },
+    {
+        id: 6,
+        fullDate: "2021-09-05",
+        date: "05 Th09",
+        year: "2021",
+        time: "14:20 Chiều",
+        hospital: "Bệnh viện Việt Đức",
+        units: "0.5",
+        points: 150,
+        status: "Hoàn thành",
+        icon: Hospital,
+        iconColor: "text-red-600 dark:text-red-400",
+        iconBg: "bg-red-100 dark:bg-red-900/30"
+    },
+    {
+        id: 7,
+        fullDate: "2021-05-20",
+        date: "20 Th05",
+        year: "2021",
+        time: "08:00 Sáng",
+        hospital: "Bệnh viện K",
+        units: "1.0",
+        points: 300,
+        status: "Đã xác minh",
+        icon: Activity,
+        iconColor: "text-blue-600 dark:text-blue-400",
+        iconBg: "bg-blue-100 dark:bg-blue-900/30"
+    },
+    {
+        id: 8,
+        fullDate: "2020-11-12",
+        date: "12 Th11",
+        year: "2020",
+        time: "09:45 Sáng",
+        hospital: "Viện Huyết học",
+        units: "1.0",
+        points: 250,
+        status: "Đã xác minh",
+        icon: Hospital,
+        iconColor: "text-red-600 dark:text-red-400",
+        iconBg: "bg-red-100 dark:bg-red-900/30"
+    },
+    {
+        id: 9,
+        fullDate: "2020-03-08",
+        date: "08 Th03",
+        year: "2020",
+        time: "10:15 Sáng",
+        hospital: "Bệnh viện Chợ Rẫy",
+        units: "1.0",
+        points: 250,
+        status: "Đã xác minh",
+        icon: Hospital,
+        iconColor: "text-red-600 dark:text-red-400",
+        iconBg: "bg-red-100 dark:bg-red-900/30"
+    },
+    {
+        id: 10,
+        fullDate: "2019-12-25",
+        date: "25 Th12",
+        year: "2019",
+        time: "08:30 Sáng",
+        hospital: "Bệnh viện Nhi Đồng 1",
+        units: "0.5",
+        points: 150,
+        status: "Hoàn thành",
+        icon: Activity,
+        iconColor: "text-blue-600 dark:text-blue-400",
+        iconBg: "bg-blue-100 dark:bg-blue-900/30"
     }
 ];
 
@@ -81,12 +166,35 @@ export default function DonationsPage() {
     const [statusFilter, setStatusFilter] = useState("Tất cả");
     const [dateFilter, setDateFilter] = useState("");
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
     const filteredDonations = ALL_DONATIONS.filter(item => {
         const matchesSearch = item.hospital.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === "Tất cả" || item.status === statusFilter;
         const matchesDate = !dateFilter || item.fullDate === dateFilter;
         return matchesSearch && matchesStatus && matchesDate;
     });
+
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredDonations.length / ITEMS_PER_PAGE);
+
+    // Get current items
+    const paginatedDonations = filteredDonations.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    // Reset pagination when filters change
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, statusFilter, dateFilter]);
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
@@ -188,8 +296,8 @@ export default function DonationsPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#ebe7f3] dark:divide-[#2d263d]">
-                                            {filteredDonations.length > 0 ? (
-                                                filteredDonations.map((item) => (
+                                            {paginatedDonations.length > 0 ? (
+                                                paginatedDonations.map((item) => (
                                                     <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-[#241c38] transition-colors">
                                                         <td className="px-6 py-5 whitespace-nowrap">
                                                             <div className="flex flex-col">
@@ -237,19 +345,49 @@ export default function DonationsPage() {
                             </div>
 
                             {/* Pagination */}
-                            <div className="mt-12 flex justify-center mb-10">
-                                <nav className="flex items-center gap-2">
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors">
-                                        <ChevronLeft className="w-5 h-5" />
-                                    </button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg bg-[#6324eb] text-white font-bold">1</button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors text-[#120e1b] dark:text-white">2</button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors text-[#120e1b] dark:text-white">3</button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors">
-                                        <ChevronRight className="w-5 h-5" />
-                                    </button>
-                                </nav>
-                            </div>
+                            {totalPages > 1 && (
+                                <div className="mt-12 flex justify-center mb-10">
+                                    <nav className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handlePageChange(currentPage - 1)}
+                                            disabled={currentPage === 1}
+                                            className={`h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d]
+                                                ${currentPage === 1
+                                                    ? "opacity-50 cursor-not-allowed"
+                                                    : "hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors"
+                                                }`}
+                                        >
+                                            <ChevronLeft className="w-5 h-5" />
+                                        </button>
+
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                            <button
+                                                key={page}
+                                                onClick={() => handlePageChange(page)}
+                                                className={`h-10 w-10 flex items-center justify-center rounded-lg border transition-colors
+                                                ${currentPage === page
+                                                        ? "bg-[#6324eb] text-white font-bold border-[#6324eb]"
+                                                        : "border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] text-[#120e1b] dark:text-white"
+                                                    }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        ))}
+
+                                        <button
+                                            onClick={() => handlePageChange(currentPage + 1)}
+                                            disabled={currentPage === totalPages}
+                                            className={`h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d]
+                                                ${currentPage === totalPages
+                                                    ? "opacity-50 cursor-not-allowed"
+                                                    : "hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors"
+                                                }`}
+                                        >
+                                            <ChevronRight className="w-5 h-5" />
+                                        </button>
+                                    </nav>
+                                </div>
+                            )}
                         </div>
                     </main>
 
