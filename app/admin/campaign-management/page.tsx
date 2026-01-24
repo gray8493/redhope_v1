@@ -314,7 +314,7 @@ export default function CampaignManagementPage() {
             </div>
 
             {/* Table & Filters */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden h-[600px] flex flex-col">
                 <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row gap-4 justify-between items-center">
                     <div className="relative w-full md:w-96">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -450,7 +450,7 @@ export default function CampaignManagementPage() {
                     </table>
                 </div>
 
-                <div className="p-6 border-t border-gray-50 flex items-center justify-between">
+                <div className="p-6 border-t border-gray-50 flex items-center justify-between mt-auto">
                     <p className="text-sm text-gray-500 font-medium">
                         Hiển thị {filteredCampaigns.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}-
                         {Math.min(currentPage * ITEMS_PER_PAGE, filteredCampaigns.length)} trên tổng số {filteredCampaigns.length} chiến dịch
