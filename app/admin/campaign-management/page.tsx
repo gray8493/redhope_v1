@@ -14,6 +14,11 @@ import {
     CheckCircle2,
     AlertCircle
 } from 'lucide-react';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 
 const CAMPAIGNS = [
     {
@@ -134,7 +139,22 @@ export default function CampaignManagementPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 4;
 
-    const filteredCampaigns = CAMPAIGNS.filter(campaign => {
+    const [campaigns, setCampaigns] = useState(CAMPAIGNS);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
+
+    const [newCampaign, setNewCampaign] = useState({
+        name: "",
+        hospital: "",
+        date: "",
+        target: "",
+        location: "",
+        type: "Khẩn cấp",
+        status: "Sắp diễn ra"
+    });
+
+    const filteredCampaigns = campaigns.filter(campaign => {
         const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             campaign.hospital.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = filterStatus === "Tất cả trạng thái" || campaign.status === filterStatus;
@@ -161,15 +181,102 @@ export default function CampaignManagementPage() {
         }
     };
 
+    const handleEdit = (campaign: any) => {
+        setNewCampaign({
+            name: campaign.name,
+            hospital: campaign.hospital,
+            date: campaign.date,
+            target: campaign.target.toString(),
+            location: campaign.location,
+            type: campaign.type,
+            status: campaign.status
+        });
+        setEditingId(campaign.id);
+        setIsModalOpen(true);
+        setActiveMenuId(null);
+    };
+
+    const handleDelete = (id: number) => {
+        if (window.confirm("Bạn có chắc chắn muốn xóa chiến dịch này không?")) {
+            setCampaigns(campaigns.filter(c => c.id !== id));
+        }
+        setActiveMenuId(null);
+    };
+
+    const handleAddCampaign = () => {
+        if (!newCampaign.name || !newCampaign.hospital) return;
+
+        if (editingId) {
+            // Update existing campaign
+            setCampaigns(campaigns.map(campaign =>
+                campaign.id === editingId
+                    ? {
+                        ...campaign,
+                        name: newCampaign.name,
+                        hospital: newCampaign.hospital,
+                        date: newCampaign.date,
+                        target: parseInt(newCampaign.target) || 0,
+                        location: newCampaign.location,
+                        type: newCampaign.type,
+                        status: newCampaign.status
+                    }
+                    : campaign
+            ));
+        } else {
+            // Create new campaign
+            const campaign = {
+                id: campaigns.length + 1,
+                name: newCampaign.name,
+                hospital: newCampaign.hospital,
+                date: newCampaign.date || new Date().toLocaleDateString('vi-VN'),
+                status: newCampaign.status,
+                participants: 0,
+                target: parseInt(newCampaign.target) || 0,
+                location: newCampaign.location,
+                type: newCampaign.type
+            };
+            setCampaigns([campaign, ...campaigns]);
+        }
+
+        setIsModalOpen(false);
+        setEditingId(null);
+        setNewCampaign({
+            name: "",
+            hospital: "",
+            date: "",
+            target: "",
+            location: "",
+            type: "Khẩn cấp",
+            status: "Sắp diễn ra"
+        });
+    };
+
+    const openCreateModal = () => {
+        setEditingId(null);
+        setNewCampaign({
+            name: "",
+            hospital: "",
+            date: "",
+            target: "",
+            location: "",
+            type: "Khẩn cấp",
+            status: "Sắp diễn ra"
+        });
+        setIsModalOpen(true);
+    };
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex flex-col gap-1">
                     <h2 className="text-2xl font-bold text-[#1f1f1f]">Quản lý chiến dịch</h2>
                     <p className="text-gray-500 text-sm">Theo dõi và quản lý các hoạt động hiến máu trên toàn hệ thống.</p>
                 </div>
-                <button className="flex items-center gap-2 bg-[#6324eb] hover:bg-[#501ac2] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-[#6324eb]/20">
+                <button
+                    onClick={openCreateModal}
+                    className="flex items-center gap-2 bg-[#6324eb] hover:bg-[#501ac2] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-[#6324eb]/20"
+                >
                     <Plus className="w-5 h-5" />
                     Tạo chiến dịch mới
                 </button>
@@ -207,7 +314,7 @@ export default function CampaignManagementPage() {
             </div>
 
             {/* Table & Filters */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
                 <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row gap-4 justify-between items-center">
                     <div className="relative w-full md:w-96">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -237,7 +344,7 @@ export default function CampaignManagementPage() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-visible">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50">
@@ -302,10 +409,32 @@ export default function CampaignManagementPage() {
                                                     {campaign.status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-5 text-right">
-                                                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
-                                                    <MoreVertical className="w-5 h-5" />
-                                                </button>
+                                            <td className="px-6 py-5 text-right relative">
+                                                <Popover open={activeMenuId === campaign.id} onOpenChange={(open) => setActiveMenuId(open ? campaign.id : null)}>
+                                                    <PopoverTrigger asChild>
+                                                        <button
+                                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600 outline-none"
+                                                        >
+                                                            <MoreVertical className="w-5 h-5" />
+                                                        </button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent align="end" className="w-40 p-1 rounded-xl shadow-xl border-gray-100 bg-white">
+                                                        <button
+                                                            onClick={() => handleEdit(campaign)}
+                                                            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#6324eb] flex items-center gap-2 rounded-lg transition-colors"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                                            Chỉnh sửa
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(campaign.id)}
+                                                            className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 rounded-lg transition-colors"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
+                                                            Xóa
+                                                        </button>
+                                                    </PopoverContent>
+                                                </Popover>
                                             </td>
                                         </tr>
                                     );
@@ -360,6 +489,124 @@ export default function CampaignManagementPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Create/Edit Campaign Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setIsModalOpen(false)}
+                    ></div>
+                    <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <h3 className="text-xl font-bold text-[#120e1b]">
+                                {editingId ? "Cập nhật chiến dịch" : "Tạo chiến dịch mới"}
+                            </h3>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                            </button>
+                        </div>
+                        <div className="p-6 flex flex-col gap-4">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-bold text-gray-700">Tên chiến dịch</label>
+                                <input
+                                    type="text"
+                                    value={newCampaign.name}
+                                    onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                    placeholder="Nhập tên chiến dịch..."
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-bold text-gray-700">Đơn vị tổ chức (Bệnh viện)</label>
+                                <input
+                                    type="text"
+                                    value={newCampaign.hospital}
+                                    onChange={(e) => setNewCampaign({ ...newCampaign, hospital: e.target.value })}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                    placeholder="VD: Bệnh viện Chợ Rẫy"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-gray-700">Thời gian</label>
+                                    <input
+                                        type="text"
+                                        value={newCampaign.date}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, date: e.target.value })}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                        placeholder="DD/MM/YYYY"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-gray-700">Mục tiêu (lượt)</label>
+                                    <input
+                                        type="number"
+                                        value={newCampaign.target}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, target: e.target.value })}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-bold text-gray-700">Địa điểm</label>
+                                <input
+                                    type="text"
+                                    value={newCampaign.location}
+                                    onChange={(e) => setNewCampaign({ ...newCampaign, location: e.target.value })}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                    placeholder="Nhập địa điểm..."
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-gray-700">Trạng thái</label>
+                                    <select
+                                        value={newCampaign.status}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, status: e.target.value })}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                    >
+                                        <option value="Sắp diễn ra">Sắp diễn ra</option>
+                                        <option value="Đang diễn ra">Đang diễn ra</option>
+                                        <option value="Đã kết thúc">Đã kết thúc</option>
+                                    </select>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-gray-700">Loại chiến dịch</label>
+                                    <select
+                                        value={newCampaign.type}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, type: e.target.value })}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                    >
+                                        <option value="Khẩn cấp">Khẩn cấp</option>
+                                        <option value="Định kỳ">Định kỳ</option>
+                                        <option value="Lễ hội">Lễ hội</option>
+                                        <option value="Cộng đồng">Cộng đồng</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="px-5 py-2.5 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-100 transition-all"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleAddCampaign}
+                                className="px-5 py-2.5 rounded-xl bg-[#6324eb] text-white font-bold shadow-lg shadow-[#6324eb]/20 hover:bg-[#501ac2] transition-all"
+                            >
+                                {editingId ? "Cập nhật" : "Tạo chiến dịch"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
