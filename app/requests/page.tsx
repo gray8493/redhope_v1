@@ -107,12 +107,16 @@ export default function RequestsPage() {
     const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
     const [activeFilter, setActiveFilter] = useState("Tất cả");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 6;
+    const itemsPerPage = 2;
     // Filter logic
     const filteredData = REQUESTS_DATA.filter(item => {
         if (activeFilter === "Tất cả") return true;
         if (activeFilter === "O-Negative") return item.bloodType.toLowerCase().includes("o negative") || item.bloodType.includes("(O-)") || item.bloodType.includes("O-");
         if (activeFilter === "Khẩn cấp") return item.urgency === "Cần gấp";
+        if (activeFilter === "Gần tôi") {
+            const distance = parseFloat(item.distance.replace(" Km", ""));
+            return distance < 10;
+        }
         return true;
     });
 
@@ -150,42 +154,33 @@ export default function RequestsPage() {
                                 </div>
                             </div>
 
-                            {/* Eligibility Action Panel */}
-                            <div className="mb-8">
-                                <div className="flex flex-col md:flex-row items-center justify-between gap-4 rounded-xl border border-[#d7d0e7] dark:border-[#3d335a] bg-white dark:bg-[#1c162e] p-6 shadow-sm">
-                                    <div className="flex gap-4 items-center">
-                                        <div className="bg-[#6324eb]/10 p-3 rounded-full text-[#6324eb]">
-                                            <ShieldCheck className="w-8 h-8" />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <p className="text-[#120e1b] dark:text-white text-lg font-bold leading-tight">Kiểm tra điều kiện hiến máu</p>
-                                            <p className="text-[#654d99] dark:text-[#a594c9] text-sm font-normal leading-normal">
-                                                Sau khi xác minh, bạn sẽ thấy vị trí chính xác, chi tiết liên hệ và có thể đặt lịch hẹn ngay lập tức.
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button className="w-full md:w-auto flex min-w-[160px] cursor-pointer items-center justify-center rounded-lg h-10 px-6 bg-[#6324eb] text-white text-sm font-semibold transition-colors">
-                                        <span>Xác minh ngay</span>
-                                    </button>
-                                </div>
-                            </div>
+
 
                             {/* Filter Chips */}
                             <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                                <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#6324eb] text-white px-4">
+                                <button
+                                    onClick={() => handleFilterChange("Tất cả")}
+                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-colors ${activeFilter === "Tất cả" ? "bg-[#6324eb] text-white" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#dcd6e8]"}`}
+                                >
                                     <span className="text-sm font-medium">Tất cả nhóm máu</span>
                                 </button>
-                                <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
+                                <button
+                                    onClick={() => handleFilterChange("O-Negative")}
+                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-colors ${activeFilter === "O-Negative" ? "bg-[#6324eb] text-white" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#dcd6e8]"}`}
+                                >
                                     <span className="text-sm font-medium">O-Negative</span>
-                                    <ChevronDown className="w-4 h-4" />
                                 </button>
-                                <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
+                                <button
+                                    onClick={() => handleFilterChange("Khẩn cấp")}
+                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-colors ${activeFilter === "Khẩn cấp" ? "bg-[#6324eb] text-white" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#dcd6e8]"}`}
+                                >
                                     <span className="text-sm font-medium">Khẩn cấp cao</span>
-                                    <ChevronDown className="w-4 h-4" />
                                 </button>
-                                <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
+                                <button
+                                    onClick={() => handleFilterChange("Gần tôi")}
+                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-colors ${activeFilter === "Gần tôi" ? "bg-[#6324eb] text-white" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#dcd6e8]"}`}
+                                >
                                     <span className="text-sm font-medium">Khoảng cách &lt; 10 km</span>
-                                    <ChevronDown className="w-4 h-4" />
                                 </button>
                                 <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
                                     <span className="text-sm font-medium">Bộ lọc khác</span>
@@ -242,18 +237,18 @@ export default function RequestsPage() {
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                                         disabled={currentPage === 1}
-                                        className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors disabled:opacity-50"
+                                        className={`h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'}`}
                                     >
                                         <ChevronLeft className="w-5 h-5" />
                                     </button>
 
-                                    {Array.from({ length: totalPages }).map((_, i) => (
+                                    {Array.from({ length: totalPages || 1 }).map((_, i) => (
                                         <button
                                             key={i}
                                             onClick={() => setCurrentPage(i + 1)}
                                             className={`h-10 w-10 flex items-center justify-center rounded-lg font-bold transition-all ${currentPage === i + 1
-                                                    ? "bg-[#6324eb] text-white shadow-lg shadow-[#6324eb]/30"
-                                                    : "border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] text-[#120e1b] dark:text-white"
+                                                ? "bg-[#6324eb] text-white shadow-lg shadow-[#6324eb]/30"
+                                                : "border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] text-[#120e1b] dark:text-white"
                                                 }`}
                                         >
                                             {i + 1}
@@ -263,7 +258,7 @@ export default function RequestsPage() {
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                                         disabled={currentPage === totalPages || totalPages === 0}
-                                        className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors disabled:opacity-50"
+                                        className={`h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] transition-colors ${currentPage === totalPages || totalPages === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'}`}
                                     >
                                         <ChevronRight className="w-5 h-5" />
                                     </button>

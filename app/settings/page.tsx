@@ -16,12 +16,84 @@ import {
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState("profile");
+
+    // Profile State
+    const [name, setName] = useState("Alex Rivera");
+    const [phone, setPhone] = useState("0912 345 678");
+    const [email, setEmail] = useState("alex.rivera@example.com");
+    const [address, setAddress] = useState("123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM");
+
+    // Password State
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+
+    // Load from localStorage on mount
+    useEffect(() => {
+        const savedProfile = localStorage.getItem("userProfile");
+        if (savedProfile) {
+            try {
+                const parsed = JSON.parse(savedProfile);
+                if (parsed.name) setName(parsed.name);
+                if (parsed.phone) setPhone(parsed.phone);
+                if (parsed.email) setEmail(parsed.email);
+                if (parsed.address) setAddress(parsed.address);
+            } catch (error) {
+                console.error("Failed to parse user profile", error);
+            }
+        }
+    }, []);
+
+    const handleSave = () => {
+        const profileData = { name, phone, email, address };
+        localStorage.setItem("userProfile", JSON.stringify(profileData));
+        toast.success("Đã lưu thông tin thành công!", {
+            description: "Thông tin cá nhân của bạn đã được cập nhật.",
+            duration: 3000,
+        });
+    };
+
+    const handleChangePassword = () => {
+        // Validation
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            toast.error("Vui lòng nhập đầy đủ thông tin!", {
+                description: "Bạn cần nhập mật khẩu hiện tại, mật khẩu mới và xác nhận mật khẩu.",
+            });
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            toast.error("Mật khẩu mới không khớp!", {
+                description: "Vui lòng kiểm tra lại mật khẩu xác nhận.",
+            });
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            toast.error("Mật khẩu quá ngắn!", {
+                description: "Mật khẩu mới phải có ít nhất 6 ký tự.",
+            });
+            return;
+        }
+
+        // Simulate API call
+        toast.success("Đổi mật khẩu thành công!", {
+            description: "Mật khẩu của bạn đã được cập nhật.",
+            duration: 3000,
+        });
+
+        // Clear password fields
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+    };
 
     // Create refs for sections
     const profileRef = useRef<HTMLDivElement>(null);
@@ -81,15 +153,15 @@ export default function SettingsPage() {
                                                 <Camera className="w-4 h-4" />
                                             </button>
                                         </div>
-                                        <h2 className="text-xl font-bold text-[#120e1b] dark:text-white">Alex Rivera</h2>
+                                        <h2 className="text-xl font-bold text-[#120e1b] dark:text-white">{name}</h2>
                                         <p className="text-sm text-[#654d99] dark:text-[#a594c9] mb-4">Nhóm máu O+</p>
 
                                         <div className="flex flex-col gap-2">
                                             <button
                                                 onClick={() => scrollToSection("profile", profileRef)}
                                                 className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${activeTab === "profile"
-                                                        ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
-                                                        : "bg-[#f6f6f8] dark:bg-[#251e36] text-[#120e1b] dark:text-white hover:bg-[#ebe7f3] dark:hover:bg-[#3d335a]"
+                                                    ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
+                                                    : "bg-[#f6f6f8] dark:bg-[#251e36] text-[#120e1b] dark:text-white hover:bg-[#ebe7f3] dark:hover:bg-[#3d335a]"
                                                     }`}
                                             >
                                                 <User className={`w-5 h-5 ${activeTab === "profile" ? "text-white" : "text-[#6324eb]"}`} /> Hồ sơ cá nhân
@@ -97,8 +169,8 @@ export default function SettingsPage() {
                                             <button
                                                 onClick={() => scrollToSection("notifications", notificationsRef)}
                                                 className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${activeTab === "notifications"
-                                                        ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
-                                                        : "text-[#654d99] dark:text-[#a594c9] hover:bg-[#f6f6f8] dark:hover:bg-[#251e36]"
+                                                    ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
+                                                    : "text-[#654d99] dark:text-[#a594c9] hover:bg-[#f6f6f8] dark:hover:bg-[#251e36]"
                                                     }`}
                                             >
                                                 <Bell className={`w-5 h-5 ${activeTab === "notifications" ? "text-white" : ""}`} /> Thông báo
@@ -106,8 +178,8 @@ export default function SettingsPage() {
                                             <button
                                                 onClick={() => scrollToSection("security", securityRef)}
                                                 className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${activeTab === "security"
-                                                        ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
-                                                        : "text-[#654d99] dark:text-[#a594c9] hover:bg-[#f6f6f8] dark:hover:bg-[#251e36]"
+                                                    ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
+                                                    : "text-[#654d99] dark:text-[#a594c9] hover:bg-[#f6f6f8] dark:hover:bg-[#251e36]"
                                                     }`}
                                             >
                                                 <Lock className={`w-5 h-5 ${activeTab === "security" ? "text-white" : ""}`} /> Bảo mật
@@ -137,26 +209,49 @@ export default function SettingsPage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Họ và tên</label>
-                                                <input type="text" defaultValue="Alex Rivera" className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none" />
+                                                <input
+                                                    type="text"
+                                                    value={name}
+                                                    onChange={(e) => setName(e.target.value)}
+                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                />
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Số điện thoại</label>
-                                                <input type="text" defaultValue="0912 345 678" className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none" />
+                                                <input
+                                                    type="text"
+                                                    value={phone}
+                                                    onChange={(e) => setPhone(e.target.value)}
+                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                />
                                             </div>
                                             <div className="flex flex-col gap-2 md:col-span-2">
                                                 <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Email</label>
                                                 <div className="relative">
                                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                                    <input type="email" defaultValue="alex.rivera@example.com" className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none" />
+                                                    <input
+                                                        type="email"
+                                                        value={email}
+                                                        onChange={(e) => setEmail(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="flex flex-col gap-2 md:col-span-2">
                                                 <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Địa chỉ</label>
-                                                <textarea rows={3} defaultValue="123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM" className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none resize-none"></textarea>
+                                                <textarea
+                                                    rows={3}
+                                                    value={address}
+                                                    onChange={(e) => setAddress(e.target.value)}
+                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none resize-none"
+                                                ></textarea>
                                             </div>
                                         </div>
                                         <div className="mt-6 flex justify-end">
-                                            <button className="px-6 py-2 bg-[#6324eb] text-white font-bold rounded-lg hover:bg-[#501ac2] transition-colors shadow-lg shadow-[#6324eb]/20">
+                                            <button
+                                                onClick={handleSave}
+                                                className="px-6 py-2 bg-[#6324eb] text-white font-bold rounded-lg hover:bg-[#501ac2] transition-colors shadow-lg shadow-[#6324eb]/20"
+                                            >
                                                 Lưu thay đổi
                                             </button>
                                         </div>
@@ -199,20 +294,41 @@ export default function SettingsPage() {
                                         <div className="flex flex-col gap-4">
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Mật khẩu hiện tại</label>
-                                                <input type="password" placeholder="••••••••" className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none" />
+                                                <input
+                                                    type="password"
+                                                    value={currentPassword}
+                                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                                    placeholder="••••••••"
+                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                />
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div className="flex flex-col gap-2">
                                                     <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Mật khẩu mới</label>
-                                                    <input type="password" placeholder="••••••••" className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none" />
+                                                    <input
+                                                        type="password"
+                                                        value={newPassword}
+                                                        onChange={(e) => setNewPassword(e.target.value)}
+                                                        placeholder="••••••••"
+                                                        className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                    />
                                                 </div>
                                                 <div className="flex flex-col gap-2">
                                                     <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Xác nhận mật khẩu</label>
-                                                    <input type="password" placeholder="••••••••" className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none" />
+                                                    <input
+                                                        type="password"
+                                                        value={confirmPassword}
+                                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        placeholder="••••••••"
+                                                        className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="mt-4">
-                                                <button className="px-6 py-2 border border-[#ebe7f3] dark:border-[#3d335a] bg-transparent text-[#120e1b] dark:text-white font-bold rounded-lg hover:bg-[#f6f6f8] dark:hover:bg-[#251e36] transition-colors">
+                                                <button
+                                                    onClick={handleChangePassword}
+                                                    className="px-6 py-2 border border-[#ebe7f3] dark:border-[#3d335a] bg-transparent text-[#120e1b] dark:text-white font-bold rounded-lg hover:bg-[#f6f6f8] dark:hover:bg-[#251e36] transition-colors"
+                                                >
                                                     Đổi mật khẩu
                                                 </button>
                                             </div>
