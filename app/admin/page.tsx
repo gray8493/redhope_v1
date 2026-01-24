@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
     return (
@@ -55,7 +56,7 @@ export default function AdminDashboard() {
                                 <p className="text-sm font-medium text-[#120e1b]">Người hiến tặng mới #120{i} vừa đăng ký</p>
                                 <p className="text-xs text-gray-500">2 giờ trước</p>
                             </div>
-                            <button className="text-xs font-semibold text-[#6324eb] hover:underline">Chi tiết</button>
+                            <Link href="/admin/admin-donor" className="text-xs font-semibold text-[#6324eb] hover:underline">Chi tiết</Link>
                         </div>
                     ))}
                 </div>

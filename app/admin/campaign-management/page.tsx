@@ -59,11 +59,107 @@ const CAMPAIGNS = [
         target: 100,
         location: "Hồ Chí Minh",
         type: "Cộng đồng"
+    },
+    {
+        id: 5,
+        name: "Lễ hội Xuân Hồng 2024",
+        hospital: "Viện Huyết học - Truyền máu TW",
+        date: "18/02/2024",
+        status: "Đã kết thúc",
+        participants: 850,
+        target: 1000,
+        location: "Hà Nội",
+        type: "Lễ hội"
+    },
+    {
+        id: 6,
+        name: "Trao đời sự sống",
+        hospital: "Bệnh viện Bạch Mai",
+        date: "20/03/2024",
+        status: "Sắp diễn ra",
+        participants: 12,
+        target: 150,
+        location: "Hà Nội",
+        type: "Khẩn cấp"
+    },
+    {
+        id: 7,
+        name: "Blouse trắng - Trái tim hồng",
+        hospital: "Bệnh viện Đại học Y Hà Nội",
+        date: "27/02/2024",
+        status: "Đã kết thúc",
+        participants: 320,
+        target: 300,
+        location: "Hà Nội",
+        type: "Định kỳ"
+    },
+    {
+        id: 8,
+        name: "Giọt máu nghĩa tình",
+        hospital: "Bệnh viện Đa khoa Đà Nẵng",
+        date: "10/04/2024",
+        status: "Sắp diễn ra",
+        participants: 5,
+        target: 200,
+        location: "Đà Nẵng",
+        type: "Cộng đồng"
+    },
+    {
+        id: 9,
+        name: "Hành trình Đỏ - Kết nối dòng máu Việt",
+        hospital: "Bệnh viện Huyết học - Truyền máu Cần Thơ",
+        date: "30/04/2024",
+        status: "Sắp diễn ra",
+        participants: 0,
+        target: 500,
+        location: "Cần Thơ",
+        type: "Lễ hội"
+    },
+    {
+        id: 10,
+        name: "Ngày hội hiến máu tình nguyện đợt 1",
+        hospital: "Bệnh viện Quân Y 103",
+        date: "15/01/2024",
+        status: "Đã kết thúc",
+        participants: 180,
+        target: 200,
+        location: "Hà Nội",
+        type: "Định kỳ"
     }
 ];
 
 export default function CampaignManagementPage() {
     const [searchQuery, setSearchQuery] = useState("");
+    const [filterStatus, setFilterStatus] = useState("Tất cả trạng thái");
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 4;
+
+    const filteredCampaigns = CAMPAIGNS.filter(campaign => {
+        const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            campaign.hospital.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = filterStatus === "Tất cả trạng thái" || campaign.status === filterStatus;
+        return matchesSearch && matchesStatus;
+    });
+
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredCampaigns.length / ITEMS_PER_PAGE);
+
+    // Get current items
+    const paginatedCampaigns = filteredCampaigns.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    // Reset pagination when filters change
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filterStatus]);
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -128,11 +224,15 @@ export default function CampaignManagementPage() {
                             <Filter className="w-4 h-4" />
                             Bộ lọc
                         </button>
-                        <select className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-xl transition-colors font-medium outline-none">
-                            <option>Tất cả trạng thái</option>
-                            <option>Đang diễn ra</option>
-                            <option>Sắp diễn ra</option>
-                            <option>Đã kết thúc</option>
+                        <select
+                            className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-xl transition-colors font-medium outline-none"
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                        >
+                            <option value="Tất cả trạng thái">Tất cả trạng thái</option>
+                            <option value="Đang diễn ra">Đang diễn ra</option>
+                            <option value="Sắp diễn ra">Sắp diễn ra</option>
+                            <option value="Đã kết thúc">Đã kết thúc</option>
                         </select>
                     </div>
                 </div>
@@ -149,77 +249,114 @@ export default function CampaignManagementPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {CAMPAIGNS.map((campaign) => {
-                                const progress = Math.min(Math.round((campaign.participants / campaign.target) * 100), 100);
-                                return (
-                                    <tr key={campaign.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-6 py-5">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-[#120e1b] mb-0.5">{campaign.name}</span>
-                                                <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                    <Building2 className="w-3 h-3" /> {campaign.hospital}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex flex-col gap-1">
-                                                <span className="text-sm text-gray-700 flex items-center gap-2">
-                                                    <Calendar className="w-4 h-4 text-gray-400" /> {campaign.date}
-                                                </span>
-                                                <span className="text-xs text-gray-500 flex items-center gap-2">
-                                                    <MapPin className="w-4 h-4 text-gray-400" /> {campaign.location}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex flex-col gap-1.5 items-center w-full max-w-[120px] mx-auto">
-                                                <div className="flex justify-between w-full text-[10px] font-bold">
-                                                    <span className="text-[#6324eb]">{campaign.participants}/{campaign.target}</span>
-                                                    <span className="text-gray-500">{progress}%</span>
+                            {paginatedCampaigns.length > 0 ? (
+                                paginatedCampaigns.map((campaign) => {
+                                    const progress = Math.min(Math.round((campaign.participants / campaign.target) * 100), 100);
+                                    return (
+                                        <tr key={campaign.id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-[#120e1b] mb-0.5">{campaign.name}</span>
+                                                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                        <Building2 className="w-3 h-3" /> {campaign.hospital}
+                                                    </span>
                                                 </div>
-                                                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-[#6324eb] rounded-full transition-all duration-1000"
-                                                        style={{ width: `${progress}%` }}
-                                                    ></div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-sm text-gray-700 flex items-center gap-2">
+                                                        <Calendar className="w-4 h-4 text-gray-400" /> {campaign.date}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500 flex items-center gap-2">
+                                                        <MapPin className="w-4 h-4 text-gray-400" /> {campaign.location}
+                                                    </span>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${campaign.status === "Đang diễn ra"
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col gap-1.5 items-center w-full max-w-[120px] mx-auto">
+                                                    <div className="flex justify-between w-full text-[10px] font-bold">
+                                                        <span className="text-[#6324eb]">{campaign.participants}/{campaign.target}</span>
+                                                        <span className="text-gray-500">{progress}%</span>
+                                                    </div>
+                                                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-[#6324eb] rounded-full transition-all duration-1000"
+                                                            style={{ width: `${progress}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${campaign.status === "Đang diễn ra"
                                                     ? "bg-green-100 text-green-700"
                                                     : campaign.status === "Sắp diễn ra"
                                                         ? "bg-blue-100 text-blue-700"
                                                         : "bg-gray-100 text-gray-600"
-                                                }`}>
-                                                <span className={`size-1.5 rounded-full ${campaign.status === "Đang diễn ra"
+                                                    }`}>
+                                                    <span className={`size-1.5 rounded-full ${campaign.status === "Đang diễn ra"
                                                         ? "bg-green-600"
                                                         : campaign.status === "Sắp diễn ra"
                                                             ? "bg-blue-600"
                                                             : "bg-gray-600"
-                                                    }`}></span>
-                                                {campaign.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-5 text-right">
-                                            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
-                                                <MoreVertical className="w-5 h-5" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                                        }`}></span>
+                                                    {campaign.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-5 text-right">
+                                                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
+                                                    <MoreVertical className="w-5 h-5" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                                        Không tìm thấy chiến dịch nào phù hợp.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
 
                 <div className="p-6 border-t border-gray-50 flex items-center justify-between">
-                    <p className="text-sm text-gray-500 font-medium">Hiển thị 1-4 trên tổng số 12 chiến dịch</p>
+                    <p className="text-sm text-gray-500 font-medium">
+                        Hiển thị {filteredCampaigns.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}-
+                        {Math.min(currentPage * ITEMS_PER_PAGE, filteredCampaigns.length)} trên tổng số {filteredCampaigns.length} chiến dịch
+                    </p>
                     <div className="flex gap-2">
-                        <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-gray-500 disabled:opacity-50" disabled>Trước</button>
-                        <button className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-[#120e1b]">1</button>
-                        <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-[#120e1b] hover:bg-gray-50">2</button>
-                        <button className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-[#120e1b] hover:bg-gray-50">Tiếp</button>
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className={`px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold transition-all
+                                ${currentPage === 1 ? "text-gray-400 bg-gray-50 cursor-not-allowed" : "text-gray-500 hover:bg-gray-50 hover:text-[#6324eb]"}`}
+                        >
+                            Trước
+                        </button>
+
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`px-4 py-2 border rounded-lg text-sm font-bold transition-all
+                                    ${currentPage === page
+                                        ? "bg-[#6324eb] text-white border-[#6324eb]"
+                                        : "border-gray-200 text-[#120e1b] hover:bg-gray-50"}`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className={`px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold transition-all
+                                ${currentPage === totalPages ? "text-gray-400 bg-gray-50 cursor-not-allowed" : "text-gray-500 hover:bg-gray-50 hover:text-[#6324eb]"}`}
+                        >
+                            Tiếp
+                        </button>
                     </div>
                 </div>
             </div>
