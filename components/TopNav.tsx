@@ -27,8 +27,8 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
     const notiRef = useRef<HTMLDivElement>(null);
     const userRef = useRef<HTMLDivElement>(null);
 
-    // Mock Notifications
-    const notifications = [
+    // Mock Data Definition
+    const initialNotifications = [
         {
             id: 1,
             title: "Máu của bạn đã được sử dụng!",
@@ -60,6 +60,42 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
             bg: "bg-blue-50"
         }
     ];
+
+    const [notifications, setNotifications] = useState(initialNotifications);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // Load from localStorage
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('notifications_state');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    // Re-attach icons because JSON.stringify removes functions/components
+                    const restored = parsed.map((n: any) => ({
+                        ...n,
+                        icon: n.id === 1 ? CheckCircle : n.id === 2 ? AlertCircle : Clock
+                    }));
+                    setNotifications(restored);
+                } catch (error) {
+                    console.error("Error parsing notifications", error);
+                }
+            }
+            setIsLoaded(true);
+        }
+    }, []);
+
+    // Save to localStorage
+    useEffect(() => {
+        if (isLoaded && typeof window !== 'undefined') {
+            localStorage.setItem('notifications_state', JSON.stringify(notifications));
+        }
+    }, [notifications, isLoaded]);
+
+    // Mark all as read handler
+    const markAllAsRead = () => {
+        setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+    };
 
     // Toggle handlers
     const toggleNoti = () => {
@@ -98,7 +134,9 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                         className={`relative p-2 rounded-lg transition-all ${showNotifications ? 'bg-[#6324eb]/10 text-[#6324eb]' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                     >
                         <Bell className="w-5 h-5" />
-                        <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
+                        {notifications.some(n => n.unread) && (
+                            <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
+                        )}
                     </button>
 
                     {/* Notification Dropdown */}
@@ -106,7 +144,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                         <div className="absolute right-0 top-full mt-4 w-80 sm:w-96 bg-white dark:bg-[#1c162e] rounded-xl shadow-2xl border border-[#ebe7f3] dark:border-[#2d263d] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right">
                             <div className="p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] flex justify-between items-center bg-slate-50/50 dark:bg-[#251e36]/50">
                                 <h3 className="font-bold text-[#120e1b] dark:text-white">Thông báo</h3>
-                                <button className="text-xs font-bold text-[#6324eb] hover:underline">Đánh dấu đã đọc</button>
+                                <button onClick={markAllAsRead} className="text-xs font-bold text-[#6324eb] hover:underline">Đánh dấu đã đọc</button>
                             </div>
                             <div className="max-h-[400px] overflow-y-auto">
                                 {notifications.map((item) => (
@@ -124,7 +162,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                                 ))}
                             </div>
                             <div className="p-3 text-center border-t border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36]">
-                                <button className="text-sm font-bold text-[#6324eb] hover:underline">Xem tất cả</button>
+                                <Link href="/notifications" className="text-sm font-bold text-[#6324eb] hover:underline block w-full">Xem tất cả</Link>
                             </div>
                         </div>
                     )}

@@ -107,12 +107,16 @@ export default function RequestsPage() {
     const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
     const [activeFilter, setActiveFilter] = useState("Tất cả");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 6;
+    const itemsPerPage = 2;
     // Filter logic
     const filteredData = REQUESTS_DATA.filter(item => {
         if (activeFilter === "Tất cả") return true;
         if (activeFilter === "O-Negative") return item.bloodType.toLowerCase().includes("o negative") || item.bloodType.includes("(O-)") || item.bloodType.includes("O-");
         if (activeFilter === "Khẩn cấp") return item.urgency === "Cần gấp";
+        if (activeFilter === "Gần tôi") {
+            const distance = parseFloat(item.distance.replace(" Km", ""));
+            return distance < 10;
+        }
         return true;
     });
 
@@ -172,20 +176,29 @@ export default function RequestsPage() {
 
                             {/* Filter Chips */}
                             <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                                <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#6324eb] text-white px-4">
+                                <button
+                                    onClick={() => handleFilterChange("Tất cả")}
+                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-colors ${activeFilter === "Tất cả" ? "bg-[#6324eb] text-white" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#dcd6e8]"}`}
+                                >
                                     <span className="text-sm font-medium">Tất cả nhóm máu</span>
                                 </button>
-                                <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
+                                <button
+                                    onClick={() => handleFilterChange("O-Negative")}
+                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-colors ${activeFilter === "O-Negative" ? "bg-[#6324eb] text-white" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#dcd6e8]"}`}
+                                >
                                     <span className="text-sm font-medium">O-Negative</span>
-                                    <ChevronDown className="w-4 h-4" />
                                 </button>
-                                <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
+                                <button
+                                    onClick={() => handleFilterChange("Khẩn cấp")}
+                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-colors ${activeFilter === "Khẩn cấp" ? "bg-[#6324eb] text-white" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#dcd6e8]"}`}
+                                >
                                     <span className="text-sm font-medium">Khẩn cấp cao</span>
-                                    <ChevronDown className="w-4 h-4" />
                                 </button>
-                                <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
+                                <button
+                                    onClick={() => handleFilterChange("Gần tôi")}
+                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-colors ${activeFilter === "Gần tôi" ? "bg-[#6324eb] text-white" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#dcd6e8]"}`}
+                                >
                                     <span className="text-sm font-medium">Khoảng cách &lt; 10 km</span>
-                                    <ChevronDown className="w-4 h-4" />
                                 </button>
                                 <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
                                     <span className="text-sm font-medium">Bộ lọc khác</span>
@@ -195,7 +208,7 @@ export default function RequestsPage() {
 
                             {/* Grid of Requests */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {REQUESTS_DATA.map((request) => (
+                                {paginatedData.map((request) => (
                                     <div
                                         key={request.id}
                                         onClick={() => setSelectedRequest(request)}
@@ -239,13 +252,32 @@ export default function RequestsPage() {
                             {/* Pagination Placeholder */}
                             <div className="mt-12 flex justify-center">
                                 <nav className="flex items-center gap-2">
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors">
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        className={`h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'}`}
+                                    >
                                         <ChevronLeft className="w-5 h-5" />
                                     </button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg bg-[#6324eb] text-white font-bold">1</button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors text-[#120e1b] dark:text-white">2</button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors text-[#120e1b] dark:text-white">3</button>
-                                    <button className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors">
+
+                                    {Array.from({ length: totalPages || 1 }, (_, i) => i + 1).map((page) => (
+                                        <button
+                                            key={page}
+                                            onClick={() => setCurrentPage(page)}
+                                            className={`h-10 w-10 flex items-center justify-center rounded-lg font-bold transition-colors ${currentPage === page
+                                                    ? 'bg-[#6324eb] text-white'
+                                                    : 'border border-[#ebe7f3] dark:border-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages || totalPages === 0}
+                                        className={`h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] transition-colors ${currentPage === totalPages || totalPages === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'}`}
+                                    >
                                         <ChevronRight className="w-5 h-5" />
                                     </button>
                                 </nav>
