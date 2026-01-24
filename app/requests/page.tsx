@@ -190,7 +190,7 @@ export default function RequestsPage() {
 
                             {/* Grid of Requests */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {paginatedData.map((request) => (
+                                {(paginatedData ?? []).map((request) => (
                                     <div
                                         key={request.id}
                                         onClick={() => setSelectedRequest(request)}
@@ -231,32 +231,32 @@ export default function RequestsPage() {
                                 ))}
                             </div>
 
-                            {/* Pagination Placeholder */}
+                            {/* Pagination */}
                             <div className="mt-12 flex justify-center">
                                 <nav className="flex items-center gap-2">
                                     <button
-                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                                         disabled={currentPage === 1}
                                         className={`h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'}`}
                                     >
                                         <ChevronLeft className="w-5 h-5" />
                                     </button>
 
-                                    {Array.from({ length: totalPages || 1 }, (_, i) => i + 1).map((page) => (
+                                    {Array.from({ length: totalPages || 1 }).map((_, i) => (
                                         <button
-                                            key={page}
-                                            onClick={() => setCurrentPage(page)}
-                                            className={`h-10 w-10 flex items-center justify-center rounded-lg font-bold transition-colors ${currentPage === page
-                                                ? 'bg-[#6324eb] text-white'
-                                                : 'border border-[#ebe7f3] dark:border-[#2d263d] text-[#120e1b] dark:text-white hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'
+                                            key={i}
+                                            onClick={() => setCurrentPage(i + 1)}
+                                            className={`h-10 w-10 flex items-center justify-center rounded-lg font-bold transition-all ${currentPage === i + 1
+                                                ? "bg-[#6324eb] text-white shadow-lg shadow-[#6324eb]/30"
+                                                : "border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] text-[#120e1b] dark:text-white"
                                                 }`}
                                         >
-                                            {page}
+                                            {i + 1}
                                         </button>
                                     ))}
 
                                     <button
-                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                                         disabled={currentPage === totalPages || totalPages === 0}
                                         className={`h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] transition-colors ${currentPage === totalPages || totalPages === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'}`}
                                     >

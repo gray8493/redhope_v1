@@ -60,8 +60,9 @@ export default function HospitalProfileCompletion() {
                     hospital_address: user.profile?.hospital_address || "",
                     full_name: user.profile?.full_name || user.user_metadata?.full_name || ""
                 }));
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Error fetching user:", err);
+                setError("Không thể tải thông tin bệnh viện. Vui lòng thử lại.");
             } finally {
                 setLoading(false);
             }
@@ -90,9 +91,9 @@ export default function HospitalProfileCompletion() {
             });
             router.push("/hospital");
         } catch (err: any) {
+            // Log internal error for diagnostics
             console.error("Update failed detailed:", err);
-            const msg = err.message || err.details || (typeof err === 'object' ? JSON.stringify(err) : String(err));
-            setError("Lỗi: " + msg);
+            setError("Có lỗi xảy ra. Vui lòng thử lại.");
         } finally {
             setSubmitting(false);
         }
@@ -160,7 +161,12 @@ export default function HospitalProfileCompletion() {
                                 <p className="text-xs text-blue-100 mb-4 opacity-80">
                                     Nếu đơn vị gặp khó khăn trong việc đăng ký, vui lòng liên hệ hotline đối tác.
                                 </p>
-                                <button className="w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition">
+                                <button
+                                    className="w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled
+                                    aria-disabled="true"
+                                    title="Tính năng đang được phát triển"
+                                >
                                     Liên hệ ngay
                                 </button>
                             </div>

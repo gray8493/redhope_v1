@@ -62,15 +62,32 @@ export default function VerificationProfilePage() {
         setError("");
 
         try {
+            // 1. Validation & Sanitization
+            const weightNum = parseFloat(formData.weight);
+            if (isNaN(weightNum) || weightNum < 45) {
+                setError("Cân nặng phải là số và tối thiểu 45kg để đủ điều kiện hiến máu.");
+                setSubmitting(false);
+                return;
+            }
+
+            if (formData.last_donation_date) {
+                const donationDate = new Date(formData.last_donation_date);
+                if (donationDate > new Date()) {
+                    setError("Ngày hiến máu gần nhất không thể ở tương lai.");
+                    setSubmitting(false);
+                    return;
+                }
+            }
+
             const user = await authService.getCurrentUser();
             const role = user?.profile?.role || user?.user_metadata?.role || "donor";
 
             // Clean data
             const cleanData = {
                 full_name: user?.profile?.full_name || user?.user_metadata?.full_name || "User",
-                weight: formData.weight ? parseFloat(formData.weight) : null,
+                weight: weightNum,
                 last_donation_date: formData.last_donation_date || null,
-                health_history: formData.health_history || null,
+                health_history: formData.health_history?.trim() || null,
                 email: user?.email || "",
                 role: role as any
             };
@@ -83,7 +100,7 @@ export default function VerificationProfilePage() {
             router.push("/dashboard");
         } catch (err: any) {
             console.error("Verification update failed:", err);
-            setError(err.message || "Không thể hoàn tất xác minh.");
+            setError("Lỗi: Có lỗi xảy ra trong quá trình xác minh. Vui lòng thử lại.");
         } finally {
             setSubmitting(false);
         }

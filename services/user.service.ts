@@ -76,12 +76,13 @@ export const userService = {
             .from('users')
             .upsert(
                 { ...data, id },
-                { onConflict: 'email' } // Quan trọng: Nếu trùng email thì cập nhật thay vì báo lỗi
+                { onConflict: 'id' } // Upsert based on primary ID to prevent cross-account overwrites
             )
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
+        if (!result) throw new Error("Failed to upsert user record.");
         return result;
     },
 
