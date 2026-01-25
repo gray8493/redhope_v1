@@ -13,12 +13,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/auth.service";
 
 interface TopNavProps {
     title?: string;
 }
 
 export function TopNav({ title = "Tổng quan" }: TopNavProps) {
+    const { user, profile } = useAuth();
     const [showNotifications, setShowNotifications] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const router = useRouter();
@@ -108,9 +111,14 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
         if (showNotifications) setShowNotifications(false);
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await authService.signOut();
         router.push("/login");
     };
+
+    const displayName = profile?.full_name || user?.user_metadata?.full_name || "Alex Rivera";
+    const userEmail = profile?.email || user?.email || "alex.rivera@example.com";
+    const displayRole = profile?.role === 'admin' ? "Quản trị viên" : profile?.role === 'hospital' ? "Bệnh viện" : profile?.blood_group ? `Nhóm máu ${profile.blood_group}` : "Thành viên";
 
     return (
         <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 sticky top-0 z-20 w-full">
@@ -169,8 +177,8 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                         className="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 p-1.5 rounded-full pl-3 transition-colors text-left"
                     >
                         <div className="text-right hidden sm:block">
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">Alex Rivera</p>
-                            <p className="text-xs text-slate-500">Nhóm máu O+</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{displayName}</p>
+                            <p className="text-xs text-slate-500">{displayRole}</p>
                         </div>
                         <div className={`size-10 rounded-full border-2 overflow-hidden transition-colors ${showUserMenu ? 'border-[#6324eb]' : 'border-emerald-500/20'}`}>
                             <img
@@ -185,8 +193,8 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                     {showUserMenu && (
                         <div className="absolute right-0 top-full mt-4 w-60 bg-white dark:bg-[#1c162e] rounded-xl shadow-2xl border border-[#ebe7f3] dark:border-[#2d263d] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right">
                             <div className="p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50/50 dark:bg-[#251e36]/50">
-                                <p className="text-sm font-bold text-[#120e1b] dark:text-white">Alex Rivera</p>
-                                <p className="text-xs text-[#654d99] dark:text-[#a594c9]">alex.rivera@example.com</p>
+                                <p className="text-sm font-bold text-[#120e1b] dark:text-white">{displayName}</p>
+                                <p className="text-xs text-[#654d99] dark:text-[#a594c9] truncate">{userEmail}</p>
                             </div>
                             <div className="p-2">
                                 <Link

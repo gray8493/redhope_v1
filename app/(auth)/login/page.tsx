@@ -28,36 +28,30 @@ const LoginPage = () => {
             const rawRole = user?.profile?.role || user?.user_metadata?.role || 'donor';
             const actualRole = rawRole.toLowerCase();
 
-            // Optional: If you want to force the user to login to the role they selected:
-            if (formData.role !== actualRole && actualRole !== 'admin') {
-                setError(`Tài khoản này có vai trò là "${actualRole === 'donor' ? 'Người hiến' : 'Bệnh viện'}", không phải "${formData.role === 'donor' ? 'Người hiến' : 'Bệnh viện'}".`);
-                await authService.signOut(); // Sign out if role mismatch
-                setLoading(false);
-                return;
-            }
-
             const redirectRole = actualRole;
             const isStep1Complete = !!user?.profile?.phone;
             const isStep2Complete = redirectRole === 'hospital' || !!user?.profile?.weight;
 
-            if (redirectRole !== 'admin') {
-                if (!isStep1Complete) {
-                    // Go to Step 1
-                    router.push(redirectRole === 'hospital' ? '/hospital/complete-profile' : '/complete-profile');
-                    return;
-                } else if (!isStep2Complete) {
-                    // Donor finished Step 1 but not Step 2
-                    router.push('/complete-profile/verification');
-                    return;
-                }
+            if (redirectRole === 'admin') {
+                setLoading(false);
+                router.push('/admin');
+                return;
             }
 
-            if (redirectRole === 'admin') {
-                router.push('/admin');
-            } else if (redirectRole === 'hospital') {
-                router.push('/hospital');
+            // Normal user checks - Admin is exempt from mismatch errors
+            if (actualRole !== 'admin' && formData.role !== actualRole) {
+                setError(`Tài khoản này có vai trò là "${actualRole === 'donor' ? 'Người hiến' : 'Bệnh viện'}", không phải "${formData.role === 'donor' ? 'Người hiến' : 'Bệnh viện'}".`);
+                await authService.signOut();
+                setLoading(false);
+                return;
+            }
+
+            if (!isStep1Complete) {
+                router.push(redirectRole === 'hospital' ? '/hospital/complete-profile' : '/complete-profile');
+            } else if (!isStep2Complete) {
+                router.push('/complete-profile/verification');
             } else {
-                router.push('/dashboard');
+                router.push(redirectRole === 'hospital' ? '/hospital' : '/dashboard');
             }
         } catch (err: any) {
             console.error('Login failed:', err);
