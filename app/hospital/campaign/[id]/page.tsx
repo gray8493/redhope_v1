@@ -847,7 +847,7 @@ export default function CampaignDetailsPage() {
                                     <div className="flex gap-3 items-center">
                                         <label className="relative flex items-center group">
                                             <span className="material-symbols-outlined absolute left-5 text-slate-300 group-focus-within:text-[#6D28D9] transition-colors text-[20px]">search</span>
-                                            <input className="pill-input py-2 pl-12 pr-6 text-sm w-72 dark:bg-slate-800 dark:border-slate-700" placeholder="Tìm tên người hiến..." type="text" />
+                                            <input className="pill-input py-2 pl-14 pr-6 text-sm w-72 dark:bg-slate-800 dark:border-slate-700" placeholder="Tìm tên người hiến..." type="text" />
                                         </label>
                                         <div className="relative">
                                             <select
