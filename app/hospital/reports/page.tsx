@@ -77,16 +77,16 @@ export default function ReportsPage() {
     );
 
     return (
-        <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f8fafc] dark:bg-[#161121] font-sans text-slate-800 dark:text-white text-left">
+        <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#161121] font-sans text-slate-800 dark:text-white text-left">
             <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
             <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
-            <div className="flex h-full grow flex-row">
+            <div className="flex h-full grow flex-row overflow-hidden">
                 <HospitalSidebar />
-                <div className="flex-1 flex flex-col min-w-0">
+                <div className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
                     <TopNav title="Báo cáo & Phân tích" />
 
-                    <main className="flex-1 flex flex-col overflow-y-auto">
+                    <main className="flex-1 flex flex-col">
                         <div className="p-6 lg:p-10 space-y-8 max-w-[1600px] mx-auto w-full text-left">
 
                             {/* Header Section */}

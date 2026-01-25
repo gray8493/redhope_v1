@@ -30,6 +30,8 @@ export default function CampaignManagementPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterDate, setFilterDate] = useState('');
     const [historySearch, setHistorySearch] = useState('');
+    const [historyPage, setHistoryPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     useEffect(() => {
         // Initial load
@@ -146,6 +148,18 @@ export default function CampaignManagementPage() {
         c.location.toLowerCase().includes(historySearch.toLowerCase())
     );
 
+    // Pagination logic for history
+    const totalHistoryPages = Math.ceil(filteredHistory.length / ITEMS_PER_PAGE);
+    const paginatedHistory = filteredHistory.slice(
+        (historyPage - 1) * ITEMS_PER_PAGE,
+        historyPage * ITEMS_PER_PAGE
+    );
+
+    // Reset page when search changes
+    useEffect(() => {
+        setHistoryPage(1);
+    }, [historySearch]);
+
     // Filter Drafts
     const draftList = activeCampaigns.filter(c => c.operationalStatus === "Bản nháp");
     const filteredDrafts = draftList.filter(c =>
@@ -173,10 +187,10 @@ export default function CampaignManagementPage() {
                     backdrop-filter: blur(4px);
                 }
             `}</style>
-            <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f7f8] dark:bg-[#161121] font-sans text-slate-900 dark:text-white">
+            <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[#f6f7f8] dark:bg-[#161121] font-sans text-slate-900 dark:text-white">
                 <div className="flex h-full grow flex-row">
                     <HospitalSidebar />
-                    <div className="flex-1 flex flex-col min-w-0">
+                    <div className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
                         <TopNav title="Quản lý Chiến dịch" />
 
                         <main className="flex-1 p-8 max-w-[1400px] w-full mx-auto">
@@ -197,7 +211,7 @@ export default function CampaignManagementPage() {
                                     <div>
                                         <p className="text-sm font-medium text-slate-500">Tổng lượng máu thu thập</p>
                                         <p className="text-2xl font-black text-slate-900 dark:text-white">
-                                            {activeCampaigns.reduce((sum, c) => sum + (c.current || 0), 0).toFixed(2)} <span className="text-sm font-normal text-slate-400">Lít (Hôm nay)</span>
+                                            {activeCampaigns.reduce((sum, c) => sum + (c.current || 0), 0).toLocaleString()} <span className="text-sm font-normal text-slate-400">ml (Hôm nay)</span>
                                         </p>
                                     </div>
                                 </div>
@@ -430,7 +444,7 @@ export default function CampaignManagementPage() {
                                                         </div>
                                                         <div className="flex flex-col justify-center w-32">
                                                             <div className="flex justify-between text-[10px] mb-1 font-medium">
-                                                                <span>{campaign.current}/{campaign.target}</span>
+                                                                <span>{campaign.current.toLocaleString()}/{campaign.target.toLocaleString()} ml</span>
                                                                 <span>{campaign.progress}%</span>
                                                             </div>
                                                             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -524,9 +538,9 @@ export default function CampaignManagementPage() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                                    {filteredHistory.length > 0 ? filteredHistory.map(campaign => {
+                                                    {paginatedHistory.length > 0 ? paginatedHistory.map(campaign => {
                                                         const diff = (campaign.current || 0) - campaign.target;
-                                                        const evalText = diff >= 0 ? (diff === 0 ? "Đủ" : `Dư ${diff.toFixed(2)}`) : `Thiếu ${Math.abs(diff).toFixed(2)}`;
+                                                        const evalText = diff >= 0 ? (diff === 0 ? "Đủ" : `Dư ${diff.toLocaleString()}`) : `Thiếu ${Math.abs(diff).toLocaleString()}`;
                                                         const evalColor = diff >= 0 ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50";
 
                                                         return (
@@ -545,7 +559,7 @@ export default function CampaignManagementPage() {
                                                                         <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{campaign.progress}%</span>
                                                                     </div>
                                                                 </td>
-                                                                <td className="px-6 py-4 text-sm font-bold text-center">{campaign.current}</td>
+                                                                <td className="px-6 py-4 text-sm font-bold text-center">{campaign.current?.toLocaleString()} ml</td>
                                                                 <td className="px-6 py-4 text-center">
                                                                     <span className={`inline-block px-2 py-1 rounded text-[11px] font-bold ${evalColor}`}>
                                                                         {evalText}
@@ -570,12 +584,22 @@ export default function CampaignManagementPage() {
                                             </table>
                                         </div>
                                         <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                                            <span className="text-xs text-slate-500">Hiển thị {filteredHistory.length} chiến dịch cũ</span>
+                                            <span className="text-xs text-slate-500">
+                                                Hiển thị {Math.min(filteredHistory.length, (historyPage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(filteredHistory.length, historyPage * ITEMS_PER_PAGE)} / {filteredHistory.length} chiến dịch cũ
+                                            </span>
                                             <div className="flex gap-2">
-                                                <button className="size-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-900 transition-colors">
+                                                <button
+                                                    onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                                                    disabled={historyPage === 1}
+                                                    className={`size-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-colors ${historyPage === 1 ? 'opacity-50 cursor-not-allowed text-slate-300' : 'text-slate-400 hover:text-slate-900'}`}
+                                                >
                                                     <span className="material-symbols-outlined text-[18px]">chevron_left</span>
                                                 </button>
-                                                <button className="size-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-900 transition-colors">
+                                                <button
+                                                    onClick={() => setHistoryPage(p => Math.min(totalHistoryPages, p + 1))}
+                                                    disabled={historyPage === totalHistoryPages || totalHistoryPages === 0}
+                                                    className={`size-8 flex items-center justify-center rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-colors ${historyPage === totalHistoryPages || totalHistoryPages === 0 ? 'opacity-50 cursor-not-allowed text-slate-300' : 'text-slate-400 hover:text-slate-900'}`}
+                                                >
                                                     <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                                                 </button>
                                             </div>
