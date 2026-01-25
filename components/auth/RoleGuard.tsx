@@ -26,37 +26,26 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
         const rawRole = profile?.role || user?.user_metadata?.role || "";
         const userRole = rawRole.toLowerCase().trim();
 
-        // LOG CHO CÔNG TÁC CHẨN ĐOÁN (Chỉ Admin nhìn thấy trong Console)
-        console.log("--- RoleGuard Check ---");
-        console.log("Email:", user.email);
-        console.log("Profile Role:", profile?.role);
-        console.log("Metadata Role:", user?.user_metadata?.role);
-        console.log("Final userRole:", `"${userRole}"`);
+        // LOG CHẨN ĐOÁN
+        console.log(`[RoleGuard] User: ${user.email}, Role: "${userRole}"`);
 
-        // 1. Nếu là Admin, mở cửa ngay lập tức
+        // 1. Nếu là Admin, cho phép vào tất cả các trang
         if (userRole === "admin") {
-            console.log("RoleGuard: Quyền Admin được xác nhận.");
             setAuthorized(true);
             return;
         }
 
-        // 2. Nếu không tìm thấy bất kỳ role nào
+        // 2. Nếu chưa có role, tiếp tục chờ (Loading) thay vì đẩy ra ngay
         if (!userRole) {
-            console.warn("RoleGuard: Không tìm thấy vai trò người dùng.");
-            // Đợi thêm 1s xem profile có kịp tải không trước khi đẩy ra login
-            const timer = setTimeout(() => {
-                router.push("/login?error=no_role");
-            }, 1000);
-            return () => clearTimeout(timer);
+            return;
         }
 
-        // 3. Kiểm tra các vai trò được phép khác
+        // 3. Kiểm tra vai trò thông thường
         const isAuthorized = allowedRoles.includes(userRole as any);
 
         if (isAuthorized) {
             setAuthorized(true);
         } else {
-            console.warn(`RoleGuard: Truy cập bị từ chối cho role "${userRole}". Đang chuyển hướng...`);
             const target = userRole === "hospital" ? "/hospital" : "/dashboard";
             if (typeof window !== 'undefined' && window.location.pathname !== target) {
                 router.push(target);

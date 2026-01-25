@@ -1,40 +1,62 @@
 "use client";
 
-import {
-    User,
-    Bell,
-    Shield,
-    Save,
-    Hotel,
-    Mail,
-    Phone,
-    MapPin,
-    Lock,
-    Upload,
-    Image as ImageIcon,
-    Info,
-    CheckCircle,
-    Eye,
-    EyeOff,
-    Camera,
-    Business,
-    GpsFixed,
-    AlternateEmail
-} from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
+import { useAuth } from "@/context/AuthContext";
+import { userService } from "@/services/user.service";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
+    const { user, profile } = useAuth();
     const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security'>('profile');
-    const [hospitalName, setHospitalName] = useState("Bệnh viện Đa khoa Trung tâm");
-    const [hospitalDesc, setHospitalDesc] = useState("Hệ thống y tế tuyến đầu chuyên sâu về cấp cứu, phẫu thuật và chăm sóc sức khỏe cộng đồng. Chúng tôi cam kết mang lại dịch vụ hiến máu an toàn và hiện đại nhất.");
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Profile State
+    const [hospitalName, setHospitalName] = useState("");
+    const [hospitalDesc, setHospitalDesc] = useState("Hệ thống y tế tuyến đầu chuyên sâu về cấp cứu, phẫu thuật và chăm sóc sức khỏe cộng đồng.");
+    const [phone, setPhone] = useState("");
+    const [address, setAddress] = useState("");
+    const [license, setLicense] = useState("");
+
+    // Sync state with profile data
+    useEffect(() => {
+        if (profile) {
+            setHospitalName(profile.hospital_name || "");
+            setPhone(profile.phone || "");
+            setAddress(profile.hospital_address || "");
+            setLicense(profile.license_number || "");
+        }
+    }, [profile]);
+
+    const handleSave = async () => {
+        if (!user) return;
+        setIsSaving(true);
+        try {
+            await userService.update(user.id, {
+                hospital_name: hospitalName,
+                phone: phone,
+                hospital_address: address,
+                license_number: license
+            });
+            toast.success("Thành công", {
+                description: "Thông tin bệnh viện đã được cập nhật.",
+            });
+        } catch (error: any) {
+            toast.error("Lỗi", {
+                description: "Không thể lưu thông tin. Vui lòng thử lại sau.",
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const [emailAlert, setEmailAlert] = useState(true);
     const [newDonorAlert, setNewDonorAlert] = useState(false);
     const [shortfallThreshold, setShortfallThreshold] = useState(20);
     const [logo, setLogo] = useState<string | null>(null);
-    const [cover, setCover] = useState<string | null>("https://lh3.googleusercontent.com/aida-public/AB6AXuB-pYSYh0nrFR9EHffBQeBIH5xosCZYGDX5BCz4F8coCgtRu4kG6rneHOzMavlAEAhCLLhsIPW4Zr8d-mdT7zRz_7_dZGzo7RaaOIAlwIsRmwLyIhmuf5Gr9OTUNGMtpvXLtejG42cMiJASTPDeWyxZ6RdUzdu0e3CY05W1RGUjdSrabS7GoI882qtaXJ6lK-Jbn-GMBpayfdILyfA7_guOESZWU91gqgzwwV-DMnVMLbupel25a7M96j3ZIjVpp7eoO77BkS2pK5A");
+    const [cover, setCover] = useState<string | null>("https://lh3.googleusercontent.com/aida-public/AB6AXuB-pYSYh0nrFR9EHffBQeBIH5xosCZYGDX5BCz4F8coCgtRu4kG6rneHOzMavlAEAhCLLhsIPW4Zr8d-mdT7zRz_7_dZGzo7RaaOIAlwIsRmwLyIhmuf5Gr9OTUNGMtpvXLtejG42cMiJASTDeWyxZ6RdUzdu0e3CY05W1RGUjdSrabS7GoI882qtaXJ6lK-Jbn-GMBpayfdILyfA7_guOESZWU91gqgzwwV-DMnVMLbupel25a7M96j3ZIjVpp7eoO77BkS2pK5A");
     const [showPassword, setShowPassword] = useState(false);
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

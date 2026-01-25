@@ -16,48 +16,60 @@ import {
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
+import { useAuth } from "@/context/AuthContext";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { authService } from "@/services/auth.service";
+import { userService } from "@/services/user.service";
 
 export default function SettingsPage() {
     const router = useRouter();
+    const { user, profile } = useAuth();
     const [activeTab, setActiveTab] = useState("profile");
+    const [isSaving, setIsSaving] = useState(false);
 
     // Profile State
-    const [name, setName] = useState("Alex Rivera");
-    const [phone, setPhone] = useState("0912 345 678");
-    const [email, setEmail] = useState("alex.rivera@example.com");
-    const [address, setAddress] = useState("123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM");
+    const [name, setName] = useState("");
+    const [phone, setPhone] = useState("");
+    const [email, setEmail] = useState("");
+    const [address, setAddress] = useState("");
+
+    // Sync state with profile data
+    useEffect(() => {
+        if (profile || user) {
+            setName(profile?.full_name || user?.user_metadata?.full_name || "");
+            setPhone(profile?.phone || "");
+            setEmail(profile?.email || user?.email || "");
+            setAddress(profile?.address || "");
+        }
+    }, [profile, user]);
 
     // Password State
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
-    // Load from localStorage on mount
-    useEffect(() => {
-        const savedProfile = localStorage.getItem("userProfile");
-        if (savedProfile) {
-            try {
-                const parsed = JSON.parse(savedProfile);
-                if (parsed.name) setName(parsed.name);
-                if (parsed.phone) setPhone(parsed.phone);
-                if (parsed.email) setEmail(parsed.email);
-                if (parsed.address) setAddress(parsed.address);
-            } catch (error) {
-                console.error("Failed to parse user profile", error);
-            }
+    const handleSave = async () => {
+        if (!user) return;
+        setIsSaving(true);
+        try {
+            await userService.update(user.id, {
+                full_name: name,
+                phone: phone,
+                address: address
+            });
+            toast.success("Đã lưu thông tin thành công!", {
+                description: "Thông tin cá nhân của bạn đã được cập nhật trên hệ thống.",
+                duration: 3000,
+            });
+        } catch (error: any) {
+            toast.error("Lỗi cập nhật", {
+                description: error.message || "Không thể lưu thông tin. Vui lòng thử lại.",
+            });
+        } finally {
+            setIsSaving(false);
         }
-    }, []);
-
-    const handleSave = () => {
-        const profileData = { name, phone, email, address };
-        localStorage.setItem("userProfile", JSON.stringify(profileData));
-        toast.success("Đã lưu thông tin thành công!", {
-            description: "Thông tin cá nhân của bạn đã được cập nhật.",
-            duration: 3000,
-        });
     };
 
     const handleChangePassword = () => {
@@ -105,8 +117,8 @@ export default function SettingsPage() {
         ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    const handleLogout = () => {
-        // Here you would typically clear session/cookies
+    const handleLogout = async () => {
+        await authService.signOut();
         router.push("/login");
     };
 
@@ -154,7 +166,9 @@ export default function SettingsPage() {
                                             </button>
                                         </div>
                                         <h2 className="text-xl font-bold text-[#120e1b] dark:text-white">{name}</h2>
-                                        <p className="text-sm text-[#654d99] dark:text-[#a594c9] mb-4">Nhóm máu O+</p>
+                                        <p className="text-sm text-[#654d99] dark:text-[#a594c9] mb-4">
+                                            {profile?.role === 'admin' ? "Quản trị viên" : profile?.role === 'hospital' ? "Bệnh viện" : profile?.blood_group ? `Nhóm máu ${profile.blood_group}` : "Thành viên"}
+                                        </p>
 
                                         <div className="flex flex-col gap-2">
                                             <button
