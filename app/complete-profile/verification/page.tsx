@@ -40,12 +40,11 @@ export default function VerificationProfilePage() {
                     return;
                 }
                 setUserId(user.id);
-                // We might want to pre-fill if data already exists, 
-                // but usually this is a one-time setup
-            } catch (err) {
-                console.error("Error fetching user:", err);
-            } finally {
                 setLoading(false);
+            } catch (err: any) {
+                console.error("Error fetching user:", err);
+                setError("Lỗi xác thực. Vui lòng đăng nhập lại.");
+                router.push("/login");
             }
         };
         fetchUser();
@@ -72,7 +71,12 @@ export default function VerificationProfilePage() {
 
             if (formData.last_donation_date) {
                 const donationDate = new Date(formData.last_donation_date);
-                if (donationDate > new Date()) {
+                donationDate.setHours(0, 0, 0, 0);
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (donationDate > today) {
                     setError("Ngày hiến máu gần nhất không thể ở tương lai.");
                     setSubmitting(false);
                     return;

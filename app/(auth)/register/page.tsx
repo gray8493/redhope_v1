@@ -45,7 +45,9 @@ const RegisterPage = () => {
             // Assuming no email confirmation required for demo:
             alert('Đăng ký thành công! Hãy hoàn thiện hồ sơ của bạn.');
 
-            if (formData.role === 'hospital') {
+            if (formData.role === 'admin') {
+                router.push('/admin');
+            } else if (formData.role === 'hospital') {
                 router.push('/hospital/complete-profile');
             } else {
                 router.push('/complete-profile');

@@ -60,10 +60,10 @@ export default function HospitalProfileCompletion() {
                     hospital_address: user.profile?.hospital_address || "",
                     full_name: user.profile?.full_name || user.user_metadata?.full_name || ""
                 }));
+                setLoading(false);
             } catch (err: any) {
                 console.error("Error fetching user:", err);
                 setError("Không thể tải thông tin bệnh viện. Vui lòng thử lại.");
-            } finally {
                 setLoading(false);
             }
         };
@@ -83,6 +83,12 @@ export default function HospitalProfileCompletion() {
         try {
             const user = await authService.getCurrentUser();
             const role = user?.profile?.role || user?.user_metadata?.role || "hospital";
+
+            if (!userId) {
+                setError("Lỗi xác minh danh tính. Vui lòng đăng nhập lại.");
+                setSubmitting(false);
+                return;
+            }
 
             await userService.upsert(userId, {
                 ...formData,

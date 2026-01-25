@@ -40,7 +40,15 @@ const LoginPage = () => {
 
             // Normal user checks - Admin is exempt from mismatch errors
             if (actualRole !== 'admin' && formData.role !== actualRole) {
-                setError(`Tài khoản này có vai trò là "${actualRole === 'donor' ? 'Người hiến' : 'Bệnh viện'}", không phải "${formData.role === 'donor' ? 'Người hiến' : 'Bệnh viện'}".`);
+                const roleLabels: Record<string, string> = {
+                    donor: 'Người hiến',
+                    hospital: 'Bệnh viện',
+                    admin: 'Quản trị'
+                };
+                const actualLabel = roleLabels[actualRole] || actualRole;
+                const requestedLabel = roleLabels[formData.role] || formData.role;
+
+                setError(`Tài khoản này có vai trò là "${actualLabel}", không phải "${requestedLabel}".`);
                 await authService.signOut();
                 setLoading(false);
                 return;

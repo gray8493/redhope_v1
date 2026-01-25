@@ -14,6 +14,18 @@ export const userService = {
         return data || [];
     },
 
+    // Get recent users
+    async getRecent(limit: number = 5): Promise<User[]> {
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return data || [];
+    },
+
     // Get user by ID
     async getById(id: string): Promise<User | null> {
         const { data, error } = await supabase

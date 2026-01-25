@@ -15,9 +15,9 @@ export default function AdminDashboard() {
     useEffect(() => {
         const fetchRecentActivity = async () => {
             try {
-                // Fetch all users and take the top 5
-                const data = await userService.getAll();
-                setRecentDonors(data.slice(0, 5));
+                // Use limited query on server-side
+                const data = await userService.getRecent(5);
+                setRecentDonors(data);
             } catch (error) {
                 console.error("Failed to fetch recent activity:", error);
             } finally {

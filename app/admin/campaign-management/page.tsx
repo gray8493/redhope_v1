@@ -223,9 +223,13 @@ export default function CampaignManagementPage() {
                     : campaign
             ));
         } else {
-            // Create new campaign
+            // Create new campaign with unique numeric ID
+            const maxId = campaigns.length > 0
+                ? Math.max(...campaigns.map(c => Number(c.id)))
+                : 0;
+
             const campaign = {
-                id: campaigns.length + 1,
+                id: maxId + 1,
                 name: newCampaign.name,
                 hospital: newCampaign.hospital,
                 date: newCampaign.date || new Date().toLocaleDateString('vi-VN'),
@@ -358,7 +362,9 @@ export default function CampaignManagementPage() {
                         <tbody className="divide-y divide-gray-50">
                             {paginatedCampaigns.length > 0 ? (
                                 paginatedCampaigns.map((campaign) => {
-                                    const progress = Math.min(Math.round((campaign.participants / campaign.target) * 100), 100);
+                                    const progress = campaign.target > 0
+                                        ? Math.min(Math.round((campaign.participants / campaign.target) * 100), 100)
+                                        : 0;
                                     return (
                                         <tr key={campaign.id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-6 py-5">
@@ -479,10 +485,14 @@ export default function CampaignManagementPage() {
                         ))}
 
                         <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
+                            onClick={() => {
+                                if (currentPage < totalPages && totalPages > 0) {
+                                    handlePageChange(currentPage + 1);
+                                }
+                            }}
+                            disabled={currentPage >= totalPages || totalPages === 0}
                             className={`px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold transition-all
-                                ${currentPage === totalPages ? "text-gray-400 bg-gray-50 cursor-not-allowed" : "text-gray-500 hover:bg-gray-50 hover:text-[#6324eb]"}`}
+                                ${currentPage >= totalPages || totalPages === 0 ? "text-gray-400 bg-gray-50 cursor-not-allowed" : "text-gray-500 hover:bg-gray-50 hover:text-[#6324eb]"}`}
                         >
                             Tiếp
                         </button>

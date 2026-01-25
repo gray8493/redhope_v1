@@ -54,10 +54,10 @@ export default function DonorProfileStep1() {
                     district: user.profile?.district || "",
                     address: user.profile?.address || ""
                 }));
+                setLoading(false);
             } catch (err: any) {
                 console.error("Error fetching user:", err);
                 setError("Không thể tải thông tin người dùng. Vui lòng làm mới trang.");
-            } finally {
                 setLoading(false);
             }
         };
@@ -89,6 +89,13 @@ export default function DonorProfileStep1() {
                 email: user?.email || "",
                 role: role as any
             };
+
+            if (!userId) {
+                console.error("No userId found for submission.");
+                setError("Không thể xác định danh tính người dùng. Vui lòng đăng nhập lại.");
+                setSubmitting(false);
+                return;
+            }
 
             await userService.upsert(userId, cleanData);
             router.push("/complete-profile/verification");

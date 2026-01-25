@@ -47,31 +47,25 @@ export default function CampaignManagementPage() {
 
     const parseCampaignDate = (dateStr: string) => {
         try {
-            // Formats: "20/10/2024" or "12/10 - 15/10/2024"
-            let startStr = dateStr;
-            let endStr = dateStr;
+            if (!dateStr) return { start: 0, end: 0 };
+            const parts = dateStr.includes('-') ? dateStr.split('-') : [dateStr, dateStr];
+            const endStr = parts[parts.length - 1].trim();
+            const startStr = parts[0].trim();
 
-            if (dateStr.includes('-')) {
-                const parts = dateStr.split('-');
-                startStr = parts[0].trim();
-                endStr = parts[1].trim();
+            const parse = (s: string, fallbackYear?: number) => {
+                const dateParts = s.split('/');
+                if (dateParts.length < 2) return 0;
 
-                // Handle composite like "12/10 - 15/10/2024" where first part lacks year?
-                // Usually it's full date "dd/mm/yyyy - dd/mm/yyyy" or "dd/mm - dd/mm/yyyy"
-                // If year is missing in first part, append it from second part?
-                // Let's assume full dates or simple fallback
-                if (startStr.split('/').length === 2 && endStr.split('/').length === 3) {
-                    startStr += '/' + endStr.split('/')[2];
-                }
-            }
-
-            const parse = (s: string) => {
-                const [d, m, y] = s.split('/').map(Number);
-                return new Date(y, m - 1, d).getTime();
+                const day = Number(dateParts[0]);
+                const month = Number(dateParts[1]);
+                const year = dateParts.length === 3 ? Number(dateParts[2]) : (fallbackYear || new Date().getFullYear());
+                return new Date(year, month - 1, day).getTime();
             };
 
-            return { start: parse(startStr), end: parse(endStr) };
+            const end = parse(endStr);
+            const start = parse(startStr, end !== 0 ? new Date(end).getFullYear() : undefined);
 
+            return { start, end };
         } catch (e) {
             return { start: 0, end: 0 };
         }
@@ -220,7 +214,7 @@ export default function CampaignManagementPage() {
                                     <div>
                                         <p className="text-sm font-medium text-slate-500">Tỉ lệ hiến máu</p>
                                         <p className="text-2xl font-black text-slate-900 dark:text-white">
-                                            {activeCampaigns.reduce((sum, c) => sum + (c.completedCount || 0), 0)} / {activeCampaigns.reduce((sum, c) => sum + (c.registeredCount || 0), 0)}
+                                            {activeCampaigns.reduce((sum, c) => sum + (c.completedCount || 0), 0)} / {activeCampaigns.reduce((sum, c) => sum + (c.registeredCount || (c.appointments?.length || 0)), 0)}
                                             <span className="text-sm font-normal text-slate-400 ml-2">Đã hiến / Đăng ký</span>
                                         </p>
                                     </div>

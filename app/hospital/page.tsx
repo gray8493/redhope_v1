@@ -58,21 +58,20 @@ export default function HospitalDashboard() {
 
     const parseCampaignDate = (dateStr: string) => {
         try {
-            let startStr = dateStr;
-            let endStr = dateStr;
-            if (dateStr.includes('-')) {
-                const parts = dateStr.split('-');
-                startStr = parts[0].trim();
-                endStr = parts[1].trim();
-                if (startStr.split('/').length === 2 && endStr.split('/').length === 3) {
-                    startStr += '/' + endStr.split('/')[2];
-                }
-            }
-            const parse = (s: string) => {
-                const [d, m, y] = s.split('/').map(Number);
-                return new Date(y, m - 1, d).getTime();
-            };
-            return { start: parse(startStr), end: parse(endStr) };
+            if (!dateStr) return { start: 0, end: 0 };
+            const parts = dateStr.includes('-') ? dateStr.split('-') : [dateStr, dateStr];
+            let endStr = parts[parts.length - 1].trim();
+
+            // Handle DD/MM or DD/MM/YYYY
+            const dateParts = endStr.split('/');
+            if (dateParts.length < 2) return { start: 0, end: 0 };
+
+            const day = Number(dateParts[0]);
+            const month = Number(dateParts[1]);
+            const year = dateParts.length === 3 ? Number(dateParts[2]) : new Date().getFullYear();
+
+            const end = new Date(year, month - 1, day).getTime();
+            return { start: 0, end }; // Start not strictly needed for expiry
         } catch (e) {
             return { start: 0, end: 0 };
         }
@@ -96,7 +95,7 @@ export default function HospitalDashboard() {
     // 1. Tính toán số liệu tổng hợp (Chỉ tính những chiến dịch đang hoạt động thực sự)
     const totalBloodCollected = activeListForStats.reduce((sum, c) => sum + (c.current || 0), 0);
     const totalParticipants = activeListForStats.reduce((sum, c) => sum + (c.completedCount || 0), 0);
-    const totalRegistered = activeListForStats.reduce((sum, c) => sum + (c.registeredCount || 0), 0);
+    const totalRegistered = activeListForStats.reduce((sum, c) => sum + (c.registeredCount || (c.appointments?.length || 0)), 0);
     const totalGoal = activeListForStats.reduce((sum, c) => sum + (c.target || 0), 0);
     const avgAchievement = totalGoal > 0 ? Math.round((totalBloodCollected / totalGoal) * 100) : 0;
 
@@ -118,10 +117,13 @@ export default function HospitalDashboard() {
     // 3. Giả lập Tỷ lệ xử lý và Gợi ý nhân sự
     const getPerformanceData = (camp: Campaign) => {
         if (camp.operationalStatus !== "Đang hoạt động") return null;
-        const seed = camp.id % 3;
-        if (seed === 2) return { time: "> 25 phút", status: "Quá tải", color: "text-rose-500", bgColor: "bg-rose-50 dark:bg-rose-900/20", recommendation: "Cần chi viện bác sĩ", recIcon: <Stethoscope className="w-3 h-3" /> };
-        if (seed === 1) return { time: "15 - 20 phút", status: "Đông đúc", color: "text-amber-500", bgColor: "bg-amber-50 dark:bg-amber-900/20", recommendation: "Theo dõi nhân sự", recIcon: <Activity className="w-3 h-3" /> };
-        return { time: "8 - 10 phút", status: "Ổn định", color: "text-emerald-500", bgColor: "bg-emerald-50 dark:bg-emerald-900/20", recommendation: "Đội ngũ đủ", recIcon: <Users className="w-3 h-3" /> };
+        const seed = Number(camp.id) % 3;
+        const perfMap: Record<number, any> = {
+            2: { time: "> 25 phút", status: "Quá tải", color: "text-rose-500", bgColor: "bg-rose-50 dark:bg-rose-900/20", recommendation: "Cần chi viện bác sĩ", recIcon: <Stethoscope className="w-3 h-3" /> },
+            1: { time: "15 - 20 phút", status: "Đông đúc", color: "text-amber-500", bgColor: "bg-amber-50 dark:bg-amber-900/20", recommendation: "Theo dõi nhân sự", recIcon: <Activity className="w-3 h-3" /> },
+            0: { time: "8 - 10 phút", status: "Ổn định", color: "text-emerald-500", bgColor: "bg-emerald-50 dark:bg-emerald-900/20", recommendation: "Đội ngũ đủ", recIcon: <Users className="w-3 h-3" /> }
+        };
+        return perfMap[seed];
     };
 
     const pendingRequests = supportRequests.filter(r => r.status === "pending");

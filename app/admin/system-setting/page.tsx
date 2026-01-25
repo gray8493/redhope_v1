@@ -3,6 +3,36 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
 
+const Toggle = ({
+    checked,
+    onChange,
+    label,
+    description
+}: {
+    checked: boolean;
+    onChange: (val: boolean) => void;
+    label: string;
+    description: string;
+}) => (
+    <div className="flex items-center justify-between">
+        <div>
+            <p className="text-sm font-semibold">{label}</p>
+            <p className="text-xs text-gray-500">{description}</p>
+        </div>
+        <button
+            role="switch"
+            aria-checked={checked}
+            aria-label={label}
+            onClick={() => onChange(!checked)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#6324eb] focus:ring-offset-2 ${checked ? 'bg-[#6324eb]' : 'bg-gray-200'}`}
+        >
+            <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
+            />
+        </button>
+    </div>
+);
+
 const SystemSettingsPage = () => {
     // Notification Settings
     const [lowStockAlert, setLowStockAlert] = useState(false);
@@ -159,7 +189,7 @@ const SystemSettingsPage = () => {
                                     value={aiSensitivity}
                                     onChange={(e) => setAiSensitivity(Number(e.target.value))}
                                 />
-                                <span className="text-sm font-bold text-[#6324eb] px-3 py-1 bg-[#6324eb]/10 rounded-lg">Cao ({aiSensitivity / 10})</span>
+                                <span className="text-sm font-bold text-[#6324eb] px-3 py-1 bg-[#6324eb]/10 rounded-lg">Cao ({aiSensitivity}/10)</span>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -169,9 +199,10 @@ const SystemSettingsPage = () => {
                                     className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all"
                                     placeholder="12.5"
                                     step="0.1"
+                                    min="0.1"
                                     type="number"
                                     value={minHemoglobin}
-                                    onChange={(e) => setMinHemoglobin(Number(e.target.value))}
+                                    onChange={(e) => setMinHemoglobin(Math.max(0.1, Number(e.target.value)))}
                                 />
                             </div>
                             <div>
@@ -179,9 +210,10 @@ const SystemSettingsPage = () => {
                                 <input
                                     className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all"
                                     placeholder="50"
+                                    min="30"
                                     type="number"
                                     value={minWeight}
-                                    onChange={(e) => setMinWeight(Number(e.target.value))}
+                                    onChange={(e) => setMinWeight(Math.max(30, Number(e.target.value)))}
                                 />
                             </div>
                         </div>
@@ -264,47 +296,27 @@ const SystemSettingsPage = () => {
                     </div>
                     <div className="p-6 space-y-6">
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-semibold">Cảnh báo Kho thấp</p>
-                                    <p className="text-xs text-gray-500">Thông báo cho bệnh viện khi lượng máu thấp</p>
-                                </div>
-                                <button
-                                    onClick={() => setLowStockAlert(!lowStockAlert)}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#6324eb] focus:ring-offset-2 ${lowStockAlert ? 'bg-[#6324eb]' : 'bg-gray-200'}`}
-                                >
-                                    <span
-                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${lowStockAlert ? 'translate-x-6' : 'translate-x-1'}`}
-                                    />
-                                </button>
+                            <Toggle
+                                checked={lowStockAlert}
+                                onChange={setLowStockAlert}
+                                label="Cảnh báo Kho thấp"
+                                description="Thông báo cho bệnh viện khi lượng máu thấp"
+                            />
+                            <div className="border-t border-gray-50 pt-4">
+                                <Toggle
+                                    checked={donationReminder}
+                                    onChange={setDonationReminder}
+                                    label="Nhắc nhở Hiến máu"
+                                    description="SMS/Email tự động mỗi 56 ngày"
+                                />
                             </div>
-                            <div className="flex items-center justify-between border-t border-gray-50 pt-4">
-                                <div>
-                                    <p className="text-sm font-semibold">Nhắc nhở Hiến máu</p>
-                                    <p className="text-xs text-gray-500">SMS/Email tự động mỗi 56 ngày</p>
-                                </div>
-                                <button
-                                    onClick={() => setDonationReminder(!donationReminder)}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#6324eb] focus:ring-offset-2 ${donationReminder ? 'bg-[#6324eb]' : 'bg-gray-200'}`}
-                                >
-                                    <span
-                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${donationReminder ? 'translate-x-6' : 'translate-x-1'}`}
-                                    />
-                                </button>
-                            </div>
-                            <div className="flex items-center justify-between border-t border-gray-50 pt-4">
-                                <div>
-                                    <p className="text-sm font-semibold">Phát sóng Khẩn cấp</p>
-                                    <p className="text-xs text-gray-500">Thông báo đẩy khu vực về nhu cầu máu O-</p>
-                                </div>
-                                <button
-                                    onClick={() => setEmergencyBroadcast(!emergencyBroadcast)}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#6324eb] focus:ring-offset-2 ${emergencyBroadcast ? 'bg-[#6324eb]' : 'bg-gray-200'}`}
-                                >
-                                    <span
-                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${emergencyBroadcast ? 'translate-x-6' : 'translate-x-1'}`}
-                                    />
-                                </button>
+                            <div className="border-t border-gray-50 pt-4">
+                                <Toggle
+                                    checked={emergencyBroadcast}
+                                    onChange={setEmergencyBroadcast}
+                                    label="Phát sóng Khẩn cấp"
+                                    description="Thông báo đẩy khu vực về nhu cầu máu O-"
+                                />
                             </div>
                         </div>
                     </div>

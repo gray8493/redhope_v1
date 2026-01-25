@@ -136,7 +136,16 @@ const DEFAULT_APPOINTMENTS = [
 export default function CampaignDetailsPage() {
     const params = useParams();
     const router = useRouter();
-    const id = Number(params.id);
+    const rawId = Number(params.id);
+
+    // Validate ID
+    if (isNaN(rawId) || rawId <= 0) {
+        if (typeof window !== 'undefined') {
+            router.replace('/hospital/campaign');
+        }
+        return null;
+    }
+    const id = rawId;
 
     // Campaign State - Default fallback
     const [campaignInfo, setCampaignInfo] = useState<Campaign>({
@@ -187,11 +196,16 @@ export default function CampaignDetailsPage() {
             );
             setAppointments(migratedApps);
 
-            // Sync back to storage to permanently remove old statuses
-            updateCampaign({
-                ...stored,
-                appointments: migratedApps
-            });
+            // Detect if migration is needed to avoid redundant writes
+            const migrationNeeded = JSON.stringify(rawAppointments) !== JSON.stringify(migratedApps);
+
+            if (migrationNeeded) {
+                // If automatic persist is required, gate the call
+                updateCampaign({
+                    ...stored,
+                    appointments: migratedApps
+                });
+            }
         } else {
             setAppointments(DEFAULT_APPOINTMENTS);
         }
@@ -230,16 +244,31 @@ export default function CampaignDetailsPage() {
     const [isLoaded, setIsLoaded] = useState(false);
 
     const [statusFilter, setStatusFilter] = useState<string>("Tất cả");
+    const [searchTerm, setSearchTerm] = useState("");
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 4;
     const statusOptions = ["Tất cả", "Đang chờ", "Đang tiến hành", "Hoàn thành", "Hoãn hiến"];
-    // Sắp xếp tên theo A-Z trước khi phân trang
-    const sortedAppointments = [...appointments].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
-    const filteredAppointments = statusFilter === "Tất cả" ? sortedAppointments : sortedAppointments.filter(a => a.status === statusFilter);
-    const totalPages = Math.ceil(filteredAppointments.length / pageSize);
-    const paginatedAppointments = filteredAppointments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    // Apply filters and search
+    const filteredByStatus = statusFilter === "Tất cả"
+        ? appointments
+        : appointments.filter(a => a.status === statusFilter);
+
+    const filteredBySearch = searchTerm.trim() === ""
+        ? filteredByStatus
+        : filteredByStatus.filter(a =>
+            a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            a.code.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+    const sortedAppointments = [...filteredBySearch].sort((a, b) =>
+        a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })
+    );
+
+    const totalPages = Math.ceil(sortedAppointments.length / pageSize);
+    const paginatedAppointments = sortedAppointments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     // --- Calculated Metrics ---
     const targetVolume = campaignInfo.target;
@@ -289,11 +318,10 @@ export default function CampaignDetailsPage() {
         const newCompletedCount = completedApps.length;
         const newRegisteredCount = appointments.length;
 
-        // Avoid infinite loops: only update if value differs significantly from stored value
-        const currentChanged = Math.abs(calculatedCurrent - campaignInfo.current) > 10;
+        const currentChanged = Math.abs(calculatedCurrent - campaignInfo.current) > 1;
         const countChanged = newCompletedCount !== (campaignInfo.completedCount || 0) || newRegisteredCount !== (campaignInfo.registeredCount || 0);
 
-        if (currentChanged || countChanged || true) { // Always sync if loaded
+        if (isLoaded && (currentChanged || countChanged)) {
             const calculatedProgress = campaignInfo.target > 0
                 ? Math.min((calculatedCurrent / campaignInfo.target) * 100, 100)
                 : 0;
@@ -311,7 +339,7 @@ export default function CampaignDetailsPage() {
         }
     }, [appointments, campaignInfo.id, campaignInfo.target, campaignInfo.current, campaignInfo.completedCount, campaignInfo.registeredCount, isLoaded]);
 
-    useEffect(() => { setCurrentPage(1); }, [statusFilter]);
+    useEffect(() => { setCurrentPage(1); }, [statusFilter, searchTerm]);
 
     const handleDonatedChange = (id: number, volume: number) => {
         setAppointments(prev => prev.map(a => a.id === id ? { ...a, donated: volume } : a));
@@ -895,7 +923,13 @@ export default function CampaignDetailsPage() {
                                     <div className="flex gap-3 items-center">
                                         <label className="relative flex items-center group">
                                             <span className="material-symbols-outlined absolute left-5 text-slate-300 group-focus-within:text-[#6D28D9] transition-colors text-[20px]">search</span>
-                                            <input className="pill-input py-2 pl-14 pr-6 text-sm w-96 dark:bg-slate-800 dark:border-slate-700" placeholder="Tìm tên người hiến..." type="text" />
+                                            <input
+                                                className="pill-input py-2 pl-14 pr-6 text-sm w-96 dark:bg-slate-800 dark:border-slate-700"
+                                                placeholder="Tìm tên người hiến..."
+                                                type="text"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
                                         </label>
                                         <div className="relative">
                                             <select
@@ -1023,7 +1057,7 @@ export default function CampaignDetailsPage() {
                                 </div>
                                 <div className="px-10 py-8 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between border-t border-slate-50 dark:border-slate-800">
                                     <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
-                                        Hiển thị {filteredAppointments.length === 0 ? 0 : ((currentPage - 1) * pageSize + 1)}-{Math.min(currentPage * pageSize, filteredAppointments.length)} / {filteredAppointments.length} bản ghi
+                                        Hiển thị {sortedAppointments.length === 0 ? 0 : ((currentPage - 1) * pageSize + 1)}-{Math.min(currentPage * pageSize, sortedAppointments.length)} / {sortedAppointments.length} bản ghi
                                     </span>
                                     <div className="flex gap-3">
                                         <button
