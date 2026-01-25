@@ -116,14 +116,6 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
         <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 sticky top-0 z-20 w-full">
             <div className="flex items-center gap-8 flex-1">
                 <h2 className="text-slate-900 dark:text-white text-xl font-bold">{title}</h2>
-                <div className="hidden md:flex flex-1 max-w-md items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-2 border border-transparent focus-within:border-[#6324eb]/50 transition-all">
-                    <Search className="text-slate-400 w-5 h-5" />
-                    <input
-                        className="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-slate-500 px-2 outline-none"
-                        placeholder="Tìm bệnh viện hoặc điểm hiến máu..."
-                        type="text"
-                    />
-                </div>
             </div>
             <div className="flex items-center gap-4">
 

@@ -139,7 +139,7 @@ export function BloodDropChatbot() {
                             <BloodDropIcon className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h3 className="text-white font-bold">Trợ lý REDHOPE</h3>
+                            <h3 className="text-white font-bold">Blood Mono</h3>
                             <p className="text-white/70 text-xs flex items-center gap-1">
                                 <span className="size-2 rounded-full bg-green-400 animate-pulse"></span>
                                 Đang hoạt động

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -34,8 +35,10 @@ export default function RootLayout({
         className={`${inter.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
       >
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-        {children}
-        <Toaster position="top-center" richColors />
+        <AuthProvider>
+          {children}
+          <Toaster position="top-center" richColors />
+        </AuthProvider>
       </body>
     </html>
   );

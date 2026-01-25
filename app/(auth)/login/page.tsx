@@ -25,7 +25,8 @@ const LoginPage = () => {
 
             // Fetch the actual authenticated user role from profile or metadata
             const user = await authService.getCurrentUser();
-            const actualRole = user?.profile?.role || user?.user_metadata?.role || 'donor';
+            const rawRole = user?.profile?.role || user?.user_metadata?.role || 'donor';
+            const actualRole = rawRole.toLowerCase();
 
             // Optional: If you want to force the user to login to the role they selected:
             if (formData.role !== actualRole && actualRole !== 'admin') {
@@ -52,7 +53,7 @@ const LoginPage = () => {
             }
 
             if (redirectRole === 'admin') {
-                router.push('/admin/global-ana');
+                router.push('/admin');
             } else if (redirectRole === 'hospital') {
                 router.push('/hospital');
             } else {

@@ -25,20 +25,23 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
                     return;
                 }
 
-                // Check role from profile or metadata
-                const userRole = user.profile?.role || user.user_metadata?.role;
+                // Check role from profile or metadata (lowercase for comparison)
+                const rawRole = user.profile?.role || user.user_metadata?.role || "";
+                const userRole = rawRole.toLowerCase();
 
-                // Admin can access everything
-                if (userRole === "admin") {
-                    setAuthorized(true);
-                }
-                // Other roles must be in the allowed list
-                else if (allowedRoles.includes(userRole as any)) {
+                console.log("RoleGuard - User Role:", userRole);
+                console.log("RoleGuard - Allowed Roles:", allowedRoles);
+
+                // Authorization logic
+                const isAuthorized = userRole === "admin" || allowedRoles.includes(userRole as any);
+
+                if (isAuthorized) {
                     setAuthorized(true);
                 }
                 else {
                     // Redirect to their respective dashboard if unauthorized
                     if (userRole === "hospital") router.push("/hospital");
+                    else if (userRole === "admin") router.push("/admin"); // Safety redirect
                     else router.push("/dashboard");
                 }
             } catch (error) {
