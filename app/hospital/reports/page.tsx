@@ -4,10 +4,68 @@ import { useState } from "react";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
+import Link from "next/link";
+import { useEffect } from "react";
+import { getCampaigns, subscribeToCampaignUpdates, Campaign } from "@/app/utils/campaignStorage";
 
 export default function ReportsPage() {
     const [timeFilter, setTimeFilter] = useState<'month' | 'quarter' | 'year'>('month');
     const [eventTab, setEventTab] = useState<'all' | 'completed' | 'ongoing'>('all');
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+
+    useEffect(() => {
+        // Initial load
+        setCampaigns(getCampaigns());
+
+        // Subscribe to updates
+        const unsubscribe = subscribeToCampaignUpdates(() => {
+            setCampaigns(getCampaigns());
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    // Helper to determine status and parsing
+    const parseCampaignDate = (dateStr: string) => {
+        try {
+            let startStr = dateStr;
+            let endStr = dateStr;
+            if (dateStr.includes('-')) {
+                const parts = dateStr.split('-');
+                startStr = parts[0].trim();
+                endStr = parts[1].trim();
+                if (startStr.split('/').length === 2 && endStr.split('/').length === 3) {
+                    startStr += '/' + endStr.split('/')[2];
+                }
+            }
+            const parse = (s: string) => {
+                const [d, m, y] = s.split('/').map(Number);
+                return new Date(y, m - 1, d).getTime();
+            };
+            return { start: parse(startStr), end: parse(endStr) };
+        } catch (e) {
+            return { start: 0, end: 0 };
+        }
+    };
+
+    const isCampaignExpired = (campaign: Campaign) => {
+        const { end } = parseCampaignDate(campaign.date || "");
+        if (end === 0) return false;
+        const now = new Date();
+        const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        return end < todayZero;
+    };
+
+    // Filter events based on tab
+    const filteredEvents = campaigns.filter(c => {
+        if (c.operationalStatus === "Bản nháp") return false;
+
+        const isCompleted = c.operationalStatus === "Đã kết thúc" || isCampaignExpired(c);
+
+        if (eventTab === 'completed') return isCompleted;
+        if (eventTab === 'ongoing') return !isCompleted && c.operationalStatus !== "Tạm dừng";
+        return true;
+    }).slice(0, 10); // Limit to recent 10 for "Recent Events"
 
     // Dữ liệu mẫu (Data Model)
     const metricsData = {
@@ -306,9 +364,9 @@ export default function ReportsPage() {
                                             </button>
                                         </div>
                                     </div>
-                                    <button className="text-[#6366f1] text-sm font-bold flex items-center gap-1 hover:underline px-2 py-1 rounded">
+                                    <Link href="/hospital/campaign" className="text-[#6366f1] text-sm font-bold flex items-center gap-1 hover:underline px-2 py-1 rounded">
                                         Xem tất cả sự kiện <MaterialIcon name="arrow_forward" className="text-sm" />
-                                    </button>
+                                    </Link>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
@@ -323,74 +381,63 @@ export default function ReportsPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-[#2d263d] font-sans">
-                                            <tr className="hover:bg-slate-50/80 dark:hover:bg-slate-800/20 transition-colors group">
-                                                <td className="px-8 py-5">
-                                                    <div className="flex flex-col text-left">
-                                                        <span className="text-sm font-bold text-slate-900 dark:text-white">Ngày hội Giọt hồng 2024</span>
-                                                        <span className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">24/10/2023 • 09:00 AM</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5">
-                                                    <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                        <MaterialIcon name="location_on" className="text-slate-400 text-sm" />
-                                                        Sảnh Chính, Tòa B
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-sm font-extrabold text-slate-900 dark:text-white">142</span>
-                                                        <div className="h-1 w-12 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                            <div className="bg-[#6366f1] h-full w-[80%]"></div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5 text-sm font-extrabold text-slate-900 dark:text-white">128.5 <span className="text-[10px] font-bold text-slate-400 ml-1 uppercase">ĐƠN VỊ</span></td>
-                                                <td className="px-8 py-5">
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border border-emerald-100 dark:border-emerald-800/30">
-                                                        <span className="size-1.5 rounded-full bg-emerald-500"></span>
-                                                        Hoàn thành
-                                                    </span>
-                                                </td>
-                                                <td className="px-8 py-5 text-right">
-                                                    <button className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-[#6366f1] hover:text-white transition-all flex items-center justify-center ml-auto">
-                                                        <MaterialIcon name="description" className="text-lg" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr className="hover:bg-slate-50/80 dark:hover:bg-slate-800/20 transition-colors group">
-                                                <td className="px-8 py-5">
-                                                    <div className="flex flex-col text-left">
-                                                        <span className="text-sm font-bold text-slate-900 dark:text-white">Chiến dịch Khẩn cấp Nhóm O</span>
-                                                        <span className="text-[10px] font-bold text-[#6366f1] uppercase mt-0.5">Đang diễn ra • Bắt đầu hôm nay</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5">
-                                                    <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
-                                                        <MaterialIcon name="location_on" className="text-slate-400 text-sm" />
-                                                        Cổng Cấp cứu
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-sm font-extrabold text-slate-900 dark:text-white">38</span>
-                                                        <div className="h-1 w-12 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                            <div className="bg-[#6366f1] h-full w-[30%]"></div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5 text-sm font-extrabold text-slate-900 dark:text-white">32.0 <span className="text-[10px] font-bold text-slate-400 ml-1 uppercase">ĐƠN VỊ</span></td>
-                                                <td className="px-8 py-5">
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 border border-indigo-100 dark:border-indigo-800/30">
-                                                        <span className="size-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                                                        Trực tiếp
-                                                    </span>
-                                                </td>
-                                                <td className="px-8 py-5 text-right">
-                                                    <button className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-300 cursor-not-allowed flex items-center justify-center ml-auto">
-                                                        <MaterialIcon name="hourglass_empty" className="text-lg" />
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                            {filteredEvents.length > 0 ? filteredEvents.map((campaign) => {
+                                                const isCompleted = campaign.operationalStatus === "Đã kết thúc" || isCampaignExpired(campaign);
+
+                                                return (
+                                                    <tr key={campaign.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/20 transition-colors group">
+                                                        <td className="px-8 py-5">
+                                                            <div className="flex flex-col text-left">
+                                                                <span className="text-sm font-bold text-slate-900 dark:text-white">{campaign.name}</span>
+                                                                <span className={`text-[10px] font-bold uppercase mt-0.5 ${isCompleted ? 'text-slate-400' : 'text-[#6366f1]'}`}>
+                                                                    {campaign.date} • {campaign.startTime || '08:00 AM'}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-8 py-5">
+                                                            <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                                                <MaterialIcon name="location_on" className="text-slate-400 text-sm" />
+                                                                <span className="truncate max-w-[150px]">{campaign.location}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-8 py-5">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="text-sm font-extrabold text-slate-900 dark:text-white">{campaign.completedCount || 0}</span>
+                                                                <div className="h-1 w-12 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                    <div className="bg-[#6366f1] h-full" style={{ width: `${Math.min(campaign.progress, 100)}%` }}></div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-8 py-5 text-sm font-extrabold text-slate-900 dark:text-white">
+                                                            {campaign.current || 0} <span className="text-[10px] font-bold text-slate-400 ml-1 uppercase">ĐƠN VỊ</span>
+                                                        </td>
+                                                        <td className="px-8 py-5">
+                                                            {isCompleted ? (
+                                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border border-emerald-100 dark:border-emerald-800/30">
+                                                                    <span className="size-1.5 rounded-full bg-emerald-500"></span>
+                                                                    Hoàn thành
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 border border-indigo-100 dark:border-indigo-800/30">
+                                                                    <span className="size-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                                                                    Trực tiếp
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-8 py-5 text-right">
+                                                            <Link href={`/hospital/campaign/${campaign.id}`} className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-[#6366f1] hover:text-white transition-all flex items-center justify-center ml-auto">
+                                                                <MaterialIcon name={isCompleted ? "description" : "visibility"} className="text-lg" />
+                                                            </Link>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            }) : (
+                                                <tr>
+                                                    <td colSpan={6} className="px-8 py-10 text-center text-slate-400 font-bold italic">
+                                                        Không tìm thấy sự kiện nào phù hợp.
+                                                    </td>
+                                                </tr>
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
