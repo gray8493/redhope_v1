@@ -148,7 +148,9 @@ export default function RequestsPage() {
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <button className="flex min-w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-[#6324eb] text-white text-sm font-bold leading-normal tracking-[0.015em] shadow-lg shadow-[#6324eb]/20 hover:bg-[#6324eb]/90 transition-all">
+                                    <button
+                                        onClick={() => router.push("/screening")}
+                                        className="flex min-w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-[#6324eb] text-white text-sm font-bold leading-normal tracking-[0.015em] shadow-lg shadow-[#6324eb]/20 hover:bg-[#6324eb]/90 transition-all">
                                         <span className="truncate">Kiểm tra sức khỏe</span>
                                     </button>
                                 </div>
