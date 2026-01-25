@@ -154,13 +154,13 @@ export default function CreateRequestPage() {
     );
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col bg-[#FDFCFE] font-sans text-slate-900 antialiased overflow-x-hidden text-left">
+        <div className="relative flex h-screen w-full flex-col bg-[#FDFCFE] font-sans text-slate-900 antialiased overflow-hidden text-left">
             <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
             <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
             <div className="flex h-full grow flex-row">
                 <HospitalSidebar />
-                <div className="flex-1 flex flex-col min-w-0">
+                <div className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
                     <TopNav title="Tạo Yêu cầu Máu" />
 
                     <main className="flex flex-1 justify-center py-10 px-6">

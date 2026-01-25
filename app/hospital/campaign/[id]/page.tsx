@@ -21,7 +21,7 @@ const DEFAULT_APPOINTMENTS = [
         time: "10:30",
         status: "Hoàn thành",
         statusClass: "px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded",
-        donated: 0.45
+        donated: 450
     },
     {
         id: 2,
@@ -55,9 +55,9 @@ const DEFAULT_APPOINTMENTS = [
         blood: "B+ (B DƯƠNG)",
         bloodClass: "px-2 py-0.5 bg-slate-50 text-slate-600 text-xs font-bold rounded border border-slate-100 uppercase",
         time: "12:30",
-        status: "Đã đặt lịch",
-        statusClass: "px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase rounded",
-        donated: undefined
+        status: "Hoãn hiến",
+        statusClass: "px-2 py-1 bg-rose-50 text-rose-600 text-[10px] font-bold uppercase rounded border border-rose-100",
+        donated: 0
     },
     {
         id: 5,
@@ -79,7 +79,7 @@ const DEFAULT_APPOINTMENTS = [
         blood: "A+ (A DƯƠNG)",
         bloodClass: "px-2 py-0.5 bg-slate-50 text-slate-600 text-xs font-bold rounded border border-slate-100 uppercase",
         time: "13:15",
-        status: "Đã đặt lịch",
+        status: "Đang chờ",
         statusClass: "px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase rounded",
         donated: undefined
     },
@@ -93,7 +93,7 @@ const DEFAULT_APPOINTMENTS = [
         time: "13:30",
         status: "Hoàn thành",
         statusClass: "px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded",
-        donated: 0.35
+        donated: 350
     },
     {
         id: 8,
@@ -127,7 +127,7 @@ const DEFAULT_APPOINTMENTS = [
         blood: "A- (A ÂM)",
         bloodClass: "px-2 py-0.5 bg-slate-50 text-slate-600 text-xs font-bold rounded border border-slate-100 uppercase",
         time: "14:15",
-        status: "Đã đặt lịch",
+        status: "Đang chờ",
         statusClass: "px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase rounded",
         donated: undefined
     },
@@ -148,7 +148,7 @@ export default function CampaignDetailsPage() {
         staffCount: 12,
         status: "Đang hoạt động",
         operationalStatus: "Đang hoạt động",
-        target: 50, // Liters
+        target: 50000, // ml
         bloodTypes: ["O+"],
         bloodType: "O+",
         bloodClass: "",
@@ -177,11 +177,21 @@ export default function CampaignDetailsPage() {
             }));
 
             // Load stored appointments if they exist, otherwise keep the default mock ones
-            if (stored.appointments && stored.appointments.length > 0) {
-                setAppointments(stored.appointments);
-            } else {
-                setAppointments(DEFAULT_APPOINTMENTS);
-            }
+            // Load stored appointments and migrate "Đã đặt lịch" to "Đang chờ"
+            const rawAppointments = (stored.appointments && stored.appointments.length > 0)
+                ? stored.appointments
+                : DEFAULT_APPOINTMENTS;
+
+            const migratedApps = rawAppointments.map(a =>
+                a.status === "Đã đặt lịch" || a.status === "Đã hủy" ? { ...a, status: "Đang chờ" } : a
+            );
+            setAppointments(migratedApps);
+
+            // Sync back to storage to permanently remove old statuses
+            updateCampaign({
+                ...stored,
+                appointments: migratedApps
+            });
         } else {
             setAppointments(DEFAULT_APPOINTMENTS);
         }
@@ -224,7 +234,7 @@ export default function CampaignDetailsPage() {
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 4;
-    const statusOptions = ["Tất cả", "Hoàn thành", "Đang tiến hành", "Đang chờ", "Đã đặt lịch"];
+    const statusOptions = ["Tất cả", "Đang chờ", "Đang tiến hành", "Hoàn thành", "Hoãn hiến"];
     // Sắp xếp tên theo A-Z trước khi phân trang
     const sortedAppointments = [...appointments].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
     const filteredAppointments = statusFilter === "Tất cả" ? sortedAppointments : sortedAppointments.filter(a => a.status === statusFilter);
@@ -252,8 +262,8 @@ export default function CampaignDetailsPage() {
     // If target is 50 Liters, then 0.45L is tiny. 
     // If target is 50 Units (people), and user wants "Amount" sum, we might need a separate "Volume" card.
     // BUT, the request says "Tiến độ mục tiêu ... cộng tổng lượng máu". 
-    // So I will change the display to "X / 50 Lít" (Liters) to be consistent with "lượng máu".
-    const progressPercent = Math.min((totalCollected / targetVolume) * 100, 100);
+    // So I will change the display to "X / 50000 ml" (ml) to be consistent with "lượng máu".
+    const progressPercent = Math.min((totalCollected / (targetVolume || 1)) * 100, 100);
     const remaining = Math.max(targetVolume - totalCollected, 0);
 
     // Analysis Logic
@@ -280,8 +290,7 @@ export default function CampaignDetailsPage() {
         const newRegisteredCount = appointments.length;
 
         // Avoid infinite loops: only update if value differs significantly from stored value
-        // Use a small epsilon for float comparison
-        const currentChanged = Math.abs(calculatedCurrent - campaignInfo.current) > 0.05;
+        const currentChanged = Math.abs(calculatedCurrent - campaignInfo.current) > 10;
         const countChanged = newCompletedCount !== (campaignInfo.completedCount || 0) || newRegisteredCount !== (campaignInfo.registeredCount || 0);
 
         if (currentChanged || countChanged || true) { // Always sync if loaded
@@ -304,11 +313,29 @@ export default function CampaignDetailsPage() {
 
     useEffect(() => { setCurrentPage(1); }, [statusFilter]);
 
-    const handleDonatedChange = (id: number, value: string) => {
-        setAppointments(prev => prev.map(a => a.id === id ? { ...a, donated: value === '' ? undefined : parseFloat(value) } : a));
+    const handleDonatedChange = (id: number, volume: number) => {
+        setAppointments(prev => prev.map(a => a.id === id ? { ...a, donated: volume } : a));
+    };
+    const handleDefer = (id: number) => {
+        setAppointments(prev => prev.map(a => a.id === id ? {
+            ...a,
+            status: "Hoãn hiến",
+            donated: 0,
+            statusClass: "px-2 py-1 bg-rose-50 text-rose-600 text-[10px] font-bold uppercase rounded border border-rose-100"
+        } : a));
     };
     const handleConfirm = (id: number) => {
-        setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "Hoàn thành", statusClass: "px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded" } : a));
+        setAppointments(prev => {
+            const appointment = prev.find(a => a.id === id);
+            // Default to 350ml if not set
+            const donatedVolume = appointment?.donated || 350;
+            return prev.map(a => a.id === id ? {
+                ...a,
+                donated: donatedVolume,
+                status: "Hoàn thành",
+                statusClass: "px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded"
+            } : a);
+        });
     };
     const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
     const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
@@ -444,7 +471,7 @@ export default function CampaignDetailsPage() {
                 }
                 .pill-input {
                     width: 100%;
-                    height: 3rem;
+                    height: 3.5rem;
                     padding-left: 1.5rem;
                     padding-right: 1.5rem;
                     border-radius: 9999px;
@@ -458,6 +485,15 @@ export default function CampaignDetailsPage() {
                 .pill-input:focus {
                     border-color: rgba(109, 40, 217, 0.4);
                     box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.05);
+                }
+                /* Hide number input spin buttons */
+                input::-webkit-outer-spin-button,
+                input::-webkit-inner-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
+                input[type=number] {
+                    -moz-appearance: textfield;
                 }
                 .blood-group-pill {
                     display: flex;
@@ -486,12 +522,28 @@ export default function CampaignDetailsPage() {
                     background: #1e293b;
                     border-color: #334155;
                 }
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #E2E8F0;
+                    border-radius: 20px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #CBD5E1;
+                }
+                .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #334155;
+                }
             `}</style>
 
             {/* Edit Modal - Redesigned based on mockup */}
             {isEditModalOpen && (
                 <div className="modal-overlay animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-[600px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-[850px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
                         {/* Modal Header */}
                         <div className="px-8 py-6 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -512,24 +564,23 @@ export default function CampaignDetailsPage() {
                         </div>
 
                         {/* Modal Body */}
-                        <div className="px-10 py-8 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
-                            <div className="space-y-5">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Tên chiến dịch</label>
-                                    <input
-                                        className="pill-input dark:bg-slate-800 dark:border-slate-700"
-                                        type="text"
-                                        value={editForm.name}
-                                        onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
+                        <div className="px-10 pr-12 py-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-3 gap-6">
+                                    <div className="col-span-2 flex flex-col gap-2">
+                                        <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Tên chiến dịch</label>
+                                        <input
+                                            className="pill-input dark:bg-slate-800 dark:border-slate-700 font-bold"
+                                            type="text"
+                                            value={editForm.name}
+                                            onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                        />
+                                    </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Thời gian (Ngày)</label>
+                                        <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Ngày tổ chức</label>
                                         <div className="relative">
                                             <input
-                                                className="pill-input dark:bg-slate-800 dark:border-slate-700"
+                                                className="pill-input dark:bg-slate-800 dark:border-slate-700 font-bold"
                                                 type="text"
                                                 value={editForm.date}
                                                 onChange={e => setEditForm({ ...editForm, date: e.target.value })}
@@ -537,38 +588,48 @@ export default function CampaignDetailsPage() {
                                             <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">calendar_month</span>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Giờ bắt đầu - Kết thúc</label>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                className="pill-input text-center px-2 dark:bg-slate-800 dark:border-slate-700"
-                                                type="text"
-                                                value={editForm.startTime || ''}
-                                                onChange={e => setEditForm({ ...editForm, startTime: e.target.value })}
-                                                placeholder="07:30"
-                                            />
-                                            <span className="text-slate-300 font-bold">-</span>
-                                            <input
-                                                className="pill-input text-center px-2 dark:bg-slate-800 dark:border-slate-700"
-                                                type="text"
-                                                value={editForm.endTime || ''}
-                                                onChange={e => setEditForm({ ...editForm, endTime: e.target.value })}
-                                                placeholder="16:30"
-                                            />
-                                        </div>
-                                    </div>
                                 </div>
 
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Địa điểm</label>
-                                    <div className="relative">
-                                        <input
-                                            className="pill-input dark:bg-slate-800 dark:border-slate-700"
-                                            type="text"
-                                            value={editForm.location}
-                                            onChange={e => setEditForm({ ...editForm, location: e.target.value })}
-                                        />
-                                        <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">location_on</span>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Địa điểm</label>
+                                        <div className="relative">
+                                            <input
+                                                className="pill-input dark:bg-slate-800 dark:border-slate-700 font-bold"
+                                                type="text"
+                                                value={editForm.location}
+                                                onChange={e => setEditForm({ ...editForm, location: e.target.value })}
+                                            />
+                                            <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">location_on</span>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Giờ bắt đầu</label>
+                                            <div className="relative">
+                                                <input
+                                                    className="pill-input text-center font-bold dark:bg-slate-800 dark:border-slate-700"
+                                                    type="text"
+                                                    value={editForm.startTime || ''}
+                                                    onChange={e => setEditForm({ ...editForm, startTime: e.target.value })}
+                                                    placeholder="07:30"
+                                                />
+                                                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 text-sm">schedule</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Giờ kết thúc</label>
+                                            <div className="relative">
+                                                <input
+                                                    className="pill-input text-center font-bold dark:bg-slate-800 dark:border-slate-700 border-indigo-100"
+                                                    type="text"
+                                                    value={editForm.endTime || ''}
+                                                    onChange={e => setEditForm({ ...editForm, endTime: e.target.value })}
+                                                    placeholder="16:30"
+                                                />
+                                                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 text-sm">more_time</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -592,28 +653,31 @@ export default function CampaignDetailsPage() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Mục tiêu (Lít)</label>
-                                        <input
-                                            className="pill-input dark:bg-slate-800 dark:border-slate-700"
-                                            type="number"
-                                            value={editForm.target}
-                                            onChange={e => setEditForm({ ...editForm, target: Number(e.target.value) })}
-                                        />
+                                        <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Mục tiêu (ml)</label>
+                                        <div className="relative">
+                                            <input
+                                                className="pill-input dark:bg-slate-800 dark:border-slate-700 pr-12 font-bold"
+                                                type="number"
+                                                value={editForm.target}
+                                                onChange={e => setEditForm({ ...editForm, target: Number(e.target.value) })}
+                                            />
+                                            <span className="absolute right-7 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest pointer-events-none">ML</span>
+                                        </div>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Trạng thái HĐ</label>
+                                        <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Trạng thái vận hành</label>
                                         <div className="relative">
                                             <select
-                                                className="pill-input appearance-none dark:bg-slate-800 dark:border-slate-700 pr-10"
+                                                className="pill-input appearance-none dark:bg-slate-800 dark:border-slate-700 pr-12 font-bold cursor-pointer"
                                                 value={editForm.operationalStatus || "Đang hoạt động"}
                                                 onChange={e => setEditForm({ ...editForm, operationalStatus: e.target.value })}
                                             >
                                                 <option value="Đang hoạt động">Đang hoạt động</option>
                                                 <option value="Tạm dừng">Tạm dừng</option>
                                             </select>
-                                            <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-sm">expand_more</span>
+                                            <span className="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">expand_more</span>
                                         </div>
                                     </div>
                                 </div>
@@ -659,11 +723,11 @@ export default function CampaignDetailsPage() {
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-slate-600 dark:text-slate-400 font-medium">Đã thu thập:</span>
-                                        <span className="font-extrabold text-slate-900 dark:text-white">{totalCollected.toFixed(2)} Lít</span>
+                                        <span className="font-extrabold text-slate-900 dark:text-white">{totalCollected.toFixed(0)} ml</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-slate-600 dark:text-slate-400 font-medium">Mục tiêu:</span>
-                                        <span className="font-extrabold text-slate-900 dark:text-white">{campaignInfo.target} Lít</span>
+                                        <span className="font-extrabold text-slate-900 dark:text-white">{campaignInfo.target} ml</span>
                                     </div>
                                     <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mt-1">
                                         <div
@@ -755,15 +819,15 @@ export default function CampaignDetailsPage() {
                                         <span className="text-[11px] font-extrabold text-slate-400/80 uppercase tracking-widest">Tiến độ mục tiêu</span>
                                     </div>
                                     <div className="flex items-baseline gap-2 mb-4">
-                                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{totalCollected.toFixed(2)}</span>
-                                        <span className="text-slate-400 font-extrabold text-xs uppercase tracking-wider">/ {targetVolume} Lít</span>
+                                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{totalCollected.toFixed(0)}</span>
+                                        <span className="text-slate-400 font-extrabold text-xs uppercase tracking-wider">/ {(targetVolume || 0).toLocaleString()} ml</span>
                                     </div>
                                     <div className="w-full bg-slate-100 dark:bg-slate-800 h-3 rounded-full overflow-hidden mb-4 p-0.5">
                                         <div className="bg-gradient-to-r from-[#6D28D9] to-[#A78BFA] h-full rounded-full transition-all duration-1000 shadow-sm" style={{ width: `${progressPercent}%` }}></div>
                                     </div>
                                     <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
                                         <span className="text-[#6D28D9] text-[11px] font-extrabold uppercase tracking-wide">{progressPercent.toFixed(1)}% Hoàn thành</span>
-                                        <span className="text-slate-400 text-[11px] font-bold">Còn {remaining.toFixed(2)} Lít</span>
+                                        <span className="text-slate-400 text-[11px] font-bold">Còn {(remaining / 1000).toFixed(1)} Lít nữa</span>
                                     </div>
                                 </div>
 
@@ -801,8 +865,8 @@ export default function CampaignDetailsPage() {
                                         <span className="text-[11px] font-extrabold text-slate-400/80 uppercase tracking-widest">Phân tích AI</span>
                                     </div>
                                     <div className="flex items-baseline gap-2 mb-4">
-                                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{totalCollected.toFixed(2)}</span>
-                                        <span className="text-slate-400 font-extrabold text-xs uppercase tracking-wider">Lít thu được</span>
+                                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{totalCollected.toLocaleString()}</span>
+                                        <span className="text-slate-400 font-extrabold text-xs uppercase tracking-wider">ml thu được</span>
                                     </div>
                                     <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl space-y-3">
                                         <div className="flex justify-between items-center">
@@ -814,28 +878,12 @@ export default function CampaignDetailsPage() {
                                         <div className="h-px bg-slate-100 dark:bg-slate-700 w-full"></div>
                                         <div className="flex justify-between items-center text-[11px] font-bold">
                                             <span className="text-slate-400 uppercase">Thiếu hụt chỉ tiêu:</span>
-                                            <span className="text-rose-500">{deficit.toFixed(2)} Lít</span>
+                                            <span className="text-rose-500">{deficit.toLocaleString()} ml</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Campaign Detailed Description */}
-                            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 p-12 mb-12 shadow-sm">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="size-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
-                                        <span className="material-symbols-outlined text-[24px]">description</span>
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Chi tiết nội dung</h2>
-                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Thông tin chiến dịch & Hướng dẫn</p>
-                                    </div>
-                                </div>
-                                <div
-                                    className="prose prose-slate dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed font-medium"
-                                    dangerouslySetInnerHTML={{ __html: campaignInfo.desc || '<p class="italic opacity-50 text-slate-400">Không có mô tả chi tiết cho chiến dịch này.</p>' }}
-                                />
-                            </div>
 
                             {/* Appointment Schedule Table */}
                             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-xl shadow-slate-200/40 dark:shadow-none mb-20">
@@ -847,11 +895,11 @@ export default function CampaignDetailsPage() {
                                     <div className="flex gap-3 items-center">
                                         <label className="relative flex items-center group">
                                             <span className="material-symbols-outlined absolute left-5 text-slate-300 group-focus-within:text-[#6D28D9] transition-colors text-[20px]">search</span>
-                                            <input className="pill-input py-2 pl-14 pr-6 text-sm w-72 dark:bg-slate-800 dark:border-slate-700" placeholder="Tìm tên người hiến..." type="text" />
+                                            <input className="pill-input py-2 pl-14 pr-6 text-sm w-96 dark:bg-slate-800 dark:border-slate-700" placeholder="Tìm tên người hiến..." type="text" />
                                         </label>
                                         <div className="relative">
                                             <select
-                                                className="pill-input appearance-none pr-12 dark:bg-slate-800 dark:border-slate-700"
+                                                className="pill-input appearance-none pl-6 pr-12 dark:bg-slate-800 dark:border-slate-700 font-bold"
                                                 value={statusFilter}
                                                 onChange={e => setStatusFilter(e.target.value)}
                                             >
@@ -899,40 +947,64 @@ export default function CampaignDetailsPage() {
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-6">
-                                                        <div className="relative w-32">
-                                                            <input
-                                                                type="number"
-                                                                min={0}
-                                                                step="any"
-                                                                className="pill-input h-10 text-center font-black text-[#6D28D9] dark:bg-slate-800 dark:border-slate-700"
-                                                                value={a.donated === undefined ? '' : a.donated}
-                                                                onChange={e => handleDonatedChange(a.id, e.target.value)}
-                                                                placeholder="0.0"
-                                                                disabled={a.status === "Hoàn thành" || isEnded}
-                                                            />
-                                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300 uppercase">Lít</span>
+                                                        <div className="flex items-center gap-1.5">
+                                                            {(a.status === "Đang chờ" || a.status === "Đang tiến hành") && !isEnded ? (
+                                                                <div className="flex gap-1.5">
+                                                                    {[250, 350, 450].map(v => (
+                                                                        <button
+                                                                            key={v}
+                                                                            onClick={() => handleDonatedChange(a.id, v)}
+                                                                            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all ${a.donated === v ? 'bg-[#6D28D9] text-white shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-700 hover:border-[#6D28D9]'}`}
+                                                                        >
+                                                                            {v}
+                                                                        </button>
+                                                                    ))}
+                                                                    <span className="text-[9px] font-bold text-slate-400 self-center ml-1">ml</span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="text-sm font-black text-[#6D28D9]">{a.donated || 0}</span>
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase">ml</span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-6">
-                                                        <span className={`px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-tight ${a.status === 'Hoàn thành' ? 'bg-emerald-50 text-emerald-600' : a.status === 'Đã hủy' ? 'bg-rose-50 text-rose-500' : 'bg-indigo-50 text-indigo-500'}`}>
+                                                        <span className={`px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-tight ${a.status === 'Hoàn thành' ? 'bg-emerald-50 text-emerald-600' :
+                                                            a.status === 'Hoãn hiến' ? 'bg-rose-50 text-rose-600' :
+                                                                a.status === 'Đang tiến hành' ? 'bg-amber-50 text-amber-600' :
+                                                                    'bg-indigo-50 text-indigo-600'
+                                                            }`}>
                                                             {a.status}
                                                         </span>
                                                     </td>
                                                     <td className="px-8 py-6">
                                                         <div className="flex items-center justify-center gap-3">
-                                                            {!isEnded && a.status !== "Hoàn thành" && a.status !== "Đã hủy" ? (
-                                                                <button
-                                                                    className="px-5 h-10 bg-[#6D28D9] text-white rounded-full text-[11px] font-black uppercase tracking-wider hover:bg-[#5B21B6] hover:shadow-lg hover:shadow-purple-500/20 transition-all"
-                                                                    onClick={() => handleConfirm(a.id)}
-                                                                >
-                                                                    Xác nhận hiến
-                                                                </button>
+                                                            {!isEnded && a.status !== "Hoàn thành" && a.status !== "Hoãn hiến" ? (
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        className="px-5 h-10 bg-[#6D28D9] text-white rounded-full text-[11px] font-black uppercase tracking-wider hover:bg-[#5B21B6] hover:shadow-lg hover:shadow-purple-500/20 transition-all"
+                                                                        onClick={() => handleConfirm(a.id)}
+                                                                    >
+                                                                        Xác nhận hiến
+                                                                    </button>
+                                                                    <div className="relative group/menu">
+                                                                        <button className="size-10 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-300 hover:text-slate-600 transition-colors flex items-center justify-center">
+                                                                            <span className="material-symbols-outlined text-[20px]">more_horiz</span>
+                                                                        </button>
+                                                                        <div className="absolute right-0 top-full mt-1 hidden group-hover/menu:block bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-xl p-2 z-10 w-32 border border-slate-200">
+                                                                            <button
+                                                                                onClick={() => handleDefer(a.id)}
+                                                                                className="w-full px-4 py-2 text-[10px] font-black uppercase text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg text-left transition-colors flex items-center gap-2"
+                                                                            >
+                                                                                <span className="material-symbols-outlined text-sm">block</span> Hoãn hiến
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                                             ) : (
-                                                                <span className="text-[11px] text-slate-300 font-bold uppercase italic">No action</span>
+                                                                <span className="text-[11px] text-slate-300 font-bold uppercase italic">Kết thúc hồ sơ</span>
                                                             )}
-                                                            <button className="size-10 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-300 hover:text-slate-600 transition-colors flex items-center justify-center">
-                                                                <span className="material-symbols-outlined text-[20px]">more_horiz</span>
-                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
