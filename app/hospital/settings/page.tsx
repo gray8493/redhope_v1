@@ -15,7 +15,11 @@ import {
     Info,
     CheckCircle,
     Eye,
-    EyeOff
+    EyeOff,
+    Camera,
+    Business,
+    GpsFixed,
+    AlternateEmail
 } from "lucide-react";
 import { useState } from "react";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
@@ -30,7 +34,7 @@ export default function SettingsPage() {
     const [newDonorAlert, setNewDonorAlert] = useState(false);
     const [shortfallThreshold, setShortfallThreshold] = useState(20);
     const [logo, setLogo] = useState<string | null>(null);
-    const [cover, setCover] = useState<string | null>(null);
+    const [cover, setCover] = useState<string | null>("https://lh3.googleusercontent.com/aida-public/AB6AXuB-pYSYh0nrFR9EHffBQeBIH5xosCZYGDX5BCz4F8coCgtRu4kG6rneHOzMavlAEAhCLLhsIPW4Zr8d-mdT7zRz_7_dZGzo7RaaOIAlwIsRmwLyIhmuf5Gr9OTUNGMtpvXLtejG42cMiJASTPDeWyxZ6RdUzdu0e3CY05W1RGUjdSrabS7GoI882qtaXJ6lK-Jbn-GMBpayfdILyfA7_guOESZWU91gqgzwwV-DMnVMLbupel25a7M96j3ZIjVpp7eoO77BkS2pK5A");
     const [showPassword, setShowPassword] = useState(false);
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,351 +55,395 @@ export default function SettingsPage() {
         }
     };
 
+    const MaterialIcon = ({ name, className = "" }: { name: string, className?: string }) => (
+        <span className={`material-symbols-outlined ${className}`}>{name}</span>
+    );
+
     return (
-        <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white text-left">
+        <div className="relative flex min-h-screen w-full flex-col bg-[#F8FAFC] dark:bg-[#0F172A] font-sans text-slate-800 dark:text-slate-200 antialiased overflow-x-hidden text-left transition-colors duration-300">
+            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+            <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
             <div className="flex h-full grow flex-row">
                 <HospitalSidebar />
-                <div className="flex-1 flex flex-col min-w-0 text-left">
-                    <TopNav title="Cài đặt Hệ thống" />
+                <div className="flex-1 flex flex-col min-w-0">
+                    <TopNav title="Hồ sơ & Thương hiệu" />
 
-                    <main className="flex flex-1 justify-center py-8">
-                        <div className="flex flex-col max-w-[1000px] flex-1 px-4 md:px-8 space-y-8">
+                    <main className="max-w-5xl mx-auto px-6 py-8 w-full">
+                        {/* Tab Navigation */}
+                        <div className="flex items-center space-x-8 mb-8 border-b border-slate-200 dark:border-slate-800">
+                            <button
+                                onClick={() => setActiveTab('profile')}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'profile' ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-500'}`}
+                            >
+                                Hồ sơ Bệnh viện
+                                {activeTab === 'profile' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-full" />}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('notifications')}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'notifications' ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-500'}`}
+                            >
+                                Thông báo
+                                {activeTab === 'notifications' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-full" />}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('security')}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'security' ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-500'}`}
+                            >
+                                Bảo mật
+                                {activeTab === 'security' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-full" />}
+                            </button>
+                        </div>
 
-                            {/* Tabs Navigation */}
-                            <div className="flex border-b border-[#ebe7f3] dark:border-[#2d263d] space-x-8">
-                                <button
-                                    onClick={() => setActiveTab('profile')}
-                                    className={`pb-4 text-sm font-bold transition-all border-b-2 ${activeTab === 'profile' ? 'border-[#6324eb] text-[#6324eb]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                                >
-                                    Hồ sơ Bệnh viện
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('notifications')}
-                                    className={`pb-4 text-sm font-bold transition-all border-b-2 ${activeTab === 'notifications' ? 'border-[#6324eb] text-[#6324eb]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                                >
-                                    Thông báo
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('security')}
-                                    className={`pb-4 text-sm font-bold transition-all border-b-2 ${activeTab === 'security' ? 'border-[#6324eb] text-[#6324eb]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                                >
-                                    Bảo mật
-                                </button>
-                            </div>
+                        {activeTab === 'profile' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                {/* Header Title */}
+                                <div className="flex items-center mb-8">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white mr-4 shadow-lg shadow-indigo-500/20">
+                                        <MaterialIcon name="business" className="text-[22px] fill-1" />
+                                    </div>
+                                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Hồ sơ & Thương hiệu</h1>
+                                </div>
 
-                            {/* TAB: HỒ SƠ BỆNH VIỆN */}
-                            {activeTab === 'profile' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                    <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                                        <Hotel className="w-5 h-5 text-slate-400" />
-                                        Hồ sơ & Thương hiệu
-                                    </h2>
-
-                                    {/* Branding Card */}
-                                    <div className="bg-white dark:bg-[#1c162e] rounded-2xl border border-[#ebe7f3] dark:border-[#2d263d] overflow-hidden shadow-sm">
-                                        <div className="h-48 bg-slate-100 dark:bg-slate-800 relative group overflow-hidden">
-                                            {cover ? (
-                                                <img src={cover} alt="Cover" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                                                    <ImageIcon className="w-12 h-12 mb-2 opacity-20" />
-                                                    <p className="text-xs font-medium">Chưa có ảnh bìa</p>
-                                                </div>
-                                            )}
-                                            <label className="absolute bottom-4 right-4 px-4 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-lg text-xs font-bold text-[#6324eb] dark:text-white cursor-pointer shadow-lg transform translate-y-12 group-hover:translate-y-0 transition-all border border-white/20">
-                                                <div className="flex items-center gap-2">
-                                                    <Upload className="w-3.5 h-3.5" />
-                                                    Thay đổi Ảnh bìa
-                                                </div>
+                                {/* Banner & Logo Section */}
+                                <section className="relative mb-16">
+                                    <div className="h-64 md:h-80 w-full rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-800 relative group border border-slate-200 dark:border-slate-800 shadow-sm">
+                                        {cover ? (
+                                            <img src={cover} alt="Hospital cover" className="w-full h-full object-cover opacity-90 dark:opacity-60 group-hover:scale-105 transition-transform duration-700" />
+                                        ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                                <MaterialIcon name="image" className="text-6xl opacity-20 mb-2" />
+                                                <p className="text-sm font-bold">Chưa có ảnh bìa</p>
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                                        <div className="absolute bottom-6 right-6">
+                                            <label className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all border border-white/30 cursor-pointer active:scale-95 shadow-lg">
+                                                <MaterialIcon name="photo_camera" className="text-sm" />
+                                                <span>Thay đổi ảnh bìa</span>
                                                 <input type="file" className="hidden" accept="image/*" onChange={handleCoverUpload} />
                                             </label>
                                         </div>
+                                        <div className="absolute bottom-8 left-44 hidden md:block">
+                                            <h2 className="text-3xl font-black text-white mb-1 drop-shadow-md">{hospitalName}</h2>
+                                            <p className="text-white/80 text-sm max-w-md font-medium drop-shadow-sm line-clamp-2">{hospitalDesc}</p>
+                                        </div>
+                                    </div>
 
-                                        <div className="px-8 pb-8 -mt-12 relative flex items-end justify-between">
-                                            <div className="flex items-end gap-6">
-                                                <div className="size-28 rounded-2xl bg-white dark:bg-slate-900 border-4 border-white dark:border-slate-900 shadow-xl overflow-hidden relative group">
+                                    {/* Logo Floating */}
+                                    <div className="absolute -bottom-10 left-10">
+                                        <div className="relative group">
+                                            <div className="w-32 h-32 md:w-36 md:h-36 bg-white dark:bg-slate-900 rounded-full p-1.5 shadow-2xl border-4 border-white dark:border-slate-900 overflow-hidden">
+                                                <div className="w-full h-full rounded-full overflow-hidden bg-slate-50 dark:bg-slate-800 flex items-center justify-center relative">
                                                     {logo ? (
-                                                        <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+                                                        <img src={logo} alt="Logo" className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-300">
-                                                            <Hotel className="w-10 h-10" />
-                                                        </div>
+                                                        <MaterialIcon name="local_hospital" className="text-indigo-600 text-6xl opacity-30 group-hover:scale-110 transition-transform duration-500 fill-1" />
                                                     )}
-                                                    <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                                        <Upload className="w-6 h-6 text-white" />
+                                                    <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-pointer">
+                                                        <MaterialIcon name="edit" className="text-white text-2xl" />
                                                         <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
                                                     </label>
                                                 </div>
-                                                <div className="pb-2">
-                                                    <h3 className="text-2xl font-black text-[#120e1b] dark:text-white">{hospitalName}</h3>
-                                                    <p className="text-sm text-slate-500 font-medium max-w-[500px] line-clamp-1">{hospitalDesc}</p>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                </section>
 
-                                    {/* Profile Form */}
-                                    <div className="bg-white dark:bg-[#1c162e] p-8 rounded-2xl border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm space-y-8">
+                                {/* Form Sections */}
+                                <div className="space-y-6">
+                                    {/* Basic Info */}
+                                    <div className="bg-white dark:bg-slate-900/50 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                                        <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
+                                            <MaterialIcon name="info" className="text-indigo-600 mr-2 text-xl fill-1" />
+                                            Thông tin cơ bản
+                                        </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Tên Bệnh viện</label>
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Tên Bệnh viện</label>
                                                 <input
                                                     value={hospitalName}
                                                     onChange={(e) => setHospitalName(e.target.value)}
-                                                    className="px-4 py-3 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] outline-none focus:border-[#6324eb] transition-all font-medium"
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm shadow-sm"
+                                                    placeholder="Nhập tên bệnh viện"
+                                                    type="text"
                                                 />
                                             </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Mã Định danh (Hospital ID)</label>
-                                                <div className="relative group">
-                                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Mã Định danh (Hospital ID)</label>
+                                                <div className="relative">
+                                                    <MaterialIcon name="lock" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
                                                     <input
-                                                        className="w-full pl-10 px-4 py-3 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-100 dark:bg-slate-800/50 text-slate-500 font-mono text-sm outline-none cursor-not-allowed select-none"
-                                                        defaultValue="HOS-8821-XC"
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/80 text-slate-500 cursor-not-allowed font-mono text-sm"
                                                         readOnly
+                                                        type="text"
+                                                        value="HOS-8821-XC"
                                                     />
-                                                    <div className="absolute top-full left-0 mt-2 px-3 py-2 bg-slate-900 text-white text-[10px] rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap font-bold flex items-center gap-2 border border-white/10">
-                                                        <Info className="w-3.5 h-3.5 text-blue-400" />
-                                                        Mã này được hệ thống cấp và không thể chỉnh sửa.
-                                                    </div>
                                                 </div>
                                             </div>
-
-                                            <div className="flex flex-col gap-2 md:col-span-2">
-                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Mô tả Tổ chức</label>
+                                            <div className="md:col-span-2 space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Mô tả Tổ chức</label>
                                                 <textarea
                                                     value={hospitalDesc}
                                                     onChange={(e) => setHospitalDesc(e.target.value)}
+                                                    className="w-full px-6 py-4 rounded-[1.5rem] border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-medium text-sm resize-none shadow-sm"
                                                     rows={4}
-                                                    className="w-full px-4 py-3 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] outline-none focus:border-[#6324eb] transition-all font-medium resize-none shadow-inner"
-                                                    placeholder="Giới thiệu đôi nét về bệnh viện và sứ mệnh của bạn..."
+                                                    placeholder="Giới thiệu về sứ mệnh tổ chức..."
                                                 />
                                             </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Email Liên hệ</label>
-                                                <div className="relative">
-                                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                    <input className="w-full pl-10 px-4 py-3 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] outline-none focus:border-[#6324eb] transition-colors" defaultValue="admins@cityhospital.org" />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Số Điện thoại</label>
-                                                <div className="relative">
-                                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                    <input className="w-full pl-10 px-4 py-3 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] outline-none focus:border-[#6324eb] transition-colors" defaultValue="+84 28 3933 9999" />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-col gap-3 md:col-span-2">
-                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Địa chỉ Trụ sở & Ghim vị trí</label>
-                                                <div className="flex flex-col gap-6">
-                                                    <div className="relative">
-                                                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                        <input className="w-full pl-10 px-4 py-3 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] outline-none focus:border-[#6324eb] transition-colors" defaultValue="452 Đường Nguyễn Y, Phường Đa Kao, Quận 1, TP. Hồ Chí Minh" />
-                                                    </div>
-
-                                                    {/* Map Card */}
-                                                    <div className="relative w-full h-[350px] rounded-2xl overflow-hidden border-2 border-[#ebe7f3] dark:border-[#2d263d] bg-slate-100 p-1 group/map">
-                                                        <img
-                                                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/HCMC_map.png/1200px-HCMC_map.png"
-                                                            alt="Map"
-                                                            className="w-full h-full object-cover rounded-xl filter grayscale-[0.2] contrast-[1.05]"
-                                                        />
-                                                        <div className="absolute inset-0 bg-[#6324eb]/5 opacity-0 group-hover/map:opacity-100 transition-opacity pointer-events-none" />
-                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                            <div className="size-16 bg-[#6324eb]/20 rounded-full flex items-center justify-center animate-pulse">
-                                                                <MapPin className="text-[#6324eb] w-10 h-10 fill-current drop-shadow-2xl" />
-                                                            </div>
-                                                        </div>
-                                                        <button className="absolute bottom-6 right-6 px-6 py-3 bg-[#6324eb] text-white text-sm font-bold rounded-xl shadow-2xl hover:scale-105 hover:bg-[#501ac2] transition-all flex items-center gap-2 border border-white/20 active:scale-95">
-                                                            <MapPin className="w-4 h-4" />
-                                                            Ghim vị trí chính xác
-                                                        </button>
-                                                        <div className="absolute top-6 left-6 p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur rounded-xl shadow-2xl border border-white/20 max-w-[240px]">
-                                                            <div className="flex items-center gap-2 text-amber-600 mb-2">
-                                                                <MapPin className="w-4 h-4" />
-                                                                <span className="text-[10px] font-black uppercase tracking-widest">Điểm hiến máu</span>
-                                                            </div>
-                                                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">Đặt ghim tại vị trí cổng đón người hiến máu để hỗ trợ chỉ đường chính xác cho tình nguyện viên.</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex justify-end pt-6 border-t border-[#ebe7f3] dark:border-[#2d263d]">
-                                            <button className="flex items-center gap-2 px-10 py-4 bg-[#6324eb] text-white rounded-xl font-bold hover:bg-[#501ac2] transition-all shadow-xl shadow-[#6324eb]/30 active:scale-95">
-                                                <Save className="w-5 h-5" />
-                                                Lưu thay đổi
-                                            </button>
                                         </div>
                                     </div>
-                                </div>
-                            )}
 
-                            {/* TAB: THÔNG BÁO */}
-                            {activeTab === 'notifications' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                    <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                                        <Bell className="w-5 h-5 text-slate-400" />
-                                        Cấu hình Thông báo
-                                    </h2>
-
-                                    <div className="bg-white dark:bg-[#1c162e] p-8 rounded-2xl border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm space-y-6">
-                                        {/* Smart Shortfall Alert */}
-                                        <div className="p-6 bg-slate-50 dark:bg-[#251e36] rounded-2xl border border-dashed border-[#ebe7f3] dark:border-[#2d263d]">
-                                            <div className="flex items-center justify-between mb-8">
-                                                <div className="flex items-start gap-4">
-                                                    <div className="size-12 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-600 shrink-0">
-                                                        <Info className="w-6 h-6" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-black text-lg text-[#120e1b] dark:text-white mb-1">Cảnh báo Thiếu hụt Chỉ tiêu Chiến dịch</p>
-                                                        <p className="text-sm text-slate-500 max-w-[450px]">Tự động gửi thông báo khẩn cấp khi tốc độ thu thập không đạt kỳ vọng so với mục tiêu đề ra.</p>
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    className={`relative inline-block w-14 h-7 transition duration-200 ease-in-out rounded-full cursor-pointer shadow-inner ${emailAlert ? 'bg-[#6324eb]' : 'bg-slate-300 dark:bg-slate-600'}`}
-                                                    onClick={() => setEmailAlert(!emailAlert)}
-                                                >
-                                                    <span className={`absolute top-1 bg-white w-5 h-5 rounded-full shadow-md transition-transform ${emailAlert ? 'left-8' : 'left-1'}`}></span>
+                                    {/* Contact & Location */}
+                                    <div className="bg-white dark:bg-slate-900/50 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                                        <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
+                                            <MaterialIcon name="contact_mail" className="text-indigo-600 mr-2 text-xl fill-1" />
+                                            Liên hệ & Vị trí
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Email Liên hệ</label>
+                                                <div className="relative">
+                                                    <MaterialIcon name="alternate_email" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                                                    <input className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm shadow-sm" type="email" defaultValue="admins@cityhospital.org" />
                                                 </div>
                                             </div>
-
-                                            <div className={`space-y-6 px-4 transition-all duration-300 ${!emailAlert ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-                                                <div className="flex justify-between items-end mb-2">
-                                                    <div>
-                                                        <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">Ngưỡng báo động tùy chỉnh</label>
-                                                        <span className="text-4xl font-black text-[#6324eb] dark:text-[#a881f3]">{shortfallThreshold}%</span>
-                                                    </div>
-                                                    <span className="text-[10px] font-black text-amber-600 bg-amber-100 dark:bg-amber-900/20 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800 uppercase tracking-tighter">Ưu tiên thông báo khẩn</span>
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Số Điện thoại</label>
+                                                <div className="relative">
+                                                    <MaterialIcon name="call" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                                                    <input className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm shadow-sm" type="tel" defaultValue="+84 28 3933 9999" />
                                                 </div>
-                                                <div className="relative h-6 flex items-center">
-                                                    <input
-                                                        type="range"
-                                                        min="0"
-                                                        max="100"
-                                                        step="5"
-                                                        value={shortfallThreshold}
-                                                        onChange={(e) => setShortfallThreshold(parseInt(e.target.value))}
-                                                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#6324eb] focus:outline-none"
-                                                    />
-                                                </div>
-                                                <div className="flex justify-between text-[11px] text-slate-400 font-bold uppercase tracking-tight">
-                                                    <span>Duy trì ổn định (0%)</span>
-                                                    <span>Báo động nguy cấp (100%)</span>
-                                                </div>
-                                                <div className="p-4 bg-[#6324eb]/5 dark:bg-[#6324eb]/10 rounded-xl border border-[#6324eb]/10 text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                                                    <div className="flex items-center gap-2 text-[#6324eb] mb-1 font-bold">
-                                                        <CheckCircle className="w-4 h-4" />
-                                                        Kịch bản: Ngưỡng báo động {shortfallThreshold}%
-                                                    </div>
-                                                    <span className="font-bold opacity-60">Thực tế:</span> Gửi cảnh báo ngay khi chiến dịch đạt dưới <span className="font-black text-[#6324eb] underline decoration-2">{shortfallThreshold}%</span> mục tiêu thu thập (tổng kiểm tra mỗi 6 giờ).
+                                            </div>
+                                            <div className="md:col-span-2 space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Địa chỉ Trụ sở & Ghim vị trí</label>
+                                                <div className="relative">
+                                                    <MaterialIcon name="location_on" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                                                    <input className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm shadow-sm" type="text" defaultValue="452 Đường Nguyễn Y, Phường Đa Kao, Quận 1, TP. Hồ Chí Minh" />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Real-time Notification */}
-                                        <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-[#251e36] rounded-2xl border border-[#ebe7f3] dark:border-[#2d263d]">
-                                            <div className="flex items-center gap-4">
-                                                <div className="size-12 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 shrink-0">
-                                                    <User className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-[#120e1b] dark:text-white">Thông báo Người hiến mới</p>
-                                                    <p className="text-sm text-slate-400">Nhận thông báo thời gian thực khi có người đăng ký hiến máu.</p>
+                                        {/* Map Preview */}
+                                        <div className="relative rounded-[2rem] overflow-hidden h-80 border border-slate-300 dark:border-slate-700 shadow-inner group/map">
+                                            <img alt="Map Preview" className="w-full h-full object-cover grayscale opacity-50 dark:opacity-30 group-hover/map:scale-105 transition-transform duration-1000" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHmSY9vfRml7HHti-HeQSDGGSKqDVpN2NmW4IV6HsJJbMULsRGeKa56XvKtECTlJqFjuL7gxl3mTpCoa-hebF584-rkJ8es8ddM3OFv5oiG2y-dQyI5Qxei0gUF4-e4VM1dA1ADZhKNRRb6LvgcYo2dbbDlbnSIJpUTbIPrbnAhJkKTxNS3tm5Nv0erjFx8c2Hb8mLPHz3JmUe_trIjUVdgp_aZiVE35dqMDjJW-DBLjwiHCrGbRGa81oKpvxnkpgVa-mY2Ctp8pw" />
+                                            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                                <div className="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-2xl animate-bounce border-4 border-white/20">
+                                                    <MaterialIcon name="location_on" className="text-3xl fill-1" />
                                                 </div>
                                             </div>
-                                            <div
-                                                className={`relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer shadow-inner ${newDonorAlert ? 'bg-[#6324eb]' : 'bg-slate-300 dark:bg-slate-600'}`}
-                                                onClick={() => setNewDonorAlert(!newDonorAlert)}
-                                            >
-                                                <span className={`absolute top-1 bg-white w-4 h-4 rounded-full shadow-sm transition-transform ${newDonorAlert ? 'left-7' : 'left-1'}`}></span>
+                                            <div className="absolute top-6 left-6 max-w-[280px]">
+                                                <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-5 rounded-2xl shadow-2xl border border-white dark:border-slate-800">
+                                                    <div className="flex items-center space-x-2 mb-2">
+                                                        <MaterialIcon name="stars" className="text-orange-500 text-sm fill-1" />
+                                                        <span className="text-orange-600 text-[10px] font-black uppercase tracking-widest">Điểm Hiến Máu</span>
+                                                    </div>
+                                                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-semibold">
+                                                        Đặt ghim tại vị trí cổng đón để hỗ trợ chỉ đường chính xác cho tình nguyện viên.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="absolute bottom-6 right-6">
+                                                <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-full font-black text-sm flex items-center shadow-2xl hover:scale-105 active:scale-95 transition-all gap-2 border border-white/10">
+                                                    <MaterialIcon name="gps_fixed" className="text-lg" />
+                                                    <span>Ghim vị trí chính xác</span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-end pt-6">
-                                        <button className="flex items-center gap-2 px-10 py-4 bg-[#6324eb] text-white rounded-xl font-bold hover:bg-[#501ac2] transition-colors shadow-xl shadow-[#6324eb]/20 active:scale-95">
-                                            <Save className="w-5 h-5" />
-                                            Lưu cấu hình
+                                    <div className="flex justify-end pt-6 pb-12">
+                                        <button className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white px-12 py-4 rounded-full font-black text-base flex items-center space-x-3 hover:-translate-y-1 transition-all shadow-2xl shadow-indigo-500/30 active:scale-95">
+                                            <MaterialIcon name="save" className="text-xl" />
+                                            <span>Lưu thay đổi hồ sơ</span>
                                         </button>
                                     </div>
                                 </div>
-                            )}
+                            </div>
+                        )}
 
-                            {/* TAB: BẢO MẬT */}
-                            {activeTab === 'security' && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                    <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                                        <Shield className="w-5 h-5 text-slate-400" />
-                                        Cài đặt Bảo mật
-                                    </h2>
+                        {activeTab === 'notifications' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600 mr-4">
+                                        <MaterialIcon name="notifications" className="text-[22px] fill-1" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Cấu hình Thông báo</h2>
+                                </div>
 
-                                    <div className="bg-white dark:bg-[#1c162e] p-8 rounded-2xl border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm space-y-8">
-                                        <div className="grid grid-cols-1 gap-6 max-w-[500px]">
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Mật khẩu Hiện tại</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type={showPassword ? "text" : "password"}
-                                                        className="w-full px-4 py-3 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] outline-none focus:border-[#6324eb] transition-all font-medium"
-                                                        placeholder="••••••••"
-                                                    />
-                                                    <button
-                                                        onClick={() => setShowPassword(!showPassword)}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                                                    >
-                                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                                    </button>
+                                <div className="bg-white dark:bg-slate-900/50 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+                                    <div className="p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-800">
+                                        <div className="flex items-center justify-between mb-8">
+                                            <div className="flex items-start gap-5">
+                                                <div className="size-12 rounded-2xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 shrink-0">
+                                                    <MaterialIcon name="warning" className="text-2xl fill-1" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-lg text-slate-900 dark:text-white mb-1">Cảnh báo thiếu hụt chỉ tiêu</p>
+                                                    <p className="text-sm text-slate-500 max-w-[450px] font-medium">Tự động gửi thông báo khẩn cấp khi tốc độ thu thập không đạt kỳ vọng.</p>
                                                 </div>
                                             </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Mật khẩu Mới</label>
-                                                <input
-                                                    type="password"
-                                                    className="w-full px-4 py-3 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] outline-none focus:border-[#6324eb] transition-all font-medium"
-                                                    placeholder="Nhập mật khẩu mới"
-                                                />
-                                            </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Xác nhận Mật khẩu Mới</label>
-                                                <input
-                                                    type="password"
-                                                    className="w-full px-4 py-3 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] outline-none focus:border-[#6324eb] transition-all font-medium"
-                                                    placeholder="Gõ lại mật khẩu mới"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-900/30 flex items-start gap-4">
-                                            <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                                            <p className="text-xs text-amber-800 dark:text-amber-400 leading-relaxed">
-                                                <span className="font-bold">Lưu ý:</span> Việc đổi mật khẩu sẽ đăng xuất tài khoản của bạn khỏi tất cả các thiết bị khác để đảm bảo an toàn.
-                                            </p>
-                                        </div>
-
-                                        <div className="flex justify-end pt-6 border-t border-[#ebe7f3] dark:border-[#2d263d]">
-                                            <button className="flex items-center gap-2 px-10 py-4 bg-[#6324eb] text-white rounded-xl font-bold hover:bg-[#501ac2] transition-all shadow-xl shadow-[#6324eb]/20 active:scale-95">
-                                                <Shield className="w-5 h-5" />
-                                                Cập nhật Bảo mật
+                                            <button
+                                                onClick={() => setEmailAlert(!emailAlert)}
+                                                className={`relative inline-block w-16 h-8 transition duration-300 ease-in-out rounded-full cursor-pointer overflow-hidden ${emailAlert ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+                                            >
+                                                <span className={`absolute top-1 bg-white w-6 h-6 rounded-full shadow-lg transition-transform duration-300 ${emailAlert ? 'translate-x-9' : 'translate-x-1'}`}></span>
                                             </button>
                                         </div>
+
+                                        <div className={`space-y-8 px-4 transition-all duration-500 ${!emailAlert ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+                                            <div className="flex justify-between items-end">
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Ngưỡng báo động</label>
+                                                    <span className="text-5xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter">{shortfallThreshold}%</span>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-2">
+                                                    <span className="text-[10px] font-black text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-800 uppercase tracking-tight">Thông báo khẩn cấp</span>
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                step="5"
+                                                value={shortfallThreshold}
+                                                onChange={(e) => setShortfallThreshold(parseInt(e.target.value))}
+                                                className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
+                                            />
+                                            <div className="p-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
+                                                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 mb-2 font-black text-sm">
+                                                    <MaterialIcon name="check_circle" className="text-lg fill-1" />
+                                                    Kịch bản kích hoạt
+                                                </div>
+                                                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-semibold">
+                                                    Gửi cảnh báo ngay khi chiến dịch đạt dưới <span className="text-indigo-600 dark:text-indigo-400 font-black underline decoration-2">{shortfallThreshold}%</span> mục tiêu trong 6 giờ đầu tiên.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-800 group hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors">
+                                        <div className="flex items-center gap-5">
+                                            <div className="size-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 shrink-0">
+                                                <MaterialIcon name="person_add" className="text-2xl fill-1" />
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-lg text-slate-900 dark:text-white">Thông báo người hiến mới</p>
+                                                <p className="text-sm text-slate-500 font-medium">Nhận thông báo thời gian thực khi có người đăng ký hiến máu.</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setNewDonorAlert(!newDonorAlert)}
+                                            className={`relative inline-block w-14 h-7 transition duration-300 ease-in-out rounded-full cursor-pointer ${newDonorAlert ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+                                        >
+                                            <span className={`absolute top-1 bg-white w-5 h-5 rounded-full shadow-md transition-transform duration-300 ${newDonorAlert ? 'translate-x-8' : 'translate-x-1'}`}></span>
+                                        </button>
+                                    </div>
+
+                                    <div className="flex justify-end pt-4">
+                                        <button className="bg-indigo-600 text-white px-10 py-4 rounded-full font-black text-base shadow-2xl shadow-indigo-500/20 active:scale-95 transition-all">
+                                            Lưu cấu hình thông báo
+                                        </button>
                                     </div>
                                 </div>
-                            )}
+                            </div>
+                        )}
 
-                        </div>
+                        {activeTab === 'security' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center text-emerald-600 mr-4">
+                                        <MaterialIcon name="shield" className="text-[22px] fill-1" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Bảo mật tài khoản</h2>
+                                </div>
+
+                                <div className="bg-white dark:bg-slate-900/50 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm space-y-8">
+                                    <div className="grid grid-cols-1 gap-8 max-w-md">
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Mật khẩu Hiện tại</label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm"
+                                                    placeholder="••••••••"
+                                                />
+                                                <button
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600"
+                                                >
+                                                    <MaterialIcon name={showPassword ? "visibility_off" : "visibility"} className="text-xl" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Mật khẩu mới</label>
+                                            <input
+                                                type="password"
+                                                className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm"
+                                                placeholder="Ít nhất 8 ký tự"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Xác nhận mật khẩu</label>
+                                            <input
+                                                type="password"
+                                                className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm"
+                                                placeholder="Gõ lại mật khẩu mới"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-200 dark:border-amber-800/30 flex items-start gap-4">
+                                        <MaterialIcon name="info" className="text-amber-600 mt-0.5 text-xl fill-1" />
+                                        <p className="text-xs text-amber-800 dark:text-amber-400 leading-relaxed font-bold">
+                                            Việc đổi mật khẩu sẽ đăng xuất tài khoản của bạn khỏi tất cả các thiết bị khác để đảm bảo an toàn tối đa.
+                                        </p>
+                                    </div>
+
+                                    <div className="flex justify-end pt-6 border-t border-slate-200 dark:border-slate-800">
+                                        <button className="bg-emerald-600 text-white px-10 py-4 rounded-full font-black text-base shadow-xl shadow-emerald-500/20 active:scale-95 transition-all">
+                                            Cập nhật bảo mật
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </main>
 
                     <MiniFooter />
                 </div>
             </div>
+
+            {/* Custom Styles */}
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .material-symbols-outlined {
+                    font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+                }
+                .fill-1 {
+                    font-variation-settings: 'FILL' 1 !important;
+                }
+                input[type="range"]::-webkit-slider-thumb {
+                    width: 24px;
+                    height: 24px;
+                    background: #4F46E5;
+                    border: 4px solid #fff;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    appearance: none;
+                    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                    transition: transform 0.2s;
+                }
+                input[type="range"]::-webkit-slider-thumb:hover {
+                    transform: scale(1.1);
+                }
+                .dark input[type="range"]::-webkit-slider-thumb {
+                    border-color: #1E293B;
+                }
+            `}} />
         </div>
     );
 }

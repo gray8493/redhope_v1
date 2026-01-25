@@ -1,64 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import {
-    Search,
-    Calendar as CalendarIcon,
-    MapPin,
-    Send,
-    Save,
-    User,
-    FileText,
-    Activity,
-    Clock
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
-
-import { useRouter } from "next/navigation";
 import { addCampaign, Campaign } from "@/app/utils/campaignStorage";
-import { useEffect } from "react";
-import dynamic from "next/dynamic";
-import { CheckCircle, Zap, Sparkles, ChevronRight, AlertTriangle } from "lucide-react";
+import {
+    Sparkles,
+    Zap,
+    AlertTriangle,
+    CheckCircle,
+    Info
+} from "lucide-react";
 
 // Tải ReactQuill phía client
 const ReactQuill = dynamic(() => import("react-quill-new"), {
     ssr: false,
-    loading: () => <div className="h-32 bg-slate-100 animate-pulse rounded-xl" />
+    loading: () => <div className="h-32 bg-slate-100 animate-pulse rounded-3xl" />
 });
 import "react-quill-new/dist/quill.snow.css";
 
 // --- Dữ liệu Mẫu (Templates) ---
 const TEMPLATES = [
     {
-        id: "spring",
-        name: "Chiến dịch Mùa Xuân",
-        icon: <Sparkles className="w-4 h-4" />,
-        color: "bg-emerald-500",
-        data: {
-            name: "Lễ hội Xuân Hồng 2026",
-            org: "Cộng đồng (Tất cả)",
-            desc: "<h2>Lễ hội Xuân Hồng</h2><p>Hành trình kết nối những trái tim nhân ái, mang lại hy vọng cho những bệnh nhân cần máu trong dịp Tết Nguyên Đán.</p>",
-            targetAmount: "250",
-            location: "Bệnh viện Đa khoa Thành phố",
-            isUrgent: false,
-            startTime: "07:30",
-            endTime: "16:30"
-        }
-    },
-    {
         id: "emergency",
-        name: "Cấp cứu Khẩn cấp",
-        icon: <Zap className="w-4 h-4" />,
-        color: "bg-red-500",
+        name: "Khẩn cấp",
+        color: "bg-rose-500",
         data: {
-            name: "Yêu cầu Máu Khẩn cấp - Tai nạn Liên hoàn",
-            org: "Cộng đồng (Tất cả)",
-            desc: "<h3>Tình trạng khẩn cấp!</h3><p>Cần gấp nhóm máu hiếm phục vụ cấp cứu các nạn nhân tai nạn giao thông tại quốc lộ. Rất mong sự hỗ trợ kịp thời từ cộng đồng.</p>",
+            name: "Yêu cầu Máu Khẩn cấp - Tai nạn liên hoàn",
+            org: "Bệnh viện Chợ Rẫy",
+            desc: "<h3>Tình trạng khẩn cấp!</h3><p>Cần gấp nhóm máu hiếm phục vụ cấp cứu các nạn nhân tai nạn giao thông. Rất mong sự hỗ trợ kịp thời từ cộng đồng.</p>",
             targetAmount: "50",
             location: "Khoa Cấp cứu - BV Chợ Rẫy",
             isUrgent: true,
@@ -72,23 +48,23 @@ export default function CreateRequestPage() {
     const router = useRouter();
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-    const [selectedBloodTypes, setSelectedBloodTypes] = useState<string[]>([]);
+    const [selectedBloodTypes, setSelectedBloodTypes] = useState<string[]>(["AB+"]);
     const [isUrgent, setIsUrgent] = useState(false);
+
     // Form States
-    const [mrn, setMrn] = useState("");
     const [campaignName, setCampaignName] = useState("");
-    const [organization, setOrganization] = useState("Cộng đồng (Tất cả)");
-    const [targetCount, setTargetCount] = useState(""); // Initialize as string
-    const [targetAmount, setTargetAmount] = useState(""); // Initialize as string
-    const [radius, setRadius] = useState("5km");
-    const [location, setLocation] = useState("");
-    const [department, setDepartment] = useState("");
+    const [mrn, setMrn] = useState("");
+    const [organization, setOrganization] = useState("Bệnh viện Chợ Rẫy");
+    const [targetCount, setTargetCount] = useState("");
+    const [targetAmount, setTargetAmount] = useState("");
+    const [radius, setRadius] = useState("5km (Lân cận)");
+    const [location, setLocation] = useState("Khoa Cấp cứu - BV Chợ Rẫy");
     const [desc, setDesc] = useState("");
-    const [startTime, setStartTime] = useState("07:30");
-    const [endTime, setEndTime] = useState("16:30");
+    const [startTime, setStartTime] = useState("08:00");
+    const [endTime, setEndTime] = useState("21:00");
     const [lastChanged, setLastChanged] = useState<'amount' | 'count' | null>(null);
 
-    // Logic tính toán thông minh hai chiều
+    // Logic tính toán thông minh hai chiều (Smart Insight)
     useEffect(() => {
         if (lastChanged === 'amount') {
             const amount = parseFloat(targetAmount);
@@ -122,43 +98,39 @@ export default function CreateRequestPage() {
         setIsUrgent(templateData.isUrgent);
         if (templateData.startTime) setStartTime(templateData.startTime);
         if (templateData.endTime) setEndTime(templateData.endTime);
+        setLastChanged('amount'); // Trigger re-calc
     };
 
     const handleCreate = (isDraft: boolean) => {
-        // Parse numbers
         const pTargetAmount = parseFloat(targetAmount) || 0;
-        const pTargetCount = parseInt(targetCount) || 1;
-
-        // Validation for Publish
         if (!isDraft) {
-            // Require campaign name and target amount > 0 if publishing
             if (!campaignName || !location || selectedBloodTypes.length === 0 || !selectedDate || pTargetAmount <= 0) {
-                alert("Vui lòng điền đầy đủ thông tin bắt buộc (bao gồm Mục tiêu đơn vị)!");
+                alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
                 return;
             }
         }
 
         const newCampaign: Campaign = {
-            id: 0, // Will be generated
-            name: campaignName.trim() || (isUrgent ? `Đợt Khẩn cấp ${mrn} ` : `Yêu cầu mới`),
-            desc: desc || `Yêu cầu máu tại ${location} `,
+            id: Date.now(),
+            name: campaignName || (isUrgent ? `Yêu cầu Khẩn cấp ${mrn}` : `Yêu cầu mới`),
+            desc: desc,
             location: location,
             organization: organization,
-            radius: organization === "Cộng đồng (Tất cả)" ? radius : undefined, // Only save radius for Community
-            target: pTargetAmount, // Use the specific target amount
+            radius: radius,
+            target: pTargetAmount,
             bloodType: selectedBloodTypes.length === 1 ? selectedBloodTypes[0] : "Hỗn hợp",
             bloodTypes: selectedBloodTypes,
-            bloodClass: "text-slate-600 bg-slate-100 dark:bg-slate-800", // Default logic
+            bloodClass: "text-slate-600 bg-slate-100",
             status: isUrgent ? "Khẩn cấp" : "Tiêu chuẩn",
             statusClass: isUrgent ? "bg-red-600 text-white" : "bg-blue-600 text-white",
             operationalStatus: isDraft ? "Bản nháp" : "Đang hoạt động",
             isUrgent: isUrgent,
-            timeLeft: isDraft ? "" : "Vừa đăng",
+            timeLeft: "Vừa đăng",
             progress: 0,
             current: 0,
             completedCount: 0,
             registeredCount: 0,
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBZiNSYWEy5ZAjxyaFcmn3iOyddBWPAo-t4t2XsfTJGxeJi9pEE3PcQvHukQOiZiZfZKJ_NqFXxSTeco2-MSerQKRL5_r53tmMnHyXvtxhRQzJ-vzOaZ2giorfxNjOUDLlGVHBskP1VPCvzakxwSAOsMZr4J8ReKbJJN6CCOy0gM-ah-B09uje6IwWuV197aU3UNyQYOKs0zvUVmjFBEd3wBkFq6J8WRnVolp_edDc9AwGCPjvU6M1HOqDmErPtLflVEa6odlYKvEr2", // Default Image
+            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBZiNSYWEy5ZAjxyaFcmn3iOyddBWPAo-t4t2XsfTJGxeJi9pEE3PcQvHukQOiZiZfZKJ_NqFXxSTeco2-MSerQKRL5_r53tmMnHyXvtxhRQzJ-vzOaZ2giorfxNjOUDLlGVHBskP1VPCvzakxwSAOsMZr4J8ReKbJJN6CCOy0gM-ah-B09uje6IwWuV197aU3UNyQYOKs0zvUVmjFBEd3wBkFq6J8WRnVolp_edDc9AwGCPjvU6M1HOqDmErPtLflVEa6odlYKvEr2",
             date: selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: vi }) : "",
             staffCount: 5,
             startTime: startTime,
@@ -176,284 +148,278 @@ export default function CreateRequestPage() {
                 : [...prev, type]
         );
     };
+
+    const MaterialIcon = ({ name, className = "" }: { name: string, className?: string }) => (
+        <span className={`material-symbols-outlined ${className}`}>{name}</span>
+    );
+
     return (
-        <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
+        <div className="relative flex min-h-screen w-full flex-col bg-[#FDFCFE] font-sans text-slate-900 antialiased overflow-x-hidden text-left">
+            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+            <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
             <div className="flex h-full grow flex-row">
                 <HospitalSidebar />
                 <div className="flex-1 flex flex-col min-w-0">
-                    <TopNav title="Tạo Yêu cầu Máu Mới" />
+                    <TopNav title="Tạo Yêu cầu Máu" />
 
-                    <main className="flex flex-1 justify-center py-10 px-4">
-                        <div className="flex flex-col max-w-[800px] w-full gap-8">
-                            {/* Page Heading */}
-                            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                                <div className="flex flex-col gap-2">
-                                    <h1 className="text-[#120e1b] dark:text-white text-3xl font-black leading-tight">Tạo Yêu cầu Máu Mới</h1>
-                                    <p className="text-slate-500 text-base font-normal">Điền thông tin yêu cầu để thông báo ngay lập tức cho người hiến phù hợp.</p>
+                    <main className="flex flex-1 justify-center py-10 px-6">
+                        <div className="flex flex-col max-w-[840px] w-full gap-8">
+
+                            {/* Header Section */}
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-2">
+                                <div className="flex flex-col gap-1">
+                                    <h1 className="text-slate-900 text-3xl font-black tracking-tight">Tạo Yêu cầu <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6]">Máu Mới</span></h1>
+                                    <p className="text-slate-500 text-sm font-medium">Hệ thống AI sẽ tự động điều phối tới người hiến tiềm năng nhất.</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Mẫu nhanh:</span>
-                                    <div className="flex gap-2">
-                                        {TEMPLATES.map(t => (
-                                            <button
-                                                key={t.id}
-                                                onClick={() => applyTemplate(t.data)}
-                                                className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:border-[#6324eb] hover:text-[#6324eb] transition-all shadow-sm"
-                                            >
-                                                <span className={`w-2 h-2 rounded-full ${t.color}`} />
-                                                {t.name}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Mẫu nhanh:</span>
+                                    {TEMPLATES.map(t => (
+                                        <button
+                                            key={t.id}
+                                            onClick={() => applyTemplate(t.data)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-full text-[12px] font-bold text-slate-600 hover:border-[#6D28D9]/40 hover:text-[#6D28D9] transition-all shadow-sm"
+                                        >
+                                            <span className={`size-2 rounded-full ${t.color}`}></span> {t.name}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
-                            <div className={`transition-all duration-500 rounded-xl border p-8 shadow-sm ${isUrgent
-                                ? "bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/10 border-red-200 dark:border-red-900/50"
-                                : "bg-white dark:bg-[#1c162e] border-[#ebe7f3] dark:border-[#2d263d]"
-                                }`}>
-                                {isUrgent && (
-                                    <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-800 rounded-xl flex items-center gap-3 animate-pulse">
-                                        <AlertTriangle className="text-red-600 dark:text-red-400 w-6 h-6" />
-                                        <p className="text-red-700 dark:text-red-300 font-bold text-sm">Chế độ Khẩn cấp đang được bật. Yêu cầu này sẽ được ưu tiên hiển thị hàng đầu!</p>
+                            {/* Main Form Card */}
+                            <div className={`bg-white border rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] transition-all duration-500 ${isUrgent ? 'border-rose-300 shadow-rose-500/10' : 'border-slate-200'}`}>
+
+                                {/* Emergency Toggle Banner */}
+                                <div className={`mb-10 rounded-2xl p-5 flex items-center justify-between border transition-all ${isUrgent ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200/60'}`}>
+                                    <div className="flex items-center gap-4">
+                                        <div className={`size-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isUrgent ? 'bg-rose-500 animate-pulse shadow-rose-200' : 'bg-indigo-500 shadow-indigo-200'}`}>
+                                            <MaterialIcon name={isUrgent ? "priority_high" : "check"} className="font-black" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <p className={`text-sm font-black uppercase tracking-tight ${isUrgent ? 'text-rose-600' : 'text-indigo-600'}`}>
+                                                Chế độ {isUrgent ? 'Khẩn cấp' : 'Tiêu chuẩn'}
+                                            </p>
+                                            <p className="text-slate-500 text-[13px] font-medium">
+                                                {isUrgent ? 'Ưu tiên cao nhất qua SMS & App Push.' : 'Thông báo bình thường tới cộng đồng.'}
+                                            </p>
+                                        </div>
                                     </div>
-                                )}
-                                {/* Section 1: Organization & Campaign Information */}
-                                <section className="mb-10">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <span className="flex items-center justify-center size-8 rounded-full bg-[#6324eb] text-white text-sm font-bold">1</span>
-                                        <h2 className="text-[#120e1b] dark:text-white text-xl font-bold leading-tight">Thông tin Tổ chức / Chiến dịch</h2>
+                                    <button
+                                        onClick={() => setIsUrgent(!isUrgent)}
+                                        className={`px-6 py-2.5 rounded-full text-xs font-black transition-all border-2 active:scale-95 ${isUrgent
+                                            ? 'bg-rose-600 text-white border-rose-600 shadow-lg shadow-rose-200'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600'}`}
+                                    >
+                                        {isUrgent ? 'Đang bật' : 'Bật KHẨN CẤP'}
+                                    </button>
+                                </div>
+
+                                {/* Section 1: Tổ chức */}
+                                <section className="mb-12">
+                                    <div className="flex items-center gap-3 mb-8">
+                                        <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">1</span>
+                                        <h2 className="text-slate-900 text-lg font-black tracking-tight">Thông tin Tổ chức</h2>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-[#120e1b] dark:text-white text-sm font-bold">Tên Chiến dịch <span className="text-red-500">*</span></label>
+                                            <label className="text-slate-700 text-[13px] font-bold ml-4">Tên Chiến dịch <span className="text-rose-500">*</span></label>
                                             <input
-                                                className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 px-4 text-base outline-none transition-all placeholder:text-slate-400"
-                                                placeholder="VD: Hiến máu nhân đạo Mùa Xuân"
-                                                type="text"
                                                 value={campaignName}
                                                 onChange={(e) => setCampaignName(e.target.value)}
+                                                className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 transition-all px-6 outline-none shadow-sm"
+                                                placeholder="Yêu cầu Máu Khẩn cấp..."
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-[#120e1b] dark:text-white text-sm font-bold">Đơn vị tổ chức <span className="text-red-500">*</span></label>
-                                            <select
-                                                className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 px-4 text-base outline-none transition-all"
-                                                value={organization}
-                                                onChange={(e) => setOrganization(e.target.value)}
-                                            >
-                                                <option value="Cộng đồng (Tất cả)">Cộng đồng (Công khai)</option>
-                                                <option value="Đại học FPT">Đại học FPT</option>
-                                                <option value="Công ty FVM">Công ty FVM</option>
-                                                <option value="Doanh nghiệp khác">Doanh nghiệp khác</option>
-                                            </select>
-                                        </div>
-                                        <div className="flex flex-col gap-2 md:col-span-2">
-                                            <label className="text-[#120e1b] dark:text-white text-sm font-bold">Mã quản lý / Sự kiện (MRN)</label>
+                                            <label className="text-slate-700 text-[13px] font-bold ml-4">Mã Quản lý / Sự Kiện</label>
                                             <input
-                                                className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 px-4 text-base outline-none transition-all placeholder:text-slate-400"
-                                                placeholder="MRN-123456 (Nếu có)"
-                                                type="text"
                                                 value={mrn}
                                                 onChange={(e) => setMrn(e.target.value)}
+                                                className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 transition-all px-6 outline-none shadow-sm"
+                                                placeholder="Vd: EV-2024-001"
                                             />
+                                        </div>
+                                        <div className="flex flex-col gap-2 md:col-span-2">
+                                            <label className="text-slate-700 text-[13px] font-bold ml-4">Đơn vị tiếp nhận <span className="text-rose-500">*</span></label>
+                                            <div className="relative">
+                                                <select
+                                                    value={organization}
+                                                    onChange={(e) => setOrganization(e.target.value)}
+                                                    className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 transition-all px-6 outline-none appearance-none shadow-sm"
+                                                >
+                                                    <option>Bệnh viện Chợ Rẫy</option>
+                                                    <option>Cộng đồng (Công khai)</option>
+                                                    <option>Hội Chữ Thập Đỏ</option>
+                                                    <option>Đại học FPT</option>
+                                                </select>
+                                                <MaterialIcon name="expand_more" className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-sm" />
+                                            </div>
                                         </div>
                                     </div>
                                 </section>
 
-                                {/* Section 2: Requirements */}
-                                <section className="mb-10">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <span className="flex items-center justify-center size-8 rounded-full bg-[#6324eb] text-white text-sm font-bold">2</span>
-                                        <h2 className="text-[#120e1b] dark:text-white text-xl font-bold leading-tight">Yêu cầu về Máu</h2>
+                                {/* Section 2: Blood Requirements */}
+                                <section className="mb-12">
+                                    <div className="flex items-center gap-3 mb-8">
+                                        <span className="section-number flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">2</span>
+                                        <h2 className="text-slate-900 text-lg font-black tracking-tight">Yêu cầu về Máu</h2>
                                     </div>
-                                    <div className="flex flex-col gap-6">
+                                    <div className="flex flex-col gap-8">
                                         <div>
-                                            <p className="text-[#120e1b] dark:text-white text-sm font-bold mb-3">Chọn Nhóm máu</p>
-                                            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                                            <p className="text-slate-700 text-[13px] font-bold mb-4 ml-4">Nhóm máu cần thiết</p>
+                                            <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
                                                 {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
                                                     <button
                                                         key={type}
                                                         onClick={() => toggleBloodType(type)}
-                                                        className={`flex h-12 items-center justify-center rounded-lg font-bold transition-all border-2 ${selectedBloodTypes.includes(type)
-                                                            ? 'bg-[#6324eb] text-white border-[#6324eb] shadow-lg shadow-[#6324eb]/30 scale-105'
-                                                            : 'bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white border-transparent hover:border-[#6324eb]/30 hover:bg-[#6324eb]/5'
-                                                            } `}
+                                                        className={`flex h-11 items-center justify-center rounded-full border text-xs font-bold transition-all duration-300 ${selectedBloodTypes.includes(type)
+                                                            ? 'bg-[#F5F3FF] border-[#6D28D9] text-[#6D28D9] shadow-lg shadow-[#6D28D9]/10 scale-105 border-2'
+                                                            : 'bg-white border-slate-300 text-slate-500 hover:border-[#6D28D9]/30 hover:bg-[#F5F3FF]/30 hover:text-[#6D28D9]'
+                                                            }`}
                                                     >
                                                         {type}
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                                        {/* Smart Insight AI Block */}
+                                        <div className="bg-gradient-to-r from-[#6D28D9]/5 to-[#A78BFA]/5 border border-[#6D28D9]/10 rounded-[1.5rem] p-5 flex flex-col md:flex-row items-center gap-6 shadow-inner">
+                                            <div className="flex items-center gap-3 shrink-0">
+                                                <div className="size-10 bg-[#6D28D9]/10 rounded-2xl flex items-center justify-center text-[#6D28D9]">
+                                                    <MaterialIcon name="psychology" className="text-[22px] fill-1" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <h3 className="text-[#6D28D9] font-black text-xs tracking-tight">Dự báo thông minh</h3>
+                                                    <p className="text-[10px] text-[#6D28D9]/60 font-black uppercase tracking-widest">IA Insight v2.8</p>
+                                                </div>
+                                            </div>
+                                            <div className="h-8 w-px bg-[#6D28D9]/10 hidden md:block"></div>
+                                            <div className="flex flex-1 gap-6 justify-around w-full">
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Cần thiết</p>
+                                                    <p className="text-[#6D28D9] text-xl font-black">~{targetCount || "63"} <span className="text-[10px] font-medium text-slate-400 uppercase">người</span></p>
+                                                </div>
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Mục tiêu</p>
+                                                    <p className="text-[#6D28D9] text-xl font-black">{targetAmount || "50"} <span className="text-[10px] font-medium text-slate-400 uppercase">đơn vị</span></p>
+                                                </div>
+                                                <div className="hidden sm:block text-center md:text-left">
+                                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Tỉ lệ đạt</p>
+                                                    <p className="text-emerald-500 text-xl font-black">80%</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                             <div className="flex flex-col gap-2">
-                                                <label className="text-[#120e1b] dark:text-white text-sm font-bold">Số lượng người hiến (Dự kiến)</label>
+                                                <label className="text-slate-700 text-[13px] font-bold ml-4">Số lượng người hiến dự kiến</label>
                                                 <input
-                                                    className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 px-4 text-base outline-none transition-all"
-                                                    placeholder="0"
-                                                    type="text"
+                                                    type="number"
                                                     value={targetCount}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
-                                                        if (val === '' || /^[0-9\b]+$/.test(val)) {
-                                                            setLastChanged('count');
-                                                            setTargetCount(val);
-                                                        }
+                                                        setLastChanged('count');
+                                                        setTargetCount(val);
                                                     }}
+                                                    className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-6 outline-none shadow-sm"
+                                                    placeholder="Vd: 63"
                                                 />
                                             </div>
                                             <div className="flex flex-col gap-2">
-                                                <label className="text-[#120e1b] dark:text-white text-sm font-bold">Mục tiêu (Đơn vị máu) <span className="text-red-500">*</span></label>
+                                                <label className="text-slate-700 text-[13px] font-bold ml-4">Mục tiêu (Đơn vị) <span className="text-rose-500">*</span></label>
                                                 <div className="relative">
                                                     <input
-                                                        className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 px-4 text-base outline-none transition-all pr-12"
-                                                        placeholder="0"
-                                                        type="text"
+                                                        type="number"
                                                         value={targetAmount}
                                                         onChange={(e) => {
                                                             const val = e.target.value;
-                                                            if (val === '' || /^[0-9\b]+$/.test(val)) {
-                                                                setLastChanged('amount');
-                                                                setTargetAmount(val);
-                                                            }
+                                                            setLastChanged('amount');
+                                                            setTargetAmount(val);
                                                         }}
+                                                        className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 pl-6 pr-16 outline-none shadow-sm"
+                                                        placeholder="50"
                                                     />
-                                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">Đơn vị</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Smart Insight UI Block */}
-                                            {(targetAmount || targetCount) && (
-                                                <div className="md:col-span-2 p-4 bg-[#6324eb]/5 dark:bg-[#6324eb]/10 border border-[#6324eb]/20 rounded-xl flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                    <div className="size-10 rounded-full bg-[#6324eb] flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#6324eb]/20">
-                                                        <Sparkles className="w-5 h-5" />
-                                                    </div>
-                                                    <div className="flex flex-col gap-1">
-                                                        <h4 className="text-[#6324eb] dark:text-[#a881f3] text-sm font-bold">Dự báo Thông minh (Smart Insight)</h4>
-                                                        <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed font-medium">
-                                                            Với tỉ lệ <span className="font-bold text-[#6324eb] dark:text-[#a881f3]">80%</span> người hiến đạt chỉ số sức khỏe tiêu chuẩn:
-                                                        </p>
-                                                        <div className="mt-2 grid grid-cols-2 gap-4">
-                                                            <div className="bg-white dark:bg-[#1c162e] p-2 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] flex flex-col items-center justify-center text-center">
-                                                                <span className="text-[10px] uppercase font-bold text-slate-400">Người hiến</span>
-                                                                <span className="text-lg font-black text-[#6324eb] dark:text-white">{targetCount || "0"}</span>
-                                                            </div>
-                                                            <div className="bg-white dark:bg-[#1c162e] p-2 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] flex flex-col items-center justify-center text-center">
-                                                                <span className="text-[10px] uppercase font-bold text-slate-400">Đơn vị máu</span>
-                                                                <span className="text-lg font-black text-[#6324eb] dark:text-white">≈ {targetAmount || "0"}</span>
-                                                            </div>
-                                                        </div>
-                                                        <p className="text-slate-400 text-[10px] italic mt-2">
-                                                            * Ví dụ: Nếu có <span className="font-bold">100</span> người đến, dự kiến thu được khoảng <span className="font-bold">80</span> đơn vị máu an toàn.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <div className="flex flex-col gap-2 md:col-span-2">
-                                                <label className="text-[#120e1b] dark:text-white text-sm font-bold">Mức độ Khẩn cấp</label>
-                                                <div className="flex p-1 bg-slate-100 dark:bg-[#251e36] rounded-xl h-12">
-                                                    <button
-                                                        onClick={() => setIsUrgent(false)}
-                                                        className={`flex-1 rounded-lg text-sm font-bold transition-all ${!isUrgent
-                                                            ? 'bg-white dark:bg-[#1c162e] shadow-sm text-[#6324eb] dark:text-white border border-slate-200 dark:border-slate-700'
-                                                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                                                            } `}
-                                                    >
-                                                        Tiêu chuẩn
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setIsUrgent(true)}
-                                                        className={`flex-1 rounded-lg text-sm font-bold transition-all ${isUrgent
-                                                            ? 'bg-white dark:bg-[#1c162e] shadow-sm text-red-500 border border-slate-200 dark:border-slate-700'
-                                                            : 'text-slate-500 hover:text-red-500/70 dark:text-slate-400'
-                                                            } `}
-                                                    >
-                                                        Khẩn cấp
-                                                    </button>
+                                                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-black uppercase tracking-widest">Đơn vị</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </section>
 
-                                {/* Section 3: Location & Logistics */}
-                                <section className="mb-10">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <span className="flex items-center justify-center size-8 rounded-full bg-[#6324eb] text-white text-sm font-bold">3</span>
-                                        <h2 className="text-[#120e1b] dark:text-white text-xl font-bold leading-tight">Địa điểm & Hậu cần</h2>
+                                {/* Section 3: Logistics */}
+                                <section className="mb-12">
+                                    <div className="flex items-center gap-3 mb-8">
+                                        <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">3</span>
+                                        <h2 className="text-slate-900 text-lg font-black tracking-tight">Địa điểm & Hậu cần</h2>
                                     </div>
-                                    <div className="flex flex-col gap-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-[#120e1b] dark:text-white text-sm font-bold">Điểm tiếp nhận (Bệnh viện/Trung tâm)</label>
+                                    <div className="flex flex-col gap-8">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                            <div className={`flex flex-col gap-2 ${organization !== "Cộng đồng (Công khai)" ? "md:col-span-2" : ""}`}>
+                                                <label className="text-slate-700 text-[13px] font-bold ml-4">Điểm tiếp nhận</label>
                                                 <div className="relative">
-                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                                                        <Search className="text-slate-400 w-5 h-5" />
-                                                    </div>
+                                                    <MaterialIcon name="search" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
                                                     <input
-                                                        className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 pl-10 pr-4 text-base outline-none transition-all placeholder:text-slate-400"
-                                                        placeholder="Tìm tên bệnh viện hoặc địa chỉ"
-                                                        type="text"
                                                         value={location}
                                                         onChange={(e) => setLocation(e.target.value)}
+                                                        className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 pl-12 pr-6 outline-none shadow-sm"
+                                                        placeholder="Khoa Cấp cứu - BV Chợ Rẫy"
                                                     />
                                                 </div>
                                             </div>
 
-                                            {/* Conditional Radius Selection */}
-                                            {organization === "Cộng đồng (Tất cả)" && (
+                                            {organization === "Cộng đồng (Công khai)" && (
                                                 <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                    <label className="text-[#120e1b] dark:text-white text-sm font-bold">Phạm vi thông báo</label>
-                                                    <select
-                                                        className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 px-4 text-base outline-none transition-all"
-                                                        value={radius}
-                                                        onChange={(e) => setRadius(e.target.value)}
-                                                    >
-                                                        <option value="5km">5km (Lân cận)</option>
-                                                        <option value="10km">10km (Quận/Huyện)</option>
-                                                        <option value="20km">20km (Thành phố)</option>
-                                                        <option value="Toàn hệ thống">Toàn hệ thống</option>
-                                                    </select>
-                                                    <p className="text-slate-500 text-xs italic">Gửi thông báo cho người hiến trong phạm vi này.</p>
+                                                    <label className="text-slate-700 text-[13px] font-bold ml-4">Phạm vi thông báo</label>
+                                                    <div className="relative">
+                                                        <select
+                                                            value={radius}
+                                                            onChange={(e) => setRadius(e.target.value)}
+                                                            className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-6 outline-none appearance-none shadow-sm"
+                                                        >
+                                                            <option>5km (Lân cận)</option>
+                                                            <option>10km (Toàn thành phố)</option>
+                                                            <option>Toàn quốc</option>
+                                                        </select>
+                                                        <MaterialIcon name="expand_more" className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-sm" />
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
 
-                                        {/* Map Placeholder */}
-                                        <div className="w-full h-48 rounded-xl overflow-hidden border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-200 dark:bg-slate-800 relative group">
-                                            <div className="absolute inset-0 bg-cover bg-center opacity-60" style={{ backgroundImage: "url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/HCMC_map.png/640px-HCMC_map.png')" }}></div>
-                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                <MapPin className="text-[#6324eb] w-12 h-12 drop-shadow-lg animate-bounce" />
+                                        {/* Map Visualization */}
+                                        <div className="w-full h-52 rounded-[2rem] overflow-hidden border border-slate-100 bg-slate-50 relative group shadow-lg">
+                                            <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuByvIDTN70XMAX1SWdkUy-gnDtoZseAgFgvqS2YmQ00PVPjTgrdh8o_nKOOAvhyoPfE-CXmPNBnSs4fAy-VQbWTfU9TiEQURHVwxaIkd6CQQYUhYb4S1WPSUAPKfSu_D0fHbxdwl-61mVf5RnxQlUActS5U8abYPvFs2WrQooHfygaMcJHzHH5CDgSeQhTw-pMWRStIMirJq2ESCD4SU0TDuX7fPqVTsKfCId2ke717J1Z_VMXJH8CRbr8vGGnD-a_jBhrVbrr-xbI')" }}></div>
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <MaterialIcon name="location_on" className="text-rose-500 text-6xl drop-shadow-2xl fill-1 animate-bounce" />
                                             </div>
-                                            <div className="absolute bottom-4 left-4 right-4 bg-white/90 dark:bg-[#1c162e]/90 backdrop-blur px-4 py-2 rounded-lg text-xs font-medium shadow-lg border border-white/20">
-                                                <p className="text-[#6324eb] font-bold">Bệnh viện Đa khoa Trung tâm</p>
-                                                <p className="text-slate-500">452 Đường Nguyễn Y, Quận 1, TP.HCM</p>
+                                            <div className="absolute bottom-5 left-5 right-5 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white max-w-[320px]">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-[#F5F3FF] p-2.5 rounded-xl text-[#6D28D9] shrink-0">
+                                                        <MaterialIcon name="local_hospital" className="text-[20px]" />
+                                                    </div>
+                                                    <div className="overflow-hidden text-left">
+                                                        <p className="text-slate-900 font-black text-[13px] truncate">Bệnh viện Chợ Rẫy</p>
+                                                        <p className="text-slate-500 text-[10px] font-bold truncate">201B Nguyễn Chí Thanh, Q5, TP.HCM</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                             <div className="flex flex-col gap-2">
-                                                <label className="text-[#120e1b] dark:text-white text-sm font-bold">Khoa / Phòng</label>
-                                                <input
-                                                    className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 px-4 text-base outline-none transition-all placeholder:text-slate-400"
-                                                    placeholder="Khoa Huyết học, Phòng 402"
-                                                    type="text"
-                                                    value={department}
-                                                    onChange={(e) => setDepartment(e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-[#120e1b] dark:text-white text-sm font-bold">Ngày tiếp nhận / Thời hạn</label>
+                                                <label className="text-slate-700 text-[13px] font-bold ml-4">Ngày diễn ra</label>
                                                 <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                                     <PopoverTrigger asChild>
-                                                        <button className="flex w-full items-center justify-between rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white hover:border-[#6324eb] focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 px-4 text-base outline-none transition-all">
-                                                            <span className={selectedDate ? "" : "text-slate-400"}>
-                                                                {selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: vi }) : "Chọn ngày"}
+                                                        <button className="flex w-full items-center justify-between rounded-full h-12 text-sm border border-slate-300/80 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-6 outline-none transition-all text-left shadow-sm">
+                                                            <span className={selectedDate ? "font-bold" : "text-slate-400"}>
+                                                                {selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: vi }) : "Chọn ngày..."}
                                                             </span>
-                                                            <CalendarIcon className="text-slate-400 w-5 h-5" />
+                                                            <MaterialIcon name="calendar_month" className="text-slate-400 text-lg" />
                                                         </button>
                                                     </PopoverTrigger>
-                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                    <PopoverContent className="w-auto p-0 rounded-3xl overflow-hidden shadow-2xl border-slate-200" align="start">
                                                         <Calendar
                                                             mode="single"
                                                             selected={selectedDate}
@@ -466,141 +432,118 @@ export default function CreateRequestPage() {
                                                     </PopoverContent>
                                                 </Popover>
                                             </div>
-
                                             <div className="flex flex-col gap-2">
-                                                <label className="text-[#120e1b] dark:text-white text-sm font-bold">Thời gian (Bắt đầu - Kết thúc)</label>
-                                                <div className="flex items-center gap-3 h-12">
-                                                    <div className="relative flex-1">
-                                                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                                                            <Clock className="text-slate-400 w-4 h-4" />
-                                                        </div>
-                                                        <input
-                                                            type="text"
-                                                            className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 pl-10 pr-4 text-sm font-medium outline-none transition-all"
-                                                            placeholder="07:30"
-                                                            value={startTime}
-                                                            onChange={(e) => setStartTime(e.target.value)}
-                                                            onFocus={(e) => (e.target.type = "time")}
-                                                            onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
-                                                        />
-                                                    </div>
-                                                    <div className="text-slate-400 font-bold"> - </div>
-                                                    <div className="relative flex-1">
-                                                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                                                            <Clock className="text-slate-400 w-4 h-4" />
-                                                        </div>
-                                                        <input
-                                                            type="text"
-                                                            className="flex w-full rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36] text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-1 focus:ring-[#6324eb] h-12 pl-10 pr-4 text-sm font-medium outline-none transition-all"
-                                                            placeholder="16:30"
-                                                            value={endTime}
-                                                            onChange={(e) => setEndTime(e.target.value)}
-                                                            onFocus={(e) => (e.target.type = "time")}
-                                                            onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
-                                                        />
-                                                    </div>
+                                                <label className="text-slate-700 text-[13px] font-bold ml-4">Thời gian tổ chức</label>
+                                                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                                                    <input
+                                                        type="time"
+                                                        value={startTime}
+                                                        onChange={(e) => setStartTime(e.target.value)}
+                                                        className="rounded-full h-12 text-sm border border-slate-300/80 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-5 outline-none text-center shadow-sm"
+                                                    />
+                                                    <span className="text-slate-300 text-[11px] font-black italic px-1 uppercase">đến</span>
+                                                    <input
+                                                        type="time"
+                                                        value={endTime}
+                                                        onChange={(e) => setEndTime(e.target.value)}
+                                                        className="rounded-full h-12 text-sm border border-slate-300/80 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-5 outline-none text-center shadow-sm"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </section>
 
-                                {/* Section 4: Campaign Description */}
+                                {/* Section 4: Description */}
                                 <section className="mb-10">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <span className="flex items-center justify-center size-8 rounded-full bg-[#6324eb] text-white text-sm font-bold">4</span>
-                                        <h2 className="text-[#120e1b] dark:text-white text-xl font-bold leading-tight">Mô tả thông tin chiến dịch</h2>
+                                    <div className="flex items-center gap-3 mb-8">
+                                        <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">4</span>
+                                        <h2 className="text-slate-900 text-lg font-black tracking-tight">Chi tiết Chiến dịch</h2>
                                     </div>
-                                    <div className="flex flex-col gap-6">
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-[#120e1b] dark:text-white text-sm font-bold">Mô tả chi tiết</label>
-                                            <div className="quill-container bg-slate-50 dark:bg-[#251e36] rounded-xl overflow-hidden border border-[#ebe7f3] dark:border-[#2d263d]">
-                                                <ReactQuill
-                                                    theme="snow"
-                                                    value={desc}
-                                                    onChange={setDesc}
-                                                    placeholder="Nhập nội dung chi tiết về chiến dịch của bạn..."
-                                                    className="min-h-[200px]"
-                                                />
-                                            </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-slate-700 text-[13px] font-bold ml-4 mb-2">Lời kêu gọi & Thông tin thêm</label>
+                                        <div className="quill-wrapper rounded-[2.5rem] overflow-hidden border border-slate-300 shadow-sm bg-white">
+                                            <ReactQuill
+                                                theme="snow"
+                                                value={desc}
+                                                onChange={setDesc}
+                                                placeholder="Viết nội dung truyền cảm hứng tới người hiến..."
+                                                className="min-h-[220px]"
+                                            />
                                         </div>
                                     </div>
                                 </section>
 
-                                {/* Footer Actions */}
-                                <div className="flex flex-col sm:flex-row items-center gap-4 pt-6 border-t border-[#ebe7f3] dark:border-[#2d263d]">
+                                {/* Action Buttons */}
+                                <div className="flex flex-col sm:flex-row items-center gap-4 pt-8">
                                     <button
-                                        className={`w-full sm:flex-1 h-14 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] ${isUrgent
-                                            ? "bg-red-600 hover:bg-red-700 text-white shadow-red-600/20"
-                                            : "bg-[#6324eb] hover:bg-[#501ac2] text-white shadow-[#6324eb]/20"
-                                            }`}
                                         onClick={() => handleCreate(false)}
+                                        className={`w-full sm:flex-[2] h-15 h-14 rounded-full font-black text-base shadow-2xl transition-all flex items-center justify-center gap-3 group active:scale-95 ${isUrgent
+                                            ? 'bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-rose-500/30 hover:shadow-rose-500/50'
+                                            : 'bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white shadow-indigo-500/30 hover:shadow-indigo-500/50'}`}
                                     >
-                                        <Send className="w-5 h-5" />
-                                        Đăng Yêu cầu {isUrgent && "KHẨN CẤP"}
+                                        <MaterialIcon name="send" className="text-[20px] group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                        Đăng Yêu cầu {isUrgent ? 'KHẨN CẤP' : 'Công khai'}
                                     </button>
                                     <button
-                                        className="w-full sm:w-auto px-8 h-14 bg-slate-100 dark:bg-[#251e36] text-slate-600 dark:text-slate-300 rounded-xl font-bold text-lg hover:bg-slate-200 dark:hover:bg-[#2d263d] transition-all flex items-center justify-center gap-2"
                                         onClick={() => handleCreate(true)}
+                                        className="w-full sm:flex-1 h-14 bg-slate-100 text-slate-600 rounded-full font-black text-base hover:bg-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95"
                                     >
-                                        <Save className="w-5 h-5" />
-                                        Lưu Nháp
+                                        <MaterialIcon name="drafts" className="text-[20px]" />
+                                        Lưu bản nháp
                                     </button>
+                                </div>
+                            </div>
+
+                            {/* Page Footer */}
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-4 pb-14 border-t border-slate-100 pt-8">
+                                <p className="text-[11px] text-slate-400 font-bold tracking-wide">© 2024 REDHOPE HEALTH SYSTEMS. BẢO MẬT CHUẨN AES-256.</p>
+                                <div className="flex gap-8">
+                                    <a className="text-[11px] text-slate-500 font-black hover:text-[#6D28D9] transition-all underline decoration-slate-200 underline-offset-4" href="#">Trung tâm Hướng dẫn</a>
+                                    <a className="text-[11px] text-slate-500 font-black hover:text-[#6D28D9] transition-all underline decoration-slate-200 underline-offset-4" href="#">Yêu cầu Hỗ trợ</a>
                                 </div>
                             </div>
                         </div>
                     </main>
                 </div>
             </div>
-            {/* Custom CSS for Quill fixes */}
+
+            {/* Global Styled JSX for UI consistency */}
             <style dangerouslySetInnerHTML={{
                 __html: `
-                .quill-container {
-                    width: 100% !important;
+                .quill-wrapper .ql-toolbar {
+                    border-top: none !important;
+                    border-left: none !important;
+                    border-right: none !important;
+                    border-bottom: 1px solid #f1f5f9 !important;
+                    padding: 12px 24px !important;
+                    background: #fbfbfc !important;
                 }
-                .quill-container .ql-toolbar {
-                    border-top-left-radius: 12px !important;
-                    border-top-right-radius: 12px !important;
-                    border-color: #ebe7f3 !important;
-                    background: #f8fafc !important;
-                    width: 100% !important;
+                .quill-wrapper .ql-container {
+                    border: none !important;
+                    font-family: 'Plus Jakarta Sans', sans-serif !important;
+                    font-size: 14px !important;
                 }
-                .quill-container .ql-container {
-                    border-bottom-left-radius: 12px !important;
-                    border-bottom-right-radius: 12px !important;
-                    border-color: #ebe7f3 !important;
-                    min-height: 200px !important;
-                    font-size: 16px !important;
-                    width: 100% !important;
+                .quill-wrapper .ql-editor {
+                    padding: 24px !important;
+                    min-height: 220px !important;
                 }
-                .quill-container .ql-editor {
-                    min-height: 200px !important;
-                    padding: 16px !important;
-                    line-height: 1.6 !important;
-                }
-                /* Fix placeholder overlap */
-                .quill-container .ql-editor.ql-blank::before {
+                .quill-wrapper .ql-editor.ql-blank::before {
+                    left: 24px !important;
                     font-style: normal !important;
                     color: #94a3b8 !important;
-                    left: 16px !important;
-                    right: 16px !important;
-                    pointer-events: none !important;
                 }
-                .quill-container .ql-editor:focus.ql-blank::before {
-                    display: none !important;
+                input[type="time"]::-webkit-calendar-picker-indicator {
+                    filter: invert(0.5);
+                    cursor: pointer;
                 }
-                /* Dark Mode fixes */
-                .dark .quill-container .ql-toolbar {
-                    border-color: #2d263d !important;
-                    background: #1c162e !important;
+                .material-symbols-outlined {
+                    font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
                 }
-                .dark .quill-container .ql-container {
-                    border-color: #2d263d !important;
+                .fill-1 {
+                    font-variation-settings: 'FILL' 1 !important;
                 }
-                .dark .quill-container .ql-editor.ql-blank::before {
-                    color: #64748b !important;
-                }
-            ` }} />
+            `}} />
         </div>
     );
 }
