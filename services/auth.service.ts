@@ -104,7 +104,10 @@ export const authService = {
             console.log(`[authService] Auth Event: ${event}`);
 
             if (session?.user) {
-                // Nếu có user, đi lấy profile ngay để đảm bảo Role chính xác
+                // 1. Trả về user ngay lập tức để UI cập nhật (nhận diện role từ metadata)
+                callback(session.user);
+
+                // 2. Fetch profile ngầm
                 try {
                     const { data: profile } = await supabase
                         .from('users')
@@ -112,10 +115,12 @@ export const authService = {
                         .eq('id', session.user.id)
                         .maybeSingle();
 
-                    callback({ ...session.user, profile });
+                    if (profile) {
+                        console.log(`[authService] Profile fetched in background:`, profile.role);
+                        callback({ ...session.user, profile });
+                    }
                 } catch (e) {
-                    console.error('[authService] Failed to fetch profile in listener:', e);
-                    callback(session.user);
+                    console.warn('[authService] Background profile fetch failed:', e);
                 }
             } else {
                 callback(null);

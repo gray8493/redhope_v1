@@ -63,39 +63,14 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
 
         // 5. Xử lý Donor
         if (userRole === "donor") {
-            const isProfileBasicComplete = !!(profile?.blood_group && profile?.city);
-            const isFullComplete = isProfileBasicComplete && !!profile?.full_name;
-
             // Nếu đang ở trang Hospital hoặc Admin (vùng cấm của Donor)
             if (pathname.startsWith("/hospital") || pathname.startsWith("/admin")) {
-                router.push(isFullComplete ? "/dashboard" : "/complete-profile");
+                router.push("/dashboard");
                 return;
             }
 
-            if (!isProfileBasicComplete) {
-                // CHƯA XONG CƠ BẢN -> Luôn phải ở /complete-profile
-                if (pathname === "/complete-profile") {
-                    setAuthorized(true);
-                } else {
-                    router.push("/complete-profile");
-                }
-            } else if (!isFullComplete) {
-                // XONG CƠ BẢN NHƯNG CHƯA XÁC MINH -> Luôn phải ở /complete-profile/verification
-                if (pathname.startsWith("/complete-profile/verification")) {
-                    setAuthorized(true);
-                } else {
-                    router.push("/complete-profile/verification");
-                }
-            } else {
-                // ĐÃ XONG HẾT
-                if (pathname.startsWith("/complete-profile")) {
-                    router.push("/dashboard"); // Không cho ở lại trang profile completion nữa
-                } else if (pathname === "/dashboard" || allowedRoles.includes("donor")) {
-                    setAuthorized(true);
-                } else {
-                    router.push("/dashboard");
-                }
-            }
+            // Cho phép truy cập bất kỳ trang nào khác (dashboard, complete-profile, vv.)
+            setAuthorized(true);
             return;
         }
 

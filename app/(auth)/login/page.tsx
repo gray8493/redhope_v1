@@ -22,7 +22,8 @@ const LoginPage = () => {
 
         try {
             console.log("[Login] Starting sign in...");
-            const { user } = await authService.signIn(formData.email, formData.password);
+            const data = await authService.signIn(formData.email, formData.password);
+            const user = data.user;
 
             if (!user) {
                 throw new Error("Đăng nhập không thành công.");
@@ -32,11 +33,13 @@ const LoginPage = () => {
             const metadataRole = user.user_metadata?.role;
             const actualRole = (metadataRole || 'donor').toLowerCase().trim();
 
+            // Nếu là Admin, đẩy thẳng đi không cần check role form
             if (actualRole === 'admin') {
                 window.location.href = '/admin';
                 return;
             }
 
+            // Kiểm tra khớp role đã chọn trên form
             if (formData.role !== actualRole) {
                 const roleLabels: Record<string, string> = {
                     donor: 'Người hiến',
@@ -49,23 +52,10 @@ const LoginPage = () => {
             }
 
             if (actualRole === 'hospital') {
-                router.push('/hospital');
+                window.location.href = '/hospital';
             } else {
-                const userData = await authService.getCurrentUser();
-                const profile = userData?.profile;
-
-                // 1. Nếu chưa có thông tin cơ bản (Nhóm máu & Tỉnh/TP)
-                if (!profile?.blood_group || !profile?.city) {
-                    router.push('/complete-profile');
-                }
-                // 2. Nếu xong cơ bản nhưng chưa xác minh (dùng full_name để check tạm)
-                else if (!profile?.full_name) {
-                    router.push('/complete-profile/verification');
-                }
-                // 3. Đã hoàn thành hồ sơ
-                else {
-                    router.push('/dashboard');
-                }
+                // Đối với Donor, đưa thẳng vào dashboard (không bắt buộc hoàn thiện hồ sơ nữa)
+                window.location.href = '/dashboard';
             }
 
         } catch (err: any) {

@@ -189,20 +189,16 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
     };
 
     const handleLogout = async () => {
-        console.log("Logout initiated...");
         try {
+            console.log("Logout initiated from TopNav...");
             // Clear hospital specific profile first
             localStorage.removeItem('redhope_hospital_profile');
 
-            // Attempt to sign out via context
+            // Call central signOut logic
             await contextSignOut();
-
-            console.log("Logout successful, redirecting...");
-            // Force a full page reload to the login page to clear all states
-            window.location.href = "/login";
         } catch (error) {
-            console.error("Logout failed during signOut call:", error);
-            // Even if sign out fails (e.g. network/session error), force the redirect
+            console.error("Logout failed:", error);
+            // Fallback forced redirect if something goes wrong
             window.location.href = "/login";
         }
     };

@@ -60,12 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const signOut = async () => {
         try {
+            console.log("[AuthContext] Signing out...");
             await authService.signOut();
-        } catch (error) {
-            console.error('Error during signOut call:', error);
-        } finally {
+            // Xóa state ngay lập tức
             setUser(null);
             setProfile(null);
+            // Chuyển hướng và reload để đảm bảo sạch session
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('Error during signOut call:', error);
+            // Kể cả lỗi vẫn nên ép về login
+            window.location.href = '/login';
         }
     };
 

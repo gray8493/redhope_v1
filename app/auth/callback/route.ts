@@ -38,19 +38,6 @@ export async function GET(request: Request) {
                 if (role === 'admin') return NextResponse.redirect(`${origin}/admin`);
                 if (role === 'hospital') return NextResponse.redirect(`${origin}/hospital`);
 
-                // Kiểm tra profile cho Donor
-                const { data: profile } = await supabase
-                    .from('users')
-                    .select('blood_group, city, full_name')
-                    .eq('id', user.id)
-                    .single();
-
-                if (!profile?.blood_group || !profile?.city) {
-                    return NextResponse.redirect(`${origin}/complete-profile`);
-                } else if (!profile?.full_name) {
-                    return NextResponse.redirect(`${origin}/complete-profile/verification`);
-                }
-
                 return NextResponse.redirect(`${origin}${next}`);
             }
         }
