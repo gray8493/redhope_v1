@@ -37,12 +37,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const isSigningOut = React.useRef(false);
+
     useEffect(() => {
         // Initial check
         refreshUser();
 
         // Listen for auth changes
         const subscription = authService.onAuthStateChange((userData) => {
+            if (isSigningOut.current) return; // Nếu đang logout thì bỏ qua mọi data mới
+
             if (userData) {
                 setUser(userData);
                 setProfile(userData.profile);
@@ -59,19 +63,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const signOut = async () => {
-        try {
-            console.log("[AuthContext] Signing out...");
-            await authService.signOut();
-            // Xóa state ngay lập tức
-            setUser(null);
-            setProfile(null);
-            // Chuyển hướng và reload để đảm bảo sạch session
-            window.location.href = '/login';
-        } catch (error) {
-            console.error('Error during signOut call:', error);
-            // Kể cả lỗi vẫn nên ép về login
-            window.location.href = '/login';
-        }
+        isSigningOut.current = true; // Chặn mọi cập nhật state từ listener
+        console.log("[AuthContext] Sign out triggered, redirecting immediately...");
+
+        // 1. Xóa trạng thái cục bộ ngay lập tức
+        setUser(null);
+        setProfile(null);
+
+        // 2. Thực hiện đăng xuất ở background (không await để tránh treo UI)
+        authService.signOut().catch(err => {
+            console.warn("[AuthContext] Background sign out error:", err);
+        });
+
+        // 3. Chuyển hướng ngay lập tức
+        window.location.href = '/login';
     };
 
     return (
