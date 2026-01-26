@@ -48,8 +48,6 @@ DROP POLICY IF EXISTS "Admin full access" ON public.users;
 DROP POLICY IF EXISTS "Allow signup inserts" ON public.users;
 
 -- RLS policies follow least-privilege principle.
--- REPLACED: CREATE POLICY "Enable email search for all" ON public.users FOR SELECT USING (true);
--- Note: Use a specific RPC with restricted access to look up users by email for search functionality.
 CREATE POLICY "Allow users to view own profile" ON public.users FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Allow users to update own profile" ON public.users FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Allow public to view hospitals" ON public.users FOR SELECT USING (role = 'hospital' AND is_verified = true);

@@ -3,53 +3,39 @@ import { userService } from '@/services/user.service';
 
 export const authService = {
     // Sign Up
-    // Sign Up
     async signUp(email: string, password: string, fullName: string, role: string = 'donor') {
         const safeRole = role.toLowerCase();
-
-        // 1. Create auth user
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: {
-                    full_name: fullName,
-                    role: safeRole
-                },
+                data: { full_name: fullName, role: safeRole },
             },
         });
-
         if (authError) throw authError;
 
-        // 2. Create public user profile if signup is successful
         if (authData.user) {
             try {
-                // Use upsert to ensure we link the record to the new Auth ID
                 await userService.upsert(authData.user.id, {
                     email: email,
                     full_name: fullName,
                     role: safeRole as any
                 });
-                return authData;
-            } catch (profileError) {
-                console.error('Failed to create public profile:', profileError);
-                throw new Error('Failed to create user profile. Please contact support.');
+            } catch (e) {
+                console.error('Profile creation error:', e);
             }
         }
-
         return authData;
     },
 
     // Sign In
-    // Sign In
     async signIn(email: string, password: string) {
+        console.log(`[authService] Calling Supabase signIn: ${email}`);
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
-
         if (error) throw error;
-        // Optionally verify role here if stored in metadata
         return data;
     },
 
@@ -65,31 +51,28 @@ export const authService = {
         if (!user) return null;
 
         let profile = null;
-        if (user.email) {
-            try {
-                profile = await userService.getByEmail(user.email);
-            } catch (error) {
-                console.error('Error fetching user profile:', error);
-            }
+        try {
+            // Lấy profile bằng ID là cách nhanh nhất và chính xác nhất
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (!error) profile = data;
+        } catch (e) {
+            console.warn('[authService] Profile fetch failed:', e);
         }
 
-        return {
-            ...user,
-            profile // Attach public profile
-        };
+        return { ...user, profile };
     },
 
-    // Auth State Change Listener (Run in useEffect)
+    // Listener tối giản nhất để tránh treo
     onAuthStateChange(callback: (user: any) => void) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (session?.user) {
-                try {
-                    const profile = session.user.email ? await userService.getByEmail(session.user.email) : null;
-                    callback({ ...session.user, profile });
-                } catch (error: any) {
-                    console.error('AuthStateChange error:', error.message || error);
-                    callback(null);
-                }
+                // Trả về user cơ bản trước để tránh block UI
+                callback(session.user);
             } else {
                 callback(null);
             }
