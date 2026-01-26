@@ -241,7 +241,13 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
         };
     }, [profile]);
 
-    const displayRole = profile?.role === 'admin' ? "Quản trị viên" : profile?.role === 'hospital' ? "Bệnh viện" : profile?.blood_group ? `Nhóm máu ${profile.blood_group}` : "Thành viên";
+    const displayRole = profile?.role === 'admin'
+        ? "Quản trị viên"
+        : profile?.role === 'hospital'
+            ? "Bệnh viện"
+            : profile?.role === 'donor'
+                ? (profile?.blood_group ? `Người hiến máu (${profile.blood_group})` : "Người hiến máu")
+                : "Thành viên";
 
     const displayName = profile?.role === 'hospital' && hospitalInfo?.name
         ? hospitalInfo.name

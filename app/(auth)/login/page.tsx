@@ -29,11 +29,13 @@ const LoginPage = () => {
                 throw new Error("Đăng nhập không thành công.");
             }
 
-            console.log("[Login] Auth successful, checking role...");
-            const metadataRole = user.user_metadata?.role;
-            const actualRole = (metadataRole || 'donor').toLowerCase().trim();
+            console.log("[Login] Auth successful, fetching detailed profile...");
 
-            console.log(`[Login] Role identified: ${actualRole}. Redirecting...`);
+            // Lấy thông tin đầy đủ (bao gồm profile từ database) trước khi chuyển hướng
+            const fullUserData = await authService.getCurrentUser();
+            const actualRole = (fullUserData?.profile?.role || user.user_metadata?.role || 'donor').toLowerCase().trim();
+
+            console.log(`[Login] Actual Role identified: ${actualRole}. Redirecting...`);
 
             // Tự động chuyển hướng dựa trên vai trò thực tế
             if (actualRole === 'admin') {
@@ -41,7 +43,6 @@ const LoginPage = () => {
             } else if (actualRole === 'hospital') {
                 window.location.href = '/hospital';
             } else {
-                // Mặc định là 'donor'
                 window.location.href = '/dashboard';
             }
 

@@ -48,8 +48,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (isSigningOut.current) return; // Nếu đang logout thì bỏ qua mọi data mới
 
             if (userData) {
+                // Chỉ cập nhật profile nếu có profile mới trong userData, 
+                // hoặc nếu đây là một user hoàn toàn khác (chuyển account)
                 setUser(userData);
-                setProfile(userData.profile);
+
+                if (userData.profile) {
+                    setProfile(userData.profile);
+                } else {
+                    // Nếu userData không có profile (thường là lượt gọi đầu tiên của SIGNED_IN)
+                    // thì chúng ta kiểm tra nếu là user mới (id khác) mới xóa profile cũ.
+                    // Nếu id vẫn vậy, giữ nguyên profile cũ để tránh flicker UI.
+                    setProfile(prev => (prev && prev.id === userData.id) ? prev : null);
+                }
             } else {
                 setUser(null);
                 setProfile(null);

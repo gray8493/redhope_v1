@@ -32,20 +32,25 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
         const metadataRole = user?.user_metadata?.role;
         const profileRole = profile?.role;
 
+        // Ưu tiên Profile -> Metadata -> Mặc định là donor nếu đã load xong mà vẫn trống
         let userRole = (profileRole || metadataRole || "").toLowerCase().trim();
 
-        // DEBUG CHI TIẾT
-        console.log(`[RoleGuard DEBUG] Path: ${pathname}`);
-        console.log(`[RoleGuard DEBUG] Metadata Role: "${metadataRole}"`);
-        console.log(`[RoleGuard DEBUG] Profile Role: "${profileRole}"`);
-        console.log(`[RoleGuard DEBUG] Final Determined Role: "${userRole || "donor (defaulted)"}"`);
-
-        // Nếu không tìm thấy role nào, mặc định là donor
+        // NẾU ĐÃ LOAD XONG MÀ VẪN TRỐNG -> MẶC ĐỊNH LÀ DONOR
         if (!userRole && !authLoading) {
             userRole = "donor";
         }
 
-        // 3. Xử lý Admin: Cho phép vào bất kỳ trang nào (đúng yêu cầu: "có thể vào bất kì trang nào")
+        // DEBUG CHI TIẾT
+        console.log(`[RoleGuard DEBUG] Path: ${pathname}`);
+        console.log(`[RoleGuard DEBUG] Determined Role: "${userRole}" (Profile: ${profileRole}, Metadata: ${metadataRole})`);
+
+        // NẾU VẪN KHÔNG CÓ ROLE (Vẫn đang load) -> TIẾP TỤC ĐỢI
+        if (!userRole) {
+            console.log("[RoleGuard DEBUG] Role still missing, waiting...");
+            return;
+        }
+
+        // 3. Xử lý Admin: Cho phép vào bất kỳ trang nào
         if (userRole === "admin") {
             setAuthorized(true);
             return;
