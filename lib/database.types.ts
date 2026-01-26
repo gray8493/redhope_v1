@@ -1,5 +1,5 @@
 // Database Types for Supabase
-// Auto-generated based on database schema (Unified Tables)
+// Auto-generated based on database schema (Unified Tables - Comprehensive)
 
 export type UserRole = 'donor' | 'hospital' | 'admin';
 
@@ -7,13 +7,19 @@ export interface User {
     id: string;                    // uuid - Primary Key
     full_name: string;             // varchar - NOT NULL
     email: string;                 // varchar - NOT NULL
-    password_hash: string | null;  // varchar
     role: UserRole;                // role indicator
+    phone: string | null;
+
+    // Common profile fields
+    city: string | null;
+    district: string | null;
+    address: string | null;
 
     // Donor specific fields
     blood_group: string | null;    // varchar (A+, A-, B+, B-, O+, O-, AB+, AB-)
-    city: string | null;           // varchar
-    district: string | null;       // varchar
+    citizen_id: string | null;     // varchar - CCCD
+    dob: string | null;            // date
+    gender: string | null;         // varchar
     current_points: number | null; // int
 
     // Hospital specific fields
@@ -22,44 +28,67 @@ export interface User {
     hospital_address: string | null;
     is_verified: boolean | null;
 
+    // Health & Verification (Step 2)
+    weight: number | null;
+    last_donation_date: string | null;
+    health_history: string | null;
+
     created_at: string;            // timestamp
 }
 
 // Type for inserting new user
 export interface InsertUser {
-    id?: string;                   // Explicitly allow providing ID (matching Auth UI)
+    id?: string;
     full_name: string;
     email: string;
-    password_hash?: string;
     role?: UserRole;
+    phone?: string | null;
 
-    blood_group?: string;
-    city?: string;
-    district?: string;
-    current_points?: number;
+    city?: string | null;
+    district?: string | null;
+    address?: string | null;
 
-    hospital_name?: string;
-    license_number?: string;
-    hospital_address?: string;
-    is_verified?: boolean;
+    blood_group?: string | null;
+    citizen_id?: string | null;
+    dob?: string | null;
+    gender?: string | null;
+    current_points?: number | null;
+
+    hospital_name?: string | null;
+    license_number?: string | null;
+    hospital_address?: string | null;
+    is_verified?: boolean | null;
+
+    weight?: number | null;
+    last_donation_date?: string | null;
+    health_history?: string | null;
 }
 
 // Type for updating user
 export interface UpdateUser {
     full_name?: string;
     email?: string;
-    password_hash?: string;
     role?: UserRole;
+    phone?: string | null;
 
-    blood_group?: string;
-    city?: string;
-    district?: string;
-    current_points?: number;
+    city?: string | null;
+    district?: string | null;
+    address?: string | null;
 
-    hospital_name?: string;
-    license_number?: string;
-    hospital_address?: string;
-    is_verified?: boolean;
+    blood_group?: string | null;
+    citizen_id?: string | null;
+    dob?: string | null;
+    gender?: string | null;
+    current_points?: number | null;
+
+    hospital_name?: string | null;
+    license_number?: string | null;
+    hospital_address?: string | null;
+    is_verified?: boolean | null;
+
+    weight?: number | null;
+    last_donation_date?: string | null;
+    health_history?: string | null;
 }
 
 // Blood group options

@@ -89,8 +89,8 @@ export default function HospitalDirectoryPage() {
 
     // Filter locally for now
     const filteredHospitals = hospitals.filter(h =>
-        h.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        h.address?.toLowerCase().includes(searchTerm.toLowerCase())
+        h.hospital_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        h.hospital_address?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (

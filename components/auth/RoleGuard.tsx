@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authService } from "@/services/auth.service";
+import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 
 interface RoleGuardProps {
@@ -12,52 +12,62 @@ interface RoleGuardProps {
 
 export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
     const router = useRouter();
+    const { user, profile, loading: authLoading } = useAuth();
     const [authorized, setAuthorized] = useState(false);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const user = await authService.getCurrentUser();
+        if (authLoading) return;
 
-                if (!user) {
-                    router.push("/login");
-                    return;
-                }
+        if (!user) {
+            router.push("/login");
+            return;
+        }
 
-                // Check role from profile or metadata
-                const userRole = user.profile?.role || user.user_metadata?.role;
+        const rawRole = profile?.role || user?.user_metadata?.role || "";
+        const userRole = rawRole.toLowerCase().trim();
 
-                // Admin can access everything
-                if (userRole === "admin") {
-                    setAuthorized(true);
-                }
-                // Other roles must be in the allowed list
-                else if (allowedRoles.includes(userRole as any)) {
-                    setAuthorized(true);
-                }
-                else {
-                    // Redirect to their respective dashboard if unauthorized
-                    if (userRole === "hospital") router.push("/hospital");
-                    else router.push("/dashboard");
-                }
-            } catch (error) {
-                console.error("Auth Guard Error:", error);
-                router.push("/login");
-            } finally {
-                setLoading(false);
+        // LOG CHẨN ĐOÁN
+        console.log(`[RoleGuard] Path: ${window.location.pathname}, User: ${user.email}, Role: "${userRole}"`);
+
+        // 1. Nếu là Admin, cho phép vào tất cả các trang
+        if (userRole === "admin") {
+            setAuthorized(true);
+            return;
+        }
+
+        // 2. Nếu chưa có role
+        if (!userRole) {
+            // Nếu đang ở trang hoàn tất profile thì cho qua (để tránh loop)
+            if (window.location.pathname.startsWith("/complete-profile")) {
+                setAuthorized(true);
+            } else {
+                // Nếu không có role và đang ở trang khác, chuyển hướng về hoàn tất profile
+                console.warn("[RoleGuard] No role found, redirecting to /complete-profile");
+                router.push("/complete-profile");
             }
-        };
+            return;
+        }
 
-        checkAuth();
-    }, [router, allowedRoles]);
+        // 3. Kiểm tra vai trò thông thường
+        const isAuthorized = allowedRoles.includes(userRole as any);
 
-    if (loading) {
+        if (isAuthorized) {
+            setAuthorized(true);
+        } else {
+            console.warn(`[RoleGuard] Unauthorized. Role "${userRole}" not in [${allowedRoles}]. Redirecting...`);
+            const target = userRole === "hospital" ? "/hospital" : "/dashboard";
+            if (typeof window !== 'undefined' && window.location.pathname !== target) {
+                router.push(target);
+            }
+        }
+    }, [user, profile, authLoading, router, allowedRoles.join(',')]);
+
+    if (authLoading || (!authorized && user)) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-white dark:bg-[#161121]">
                 <div className="flex flex-col items-center gap-4">
-                    <span className="loading loading-spinner text-neutral"></span>
-                    <p className="text-sm font-medium text-gray-500">Đang xác thực quyền truy cập...</p>
+                    <Loader2 className="w-8 h-8 animate-spin text-[#6324eb]" />
+                    <p className="text-sm font-medium text-gray-500">Đang chuẩn bị không gian làm việc...</p>
                 </div>
             </div>
         );

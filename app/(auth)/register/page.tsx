@@ -43,8 +43,15 @@ const RegisterPage = () => {
             // Redirect to completion or login
             // For better UX, maybe auto-login? But signUp usually requires email confirmation if configured
             // Assuming no email confirmation required for demo:
-            alert('Đăng ký thành công! Vui lòng đăng nhập.');
-            router.push('/login');
+            alert('Đăng ký thành công! Hãy hoàn thiện hồ sơ của bạn.');
+
+            if (formData.role === 'admin') {
+                router.push('/admin');
+            } else if (formData.role === 'hospital') {
+                router.push('/hospital/complete-profile');
+            } else {
+                router.push('/complete-profile');
+            }
         } catch (err: any) {
             console.error('Registration failed:', err);
             setError(err.message || 'Đăng ký thất bại. Vui lòng thử lại.');

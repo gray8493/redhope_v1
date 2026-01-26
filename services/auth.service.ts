@@ -24,17 +24,13 @@ export const authService = {
         // 2. Create public user profile if signup is successful
         if (authData.user) {
             try {
-                // Check if user already exists in public table
-                const existing = await userService.getByEmail(email);
-                if (!existing) {
-                    await userService.create({
-                        id: authData.user.id, // Ensure IDs match
-                        email: email,
-                        full_name: fullName,
-                        role: safeRole as any
-                    });
-                }
-                return authData; // Return success here
+                // Use upsert to ensure we link the record to the new Auth ID
+                await userService.upsert(authData.user.id, {
+                    email: email,
+                    full_name: fullName,
+                    role: safeRole as any
+                });
+                return authData;
             } catch (profileError) {
                 console.error('Failed to create public profile:', profileError);
                 throw new Error('Failed to create user profile. Please contact support.');
@@ -90,8 +86,8 @@ export const authService = {
                 try {
                     const profile = session.user.email ? await userService.getByEmail(session.user.email) : null;
                     callback({ ...session.user, profile });
-                } catch (error) {
-                    console.error('AuthStateChange error:', error);
+                } catch (error: any) {
+                    console.error('AuthStateChange error:', error.message || error);
                     callback(null);
                 }
             } else {

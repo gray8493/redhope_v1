@@ -25,24 +25,59 @@ const LoginPage = () => {
 
             // Fetch the actual authenticated user role from profile or metadata
             const user = await authService.getCurrentUser();
+<<<<<<< HEAD
             const actualRole = user?.profile?.role || user?.user_metadata?.role || 'donor';
 
             // Optional: If you want to force the user to login to the role they selected:
             if (formData.role !== actualRole && actualRole !== 'admin') {
                 setError(`Tài khoản này có vai trò là "${actualRole === 'donor' ? 'Người hiến' : 'Bệnh viện'}", không phải "${formData.role === 'donor' ? 'Người hiến' : 'Bệnh viện'}".`);
                 await authService.signOut(); // Sign out if role mismatch
+=======
+            const rawRole = user?.profile?.role || user?.user_metadata?.role || 'donor';
+            const actualRole = rawRole.toLowerCase();
+
+            const redirectRole = actualRole;
+            const isStep1Complete = !!user?.profile?.phone;
+            const isStep2Complete = redirectRole === 'hospital' || !!user?.profile?.weight;
+
+            if (redirectRole === 'admin') {
+                setLoading(false);
+                router.push('/admin');
+                return;
+            }
+
+            // Normal user checks - Admin is exempt from mismatch errors
+            if (actualRole !== 'admin' && formData.role !== actualRole) {
+                const roleLabels: Record<string, string> = {
+                    donor: 'Người hiến',
+                    hospital: 'Bệnh viện',
+                    admin: 'Quản trị'
+                };
+                const actualLabel = roleLabels[actualRole] || actualRole;
+                const requestedLabel = roleLabels[formData.role] || formData.role;
+
+                setError(`Tài khoản này có vai trò là "${actualLabel}", không phải "${requestedLabel}".`);
+                await authService.signOut();
+>>>>>>> main
                 setLoading(false);
                 return;
             }
 
+<<<<<<< HEAD
             const redirectRole = actualRole; // Use actual role for redirection
 
             if (redirectRole === 'admin') {
                 router.push('/admin/global-ana');
             } else if (redirectRole === 'hospital') {
                 router.push('/hospital');
+=======
+            if (!isStep1Complete) {
+                router.push(redirectRole === 'hospital' ? '/hospital/complete-profile' : '/complete-profile');
+            } else if (!isStep2Complete) {
+                router.push('/complete-profile/verification');
+>>>>>>> main
             } else {
-                router.push('/dashboard');
+                router.push(redirectRole === 'hospital' ? '/hospital' : '/dashboard');
             }
         } catch (err: any) {
             console.error('Login failed:', err);

@@ -14,6 +14,18 @@ export const userService = {
         return data || [];
     },
 
+    // Get recent users
+    async getRecent(limit: number = 5): Promise<User[]> {
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return data || [];
+    },
+
     // Get user by ID
     async getById(id: string): Promise<User | null> {
         const { data, error } = await supabase
@@ -38,7 +50,7 @@ export const userService = {
             .maybeSingle(); // Returns null instead of error if not found
 
         if (error) {
-            console.error('Error in getByEmail:', error);
+            console.error('Error in getByEmail:', error.message || error);
             throw error;
         }
         return data;
@@ -63,10 +75,27 @@ export const userService = {
             .update(updates)
             .eq('id', id)
             .select()
-            .single();
+            .maybeSingle(); // Better for handling non-existent rows
 
         if (error) throw error;
+        if (!data) throw new Error("User record not found to update.");
         return data;
+    },
+
+    // Upsert user (Update or Create)
+    async upsert(id: string, data: InsertUser): Promise<User> {
+        const { data: result, error } = await supabase
+            .from('users')
+            .upsert(
+                { ...data, id },
+                { onConflict: 'id' } // Upsert based on primary ID to prevent cross-account overwrites
+            )
+            .select()
+            .maybeSingle();
+
+        if (error) throw error;
+        if (!result) throw new Error("Failed to upsert user record.");
+        return result;
     },
 
     // Delete user

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     ChevronDown,
     SlidersHorizontal,
@@ -15,7 +15,8 @@ import {
     X,
     Building2,
     Calendar,
-    AlertCircle
+    AlertCircle,
+    ArrowRight
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
@@ -107,12 +108,25 @@ export default function RequestsPage() {
     const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
     const [activeFilter, setActiveFilter] = useState("Tất cả");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 6;
+    const [isVerified, setIsVerified] = useState(false);
+    const itemsPerPage = 6; // Increased from 2 to show more in demo
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const verified = localStorage.getItem('screening_verified') === 'true';
+            setIsVerified(verified);
+        }
+    }, []);
+
     // Filter logic
     const filteredData = REQUESTS_DATA.filter(item => {
         if (activeFilter === "Tất cả") return true;
-        if (activeFilter === "O-Negative") return item.bloodType.toLowerCase().includes("o negative") || item.bloodType.includes("(O-)") || item.bloodType.includes("O-");
+        if (activeFilter === "O-Negative") return item.bloodType.toLowerCase().includes("o-") || item.bloodType.includes("(O-)") || item.bloodType.toLowerCase().includes("o negative");
         if (activeFilter === "Khẩn cấp") return item.urgency === "Cần gấp";
+        if (activeFilter === "Gần tôi") {
+            const distance = parseFloat(item.distance.replace(" Km", ""));
+            return distance < 10;
+        }
         return true;
     });
 
@@ -125,6 +139,11 @@ export default function RequestsPage() {
         setCurrentPage(1); // Reset to first page on filter change
     };
 
+    const handleResetVerification = () => {
+        localStorage.removeItem('screening_verified');
+        setIsVerified(false);
+    };
+
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <div className="flex h-full grow flex-row">
@@ -132,7 +151,7 @@ export default function RequestsPage() {
                 <Sidebar />
                 {/* Main Content & Footer Wrapper */}
                 <div className="flex-1 flex flex-col min-w-0">
-                    <TopNav title="" />
+                    <TopNav title="Yêu cầu hiến máu" />
                     <main className="flex flex-1 justify-center py-8">
                         <div className="flex flex-col max-w-[1024px] flex-1 px-4 md:px-10">
                             {/* Page Heading */}
@@ -140,82 +159,109 @@ export default function RequestsPage() {
                                 <div className="flex min-w-72 flex-col gap-2">
                                     <h1 className="text-[#120e1b] dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Yêu cầu hiến máu</h1>
                                     <p className="text-[#654d99] dark:text-[#a594c9] text-base font-normal leading-normal max-w-2xl">
-                                        Nhu cầu khẩn cấp từ các cơ sở y tế trong khu vực của bạn. Cần sàng lọc an toàn để xem chi tiết vị trí bệnh viện.
+                                        Nhu cầu khẩn cấp từ các cơ sở y tế trong khu vực của bạn. {isVerified ? 'Cảm ơn bạn đã hoàn thành sàng lọc sức khỏe.' : 'Cần sàng lọc an toàn để xem chi tiết vị trí bệnh viện.'}
                                     </p>
                                 </div>
-
+                                <div className="flex items-center gap-3">
+                                    {isVerified ? (
+                                        <div className="flex items-center gap-3 bg-emerald-500/10 text-emerald-600 px-5 py-3 rounded-xl border border-emerald-500/20">
+                                            <ShieldCheck className="w-5 h-5" />
+                                            <span className="text-sm font-black uppercase tracking-wider">Đã xác minh AI</span>
+                                            <button onClick={handleResetVerification} className="ml-2 hover:text-emerald-800"><X className="w-4 h-4" /></button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => router.push("/screening")}
+                                            className="flex min-w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-8 bg-[#6324eb] text-white text-sm font-bold leading-normal tracking-[0.015em] shadow-xl shadow-[#6324eb]/25 hover:bg-[#501ac2] hover:-translate-y-0.5 transition-all">
+                                            <span className="truncate">Kiểm tra ngay</span>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-
-                            {/* Eligibility Action Panel */}
-
 
                             {/* Filter Chips */}
-                            <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                                <button
-                                    onClick={() => handleFilterChange("Tất cả")}
-                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-all ${activeFilter === "Tất cả" ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white"
-                                        }`}
-                                >
-                                    <span className="text-sm font-medium">Tất cả nhóm máu</span>
-                                </button>
-                                <button
-                                    onClick={() => handleFilterChange("O-Negative")}
-                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-all ${activeFilter === "O-Negative" ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white"
-                                        }`}
-                                >
-                                    <span className="text-sm font-medium">O-Negative</span>
-                                    <ChevronDown className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => handleFilterChange("Khẩn cấp")}
-                                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-all ${activeFilter === "Khẩn cấp" ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white"
-                                        }`}
-                                >
-                                    <span className="text-sm font-medium">Khẩn cấp cao</span>
-                                    <ChevronDown className="w-4 h-4" />
-                                </button>
-                                <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
-                                    <span className="text-sm font-medium">Khoảng cách &lt; 10 km</span>
-                                    <ChevronDown className="w-4 h-4" />
+                            <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-2 no-scrollbar">
+                                {["Tất cả", "O-Negative", "Khẩn cấp", "Gần tôi"].map(f => (
+                                    <button
+                                        key={f}
+                                        onClick={() => handleFilterChange(f)}
+                                        className={`flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-xl px-6 transition-all font-bold text-sm tracking-tight ${activeFilter === f ? "bg-[#6324eb] text-white shadow-lg shadow-indigo-500/20" : "bg-white dark:bg-[#1c162e] text-[#120e1b] dark:text-white border border-[#ebe7f3] dark:border-[#2d263d] hover:border-[#6324eb]/50"}`}
+                                    >
+                                        {f === "Tất cả" ? "Tất cả nhóm máu" : f === "Gần tôi" ? "Trong bán kính 10km" : f}
+                                    </button>
+                                ))}
+                                <button className="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-white dark:bg-[#1c162e] border border-slate-200 dark:border-slate-800 px-6 text-[#120e1b] dark:text-white hover:bg-slate-50 transition-colors">
+                                    <span className="text-sm font-bold">Lọc thêm</span>
+                                    <SlidersHorizontal className="w-4 h-4" />
                                 </button>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {paginatedData.map((request) => (
+                            {/* Grid of Requests */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                                {(paginatedData ?? []).map((request) => (
                                     <div
                                         key={request.id}
                                         onClick={() => setSelectedRequest(request)}
-                                        className="flex flex-col bg-white dark:bg-[#1c162e] rounded-xl overflow-hidden shadow-sm border border-[#ebe7f3] dark:border-[#2d263d] hover:shadow-md transition-shadow group cursor-pointer"
+                                        className="flex flex-col bg-white dark:bg-[#1c162e] rounded-3xl overflow-hidden shadow-sm border border-[#ebe7f3] dark:border-[#2d263d] hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group cursor-pointer group"
                                     >
                                         <div
-                                            className="h-40 bg-center bg-no-repeat bg-cover relative"
-                                            style={{ backgroundImage: `linear-gradient(rgba(99, 36, 235, 0.1), rgba(99, 36, 235, 0.2)), url("${request.image}")` }}
+                                            className="h-56 bg-center bg-no-repeat bg-cover relative"
+                                            style={{ backgroundImage: `url("${request.image}")` }}
                                         >
-                                            <div className="absolute inset-0 flex items-center justify-center backdrop-blur-md bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <div className="bg-white/90 dark:bg-[#1c162e]/90 p-2 rounded-lg shadow-xl flex items-center gap-2">
-                                                    <Lock className="w-4 h-4 text-[#6324eb]" />
-                                                    <span className="text-xs font-bold uppercase tracking-wider text-[#6324eb]">Click để xem chi tiết</span>
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+
+                                            {!isVerified && (
+                                                <div className="absolute inset-0 flex items-center justify-center backdrop-blur-xl bg-white/5 group-hover:bg-white/10 transition-colors">
+                                                    <div className="bg-white/90 dark:bg-[#1c162e]/90 p-4 rounded-2xl shadow-2xl flex flex-col items-center gap-3 transform group-hover:scale-105 transition-transform">
+                                                        <div className="size-12 rounded-full bg-[#6324eb]/10 flex items-center justify-center text-[#6324eb]">
+                                                            <Lock className="w-6 h-6" />
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6324eb] mb-0.5">Vị trí bị khóa</p>
+                                                            <p className="text-[10px] font-bold text-slate-500">Cần sàng lọc AI để xem</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="absolute top-4 left-4 flex gap-2">
+                                                <span className={`px-3 py-1.5 ${request.urgencyClass} text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg`}>{request.urgency}</span>
+                                                <span className="px-3 py-1.5 bg-white/95 dark:bg-black/80 text-[#120e1b] dark:text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">{request.distance}</span>
+                                            </div>
+
+                                            {isVerified && (
+                                                <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white drop-shadow-lg">
+                                                    <MapPin className="w-4 h-4 text-emerald-400" />
+                                                    <span className="text-sm font-bold truncate max-w-[200px]">{request.hospitalName}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="p-6">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h3 className="text-[#120e1b] dark:text-white text-2xl font-black tracking-tight">{request.bloodType}</h3>
+                                                    <p className="text-[#6324eb] text-xs font-black uppercase tracking-wider mt-1">{request.urgency === "Cần gấp" ? '⚡ Yêu cầu ưu tiên' : 'Thông thường'}</p>
+                                                </div>
+                                                <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center group-hover:border-[#6324eb] transition-colors">
+                                                    <ArrowRight className="w-6 h-6 text-slate-300 group-hover:text-[#6324eb]" />
                                                 </div>
                                             </div>
-                                            <div className="absolute top-3 left-3 flex gap-2">
-                                                <span className={`px-3 py-1 ${request.urgencyClass} text-white text-[10px] font-bold uppercase rounded-full`}>{request.urgency}</span>
-                                                <span className="px-3 py-1 bg-white/90 dark:bg-black/80 text-[#120e1b] dark:text-white text-[10px] font-bold rounded-full">{request.distance}</span>
-                                            </div>
-                                        </div>
-                                        <div className="p-5">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h3 className="text-[#120e1b] dark:text-white text-lg font-bold">{request.bloodType}</h3>
-                                                <div className="text-[#6324eb] bg-[#6324eb]/10 px-2 py-1 rounded text-xs font-bold">{request.distance}</div>
-                                            </div>
-                                            <p className="text-[#654d99] dark:text-[#a594c9] text-sm font-normal mb-4 line-clamp-2">
+                                            <p className="text-[#654d99] dark:text-[#a594c9] text-sm font-medium mb-6 line-clamp-2 leading-relaxed">
                                                 {request.description}
                                             </p>
-                                            <div className="pt-4 border-t border-[#ebe7f3] dark:border-[#2d263d] flex items-center justify-between">
-                                                <div className="flex items-center gap-2 text-xs text-[#654d99] dark:text-[#a594c9]">
-                                                    <Clock className="w-4 h-4" />
+                                            <div className="pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                                                <div className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 rounded-full text-[11px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                                    <Clock className="w-4 h-4 text-[#6324eb]" />
                                                     <span>{request.timeLeft}</span>
                                                 </div>
-                                                <button className="text-[#6324eb] text-sm font-bold hover:underline">Chi tiết</button>
+                                                <div className="flex -space-x-3">
+                                                    {[1, 2, 3].map(i => (
+                                                        <div key={i} className="size-8 rounded-full border-4 border-white dark:border-[#1c162e] bg-slate-200 overflow-hidden shadow-sm">
+                                                            <img src={`https://i.pravatar.cc/100?u=${request.id + i}`} alt="User" className="w-full h-full object-cover" />
+                                                        </div>
+                                                    ))}
+                                                    <div className="size-8 rounded-full border-4 border-white dark:border-[#1c162e] bg-indigo-500 flex items-center justify-center text-[10px] text-white font-black">+{request.unitsNeeded}</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -223,40 +269,38 @@ export default function RequestsPage() {
                             </div>
 
                             {/* Pagination */}
-                            {totalPages > 1 && (
-                                <div className="mt-12 flex justify-center">
-                                    <nav className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                            disabled={currentPage === 1}
-                                            className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors disabled:opacity-50"
-                                        >
-                                            <ChevronLeft className="w-5 h-5" />
-                                        </button>
+                            <div className="mt-12 flex justify-center">
+                                <nav className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                        className={`h-10 w-10 flex items-center justify-center rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'}`}
+                                    >
+                                        <ChevronLeft className="w-5 h-5" />
+                                    </button>
 
-                                        {Array.from({ length: totalPages }).map((_, i) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => setCurrentPage(i + 1)}
-                                                className={`h-10 w-10 flex items-center justify-center rounded-lg font-bold transition-all ${currentPage === i + 1
-                                                    ? "bg-[#6324eb] text-white shadow-lg shadow-[#6324eb]/30"
-                                                    : "border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] text-[#120e1b] dark:text-white"
-                                                    }`}
-                                            >
-                                                {i + 1}
-                                            </button>
-                                        ))}
-
+                                    {Array.from({ length: totalPages || 1 }).map((_, i) => (
                                         <button
-                                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                            disabled={currentPage === totalPages}
-                                            className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors disabled:opacity-50"
+                                            key={i}
+                                            onClick={() => setCurrentPage(i + 1)}
+                                            className={`h-10 w-10 flex items-center justify-center rounded-xl font-bold transition-all ${currentPage === i + 1
+                                                ? "bg-[#6324eb] text-white shadow-lg shadow-[#6324eb]/30"
+                                                : "border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] text-[#120e1b] dark:text-white"
+                                                }`}
                                         >
-                                            <ChevronRight className="w-5 h-5" />
+                                            {i + 1}
                                         </button>
-                                    </nav>
-                                </div>
-                            )}
+                                    ))}
+
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages || totalPages === 0}
+                                        className={`h-10 w-10 flex items-center justify-center rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] transition-colors ${currentPage === totalPages || totalPages === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'}`}
+                                    >
+                                        <ChevronRight className="w-5 h-5" />
+                                    </button>
+                                </nav>
+                            </div>
                         </div>
                     </main>
 
@@ -271,72 +315,79 @@ export default function RequestsPage() {
                         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                         onClick={() => setSelectedRequest(null)}
                     ></div>
-                    <div className="relative w-full max-w-lg bg-white dark:bg-[#1c162e] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div className="relative w-full max-w-lg bg-white dark:bg-[#1c162e] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         {/* Modal Header Image */}
                         <div
-                            className="h-48 bg-cover bg-center relative"
+                            className="h-56 bg-cover bg-center relative"
                             style={{ backgroundImage: `url("${selectedRequest.image}")` }}
                         >
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
                             <button
                                 onClick={() => setSelectedRequest(null)}
-                                className="absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-colors"
+                                className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-colors"
                             >
                                 <X className="w-5 h-5" />
                             </button>
-                            <div className="absolute bottom-4 left-6 text-white">
-                                <p className="text-sm font-medium opacity-90 mb-1 flex items-center gap-2">
-                                    <Building2 className="w-4 h-4" /> {selectedRequest.hospitalName}
+                            <div className="absolute bottom-6 left-6 text-white">
+                                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400 mb-1 flex items-center gap-2">
+                                    <Building2 className="w-4 h-4" /> {isVerified ? selectedRequest.hospitalName : 'Vị trí đang khóa'}
                                 </p>
-                                <h2 className="text-3xl font-black">{selectedRequest.bloodType}</h2>
+                                <h2 className="text-4xl font-black tracking-tight">{selectedRequest.bloodType}</h2>
                             </div>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-6 flex flex-col gap-6">
-                            <div className="flex items-center gap-4">
-                                <div className={`px-4 py-2 rounded-lg ${selectedRequest.urgencyClass}/10 text-${selectedRequest.urgencyColor}-500 font-bold flex flex-col items-center`}>
-                                    <AlertCircle className="w-6 h-6 mb-1" />
-                                    <span className="text-xs uppercase">{selectedRequest.urgency}</span>
+                        <div className="p-8 flex flex-col gap-6">
+                            <div className="flex items-start gap-4 p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${selectedRequest.urgencyColor === 'red' ? 'bg-red-500 text-white' : 'bg-amber-500 text-white'}`}>
+                                    <AlertCircle className="w-6 h-6" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-bold text-[#120e1b] dark:text-white text-lg">Chi tiết tình trạng</h3>
-                                    <p className="text-sm text-[#654d99] dark:text-[#a594c9]">{selectedRequest.patientCondition}</p>
+                                    <h3 className="font-black text-[#120e1b] dark:text-white text-lg tracking-tight uppercase text-xs opacity-50 mb-1">Tình trạng bệnh nhân</h3>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed italic">"{selectedRequest.patientCondition}"</p>
                                 </div>
                             </div>
 
-                            <div className="space-y-4 border-t border-[#ebe7f3] dark:border-[#2d263d] pt-4">
-                                <div className="flex items-start gap-3">
-                                    <MapPin className="w-5 h-5 text-[#6324eb] shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-bold text-[#120e1b] dark:text-white">Địa chỉ tiếp nhận</p>
-                                        <p className="text-sm text-[#654d99] dark:text-[#a594c9]">{selectedRequest.address}</p>
-                                    </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl">
+                                    <MapPin className="w-5 h-5 text-[#6324eb] mb-2" />
+                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Khoảng cách</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedRequest.distance}</p>
                                 </div>
-                                <div className="flex items-start gap-3">
-                                    <Calendar className="w-5 h-5 text-[#6324eb] shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-bold text-[#120e1b] dark:text-white">Thời hạn</p>
-                                        <p className="text-sm text-[#654d99] dark:text-[#a594c9]">{selectedRequest.timeLeft}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <ShieldCheck className="w-5 h-5 text-[#6324eb] shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-bold text-[#120e1b] dark:text-white">Số lượng cần thiết</p>
-                                        <p className="text-sm text-[#654d99] dark:text-[#a594c9]">{selectedRequest.unitsNeeded} đơn vị máu</p>
-                                    </div>
+                                <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl">
+                                    <ShieldCheck className="w-5 h-5 text-emerald-500 mb-2" />
+                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Số lượng</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedRequest.unitsNeeded} đơn vị</p>
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 mt-2">
-                                <button
-                                    onClick={() => router.push("/screening")}
-                                    className="flex-1 py-3 bg-[#6324eb] text-white font-bold rounded-xl hover:bg-[#501ac2] shadow-lg shadow-[#6324eb]/20 transition-all active:scale-[0.98]"
-                                >
-                                    Đăng ký hiến máu
+                            {!isVerified && (
+                                <div className="p-5 bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-900/30 flex items-start gap-3">
+                                    <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                                    <p className="text-xs text-amber-800 dark:text-amber-200 font-medium leading-relaxed">
+                                        Để đảm bảo an toàn, địa chỉ chính xác của bệnh viện chỉ hiển thị sau khi bạn hoàn thành sàng lọc sức khỏe AI.
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="flex gap-4 mt-4">
+                                {isVerified ? (
+                                    <button
+                                        className="flex-1 py-4 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 transition-all active:scale-[0.98] uppercase tracking-widest text-sm"
+                                    >
+                                        Liên hệ bệnh viện
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => router.push("/screening")}
+                                        className="flex-1 py-4 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 transition-all active:scale-[0.98] uppercase tracking-widest text-sm"
+                                    >
+                                        Kiểm tra ngay
+                                    </button>
+                                )}
+                                <button className="px-5 py-4 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 text-slate-900 dark:text-white transition-colors">
+                                    <Phone className="w-5 h-5" />
                                 </button>
-
                             </div>
                         </div>
                     </div>

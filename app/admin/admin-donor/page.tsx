@@ -79,13 +79,13 @@ export default function DonorManagementPage() {
                 }
 
                 const newUser = await userService.create({
-                    full_name: currentUser.full_name,
-                    email: currentUser.email,
+                    full_name: currentUser.full_name as string,
+                    email: currentUser.email as string,
+                    role: 'donor',
                     blood_group: currentUser.blood_group || undefined,
                     city: currentUser.city || undefined,
                     district: currentUser.district || undefined,
                     current_points: Number(currentUser.current_points) || 0,
-                    password_hash: undefined // Password managed by Supabase Auth / Invite flow
                 });
 
                 setDonors([newUser, ...donors]);

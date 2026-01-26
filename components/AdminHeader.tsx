@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { authService } from '@/services/auth.service';
 
 // You can replace these with actual icons from a library like lucide-react
 const BellIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -13,6 +15,7 @@ const BellIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 const AdminHeader = () => {
+  const router = useRouter();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
 
   return (
@@ -60,18 +63,30 @@ const AdminHeader = () => {
                 aria-labelledby="user-menu-button"
                 tabIndex={-1}
               >
-                <Link href="/settings" legacyBehavior>
-                  <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabIndex={-1} id="user-menu-item-0">
-                    Your Profile
-                  </a>
+                <Link
+                  href="/settings"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
+                  tabIndex={-1}
+                  id="user-menu-item-0"
+                >
+                  Your Profile
                 </Link>
-                <Link href="/settings" legacyBehavior>
-                  <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabIndex={-1} id="user-menu-item-1">
-                    Settings
-                  </a>
+                <Link
+                  href="/settings"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
+                  tabIndex={-1}
+                  id="user-menu-item-1"
+                >
+                  Settings
                 </Link>
                 <button
                   type="button"
+                  onClick={async () => {
+                    await authService.signOut();
+                    router.push("/login");
+                  }}
                   className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
                   role="menuitem"
                   tabIndex={-1}
