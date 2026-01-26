@@ -15,10 +15,20 @@ import { useState, useEffect } from "react";
 import { authService } from "@/services/auth.service";
 import { userService } from "@/services/user.service";
 import { BLOOD_GROUPS } from "@/lib/database.types";
+import RoleGuard from "@/components/auth/RoleGuard";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DonorProfileStep1() {
+    return (
+        <RoleGuard allowedRoles={["donor"]}>
+            <DonorProfileContent />
+        </RoleGuard>
+    );
+}
+
+function DonorProfileContent() {
     const router = useRouter();
-    const [loading, setLoading] = useState(true);
+    const { refreshUser } = useAuth();
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [userId, setUserId] = useState("");
@@ -54,11 +64,9 @@ export default function DonorProfileStep1() {
                     district: user.profile?.district || "",
                     address: user.profile?.address || ""
                 }));
-                setLoading(false);
             } catch (err: any) {
                 console.error("Error fetching user:", err);
                 setError("Không thể tải thông tin người dùng. Vui lòng làm mới trang.");
-                setLoading(false);
             }
         };
         fetchUser();
@@ -97,7 +105,14 @@ export default function DonorProfileStep1() {
                 return;
             }
 
+            // 1. Lưu dữ liệu
             await userService.upsert(userId, cleanData);
+
+            // 2. Refresh dữ liệu trong AuthContext để RoleGuard nhận diện được thay đổi
+            // Chúng ta lấy refreshUser từ useAuth hook
+            if (refreshUser) await refreshUser();
+
+            // 3. Chuyển hướng
             router.push("/complete-profile/verification");
         } catch (err: any) {
             // Log full error internally for diagnostics
@@ -109,14 +124,6 @@ export default function DonorProfileStep1() {
             setSubmitting(false);
         }
     };
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#101622]">
-                <Loader2 className="w-10 h-10 animate-spin text-[#2b6cee]" />
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-[#f6f6f8] dark:bg-[#101622] font-sans text-[#0d121b] dark:text-gray-100">

@@ -98,12 +98,25 @@ export const authService = {
         return { ...user, profile };
     },
 
-    // Listener tối giản nhất để tránh treo
-    onAuthStateChange(callback: (user: any) => void) {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // Listener tự động cập nhật Profile khi trạng thái Auth thay đổi
+    onAuthStateChange(callback: (userData: any) => void) {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log(`[authService] Auth Event: ${event}`);
+
             if (session?.user) {
-                // Trả về user cơ bản trước để tránh block UI
-                callback(session.user);
+                // Nếu có user, đi lấy profile ngay để đảm bảo Role chính xác
+                try {
+                    const { data: profile } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .maybeSingle();
+
+                    callback({ ...session.user, profile });
+                } catch (e) {
+                    console.error('[authService] Failed to fetch profile in listener:', e);
+                    callback(session.user);
+                }
             } else {
                 callback(null);
             }
