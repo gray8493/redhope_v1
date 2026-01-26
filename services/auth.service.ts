@@ -39,6 +39,37 @@ export const authService = {
         return data;
     },
 
+    // Forgot Password - Send Reset Link
+    async resetPassword(email: string) {
+        console.log(`[authService] Sending reset password link to: ${email}`);
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/update-password`,
+        });
+        if (error) throw error;
+    },
+
+    // Update Password (used after clicking reset link)
+    async updatePassword(newPassword: string) {
+        console.log(`[authService] Updating password...`);
+        const { error } = await supabase.auth.updateUser({
+            password: newPassword
+        });
+        if (error) throw error;
+    },
+
+    // Sign In with Google
+    async signInWithGoogle() {
+        console.log("[authService] Starting Google Sign In...");
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+            },
+        });
+        if (error) throw error;
+        return data;
+    },
+
     // Sign Out
     async signOut() {
         const { error } = await supabase.auth.signOut();
