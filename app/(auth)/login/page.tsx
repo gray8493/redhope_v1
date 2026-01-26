@@ -53,11 +53,17 @@ const LoginPage = () => {
             } else {
                 const userData = await authService.getCurrentUser();
                 const profile = userData?.profile;
-                if (!profile?.blood_group) {
+
+                // 1. Nếu chưa có thông tin cơ bản (Nhóm máu & Tỉnh/TP)
+                if (!profile?.blood_group || !profile?.city) {
                     router.push('/complete-profile');
-                } else if (!profile?.weight) {
+                }
+                // 2. Nếu xong cơ bản nhưng chưa xác minh (dùng full_name để check tạm)
+                else if (!profile?.full_name) {
                     router.push('/complete-profile/verification');
-                } else {
+                }
+                // 3. Đã hoàn thành hồ sơ
+                else {
                     router.push('/dashboard');
                 }
             }
@@ -137,7 +143,7 @@ const LoginPage = () => {
                             <div>
                                 <div className="flex justify-between items-center mb-1.5 ml-1">
                                     <label className="text-sm font-bold text-gray-700">Mật khẩu</label>
-                                    <Link href="/forgot-password" size="sm" className="text-xs font-bold text-[#6324eb] hover:underline">
+                                    <Link href="/forgot-password" className="text-xs font-bold text-[#6324eb] hover:underline">
                                         Quên mật khẩu?
                                     </Link>
                                 </div>
