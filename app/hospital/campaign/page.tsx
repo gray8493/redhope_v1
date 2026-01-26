@@ -5,6 +5,7 @@ import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
     LayoutGrid,
     List,
@@ -22,9 +23,32 @@ import {
 
 import { getCampaigns, subscribeToCampaignUpdates, Campaign } from "@/app/utils/campaignStorage";
 
+const LOCATION_DATA = {
+    "Nội thành Quy Nhơn": ["Trần Hưng Đạo", "Đống Đa", "Hải Cảng", "Lê Lợi", "Trần Phú", "Lê Hồng Phong", "Lý Thường Kiệt", "Nguyễn Văn Cừ", "Ngô Mây", "Ghềnh Ráng", "Quang Trung"],
+    "Ngoại thành": ["Nhơn Phú", "Nhơn Bình", "Bùi Thị Xuân", "Trần Quang Diệu"],
+    "Xã đảo & Bán đảo": ["Nhơn Lý", "Nhơn Hải", "Nhơn Hội", "Nhơn Châu"]
+};
+
 export default function CampaignManagementPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('grid');
     const [activeTab, setActiveTab] = useState<'active' | 'history' | 'drafts'>('active');
+
+    // Sync activeTab with URL
+    useEffect(() => {
+        const tab = searchParams.get('tab') as 'active' | 'history' | 'drafts';
+        if (tab) {
+            setActiveTab(tab);
+        }
+    }, [searchParams]);
+
+    const handleTabChange = (tab: 'active' | 'history' | 'drafts') => {
+        setActiveTab(tab);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('tab', tab);
+        router.push(`/hospital/campaign?${params.toString()}`, { scroll: false });
+    };
     const [historyTab, setHistoryTab] = useState('all');
     const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +56,24 @@ export default function CampaignManagementPage() {
     const [historySearch, setHistorySearch] = useState('');
     const [historyPage, setHistoryPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
+
+    // Cascader State
+    const [isLocationOpen, setIsLocationOpen] = useState(false);
+    const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
+    const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+    const [selectedWard, setSelectedWard] = useState<string | null>(null);
+    const [regionFilter, setRegionFilter] = useState('');
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (!(e.target as HTMLElement).closest('#cascader-container')) {
+                setIsLocationOpen(false);
+                setHoveredDistrict(null);
+            }
+        };
+        window.addEventListener('click', handleClickOutside);
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         // Initial load
@@ -94,19 +136,12 @@ export default function CampaignManagementPage() {
         return end < todayZero;
     };
 
-    // Helper to check if campaign belongs to current month (for monthly reporting)
-    const isInCurrentMonth = (campaign: Campaign) => {
-        // If no date, ignore? Or assume created now? Let's check date string.
+    const isCampaignToday = (campaign: Campaign) => {
         if (!campaign.date) return false;
-
-        const { start } = parseCampaignDate(campaign.date);
-        if (start === 0) return false;
-
-        const campaignDate = new Date(start);
+        const { start, end } = parseCampaignDate(campaign.date);
         const now = new Date();
-
-        return campaignDate.getMonth() === now.getMonth() &&
-            campaignDate.getFullYear() === now.getFullYear();
+        const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        return todayTime >= start && todayTime <= end;
     };
 
     // Filter Active Campaigns (Not Ended, Not Expired, Not Draft)
@@ -116,11 +151,31 @@ export default function CampaignManagementPage() {
         !isCampaignExpired(c)
     );
 
+    // Filter campaigns for Daily Statistics (Active or Ended Today)
+    const todayList = activeCampaigns.filter(c =>
+        c.operationalStatus !== "Bản nháp" &&
+        isCampaignToday(c)
+    );
+
     const filteredCampaigns = activeList.filter(campaign => {
         const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             campaign.id.toString().includes(searchQuery);
 
         if (!matchesSearch) return false;
+
+        // Location Filter (Cascader)
+        if (selectedDistrict) {
+            const locationLower = campaign.location.toLowerCase();
+            if (selectedWard) {
+                // Specific ward selected
+                if (!locationLower.includes(selectedWard.toLowerCase())) return false;
+            } else {
+                // Only district selected - check if location contains any ward in that district
+                const wards = LOCATION_DATA[selectedDistrict as keyof typeof LOCATION_DATA];
+                const matchesAnyWard = wards.some(ward => locationLower.includes(ward.toLowerCase()));
+                if (!matchesAnyWard) return false;
+            }
+        }
 
         // Date Filter
         if (!filterDate) return true;
@@ -132,15 +187,36 @@ export default function CampaignManagementPage() {
     });
 
     // Filter History Campaigns (Ended OR Expired)
-    const historyList = activeCampaigns.filter(c =>
-        (c.operationalStatus === "Đã kết thúc" || isCampaignExpired(c)) &&
-        c.operationalStatus !== "Bản nháp"
-    );
+    const historyList = activeCampaigns
+        .filter(c =>
+            (c.operationalStatus === "Đã kết thúc" || isCampaignExpired(c)) &&
+            c.operationalStatus !== "Bản nháp"
+        )
+        .sort((a, b) => {
+            const dateA = parseCampaignDate(a.date || "").end;
+            const dateB = parseCampaignDate(b.date || "").end;
+            return dateB - dateA; // Sắp xếp từ mới nhất đến cũ nhất
+        });
 
-    const filteredHistory = historyList.filter(c =>
-        c.name.toLowerCase().includes(historySearch.toLowerCase()) ||
-        c.location.toLowerCase().includes(historySearch.toLowerCase())
-    );
+    const filteredHistory = historyList.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(historySearch.toLowerCase()) ||
+            c.location.toLowerCase().includes(historySearch.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        // Location Filter (Cascader)
+        if (selectedDistrict) {
+            const locationLower = c.location.toLowerCase();
+            if (selectedWard) {
+                if (!locationLower.includes(selectedWard.toLowerCase())) return false;
+            } else {
+                const wards = LOCATION_DATA[selectedDistrict as keyof typeof LOCATION_DATA];
+                const matchesAnyWard = wards.some(ward => locationLower.includes(ward.toLowerCase()));
+                if (!matchesAnyWard) return false;
+            }
+        }
+        return true;
+    });
 
     // Pagination logic for history
     const totalHistoryPages = Math.ceil(filteredHistory.length / ITEMS_PER_PAGE);
@@ -198,65 +274,171 @@ export default function CampaignManagementPage() {
                             </div>
 
                             {/* Quick Stats Widget */}
-                            {/* Quick Stats Widget */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
-                                    <div className="size-12 rounded-full bg-blue-100 flex items-center justify-center text-[#137fec]"><Droplet className="w-6 h-6" /></div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
+                                    <div className="size-12 rounded-full bg-red-50 flex items-center justify-center text-[#6324eb]"><Droplet className="w-6 h-6" /></div>
                                     <div>
-                                        <p className="text-sm font-medium text-slate-500">Tổng lượng máu thu thập</p>
+                                        <p className="text-sm font-medium text-slate-500">Tổng lượng máu</p>
                                         <p className="text-2xl font-black text-slate-900 dark:text-white">
-                                            {activeCampaigns.reduce((sum, c) => sum + (c.current || 0), 0).toLocaleString()} <span className="text-sm font-normal text-slate-400">ml (Hôm nay)</span>
+                                            {todayList.reduce((sum, c) => sum + (c.current || 0), 0).toLocaleString()} <span className="text-sm font-normal text-slate-400">ml</span>
                                         </p>
+                                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Thu thập hôm nay</p>
                                     </div>
                                 </div>
-                                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
                                     <div className="size-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"><Users className="w-6 h-6" /></div>
                                     <div>
                                         <p className="text-sm font-medium text-slate-500">Tỉ lệ hiến máu</p>
-                                        <p className="text-2xl font-black text-slate-900 dark:text-white">
-                                            {activeCampaigns.reduce((sum, c) => sum + (c.completedCount || 0), 0)} / {activeCampaigns.reduce((sum, c) => sum + (c.registeredCount || (c.appointments?.length || 0)), 0)}
-                                            <span className="text-sm font-normal text-slate-400 ml-2">Đã hiến / Đăng ký</span>
-                                        </p>
+                                        <div className="flex items-baseline gap-2">
+                                            <p className="text-2xl font-black text-slate-900 dark:text-white">
+                                                {(() => {
+                                                    const donated = todayList.reduce((sum, c) => sum + (c.completedCount || (c.appointments?.filter(a => a.status === 'Hoàn thành').length || 0)), 0);
+                                                    const registered = todayList.reduce((sum, c) => sum + (c.registeredCount || (c.appointments?.length || 0)), 0);
+                                                    const percent = registered > 0 ? Math.round((donated / registered) * 100) : 0;
+                                                    return (
+                                                        <>
+                                                            {donated}/{registered}
+                                                            <span className={`ml-1 text-[10px] px-1 py-0.5 rounded font-bold ${percent >= 80 ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                                                                {percent}%
+                                                            </span>
+                                                        </>
+                                                    );
+                                                })()}
+                                            </p>
+                                        </div>
+                                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Đã hiến / Đăng ký</p>
                                     </div>
                                 </div>
-                                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-red-100 dark:border-red-900/30 shadow-sm flex items-center gap-4">
-                                    <div className="size-12 rounded-full bg-red-100 flex items-center justify-center text-red-600"><AlertCircle className="w-6 h-6" /></div>
+                                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
+                                    <div className="size-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"><Clock className="w-6 h-6" /></div>
+                                    <div>
+                                        <p className="text-sm font-medium text-slate-500">Hoãn hiến hôm nay</p>
+                                        <p className="text-2xl font-black text-orange-600">
+                                            {todayList.reduce((sum, c) => sum + (c.deferredCount || (c.appointments?.filter(a => a.status === 'Đã hoãn' || a.status === 'Hoãn hiến').length || 0)), 0)}
+                                            <span className="text-sm font-normal text-slate-400 ml-2 text-slate-400">Người</span>
+                                        </p>
+                                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần hỗ trợ hồ sơ</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-indigo-50 dark:border-indigo-900/30 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
+                                    <div className="size-12 rounded-full bg-indigo-100 flex items-center justify-center text-[#6324eb]"><AlertCircle className="w-6 h-6" /></div>
                                     <div>
                                         <p className="text-sm font-medium text-slate-500">Thiếu hụt chỉ tiêu</p>
-                                        <p className="text-2xl font-black text-red-600">
-                                            {activeCampaigns.filter(c => isInCurrentMonth(c) && (c.current < c.target)).length} <span className="text-sm font-normal text-slate-400">Chiến dịch</span>
+                                        <p className="text-2xl font-black text-[#6324eb]">
+                                            {todayList.filter(c => (c.current < c.target)).length} <span className="text-sm font-normal text-slate-400">Đợt</span>
                                         </p>
+                                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần đẩy mạnh truyền thông</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Filters */}
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-8 flex flex-col lg:flex-row items-center gap-4 transition-colors">
-                                <div className="relative w-full lg:flex-1">
-                                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 flex flex-col lg:flex-row items-center gap-3 transition-colors">
+                                <div className="relative w-full lg:flex-1 group">
+                                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#6324eb] transition-colors text-[20px] pointer-events-none z-10">search</span>
                                     <input
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#137fec]/50 text-slate-900 dark:text-white placeholder-slate-500 outline-none transition-all"
+                                        className="w-full h-11 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-full pl-12 pr-4 text-sm focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] text-slate-900 dark:text-white placeholder-slate-500 outline-none transition-all shadow-sm"
                                         placeholder="Tìm kiếm tên chiến dịch hoặc ID..."
                                         type="text"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                 </div>
-                                <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-                                    <div className="relative w-full sm:w-48">
-                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">location_on</span>
-                                        <select className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-2.5 pl-9 pr-4 text-sm focus:ring-2 focus:ring-[#137fec]/50 text-slate-900 dark:text-white appearance-none outline-none transition-all">
-                                            <option value="">Thành phố / Khu vực</option>
-                                            <option value="downtown">Trung tâm</option>
-                                            <option value="north">Quận Bắc</option>
-                                            <option value="east">Thung lũng Đông</option>
-                                            <option value="west">Phía Tây</option>
-                                        </select>
+                                <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+                                    <div className="relative w-full sm:w-52" id="cascader-container">
+                                        <button
+                                            onClick={() => setIsLocationOpen(!isLocationOpen)}
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-9 pr-3 text-sm focus:ring-2 focus:ring-[#6324eb]/50 text-slate-900 dark:text-white flex items-center justify-between outline-none transition-all"
+                                        >
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                                                <span className="truncate">{selectedWard ? `${selectedDistrict}, ${selectedWard}` : (selectedDistrict || "Thành phố / Khu vực")}</span>
+                                            </div>
+                                            <span className={`material-symbols-outlined text-[18px] text-slate-400 transition-transform ${isLocationOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                                        </button>
+
+                                        {isLocationOpen && (
+                                            <div className="absolute top-[calc(100%+8px)] left-0 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
+                                                <div className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 dark:border-slate-800/50 mb-1">Khu vực / Địa điểm</div>
+
+                                                <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                                                    {/* Option: All Areas */}
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedDistrict(null);
+                                                            setSelectedWard(null);
+                                                            setRegionFilter('');
+                                                            setIsLocationOpen(false);
+                                                        }}
+                                                        className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold transition-all ${!selectedDistrict ? 'bg-indigo-50 dark:bg-indigo-900/20 text-[#6324eb]' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                                    >
+                                                        <span>Toàn thành phố</span>
+                                                        {!selectedDistrict && <span className="material-symbols-outlined text-[14px]">check</span>}
+                                                    </button>
+
+                                                    {/* Level 1: Districts */}
+                                                    {Object.keys(LOCATION_DATA).map((district) => {
+                                                        const isExpanded = hoveredDistrict === district;
+                                                        return (
+                                                            <div key={district} className="flex flex-col">
+                                                                <div
+                                                                    className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold transition-all cursor-pointer ${selectedDistrict === district && !selectedWard ? 'bg-indigo-50 dark:bg-indigo-900/20 text-[#6324eb]' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                                                >
+                                                                    <span
+                                                                        className="flex-1"
+                                                                        onClick={() => {
+                                                                            setSelectedDistrict(district);
+                                                                            setSelectedWard(null);
+                                                                            setRegionFilter(district);
+                                                                            setIsLocationOpen(false);
+                                                                        }}
+                                                                    >
+                                                                        {district}
+                                                                    </span>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setHoveredDistrict(isExpanded ? null : district);
+                                                                        }}
+                                                                        className={`size-6 flex items-center justify-center rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-all ${isExpanded ? 'rotate-90 bg-slate-100 dark:bg-slate-800' : ''}`}
+                                                                    >
+                                                                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                                                                    </button>
+                                                                </div>
+
+                                                                {/* Level 2: Wards (Accordion Content) */}
+                                                                {isExpanded && (
+                                                                    <div className="bg-slate-50/50 dark:bg-slate-800/30 border-y border-slate-50 dark:border-slate-800 animate-in slide-in-from-top-1 duration-200">
+                                                                        {LOCATION_DATA[district as keyof typeof LOCATION_DATA].map((ward) => (
+                                                                            <button
+                                                                                key={ward}
+                                                                                onClick={() => {
+                                                                                    setSelectedDistrict(district);
+                                                                                    setSelectedWard(ward);
+                                                                                    setRegionFilter(`${district}, ${ward}`);
+                                                                                    setIsLocationOpen(false);
+                                                                                }}
+                                                                                className={`w-full flex items-center justify-between pl-8 pr-4 py-2 text-[11px] font-bold transition-all ${selectedWard === ward && selectedDistrict === district ? 'text-[#6324eb] bg-indigo-50/50 dark:bg-indigo-900/10' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-700/50'}`}
+                                                                            >
+                                                                                <span>{ward}</span>
+                                                                                {selectedWard === ward && selectedDistrict === district && (
+                                                                                    <span className="material-symbols-outlined text-[12px]">check</span>
+                                                                                )}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="relative w-full sm:w-48">
+                                    <div className="relative w-full sm:w-36">
                                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">calendar_month</span>
                                         <input
-                                            className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-2.5 pl-9 pr-4 text-sm focus:ring-2 focus:ring-[#137fec]/50 text-slate-900 dark:text-white outline-none transition-all placeholder-slate-500"
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-9 pr-3 text-sm focus:ring-2 focus:ring-[#6324eb]/50 text-slate-900 dark:text-white outline-none transition-all placeholder-slate-500"
                                             type="text"
                                             onFocus={(e) => (e.target.type = "date")}
                                             onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
@@ -265,9 +447,9 @@ export default function CampaignManagementPage() {
                                             placeholder="Chọn ngày"
                                         />
                                     </div>
-                                    <button className="w-full sm:w-auto px-4 py-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-800 dark:hover:bg-white transition-colors">
+                                    <button className="w-full sm:w-auto px-4 py-1.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-800 dark:hover:bg-white transition-colors">
                                         <span className="material-symbols-outlined text-[18px]">filter_list</span>
-                                        Áp dụng bộ lọc
+                                        Lọc
                                     </button>
                                 </div>
                             </div>
@@ -275,30 +457,30 @@ export default function CampaignManagementPage() {
                             {/* Tabs Navigation */}
                             <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800 mb-6">
                                 <button
-                                    onClick={() => setActiveTab('active')}
-                                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'active' ? 'text-[#137fec]' : 'text-slate-500 hover:text-slate-700'}`}
+                                    onClick={() => handleTabChange('active')}
+                                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'active' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-slate-700'}`}
                                 >
                                     <span className="material-symbols-outlined text-[20px]">grid_view</span>
                                     Đang hoạt động
                                     <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-xs">{activeList.length}</span>
-                                    {activeTab === 'active' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#137fec] rounded-t-full"></span>}
+                                    {activeTab === 'active' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-t-full"></span>}
                                 </button>
                                 <button
-                                    onClick={() => setActiveTab('history')}
-                                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'history' ? 'text-[#137fec]' : 'text-slate-500 hover:text-slate-700'}`}
+                                    onClick={() => handleTabChange('history')}
+                                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'history' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-slate-700'}`}
                                 >
                                     <span className="material-symbols-outlined text-[20px]">history</span>
                                     Lịch sử
-                                    {activeTab === 'history' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#137fec] rounded-t-full"></span>}
+                                    {activeTab === 'history' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-t-full"></span>}
                                 </button>
                                 <button
-                                    onClick={() => setActiveTab('drafts')}
-                                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'drafts' ? 'text-[#137fec]' : 'text-slate-500 hover:text-slate-700'}`}
+                                    onClick={() => handleTabChange('drafts')}
+                                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'drafts' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-slate-700'}`}
                                 >
                                     <span className="material-symbols-outlined text-[20px]">edit_note</span>
                                     Bản nháp
                                     <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-xs">{filteredDrafts.length}</span>
-                                    {activeTab === 'drafts' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#137fec] rounded-t-full"></span>}
+                                    {activeTab === 'drafts' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-t-full"></span>}
                                 </button>
                             </div>
 
@@ -312,13 +494,13 @@ export default function CampaignManagementPage() {
                                         <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
                                             <button
                                                 onClick={() => setViewMode('grid')}
-                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-800 text-[#137fec]' : 'text-slate-400 hover:text-slate-600'}`}
+                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-800 text-[#6324eb]' : 'text-slate-400 hover:text-slate-600'}`}
                                             >
                                                 <LayoutGrid className="w-5 h-5" />
                                             </button>
                                             <button
                                                 onClick={() => setViewMode('timeline')}
-                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'timeline' ? 'bg-slate-100 dark:bg-slate-800 text-[#137fec]' : 'text-slate-400 hover:text-slate-600'}`}
+                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'timeline' ? 'bg-slate-100 dark:bg-slate-800 text-[#6324eb]' : 'text-slate-400 hover:text-slate-600'}`}
                                             >
                                                 <List className="w-5 h-5" />
                                             </button>
@@ -387,7 +569,7 @@ export default function CampaignManagementPage() {
                                                                 <span>Mục tiêu: {campaign.target}</span>
                                                             </div>
                                                             <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                                <div className={`h-full rounded-full transition-all duration-1000 ${campaign.progress >= 100 ? 'bg-emerald-500' : campaign.progress >= 80 ? 'bg-green-500' : campaign.progress < 30 ? 'bg-red-500' : 'bg-[#137fec]'}`} style={{ width: `${campaign.progress}%` }}></div>
+                                                                <div className={`h-full rounded-full transition-all duration-1000 ${campaign.progress >= 100 ? 'bg-emerald-500' : campaign.progress >= 80 ? 'bg-green-500' : campaign.progress < 30 ? 'bg-red-500' : 'bg-[#6324eb]'}`} style={{ width: `${campaign.progress}%` }}></div>
                                                             </div>
                                                         </div>
 
@@ -403,7 +585,7 @@ export default function CampaignManagementPage() {
                                                             <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
                                                                 <Clock className="w-3 h-3" /> {campaign.timeLeft}
                                                             </span>
-                                                            <Link className="text-[11px] font-bold text-[#137fec] hover:text-[#137fec]/80 transition-colors uppercase tracking-tight flex items-center gap-1" href={`/hospital/campaign/${campaign.id}`}>
+                                                            <Link className="text-[11px] font-bold text-[#6324eb] hover:text-[#6324eb]/80 transition-colors uppercase tracking-tight flex items-center gap-1" href={`/hospital/campaign/${campaign.id}?fromTab=${activeTab}`}>
                                                                 Chi tiết <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                                                             </Link>
                                                         </div>
@@ -445,7 +627,7 @@ export default function CampaignManagementPage() {
                                                                 <div className="h-full bg-blue-500" style={{ width: `${campaign.progress}%` }}></div>
                                                             </div>
                                                         </div>
-                                                        <Link className="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 text-[#137fec] transition-colors" href={`/hospital/campaign/${campaign.id}`}>
+                                                        <Link className="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 text-[#6324eb] transition-colors" href={`/hospital/campaign/${campaign.id}?fromTab=${activeTab}`}>
                                                             <span className="material-symbols-outlined">arrow_forward</span>
                                                         </Link>
                                                     </div>
@@ -507,7 +689,7 @@ export default function CampaignManagementPage() {
                                             <div className="relative w-full md:w-64">
                                                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
                                                 <input
-                                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-2 pl-9 pr-4 text-sm focus:ring-2 focus:ring-[#137fec]/50 text-slate-900 dark:text-white outline-none transition-all placeholder-slate-400"
+                                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-2 pl-9 pr-4 text-sm focus:ring-2 focus:ring-[#6324eb]/50 text-slate-900 dark:text-white outline-none transition-all placeholder-slate-400"
                                                     value={historySearch}
                                                     onChange={(e) => setHistorySearch(e.target.value)}
                                                     placeholder="Tìm kiếm lịch sử..."
@@ -548,7 +730,7 @@ export default function CampaignManagementPage() {
                                                                 <td className="px-6 py-4">
                                                                     <div className="flex items-center gap-2">
                                                                         <div className="w-16 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full">
-                                                                            <div className={`h-full rounded-full ${campaign.progress >= 100 ? 'bg-green-500' : 'bg-[#137fec]'}`} style={{ width: `${Math.min(campaign.progress, 100)}%` }}></div>
+                                                                            <div className={`h-full rounded-full ${campaign.progress >= 100 ? 'bg-green-500' : 'bg-[#6324eb]'}`} style={{ width: `${Math.min(campaign.progress, 100)}%` }}></div>
                                                                         </div>
                                                                         <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{campaign.progress}%</span>
                                                                     </div>
@@ -561,7 +743,7 @@ export default function CampaignManagementPage() {
                                                                 </td>
                                                                 <td className="px-6 py-4 text-right">
                                                                     <div className="flex items-center justify-end gap-2">
-                                                                        <Link className="text-[#137fec] text-sm font-bold hover:underline" href={`/hospital/campaign/${campaign.id}`}>Xem</Link>
+                                                                        <Link className="text-[#6324eb] text-sm font-bold hover:underline" href={`/hospital/campaign/${campaign.id}?fromTab=${activeTab}`}>Xem</Link>
                                                                     </div>
                                                                 </td>
                                                             </tr>

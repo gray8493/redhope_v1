@@ -33,6 +33,7 @@ export interface Campaign {
     bloodTypes?: string[];
     // New fields for extended stats
     completedCount?: number;
+    deferredCount?: number;
     registeredCount?: number;
     startTime?: string;
     endTime?: string;

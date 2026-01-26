@@ -86,8 +86,8 @@ export const authService = {
                 try {
                     const profile = session.user.email ? await userService.getByEmail(session.user.email) : null;
                     callback({ ...session.user, profile });
-                } catch (error) {
-                    console.error('AuthStateChange error:', error);
+                } catch (error: any) {
+                    console.error('AuthStateChange error:', error.message || error);
                     callback(null);
                 }
             } else {

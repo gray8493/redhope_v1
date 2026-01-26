@@ -27,7 +27,7 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
         const userRole = rawRole.toLowerCase().trim();
 
         // LOG CHẨN ĐOÁN
-        console.log(`[RoleGuard] User: ${user.email}, Role: "${userRole}"`);
+        console.log(`[RoleGuard] Path: ${window.location.pathname}, User: ${user.email}, Role: "${userRole}"`);
 
         // 1. Nếu là Admin, cho phép vào tất cả các trang
         if (userRole === "admin") {
@@ -35,8 +35,16 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
             return;
         }
 
-        // 2. Nếu chưa có role, tiếp tục chờ (Loading) thay vì đẩy ra ngay
+        // 2. Nếu chưa có role
         if (!userRole) {
+            // Nếu đang ở trang hoàn tất profile thì cho qua (để tránh loop)
+            if (window.location.pathname.startsWith("/complete-profile")) {
+                setAuthorized(true);
+            } else {
+                // Nếu không có role và đang ở trang khác, chuyển hướng về hoàn tất profile
+                console.warn("[RoleGuard] No role found, redirecting to /complete-profile");
+                router.push("/complete-profile");
+            }
             return;
         }
 
@@ -46,6 +54,7 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
         if (isAuthorized) {
             setAuthorized(true);
         } else {
+            console.warn(`[RoleGuard] Unauthorized. Role "${userRole}" not in [${allowedRoles}]. Redirecting...`);
             const target = userRole === "hospital" ? "/hospital" : "/dashboard";
             if (typeof window !== 'undefined' && window.location.pathname !== target) {
                 router.push(target);

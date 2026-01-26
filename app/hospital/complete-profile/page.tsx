@@ -108,7 +108,7 @@ export default function HospitalProfileCompletion() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#101622]">
-                <Loader2 className="w-10 h-10 animate-spin text-[#2b6cee]" />
+                <Loader2 className="w-10 h-10 animate-spin text-[#6324eb]" />
             </div>
         );
     }
@@ -118,10 +118,10 @@ export default function HospitalProfileCompletion() {
             {/* Header */}
             <header className="bg-white dark:bg-[#1e293b] border-b border-slate-200 dark:border-slate-800 py-4 px-6 flex justify-between items-center sticky top-0 z-10 shadow-sm">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-[#2b6cee] rounded-lg flex items-center justify-center text-white">
+                    <div className="w-8 h-8 bg-[#6324eb] rounded-lg flex items-center justify-center text-white">
                         <Building2 className="w-5 h-5" />
                     </div>
-                    <span className="font-bold text-xl tracking-tight">REDHOPE <span className="text-[#2b6cee]">Hospital</span></span>
+                    <span className="font-bold text-xl tracking-tight">REDHOPE <span className="text-[#6324eb]">Hospital</span></span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-slate-500">
                     <ShieldCheck className="w-4 h-4 text-green-500" />
@@ -162,9 +162,9 @@ export default function HospitalProfileCompletion() {
                                 </ul>
                             </div>
 
-                            <div className="p-6 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/20">
+                            <div className="p-6 rounded-2xl bg-[#6324eb] text-white shadow-lg shadow-indigo-500/20">
                                 <h3 className="font-bold mb-2">Hỗ trợ kỹ thuật?</h3>
-                                <p className="text-xs text-blue-100 mb-4 opacity-80">
+                                <p className="text-xs text-indigo-100 mb-4 opacity-80">
                                     Nếu đơn vị gặp khó khăn trong việc đăng ký, vui lòng liên hệ hotline đối tác.
                                 </p>
                                 <button
@@ -184,7 +184,7 @@ export default function HospitalProfileCompletion() {
                                 <div className="p-8">
                                     <form onSubmit={handleSubmit} className="flex flex-col gap-8">
                                         {error && (
-                                            <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-100">
+                                            <div className="p-4 bg-rose-50 text-rose-600 rounded-lg text-sm font-medium border border-rose-100">
                                                 {error}
                                             </div>
                                         )}
@@ -192,7 +192,7 @@ export default function HospitalProfileCompletion() {
                                         <div className="flex flex-col gap-6">
                                             <div>
                                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">Thông tin cơ sở y tế</h3>
-                                                <div className="h-1 w-12 bg-blue-500 rounded-full mt-2"></div>
+                                                <div className="h-1 w-12 bg-[#6324eb] rounded-full mt-2"></div>
                                             </div>
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -206,7 +206,7 @@ export default function HospitalProfileCompletion() {
                                                             value={formData.hospital_name}
                                                             onChange={handleChange}
                                                             placeholder="VD: Bệnh viện Chợ Rẫy"
-                                                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-blue-500 outline-none transition-all text-sm"
+                                                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-[#6324eb] outline-none transition-all text-sm"
                                                         />
                                                         <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                                                     </div>
@@ -222,7 +222,7 @@ export default function HospitalProfileCompletion() {
                                                             value={formData.license_number}
                                                             onChange={handleChange}
                                                             placeholder="VD: 123/BYT-GPHĐ"
-                                                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-blue-500 outline-none transition-all text-sm"
+                                                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-[#6324eb] outline-none transition-all text-sm"
                                                         />
                                                         <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                                                     </div>
@@ -238,7 +238,7 @@ export default function HospitalProfileCompletion() {
                                                             value={formData.phone}
                                                             onChange={handleChange}
                                                             placeholder="VD: 028 3855 4137"
-                                                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-blue-500 outline-none transition-all text-sm"
+                                                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-[#6324eb] outline-none transition-all text-sm"
                                                         />
                                                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                                                     </div>
@@ -253,7 +253,7 @@ export default function HospitalProfileCompletion() {
                                                         value={formData.city}
                                                         onChange={handleChange}
                                                         placeholder="VD: TP. Hồ Chí Minh"
-                                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-blue-500 outline-none transition-all text-sm"
+                                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-[#6324eb] outline-none transition-all text-sm"
                                                     />
                                                 </label>
 
@@ -266,7 +266,7 @@ export default function HospitalProfileCompletion() {
                                                         value={formData.district}
                                                         onChange={handleChange}
                                                         placeholder="VD: Quận 5"
-                                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-blue-500 outline-none transition-all text-sm"
+                                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-[#6324eb] outline-none transition-all text-sm"
                                                     />
                                                 </label>
 
@@ -280,7 +280,7 @@ export default function HospitalProfileCompletion() {
                                                             value={formData.hospital_address}
                                                             onChange={handleChange}
                                                             placeholder="VD: 201B Nguyễn Chí Thanh, Phường 12, Quận 5"
-                                                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-blue-500 outline-none transition-all text-sm"
+                                                            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-[#0f172a] focus:border-[#6324eb] outline-none transition-all text-sm"
                                                         />
                                                         <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                                                     </div>
@@ -295,7 +295,7 @@ export default function HospitalProfileCompletion() {
                                             <button
                                                 type="submit"
                                                 disabled={submitting}
-                                                className="flex items-center gap-2 px-10 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-xl shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50"
+                                                className="flex items-center gap-2 px-10 py-3 rounded-xl bg-[#6324eb] hover:bg-indigo-700 text-white font-bold text-sm shadow-xl shadow-indigo-500/20 transition-all active:scale-95 disabled:opacity-50"
                                             >
                                                 {submitting ? "Đang xử lý..." : "Xác nhận & Hoàn tất"}
                                                 <ArrowRight className="w-4 h-4" />

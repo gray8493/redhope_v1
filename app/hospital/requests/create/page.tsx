@@ -30,7 +30,7 @@ const TEMPLATES = [
     {
         id: "emergency",
         name: "Khẩn cấp",
-        color: "bg-rose-500",
+        color: "bg-indigo-500",
         data: {
             name: "Yêu cầu Máu Khẩn cấp - Tai nạn liên hoàn",
             org: "Bệnh viện Chợ Rẫy",
@@ -122,7 +122,7 @@ export default function CreateRequestPage() {
             bloodTypes: selectedBloodTypes,
             bloodClass: "text-slate-600 bg-slate-100",
             status: isUrgent ? "Khẩn cấp" : "Tiêu chuẩn",
-            statusClass: isUrgent ? "bg-red-600 text-white" : "bg-blue-600 text-white",
+            statusClass: isUrgent ? "bg-indigo-600 text-white" : "bg-blue-600 text-white",
             operationalStatus: isDraft ? "Bản nháp" : "Đang hoạt động",
             isUrgent: isUrgent,
             timeLeft: "Vừa đăng",
@@ -187,16 +187,16 @@ export default function CreateRequestPage() {
                             </div>
 
                             {/* Main Form Card */}
-                            <div className={`bg-white border rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] transition-all duration-500 ${isUrgent ? 'border-rose-300 shadow-rose-500/10' : 'border-slate-200'}`}>
+                            <div className={`bg-white border rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] transition-all duration-500 ${isUrgent ? 'border-indigo-300 shadow-indigo-500/10' : 'border-slate-200'}`}>
 
                                 {/* Emergency Toggle Banner */}
-                                <div className={`mb-10 rounded-2xl p-5 flex items-center justify-between border transition-all ${isUrgent ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200/60'}`}>
+                                <div className={`mb-10 rounded-2xl p-5 flex items-center justify-between border transition-all ${isUrgent ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200/60'}`}>
                                     <div className="flex items-center gap-4">
-                                        <div className={`size-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isUrgent ? 'bg-rose-500 animate-pulse shadow-rose-200' : 'bg-indigo-500 shadow-indigo-200'}`}>
+                                        <div className={`size-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isUrgent ? 'bg-indigo-500 animate-pulse shadow-indigo-200' : 'bg-indigo-500 shadow-indigo-200'}`}>
                                             <MaterialIcon name={isUrgent ? "priority_high" : "check"} className="font-black" />
                                         </div>
                                         <div className="flex flex-col">
-                                            <p className={`text-sm font-black uppercase tracking-tight ${isUrgent ? 'text-rose-600' : 'text-indigo-600'}`}>
+                                            <p className={`text-sm font-black uppercase tracking-tight ${isUrgent ? 'text-indigo-600' : 'text-indigo-600'}`}>
                                                 Chế độ {isUrgent ? 'Khẩn cấp' : 'Tiêu chuẩn'}
                                             </p>
                                             <p className="text-slate-500 text-[13px] font-medium">
@@ -207,7 +207,7 @@ export default function CreateRequestPage() {
                                     <button
                                         onClick={() => setIsUrgent(!isUrgent)}
                                         className={`px-6 py-2.5 rounded-full text-xs font-black transition-all border-2 active:scale-95 ${isUrgent
-                                            ? 'bg-rose-600 text-white border-rose-600 shadow-lg shadow-rose-200'
+                                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-200'
                                             : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600'}`}
                                     >
                                         {isUrgent ? 'Đang bật' : 'Bật KHẨN CẤP'}
@@ -222,7 +222,7 @@ export default function CreateRequestPage() {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-slate-700 text-[13px] font-bold ml-4">Tên Chiến dịch <span className="text-rose-500">*</span></label>
+                                            <label className="text-slate-700 text-[13px] font-bold ml-4">Tên Chiến dịch <span className="text-indigo-500">*</span></label>
                                             <input
                                                 value={campaignName}
                                                 onChange={(e) => setCampaignName(e.target.value)}
@@ -240,7 +240,7 @@ export default function CreateRequestPage() {
                                             />
                                         </div>
                                         <div className="flex flex-col gap-2 md:col-span-2">
-                                            <label className="text-slate-700 text-[13px] font-bold ml-4">Đơn vị tiếp nhận <span className="text-rose-500">*</span></label>
+                                            <label className="text-slate-700 text-[13px] font-bold ml-4">Đơn vị tiếp nhận <span className="text-indigo-500">*</span></label>
                                             <div className="relative">
                                                 <select
                                                     value={organization}
@@ -327,7 +327,7 @@ export default function CreateRequestPage() {
                                                 />
                                             </div>
                                             <div className="flex flex-col gap-2">
-                                                <label className="text-slate-700 text-[13px] font-bold ml-4">Mục tiêu (Đơn vị) <span className="text-rose-500">*</span></label>
+                                                <label className="text-slate-700 text-[13px] font-bold ml-4">Mục tiêu (Đơn vị) <span className="text-indigo-500">*</span></label>
                                                 <div className="relative">
                                                     <input
                                                         type="number"
@@ -392,7 +392,7 @@ export default function CreateRequestPage() {
                                             <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuByvIDTN70XMAX1SWdkUy-gnDtoZseAgFgvqS2YmQ00PVPjTgrdh8o_nKOOAvhyoPfE-CXmPNBnSs4fAy-VQbWTfU9TiEQURHVwxaIkd6CQQYUhYb4S1WPSUAPKfSu_D0fHbxdwl-61mVf5RnxQlUActS5U8abYPvFs2WrQooHfygaMcJHzHH5CDgSeQhTw-pMWRStIMirJq2ESCD4SU0TDuX7fPqVTsKfCId2ke717J1Z_VMXJH8CRbr8vGGnD-a_jBhrVbrr-xbI')" }}></div>
                                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
                                             <div className="absolute inset-0 flex items-center justify-center">
-                                                <MaterialIcon name="location_on" className="text-rose-500 text-6xl drop-shadow-2xl fill-1 animate-bounce" />
+                                                <MaterialIcon name="location_on" className="text-indigo-500 text-6xl drop-shadow-2xl fill-1 animate-bounce" />
                                             </div>
                                             <div className="absolute bottom-5 left-5 right-5 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white max-w-[320px]">
                                                 <div className="flex items-center gap-3">
@@ -479,7 +479,7 @@ export default function CreateRequestPage() {
                                     <button
                                         onClick={() => handleCreate(false)}
                                         className={`w-full sm:flex-[2] h-15 h-14 rounded-full font-black text-base shadow-2xl transition-all flex items-center justify-center gap-3 group active:scale-95 ${isUrgent
-                                            ? 'bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-rose-500/30 hover:shadow-rose-500/50'
+                                            ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-indigo-500/30 hover:shadow-indigo-500/50'
                                             : 'bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white shadow-indigo-500/30 hover:shadow-indigo-500/50'}`}
                                     >
                                         <MaterialIcon name="send" className="text-[20px] group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />

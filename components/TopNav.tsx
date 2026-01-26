@@ -9,7 +9,15 @@ import {
     Settings,
     CheckCircle,
     Clock,
-    AlertCircle
+    AlertCircle,
+    AlertTriangle,
+    TrendingDown,
+    Star,
+    ShieldCheck,
+    Users,
+    CheckCircle2,
+    MessageSquare,
+    TrendingUp
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -21,7 +29,7 @@ interface TopNavProps {
 }
 
 export function TopNav({ title = "Tổng quan" }: TopNavProps) {
-    const { user, profile } = useAuth();
+    const { user, profile, signOut: contextSignOut } = useAuth();
     const [showNotifications, setShowNotifications] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const router = useRouter();
@@ -31,6 +39,40 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
     const userRef = useRef<HTMLDivElement>(null);
 
     // Mock Data Definition
+    // Mock Data Definition for Hospital/Admin
+    const hospitalNotifications = [
+        {
+            id: Date.now() - 1000,
+            title: "⚠️ Cảnh báo Tỷ lệ đăng ký thấp",
+            desc: "Chiến dịch 'Hiến máu Mùa Xuân' diễn ra ngày mai nhưng chỉ đạt 15% lượt đăng ký.",
+            time: "1 giờ trước",
+            unread: true,
+            icon: AlertTriangle,
+            color: "text-amber-500",
+            bg: "bg-amber-50"
+        },
+        {
+            id: Date.now() - 2000,
+            title: "📉 Cảnh báo Lệch Nhóm máu",
+            desc: "Chiến dịch hiện tại đang thiếu hụt nhóm máu O (chỉ chiếm 5%). Hãy ưu tiên gọi người nhóm O.",
+            time: "3 giờ trước",
+            unread: true,
+            icon: TrendingDown,
+            color: "text-indigo-500",
+            bg: "bg-indigo-50"
+        },
+        {
+            id: Date.now() - 3000,
+            title: "🛠️ Hệ thống",
+            desc: "Admin Hệ thống đã duyệt yêu cầu tạo chiến dịch mới của bạn.",
+            time: "Vừa xong",
+            unread: false,
+            icon: ShieldCheck,
+            color: "text-[#6324eb]",
+            bg: "bg-[#6324eb]/5"
+        }
+    ];
+
     const initialNotifications = [
         {
             id: 1,
@@ -49,18 +91,8 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
             time: "5 giờ trước",
             unread: true,
             icon: AlertCircle,
-            color: "text-red-500",
-            bg: "bg-red-50"
-        },
-        {
-            id: 3,
-            title: "Nhắc nhở lịch hẹn",
-            desc: "Bạn có thể hiến máu lại bắt đầu từ tuần tới.",
-            time: "1 ngày trước",
-            unread: false,
-            icon: Clock,
-            color: "text-blue-500",
-            bg: "bg-blue-50"
+            color: "text-[#6324eb]",
+            bg: "bg-indigo-50"
         }
     ];
 
@@ -75,17 +107,62 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                 try {
                     const parsed = JSON.parse(saved);
                     // Re-attach icons because JSON.stringify removes functions/components
-                    const restored = parsed.map((n: any) => ({
-                        ...n,
-                        icon: n.id === 1 ? CheckCircle : n.id === 2 ? AlertCircle : Clock
-                    }));
+                    const restored = parsed.map((n: any) => {
+                        let Icon = n.type === 'alert' ? AlertTriangle :
+                            n.type === 'goal' ? TrendingUp :
+                                n.type === 'check' ? CheckCircle2 :
+                                    n.type === 'feedback' ? Star :
+                                        n.type === 'system' ? ShieldCheck :
+                                            n.type === 'down' ? TrendingDown : Clock;
+
+                        // Fallback to original icon map if type not found
+                        if (!n.type) Icon = n.id % 2 === 0 ? AlertTriangle : CheckCircle;
+
+                        return {
+                            ...n,
+                            icon: Icon
+                        };
+                    });
                     setNotifications(restored);
                 } catch (error) {
                     console.error("Error parsing notifications", error);
+                    setNotifications(profile?.role === 'hospital' ? hospitalNotifications : initialNotifications);
                 }
+            } else {
+                setNotifications(profile?.role === 'hospital' ? hospitalNotifications : initialNotifications);
             }
             setIsLoaded(true);
         }
+    }, [profile]);
+
+    // Global Notification Listener
+    useEffect(() => {
+        const handleNewNotification = (event: any) => {
+            const data = event.detail;
+            const newNoti = {
+                id: Date.now(),
+                title: data.title,
+                desc: data.desc,
+                time: "Vừa xong",
+                unread: true,
+                type: data.type,
+                icon: data.type === 'alert' ? AlertTriangle :
+                    data.type === 'goal' ? TrendingUp :
+                        data.type === 'check' ? CheckCircle2 :
+                            data.type === 'feedback' ? Star :
+                                data.type === 'system' ? ShieldCheck :
+                                    data.type === 'down' ? TrendingDown : Clock,
+                color: data.color || (profile?.role === 'hospital' ? "text-[#6324eb]" : "text-[#6324eb]"),
+                bg: data.bg || (profile?.role === 'hospital' ? "bg-indigo-50" : "bg-[#6324eb]/5")
+            };
+            setNotifications(prev => [newNoti, ...prev]);
+
+            // Auto open notifications if it's an alert (optional)
+            // if (data.type === 'alert') setShowNotifications(true);
+        };
+
+        window.addEventListener('redhope:notification', handleNewNotification);
+        return () => window.removeEventListener('redhope:notification', handleNewNotification);
     }, []);
 
     // Save to localStorage
@@ -112,13 +189,77 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
     };
 
     const handleLogout = async () => {
-        await authService.signOut();
-        router.push("/login");
+        console.log("Logout initiated...");
+        try {
+            // Clear hospital specific profile first
+            localStorage.removeItem('redhope_hospital_profile');
+
+            // Attempt to sign out via context
+            await contextSignOut();
+
+            console.log("Logout successful, redirecting...");
+            // Force a full page reload to the login page to clear all states
+            window.location.href = "/login";
+        } catch (error) {
+            console.error("Logout failed during signOut call:", error);
+            // Even if sign out fails (e.g. network/session error), force the redirect
+            window.location.href = "/login";
+        }
     };
 
-    const displayName = profile?.full_name || user?.user_metadata?.full_name || "Alex Rivera";
-    const userEmail = profile?.email || user?.email || "alex.rivera@example.com";
+    const [hospitalInfo, setHospitalInfo] = useState<{ name: string; email: string; logo: string | null } | null>(null);
+
+    // Sync hospital profile data
+    useEffect(() => {
+        const loadHospitalInfo = () => {
+            if (profile?.role === 'hospital') {
+                const saved = localStorage.getItem("redhope_hospital_profile");
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        setHospitalInfo({
+                            name: data.name,
+                            email: data.email,
+                            logo: data.logo
+                        });
+                    } catch (e) {
+                        console.error("Error parsing hospital profile", e);
+                    }
+                }
+            }
+        };
+
+        loadHospitalInfo();
+
+        // Listen for internal updates within the app
+        window.addEventListener("hospitalProfileUpdated", loadHospitalInfo);
+
+        // Also listen for storage events (if multiple tabs are open)
+        window.addEventListener("storage", (e) => {
+            if (e.key === "redhope_hospital_profile") loadHospitalInfo();
+        });
+
+        return () => {
+            window.removeEventListener("hospitalProfileUpdated", loadHospitalInfo);
+            window.removeEventListener("storage", loadHospitalInfo);
+        };
+    }, [profile]);
+
     const displayRole = profile?.role === 'admin' ? "Quản trị viên" : profile?.role === 'hospital' ? "Bệnh viện" : profile?.blood_group ? `Nhóm máu ${profile.blood_group}` : "Thành viên";
+
+    const displayName = profile?.role === 'hospital' && hospitalInfo?.name
+        ? hospitalInfo.name
+        : (profile?.full_name || user?.user_metadata?.full_name || "Alex Rivera");
+
+    const userEmail = profile?.role === 'hospital' && hospitalInfo?.email
+        ? hospitalInfo.email
+        : (profile?.email || user?.email || "alex.rivera@example.com");
+
+    const avatarUrl = profile?.role === 'hospital' && hospitalInfo?.logo
+        ? hospitalInfo.logo
+        : "https://lh3.googleusercontent.com/aida-public/AB6AXuAI4faTCJTkv8OO6MUFrzxQB3yJcWE7Zkm3Y9_WkORgcZUhg0mk8rv7geI97EgbgP3xfDraG1Oy9Psl47i83JoPayPQNpCHWNrSkQfnybH55NGY5MeYil6abA0jZHtNJmfXNyZTl8KPnYoPJdsSVNf-MVgxmvZSicOMuVKfMBGWKjOnheH0k_JUU5GhZRy0Go2cQ6u1xBc8VpgcwkOhb7P0b4kGQIcQ_8z8WaWBcp-2kVgx8l9LfAVeffjFZ8WyB63LgiErOcfK7o26";
+
+    const settingsPath = profile?.role === 'hospital' ? "/hospital/settings" : "/settings";
 
     return (
         <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 sticky top-0 z-20 w-full">
@@ -135,7 +276,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                     >
                         <Bell className="w-5 h-5" />
                         {notifications.some(n => n.unread) && (
-                            <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
+                            <span className="absolute top-2 right-2 size-2 bg-[#6324eb] rounded-full ring-2 ring-white dark:ring-slate-900"></span>
                         )}
                     </button>
 
@@ -157,12 +298,12 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                                             <p className="text-xs text-[#654d99] dark:text-[#a594c9] leading-relaxed mb-1">{item.desc}</p>
                                             <p className="text-[10px] text-slate-400 font-medium">{item.time}</p>
                                         </div>
-                                        {item.unread && <div className="size-2 rounded-full bg-[#6324eb] mt-1.5"></div>}
+                                        {item.unread && <div className={`size-2 rounded-full mt-1.5 ${profile?.role === 'hospital' ? 'bg-[#6324eb]' : 'bg-[#6324eb]'}`}></div>}
                                     </div>
                                 ))}
                             </div>
                             <div className="p-3 text-center border-t border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36]">
-                                <Link href="/notifications" className="text-sm font-bold text-[#6324eb] hover:underline block w-full">Xem tất cả</Link>
+                                <Link href="/notifications" className={`text-sm font-bold ${profile?.role === 'hospital' ? 'text-[#6324eb]' : 'text-[#6324eb]'} hover:underline block w-full`}>Xem tất cả</Link>
                             </div>
                         </div>
                     )}
@@ -182,7 +323,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                         </div>
                         <div className={`size-10 rounded-full border-2 overflow-hidden transition-colors ${showUserMenu ? 'border-[#6324eb]' : 'border-emerald-500/20'}`}>
                             <img
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI4faTCJTkv8OO6MUFrzxQB3yJcWE7Zkm3Y9_WkORgcZUhg0mk8rv7geI97EgbgP3xfDraG1Oy9Psl47i83JoPayPQNpCHWNrSkQfnybH55NGY5MeYil6abA0jZHtNJmfXNyZTl8KPnYoPJdsSVNf-MVgxmvZSicOMuVKfMBGWKjOnheH0k_JUU5GhZRy0Go2cQ6u1xBc8VpgcwkOhb7P0b4kGQIcQ_8z8WaWBcp-2kVgx8l9LfAVeffjFZ8WyB63LgiErOcfK7o26"
+                                src={avatarUrl}
                                 alt="Avatar"
                                 className="w-full h-full object-cover"
                             />
@@ -198,31 +339,31 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                             </div>
                             <div className="p-2">
                                 <Link
-                                    href="/settings"
+                                    href={settingsPath}
                                     onClick={() => setShowUserMenu(false)}
                                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#120e1b] dark:text-white hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors"
                                 >
                                     <User className="w-4 h-4 text-slate-500" /> Hồ sơ cá nhân
                                 </Link>
                                 <Link
-                                    href="/settings"
+                                    href={`${settingsPath}?tab=notifications`}
                                     onClick={() => setShowUserMenu(false)}
                                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#120e1b] dark:text-white hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors"
                                 >
                                     <Bell className="w-4 h-4 text-slate-500" /> Cài đặt thông báo
                                 </Link>
                                 <Link
-                                    href="/settings"
+                                    href={`${settingsPath}?tab=security`}
                                     onClick={() => setShowUserMenu(false)}
                                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#120e1b] dark:text-white hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors"
                                 >
-                                    <Settings className="w-4 h-4 text-slate-500" /> Cài đặt & Quyền riêng tư
+                                    <Settings className="w-4 h-4 text-slate-500" /> Bảo mật
                                 </Link>
                             </div>
                             <div className="p-2 border-t border-[#ebe7f3] dark:border-[#2d263d]">
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
                                 >
                                     <LogOut className="w-4 h-4" /> Đăng xuất
                                 </button>

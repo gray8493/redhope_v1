@@ -59,9 +59,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const signOut = async () => {
-        await authService.signOut();
-        setUser(null);
-        setProfile(null);
+        try {
+            await authService.signOut();
+        } catch (error) {
+            console.error('Error during signOut call:', error);
+        } finally {
+            setUser(null);
+            setProfile(null);
+        }
     };
 
     return (

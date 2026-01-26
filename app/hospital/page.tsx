@@ -119,7 +119,7 @@ export default function HospitalDashboard() {
         if (camp.operationalStatus !== "Đang hoạt động") return null;
         const seed = Number(camp.id) % 3;
         const perfMap: Record<number, any> = {
-            2: { time: "> 25 phút", status: "Quá tải", color: "text-rose-500", bgColor: "bg-rose-50 dark:bg-rose-900/20", recommendation: "Cần chi viện bác sĩ", recIcon: <Stethoscope className="w-3 h-3" /> },
+            2: { time: "> 25 phút", status: "Quá tải", color: "text-[#6324eb]", bgColor: "bg-indigo-50 dark:bg-indigo-900/20", recommendation: "Cần chi viện bác sĩ", recIcon: <Stethoscope className="w-3 h-3" /> },
             1: { time: "15 - 20 phút", status: "Đông đúc", color: "text-amber-500", bgColor: "bg-amber-50 dark:bg-amber-900/20", recommendation: "Theo dõi nhân sự", recIcon: <Activity className="w-3 h-3" /> },
             0: { time: "8 - 10 phút", status: "Ổn định", color: "text-emerald-500", bgColor: "bg-emerald-50 dark:bg-emerald-900/20", recommendation: "Đội ngũ đủ", recIcon: <Users className="w-3 h-3" /> }
         };
@@ -129,8 +129,8 @@ export default function HospitalDashboard() {
     const pendingRequests = supportRequests.filter(r => r.status === "pending");
 
     const bloodTypeStats = [
-        { label: "Nhóm O+", val: Math.round(totalBloodCollected * 0.45), color: "bg-red-500", pct: "45%" },
-        { label: "Nhóm A+", val: Math.round(totalBloodCollected * 0.30), color: "bg-[#6324eb]", pct: "30%" },
+        { label: "Nhóm O+", val: Math.round(totalBloodCollected * 0.45), color: "bg-[#6324eb]", pct: "45%" },
+        { label: "Nhóm A+", val: Math.round(totalBloodCollected * 0.30), color: "bg-indigo-400", pct: "30%" },
         { label: "Nhóm B+", val: Math.round(totalBloodCollected * 0.15), color: "bg-blue-500", pct: "15%" },
         { label: "Nhóm AB", val: Math.round(totalBloodCollected * 0.10), color: "bg-orange-500", pct: "10%" },
     ];
@@ -181,7 +181,7 @@ export default function HospitalDashboard() {
                                 <div className="bg-white dark:bg-[#1c162d] p-6 rounded-2xl border border-[#d7d0e7] dark:border-[#32294e] shadow-sm">
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-[#654d99] dark:text-[#a391c8] text-[10px] font-black uppercase tracking-[0.1em]">Máu đã thu (ml)</span>
-                                        <Droplet className="w-5 h-5 text-red-500" />
+                                        <Droplet className="w-5 h-5 text-[#6324eb]" />
                                     </div>
                                     <div className="flex items-end gap-2">
                                         <p className="text-3xl font-black">{totalBloodCollected.toLocaleString()}</p>
@@ -192,15 +192,15 @@ export default function HospitalDashboard() {
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-[#654d99] dark:text-[#a391c8] text-[10px] font-black uppercase tracking-[0.1em]">Yêu cầu Chi viện</span>
                                         <div className="relative">
-                                            <MessageSquareText className={`w-5 h-5 text-rose-500 ${pendingRequests.length > 0 ? 'animate-bounce' : ''}`} />
+                                            <MessageSquareText className={`w-5 h-5 text-[#6324eb] ${pendingRequests.length > 0 ? 'animate-bounce' : ''}`} />
                                             {pendingRequests.length > 0 && (
-                                                <span className="absolute -top-1 -right-1 size-2 bg-rose-600 rounded-full"></span>
+                                                <span className="absolute -top-1 -right-1 size-2 bg-[#6324eb] rounded-full"></span>
                                             )}
                                         </div>
                                     </div>
                                     <div className="flex items-end gap-2">
                                         <p className="text-3xl font-black">{pendingRequests.length}</p>
-                                        <p className="text-rose-500 text-[10px] mb-1 font-black uppercase tracking-tight italic">Cần xử lý gấp</p>
+                                        <p className="text-[#6324eb] text-[10px] mb-1 font-black uppercase tracking-tight italic">Cần xử lý gấp</p>
                                     </div>
                                 </div>
                             </div>
@@ -256,7 +256,7 @@ export default function HospitalDashboard() {
                                                                     <div className="flex flex-col items-center">
                                                                         <div className="flex -space-x-1">
                                                                             {(camp.bloodTypes || [camp.bloodType]).slice(0, 3).map((t, idx) => (
-                                                                                <span key={idx} className={`size-5 rounded-full flex items-center justify-center text-[8px] font-black border-2 border-white dark:border-[#1c162d] text-white ${t.includes('O') ? 'bg-red-500' : t.includes('A') ? 'bg-indigo-600' : 'bg-blue-500'}`}>
+                                                                                <span key={idx} className={`size-5 rounded-full flex items-center justify-center text-[8px] font-black border-2 border-white dark:border-[#1c162d] text-white ${t.includes('O') ? 'bg-indigo-600' : t.includes('A') ? 'bg-indigo-600' : 'bg-blue-500'}`}>
                                                                                     {t}
                                                                                 </span>
                                                                             ))}
@@ -304,7 +304,7 @@ export default function HospitalDashboard() {
                                     <div className="bg-white dark:bg-[#1c162d] rounded-[32px] border border-[#d7d0e7] dark:border-[#32294e] p-8 shadow-sm space-y-6">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-3 bg-rose-50 dark:bg-rose-900/30 rounded-2xl text-rose-600 border border-rose-100 dark:border-rose-800">
+                                                <div className="p-3 bg-rose-50 dark:bg-rose-900/30 rounded-2xl text-[#6324eb] border border-rose-100 dark:border-rose-800">
                                                     <AlertCircle className="w-6 h-6" />
                                                 </div>
                                                 <div>
@@ -312,7 +312,7 @@ export default function HospitalDashboard() {
                                                     <p className="text-xs text-slate-500 font-medium">Có {pendingRequests.length} yêu cầu mới từ các điểm hiến máu</p>
                                                 </div>
                                             </div>
-                                            <Link href="/hospital/support" className="px-4 py-2 bg-[#6324eb] text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 hover:opacity-90 transition-all shadow-md shadow-indigo-100 dark:shadow-none">
+                                            <Link href="/hospital/support" className="px-4 py-2 bg-[#6324eb] text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 hover:opacity-90 transition-all shadow-md shadow-indigo-500/20 dark:shadow-none">
                                                 Xử lý yêu cầu <ArrowRight className="w-4 h-4" />
                                             </Link>
                                         </div>
@@ -321,7 +321,7 @@ export default function HospitalDashboard() {
                                             {pendingRequests.length > 0 ? pendingRequests.slice(0, 2).map((req) => (
                                                 <div key={req.id} className="p-5 bg-rose-50/50 dark:bg-rose-900/10 rounded-3xl border border-rose-100 dark:border-rose-900/30 flex flex-col gap-3">
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-[10px] font-black uppercase text-rose-600 tracking-widest">{req.campaignName}</span>
+                                                        <span className="text-[10px] font-black uppercase text-[#6324eb] tracking-widest">{req.campaignName}</span>
                                                         <span className="text-[9px] font-bold text-slate-400">{new Date(req.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                     </div>
                                                     <p className="text-sm font-bold text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed italic">"{req.message}"</p>
@@ -344,7 +344,7 @@ export default function HospitalDashboard() {
                                         <div className="relative flex justify-center items-center py-6">
                                             <svg className="w-48 h-48 transform -rotate-90">
                                                 <circle className="dark:stroke-[#32294e] stroke-[#ebe7f3]" cx="96" cy="96" fill="transparent" r="80" strokeWidth="20"></circle>
-                                                <circle cx="96" cy="96" fill="transparent" r="80" stroke="#ef4444" strokeDasharray="502" strokeDashoffset={502 - (502 * 0.45)} strokeWidth="20" strokeLinecap="round"></circle>
+                                                <circle cx="96" cy="96" fill="transparent" r="80" stroke="#f43f5e" strokeDasharray="502" strokeDashoffset={502 - (502 * 0.45)} strokeWidth="20" strokeLinecap="round"></circle>
                                                 <circle cx="96" cy="96" fill="transparent" r="80" stroke="#6324eb" strokeDasharray="502" strokeDashoffset={502 - (502 * 0.30)} strokeWidth="20" strokeLinecap="round" style={{ transformOrigin: 'center', transform: `rotate(${360 * 0.45}deg)` }}></circle>
                                                 <circle cx="96" cy="96" fill="transparent" r="80" stroke="#2563eb" strokeDasharray="502" strokeDashoffset={502 - (502 * 0.15)} strokeWidth="20" strokeLinecap="round" style={{ transformOrigin: 'center', transform: `rotate(${360 * 0.75}deg)` }}></circle>
                                                 <circle cx="96" cy="96" fill="transparent" r="80" stroke="#f59e0b" strokeDasharray="502" strokeDashoffset={502 - (502 * 0.10)} strokeWidth="20" strokeLinecap="round" style={{ transformOrigin: 'center', transform: `rotate(${360 * 0.90}deg)` }}></circle>
@@ -367,7 +367,7 @@ export default function HospitalDashboard() {
                                         </div>
                                     </div>
 
-                                    <div className="bg-[#6324eb] p-8 rounded-[32px] text-white space-y-6 shadow-xl shadow-indigo-100 dark:shadow-none">
+                                    <div className="bg-[#6324eb] p-8 rounded-[32px] text-white space-y-6 shadow-xl shadow-indigo-500/20 dark:shadow-none">
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 bg-white/20 rounded-xl">
                                                 <Target className="w-5 h-5 text-white" />
@@ -387,7 +387,7 @@ export default function HospitalDashboard() {
                                             <div className="pt-4 border-t border-white/10">
                                                 <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Dự báo Tiếp nhận</p>
                                                 <h4 className="text-2xl font-black italic">~ {totalRegistered > 0 ? Math.round((totalParticipants / totalRegistered) * 100) : 0}% tỉ lệ đến</h4>
-                                                <p className="text-[10px] font-medium mt-2 leading-relaxed text-indigo-100 italic">
+                                                <p className="text-[10px] font-medium mt-2 leading-relaxed text-blue-100 italic">
                                                     Vui lòng phản hồi các yêu cầu chi viện để đảm bảo tỉ lệ xử lý ca hiến duy trì dưới 12 phút.
                                                 </p>
                                             </div>

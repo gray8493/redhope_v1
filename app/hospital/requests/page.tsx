@@ -39,7 +39,7 @@ const REQUESTS_DATA: BloodRequest[] = [
         bloodType: "O Positive (O+)",
         quantity: 2,
         urgency: "Nguy kịch",
-        urgencyClass: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+        urgencyClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
         progress: 80,
         status: "active",
         createdDate: "2026-01-23",
@@ -75,7 +75,7 @@ const REQUESTS_DATA: BloodRequest[] = [
         bloodType: "A Negative (A-)",
         quantity: 3,
         urgency: "Nguy kịch",
-        urgencyClass: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+        urgencyClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
         progress: 60,
         status: "active",
         createdDate: "2026-01-20",
@@ -87,7 +87,7 @@ const REQUESTS_DATA: BloodRequest[] = [
         bloodType: "O Negative (O-)",
         quantity: 5,
         urgency: "Nguy kịch",
-        urgencyClass: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+        urgencyClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
         progress: 40,
         status: "active",
         createdDate: "2026-01-19",
@@ -283,7 +283,7 @@ export default function HospitalRequestsPage() {
                                                                 <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-[#6324eb]">
                                                                     <Edit2 className="w-4 h-4" />
                                                                 </button>
-                                                                <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-red-500">
+                                                                <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-indigo-500">
                                                                     <Trash2 className="w-4 h-4" />
                                                                 </button>
                                                             </div>

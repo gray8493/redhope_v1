@@ -50,7 +50,7 @@ export const userService = {
             .maybeSingle(); // Returns null instead of error if not found
 
         if (error) {
-            console.error('Error in getByEmail:', error);
+            console.error('Error in getByEmail:', error.message || error);
             throw error;
         }
         return data;

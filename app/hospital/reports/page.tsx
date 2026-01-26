@@ -166,7 +166,7 @@ export default function ReportsPage() {
                                     </div>
                                     <div className="flex items-baseline gap-2">
                                         <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{currentData.deferralRate}%</p>
-                                        <span className={`text-sm font-bold flex items-center font-sans ${currentData.isdeferralGood ? 'text-green-500' : 'text-rose-500'}`}>
+                                        <span className={`text-sm font-bold flex items-center font-sans ${currentData.isdeferralGood ? 'text-green-500' : 'text-indigo-400'}`}>
                                             <MaterialIcon name={currentData.isdeferralGood ? "trending_down" : "trending_up"} className="text-sm" />
                                             {currentData.deferralGrowth}
                                         </span>
@@ -176,7 +176,7 @@ export default function ReportsPage() {
 
                                 {/* No-Show Rate */}
                                 <div className="bg-white dark:bg-[#1c162e] p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-[#2d263d] relative overflow-hidden group">
-                                    <div className="absolute right-0 top-0 size-24 bg-rose-500/5 rounded-bl-full -mr-4 -mt-4 transition-colors"></div>
+                                    <div className="absolute right-0 top-0 size-24 bg-indigo-500/5 rounded-bl-full -mr-4 -mt-4 transition-colors"></div>
                                     <div className="flex items-center gap-4 mb-4">
                                         <div className="size-12 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-600">
                                             <MaterialIcon name="person_off" />
@@ -185,7 +185,7 @@ export default function ReportsPage() {
                                     </div>
                                     <div className="flex items-baseline gap-2">
                                         <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{currentData.noShowRate}%</p>
-                                        <span className={`text-sm font-bold font-sans ${currentData.isNoShowGood ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                        <span className={`text-sm font-bold font-sans ${currentData.isNoShowGood ? 'text-emerald-500' : 'text-indigo-400'}`}>
                                             {currentData.noShowGrowth}
                                         </span>
                                     </div>

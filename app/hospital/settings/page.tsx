@@ -1,17 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
 import { useAuth } from "@/context/AuthContext";
 import { userService } from "@/services/user.service";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
-export default function SettingsPage() {
-    const { user, profile } = useAuth();
+function SettingsContent() {
+    const { user, profile, refreshUser } = useAuth();
+    const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security'>('profile');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Initial tab from URL
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab === 'notifications' || tab === 'security' || tab === 'profile') {
+            setActiveTab(tab as any);
+        }
+    }, [searchParams]);
+    const LOCAL_STORAGE_KEY = "redhope_hospital_profile";
 
     // Profile State
     const [hospitalName, setHospitalName] = useState("");
@@ -19,33 +30,73 @@ export default function SettingsPage() {
     const [phone, setPhone] = useState("");
     const [address, setAddress] = useState("");
     const [license, setLicense] = useState("");
+    const [email, setEmail] = useState("");
+    const [logo, setLogo] = useState<string | null>(null);
+    const [cover, setCover] = useState<string | null>("https://lh3.googleusercontent.com/aida-public/AB6AXuB-pYSYh0nrFR9EHffBQeBIH5xosCZYGDX5BCz4F8coCgtRu4kG6rneHOzMavlAEAhCLLhsIPW4Zr8d-mdT7zRz_7_dZGzo7RaaOIAlwIsRmwLyIhmuf5Gr9OTUNGMtpvXLtejG42cMiJASTDeWyxZ6RdUzdu0e3CY05W1RGUjdSrabS7GoI882qtaXJ6lK-Jbn-GMBpayfdILyfA7_guOESZWU91gqgzwwV-DMnVMLbupel25a7M96j3ZIjVpp7eoO77BkS2pK5A");
 
-    // Sync state with profile data
+    // Load data from LocalStorage on mount
     useEffect(() => {
-        if (profile) {
+        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            setHospitalName(data.name || "");
+            setHospitalDesc(data.desc || "");
+            setPhone(data.phone || "");
+            setAddress(data.address || "");
+            setLicense(data.license || "");
+            setEmail(data.email || "");
+            setLogo(data.logo || null);
+            setCover(data.cover || null);
+
+            // Notification settings
+            if (data.notifications) {
+                setEmailAlert(data.notifications.emailAlert ?? true);
+                setNewDonorAlert(data.notifications.newDonorAlert ?? false);
+                setShortfallThreshold(data.notifications.shortfallThreshold ?? 20);
+            }
+        } else if (profile) {
+            // Fallback to auth profile if no local data
             setHospitalName(profile.hospital_name || "");
             setPhone(profile.phone || "");
             setAddress(profile.hospital_address || "");
             setLicense(profile.license_number || "");
+            setEmail(profile.email || "");
         }
     }, [profile]);
 
     const handleSave = async () => {
-        if (!user) return;
         setIsSaving(true);
+        const loadingToast = toast.loading("Đang lưu vào trình duyệt...");
+
         try {
-            await userService.update(user.id, {
-                hospital_name: hospitalName,
+            // Save to LocalStorage (FE Only)
+            const profileData = {
+                name: hospitalName,
+                desc: hospitalDesc,
                 phone: phone,
-                hospital_address: address,
-                license_number: license
-            });
+                address: address,
+                license: license,
+                email: email,
+                logo: logo,
+                cover: cover
+            };
+
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(profileData));
+
+            // Notify other components (like TopNav) that the profile has changed
+            window.dispatchEvent(new Event("hospitalProfileUpdated"));
+
+            // Simulate a short delay for feel
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             toast.success("Thành công", {
-                description: "Thông tin bệnh viện đã được cập nhật.",
+                id: loadingToast,
+                description: "Hồ sơ đã được lưu tạm thời trên trình duyệt này.",
             });
         } catch (error: any) {
             toast.error("Lỗi", {
-                description: "Không thể lưu thông tin. Vui lòng thử lại sau.",
+                id: loadingToast,
+                description: "Không thể lưu hồ sơ.",
             });
         } finally {
             setIsSaving(false);
@@ -55,9 +106,39 @@ export default function SettingsPage() {
     const [emailAlert, setEmailAlert] = useState(true);
     const [newDonorAlert, setNewDonorAlert] = useState(false);
     const [shortfallThreshold, setShortfallThreshold] = useState(20);
-    const [logo, setLogo] = useState<string | null>(null);
-    const [cover, setCover] = useState<string | null>("https://lh3.googleusercontent.com/aida-public/AB6AXuB-pYSYh0nrFR9EHffBQeBIH5xosCZYGDX5BCz4F8coCgtRu4kG6rneHOzMavlAEAhCLLhsIPW4Zr8d-mdT7zRz_7_dZGzo7RaaOIAlwIsRmwLyIhmuf5Gr9OTUNGMtpvXLtejG42cMiJASTDeWyxZ6RdUzdu0e3CY05W1RGUjdSrabS7GoI882qtaXJ6lK-Jbn-GMBpayfdILyfA7_guOESZWU91gqgzwwV-DMnVMLbupel25a7M96j3ZIjVpp7eoO77BkS2pK5A");
     const [showPassword, setShowPassword] = useState(false);
+
+    const handleSaveNotifications = async () => {
+        setIsSaving(true);
+        const loadingToast = toast.loading("Đang lưu cấu hình...");
+
+        try {
+            const currentData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "{}");
+            const updatedData = {
+                ...currentData,
+                notifications: {
+                    emailAlert,
+                    newDonorAlert,
+                    shortfallThreshold
+                }
+            };
+
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedData));
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            toast.success("Thành công", {
+                id: loadingToast,
+                description: "Cấu hình thông báo đã được lưu.",
+            });
+        } catch (error) {
+            toast.error("Lỗi", {
+                id: loadingToast,
+                description: "Không thể lưu cấu hình.",
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -96,24 +177,24 @@ export default function SettingsPage() {
                         <div className="flex items-center space-x-8 mb-8 border-b border-slate-200 dark:border-slate-800">
                             <button
                                 onClick={() => setActiveTab('profile')}
-                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'profile' ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-500'}`}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'profile' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-[#501ac2]'}`}
                             >
                                 Hồ sơ Bệnh viện
-                                {activeTab === 'profile' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-full" />}
+                                {activeTab === 'profile' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-full" />}
                             </button>
                             <button
                                 onClick={() => setActiveTab('notifications')}
-                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'notifications' ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-500'}`}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'notifications' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-[#501ac2]'}`}
                             >
                                 Thông báo
-                                {activeTab === 'notifications' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-full" />}
+                                {activeTab === 'notifications' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-full" />}
                             </button>
                             <button
                                 onClick={() => setActiveTab('security')}
-                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'security' ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-500'}`}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'security' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-[#501ac2]'}`}
                             >
                                 Bảo mật
-                                {activeTab === 'security' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-full" />}
+                                {activeTab === 'security' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-full" />}
                             </button>
                         </div>
 
@@ -121,7 +202,7 @@ export default function SettingsPage() {
                             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 {/* Header Title */}
                                 <div className="flex items-center mb-8">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white mr-4 shadow-lg shadow-indigo-500/20">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-[#6324eb] to-indigo-600 rounded-xl flex items-center justify-center text-white mr-4 shadow-lg shadow-[#6324eb]/20">
                                         <MaterialIcon name="business" className="text-[22px] fill-1" />
                                     </div>
                                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Hồ sơ & Thương hiệu</h1>
@@ -146,9 +227,9 @@ export default function SettingsPage() {
                                                 <input type="file" className="hidden" accept="image/*" onChange={handleCoverUpload} />
                                             </label>
                                         </div>
-                                        <div className="absolute bottom-8 left-44 hidden md:block">
+                                        <div className="absolute bottom-8 left-52 hidden md:block">
                                             <h2 className="text-3xl font-black text-white mb-1 drop-shadow-md">{hospitalName}</h2>
-                                            <p className="text-white/80 text-sm max-w-md font-medium drop-shadow-sm line-clamp-2">{hospitalDesc}</p>
+                                            <p className="text-white/80 text-sm max-w-lg font-medium drop-shadow-sm line-clamp-2 leading-relaxed">{hospitalDesc}</p>
                                         </div>
                                     </div>
 
@@ -160,7 +241,7 @@ export default function SettingsPage() {
                                                     {logo ? (
                                                         <img src={logo} alt="Logo" className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <MaterialIcon name="local_hospital" className="text-indigo-600 text-6xl opacity-30 group-hover:scale-110 transition-transform duration-500 fill-1" />
+                                                        <MaterialIcon name="local_hospital" className="text-[#6324eb] text-6xl opacity-30 group-hover:scale-110 transition-transform duration-500 fill-1" />
                                                     )}
                                                     <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-pointer">
                                                         <MaterialIcon name="edit" className="text-white text-2xl" />
@@ -177,7 +258,7 @@ export default function SettingsPage() {
                                     {/* Basic Info */}
                                     <div className="bg-white dark:bg-slate-900/50 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                                         <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
-                                            <MaterialIcon name="info" className="text-indigo-600 mr-2 text-xl fill-1" />
+                                            <MaterialIcon name="info" className="text-[#6324eb] mr-2 text-xl fill-1" />
                                             Thông tin cơ bản
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -186,7 +267,7 @@ export default function SettingsPage() {
                                                 <input
                                                     value={hospitalName}
                                                     onChange={(e) => setHospitalName(e.target.value)}
-                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm shadow-sm"
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/5 focus:border-[#6324eb] outline-none transition-all font-bold text-sm shadow-sm"
                                                     placeholder="Nhập tên bệnh viện"
                                                     type="text"
                                                 />
@@ -219,7 +300,7 @@ export default function SettingsPage() {
                                     {/* Contact & Location */}
                                     <div className="bg-white dark:bg-slate-900/50 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                                         <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
-                                            <MaterialIcon name="contact_mail" className="text-indigo-600 mr-2 text-xl fill-1" />
+                                            <MaterialIcon name="contact_mail" className="text-[#6324eb] mr-2 text-xl fill-1" />
                                             Liên hệ & Vị trí
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -227,21 +308,36 @@ export default function SettingsPage() {
                                                 <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Email Liên hệ</label>
                                                 <div className="relative">
                                                     <MaterialIcon name="alternate_email" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
-                                                    <input className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm shadow-sm" type="email" defaultValue="admins@cityhospital.org" />
+                                                    <input
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/5 focus:border-[#6324eb] outline-none transition-all font-bold text-sm shadow-sm"
+                                                        type="email"
+                                                        value={email}
+                                                        onChange={(e) => setEmail(e.target.value)}
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Số Điện thoại</label>
                                                 <div className="relative">
                                                     <MaterialIcon name="call" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
-                                                    <input className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm shadow-sm" type="tel" defaultValue="+84 28 3933 9999" />
+                                                    <input
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/5 focus:border-[#6324eb] outline-none transition-all font-bold text-sm shadow-sm"
+                                                        type="tel"
+                                                        value={phone}
+                                                        onChange={(e) => setPhone(e.target.value)}
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="md:col-span-2 space-y-2">
                                                 <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Địa chỉ Trụ sở & Ghim vị trí</label>
                                                 <div className="relative">
                                                     <MaterialIcon name="location_on" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
-                                                    <input className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm shadow-sm" type="text" defaultValue="452 Đường Nguyễn Y, Phường Đa Kao, Quận 1, TP. Hồ Chí Minh" />
+                                                    <input
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/5 focus:border-[#6324eb] outline-none transition-all font-bold text-sm shadow-sm"
+                                                        type="text"
+                                                        value={address}
+                                                        onChange={(e) => setAddress(e.target.value)}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -250,7 +346,7 @@ export default function SettingsPage() {
                                         <div className="relative rounded-[2rem] overflow-hidden h-80 border border-slate-300 dark:border-slate-700 shadow-inner group/map">
                                             <img alt="Map Preview" className="w-full h-full object-cover grayscale opacity-50 dark:opacity-30 group-hover/map:scale-105 transition-transform duration-1000" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHmSY9vfRml7HHti-HeQSDGGSKqDVpN2NmW4IV6HsJJbMULsRGeKa56XvKtECTlJqFjuL7gxl3mTpCoa-hebF584-rkJ8es8ddM3OFv5oiG2y-dQyI5Qxei0gUF4-e4VM1dA1ADZhKNRRb6LvgcYo2dbbDlbnSIJpUTbIPrbnAhJkKTxNS3tm5Nv0erjFx8c2Hb8mLPHz3JmUe_trIjUVdgp_aZiVE35dqMDjJW-DBLjwiHCrGbRGa81oKpvxnkpgVa-mY2Ctp8pw" />
                                             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                                                <div className="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-2xl animate-bounce border-4 border-white/20">
+                                                <div className="w-14 h-14 bg-[#6324eb] rounded-full flex items-center justify-center text-white shadow-2xl animate-bounce border-4 border-white/20">
                                                     <MaterialIcon name="location_on" className="text-3xl fill-1" />
                                                 </div>
                                             </div>
@@ -275,9 +371,13 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="flex justify-end pt-6 pb-12">
-                                        <button className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white px-12 py-4 rounded-full font-black text-base flex items-center space-x-3 hover:-translate-y-1 transition-all shadow-2xl shadow-indigo-500/30 active:scale-95">
-                                            <MaterialIcon name="save" className="text-xl" />
-                                            <span>Lưu thay đổi hồ sơ</span>
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className={`bg-gradient-to-r from-[#6324eb] to-indigo-600 text-white px-12 py-4 rounded-full font-black text-base flex items-center space-x-3 transition-all shadow-2xl shadow-indigo-500/30 active:scale-95 ${isSaving ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
+                                        >
+                                            <MaterialIcon name={isSaving ? "sync" : "save"} className={`text-xl ${isSaving ? 'animate-spin' : ''}`} />
+                                            <span>{isSaving ? "Đang lưu..." : "Lưu thay đổi hồ sơ"}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -285,9 +385,9 @@ export default function SettingsPage() {
                         )}
 
                         {activeTab === 'notifications' && (
-                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                            <div className="space-y-8">
                                 <div className="flex items-center">
-                                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600 mr-4">
+                                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-[#6324eb] mr-4">
                                         <MaterialIcon name="notifications" className="text-[22px] fill-1" />
                                     </div>
                                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Cấu hình Thông báo</h2>
@@ -297,7 +397,7 @@ export default function SettingsPage() {
                                     <div className="p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-800">
                                         <div className="flex items-center justify-between mb-8">
                                             <div className="flex items-start gap-5">
-                                                <div className="size-12 rounded-2xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 shrink-0">
+                                                <div className="size-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[#6324eb] shrink-0">
                                                     <MaterialIcon name="warning" className="text-2xl fill-1" />
                                                 </div>
                                                 <div>
@@ -307,9 +407,9 @@ export default function SettingsPage() {
                                             </div>
                                             <button
                                                 onClick={() => setEmailAlert(!emailAlert)}
-                                                className={`relative inline-block w-16 h-8 transition duration-300 ease-in-out rounded-full cursor-pointer overflow-hidden ${emailAlert ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+                                                className={`relative flex items-center w-14 h-7 transition duration-300 ease-in-out rounded-full cursor-pointer px-1 ${emailAlert ? 'bg-[#6324eb]' : 'bg-slate-300 dark:bg-slate-700'}`}
                                             >
-                                                <span className={`absolute top-1 bg-white w-6 h-6 rounded-full shadow-lg transition-transform duration-300 ${emailAlert ? 'translate-x-9' : 'translate-x-1'}`}></span>
+                                                <span className={`bg-white w-5 h-5 rounded-full shadow-lg transition-transform duration-300 ${emailAlert ? 'translate-x-7' : 'translate-x-0'}`}></span>
                                             </button>
                                         </div>
 
@@ -317,7 +417,7 @@ export default function SettingsPage() {
                                             <div className="flex justify-between items-end">
                                                 <div>
                                                     <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Ngưỡng báo động</label>
-                                                    <span className="text-5xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter">{shortfallThreshold}%</span>
+                                                    <span className="text-5xl font-black text-[#6324eb] dark:text-indigo-400 tracking-tighter">{shortfallThreshold}%</span>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-2">
                                                     <span className="text-[10px] font-black text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-800 uppercase tracking-tight">Thông báo khẩn cấp</span>
@@ -330,15 +430,15 @@ export default function SettingsPage() {
                                                 step="5"
                                                 value={shortfallThreshold}
                                                 onChange={(e) => setShortfallThreshold(parseInt(e.target.value))}
-                                                className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
+                                                className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-[#6324eb] focus:outline-none"
                                             />
                                             <div className="p-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
-                                                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 mb-2 font-black text-sm">
+                                                <div className="flex items-center gap-2 text-[#6324eb] dark:text-indigo-400 mb-2 font-black text-sm">
                                                     <MaterialIcon name="check_circle" className="text-lg fill-1" />
                                                     Kịch bản kích hoạt
                                                 </div>
                                                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-semibold">
-                                                    Gửi cảnh báo ngay khi chiến dịch đạt dưới <span className="text-indigo-600 dark:text-indigo-400 font-black underline decoration-2">{shortfallThreshold}%</span> mục tiêu trong 6 giờ đầu tiên.
+                                                    Gửi cảnh báo ngay khi chiến dịch đạt dưới <span className="text-[#6324eb] dark:text-indigo-400 font-black underline decoration-2">{shortfallThreshold}%</span> mục tiêu trong 6 giờ đầu tiên.
                                                 </p>
                                             </div>
                                         </div>
@@ -346,7 +446,7 @@ export default function SettingsPage() {
 
                                     <div className="flex items-center justify-between p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-800 group hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors">
                                         <div className="flex items-center gap-5">
-                                            <div className="size-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 shrink-0">
+                                            <div className="size-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center text-[#6324eb] shrink-0">
                                                 <MaterialIcon name="person_add" className="text-2xl fill-1" />
                                             </div>
                                             <div>
@@ -356,15 +456,19 @@ export default function SettingsPage() {
                                         </div>
                                         <button
                                             onClick={() => setNewDonorAlert(!newDonorAlert)}
-                                            className={`relative inline-block w-14 h-7 transition duration-300 ease-in-out rounded-full cursor-pointer ${newDonorAlert ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+                                            className={`relative flex items-center w-14 h-7 transition duration-300 ease-in-out rounded-full cursor-pointer px-1 ${newDonorAlert ? 'bg-[#6324eb]' : 'bg-slate-300 dark:bg-slate-700'}`}
                                         >
-                                            <span className={`absolute top-1 bg-white w-5 h-5 rounded-full shadow-md transition-transform duration-300 ${newDonorAlert ? 'translate-x-8' : 'translate-x-1'}`}></span>
+                                            <span className={`bg-white w-5 h-5 rounded-full shadow-md transition-transform duration-300 ${newDonorAlert ? 'translate-x-7' : 'translate-x-0'}`}></span>
                                         </button>
                                     </div>
 
                                     <div className="flex justify-end pt-4">
-                                        <button className="bg-indigo-600 text-white px-10 py-4 rounded-full font-black text-base shadow-2xl shadow-indigo-500/20 active:scale-95 transition-all">
-                                            Lưu cấu hình thông báo
+                                        <button
+                                            onClick={handleSaveNotifications}
+                                            disabled={isSaving}
+                                            className={`bg-[#6324eb] text-white px-10 py-4 rounded-full font-black text-base shadow-2xl shadow-[#6324eb]/20 active:scale-95 transition-all ${isSaving ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
+                                        >
+                                            {isSaving ? "Đang lưu..." : "Lưu cấu hình thông báo"}
                                         </button>
                                     </div>
                                 </div>
@@ -372,7 +476,7 @@ export default function SettingsPage() {
                         )}
 
                         {activeTab === 'security' && (
-                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                            <div className="space-y-8">
                                 <div className="flex items-center">
                                     <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center text-emerald-600 mr-4">
                                         <MaterialIcon name="shield" className="text-[22px] fill-1" />
@@ -387,12 +491,12 @@ export default function SettingsPage() {
                                             <div className="relative">
                                                 <input
                                                     type={showPassword ? "text" : "password"}
-                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm"
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/5 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
                                                     placeholder="••••••••"
                                                 />
                                                 <button
                                                     onClick={() => setShowPassword(!showPassword)}
-                                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600"
+                                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#6324eb]"
                                                 >
                                                     <MaterialIcon name={showPassword ? "visibility_off" : "visibility"} className="text-xl" />
                                                 </button>
@@ -403,7 +507,7 @@ export default function SettingsPage() {
                                             <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Mật khẩu mới</label>
                                             <input
                                                 type="password"
-                                                className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm"
+                                                className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/5 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
                                                 placeholder="Ít nhất 8 ký tự"
                                             />
                                         </div>
@@ -412,7 +516,7 @@ export default function SettingsPage() {
                                             <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Xác nhận mật khẩu</label>
                                             <input
                                                 type="password"
-                                                className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-bold text-sm"
+                                                className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/5 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
                                                 placeholder="Gõ lại mật khẩu mới"
                                             />
                                         </div>
@@ -439,7 +543,6 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            {/* Custom Styles */}
             <style dangerouslySetInnerHTML={{
                 __html: `
                 .material-symbols-outlined {
@@ -451,7 +554,7 @@ export default function SettingsPage() {
                 input[type="range"]::-webkit-slider-thumb {
                     width: 24px;
                     height: 24px;
-                    background: #4F46E5;
+                    background: #6324eb;
                     border: 4px solid #fff;
                     border-radius: 50%;
                     cursor: pointer;
@@ -467,5 +570,13 @@ export default function SettingsPage() {
                 }
             `}} />
         </div>
+    );
+}
+
+export default function SettingsPage() {
+    return (
+        <Suspense>
+            <SettingsContent />
+        </Suspense>
     );
 }

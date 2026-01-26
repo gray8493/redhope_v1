@@ -96,7 +96,7 @@ export default function SupportManagementPage() {
 
     const getStatusConfig = (status: string) => {
         switch (status) {
-            case "pending": return { label: "Đang chờ", class: "bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400" };
+            case "pending": return { label: "Đang chờ", class: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400" };
             case "processing": return { label: "Đang hỗ trợ", class: "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400" };
             case "completed": return { label: "Hoàn thành", class: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400" };
             default: return { label: "Không xác định", class: "bg-slate-100 dark:bg-slate-800 text-slate-500" };
@@ -140,7 +140,7 @@ export default function SupportManagementPage() {
                         <div className="flex items-center gap-6">
                             <button className="relative w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
                                 <Bell className="w-5 h-5" />
-                                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-rose-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
+                                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-indigo-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
                             </button>
                             <div className="flex items-center gap-4 pl-6 border-l border-slate-200 dark:border-slate-800">
                                 <div className="text-right hidden sm:block">
@@ -165,7 +165,7 @@ export default function SupportManagementPage() {
                             <div className="flex flex-wrap items-center gap-4">
                                 <h1 className="text-4xl font-[900] tracking-tighter text-slate-900 dark:text-white">Điều phối Hỗ trợ Chiến dịch</h1>
                                 {requests.filter(r => r.status === 'pending').length > 0 && (
-                                    <span className="bg-rose-500 text-white text-[11px] font-black px-3 py-1 rounded-full animate-pulse shadow-lg shadow-rose-500/20">
+                                    <span className="bg-indigo-500 text-white text-[11px] font-black px-3 py-1 rounded-full animate-pulse shadow-lg shadow-indigo-500/20">
                                         {requests.filter(r => r.status === 'pending').length} Yêu cầu mới
                                     </span>
                                 )}
@@ -206,11 +206,11 @@ export default function SupportManagementPage() {
                                             <div
                                                 key={req.id}
                                                 className={`group bg-white dark:bg-slate-900 border-2 transition-all duration-300 p-8 rounded-[40px] hover:shadow-2xl flex flex-col md:flex-row gap-8 items-start md:items-center ${req.status === 'pending'
-                                                    ? 'border-rose-100 dark:border-rose-900/30 ring-1 ring-rose-50 dark:ring-0 shadow-xl shadow-rose-500/5'
+                                                    ? 'border-indigo-100 dark:border-indigo-900/30 ring-1 ring-indigo-50 dark:ring-0 shadow-xl shadow-indigo-500/5'
                                                     : 'border-slate-50 dark:border-slate-800'
                                                     }`}
                                             >
-                                                <div className={`w-16 h-16 rounded-[28px] flex items-center justify-center shrink-0 transition-all group-hover:scale-110 ${req.status === 'pending' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-500' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                                                <div className={`w-16 h-16 rounded-[28px] flex items-center justify-center shrink-0 transition-all group-hover:scale-110 ${req.status === 'pending' ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
                                                     }`}>
                                                     {getTypeIcon(req.type)}
                                                 </div>
@@ -233,7 +233,7 @@ export default function SupportManagementPage() {
                                                             <Clock className="w-4 h-4" /> {new Date(req.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                         {req.type === 'doctor' && req.status === 'pending' && (
-                                                            <div className="flex items-center gap-2 text-[11px] font-black uppercase text-rose-500 tracking-tighter">
+                                                            <div className="flex items-center gap-2 text-[11px] font-black uppercase text-indigo-500 tracking-tighter">
                                                                 <AlertTriangle className="w-4 h-4" /> Ưu tiên y tế cao
                                                             </div>
                                                         )}
