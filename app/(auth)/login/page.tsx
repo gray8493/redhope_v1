@@ -33,28 +33,15 @@ const LoginPage = () => {
             const metadataRole = user.user_metadata?.role;
             const actualRole = (metadataRole || 'donor').toLowerCase().trim();
 
-            // Nếu là Admin, đẩy thẳng đi không cần check role form
+            console.log(`[Login] Role identified: ${actualRole}. Redirecting...`);
+
+            // Tự động chuyển hướng dựa trên vai trò thực tế
             if (actualRole === 'admin') {
                 window.location.href = '/admin';
-                return;
-            }
-
-            // Kiểm tra khớp role đã chọn trên form
-            if (formData.role !== actualRole) {
-                const roleLabels: Record<string, string> = {
-                    donor: 'Người hiến',
-                    hospital: 'Bệnh viện'
-                };
-                setError(`Tài khoản này là "${roleLabels[actualRole] || actualRole}", không phải "${roleLabels[formData.role] || formData.role}".`);
-                await authService.signOut();
-                setLoading(false);
-                return;
-            }
-
-            if (actualRole === 'hospital') {
+            } else if (actualRole === 'hospital') {
                 window.location.href = '/hospital';
             } else {
-                // Đối với Donor, đưa thẳng vào dashboard (không bắt buộc hoàn thiện hồ sơ nữa)
+                // Mặc định là 'donor'
                 window.location.href = '/dashboard';
             }
 
