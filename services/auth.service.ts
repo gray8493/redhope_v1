@@ -109,18 +109,25 @@ export const authService = {
 
                 // 2. Fetch profile ngầm
                 try {
-                    const { data: profile } = await supabase
+                    const { data: profile, error } = await supabase
                         .from('users')
                         .select('*')
                         .eq('id', session.user.id)
                         .maybeSingle();
 
+                    if (error) {
+                        console.warn('[authService] Background profile fetch error:', error.message);
+                        return;
+                    }
+
                     if (profile) {
                         console.log(`[authService] Profile fetched in background:`, profile.role);
                         callback({ ...session.user, profile });
+                    } else {
+                        console.warn('[authService] Profile not found in background fetch');
                     }
                 } catch (e) {
-                    console.warn('[authService] Background profile fetch failed:', e);
+                    console.warn('[authService] Background profile fetch exception:', e);
                 }
             } else {
                 callback(null);

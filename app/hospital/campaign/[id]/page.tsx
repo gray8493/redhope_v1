@@ -141,8 +141,20 @@ export default function CampaignDetailsPage() {
     const rawId = Number(params.id);
 
     // Helper to push notifications to TopNav
-    const pushNotification = (data: { title: string; desc: string; type: string; color?: string; bg?: string }) => {
+    const pushNotification = (dataOrTitle: { title: string; desc: string; type: string; color?: string; bg?: string } | string, type?: string) => {
         if (typeof window !== 'undefined') {
+            let data: any;
+            if (typeof dataOrTitle === 'string') {
+                data = {
+                    title: type === 'error' ? 'Lỗi' : type === 'success' ? 'Thành công' : 'Thông báo',
+                    desc: dataOrTitle,
+                    type: type || 'info',
+                    color: type === 'error' ? 'text-red-500' : type === 'success' ? 'text-emerald-500' : 'text-[#6324eb]',
+                    bg: type === 'error' ? 'bg-red-50' : type === 'success' ? 'bg-emerald-50' : 'bg-[#6324eb]/5'
+                };
+            } else {
+                data = dataOrTitle;
+            }
             window.dispatchEvent(new CustomEvent('redhope:notification', { detail: data }));
         }
     };
@@ -270,6 +282,7 @@ export default function CampaignDetailsPage() {
         return () => window.removeEventListener('click', handleClickOutside);
     }, [isDropdownOpen]);
     const [editForm, setEditForm] = useState<Campaign>(campaignInfo);
+    const [imageError, setImageError] = useState("");
 
     // Update edit form when modal opens
     useEffect(() => {
@@ -559,23 +572,28 @@ export default function CampaignDetailsPage() {
         });
     };
 
-    const handleSendSupport = () => {
+    const handleSendSupport = async () => {
         if (!supportMessage.trim()) {
-            alert("Vui lòng nhập mô tả vấn đề!");
+            pushNotification("Vui lòng nhập mô tả vấn đề!", "error");
             return;
         }
-        addSupportRequest({
-            campaignId: campaignInfo.id,
-            campaignName: campaignInfo.name,
-            type: supportType,
-            message: supportMessage,
-            timestamp: new Date().toISOString(),
-            status: "pending"
-        });
-        setIsSupportModalOpen(false);
-        setSupportMessage("");
-        setSupportType("staff");
-        alert("Đã gửi yêu cầu hỗ trợ đến trung tâm điều phối!");
+        try {
+            await addSupportRequest({
+                campaignId: campaignInfo.id,
+                campaignName: campaignInfo.name,
+                type: supportType,
+                message: supportMessage,
+                timestamp: new Date().toISOString(),
+                status: "pending"
+            });
+            setIsSupportModalOpen(false);
+            setSupportMessage("");
+            setSupportType("staff");
+            pushNotification("Đã gửi yêu cầu hỗ trợ đến trung tâm điều phối!", "success");
+        } catch (error) {
+            console.error("Support request failed:", error);
+            pushNotification("Không thể gửi yêu cầu hỗ trợ. Vui lòng thử lại sau.", "error");
+        }
     };
 
     return (
@@ -838,9 +856,25 @@ export default function CampaignDetailsPage() {
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
                                                 if (file) {
+                                                    // Validate file size (max 5MB)
+                                                    const MAX_SIZE = 5 * 1024 * 1024;
+                                                    if (file.size > MAX_SIZE) {
+                                                        setImageError("Kích thước ảnh quá lớn (tối đa 5MB)");
+                                                        return;
+                                                    }
+                                                    setImageError("");
+
                                                     const reader = new FileReader();
                                                     reader.onloadend = () => {
-                                                        setEditForm({ ...editForm, image: reader.result as string });
+                                                        if (reader.readyState === FileReader.DONE && reader.result) {
+                                                            setEditForm({ ...editForm, image: reader.result as string });
+                                                        }
+                                                    };
+                                                    reader.onerror = () => {
+                                                        setImageError("Lỗi khi đọc file ảnh");
+                                                    };
+                                                    reader.onabort = () => {
+                                                        setImageError("Đã hủy việc tải ảnh");
                                                     };
                                                     reader.readAsDataURL(file);
                                                 }
@@ -876,6 +910,11 @@ export default function CampaignDetailsPage() {
                                             </button>
                                         )}
                                     </div>
+                                    {imageError && (
+                                        <div className="text-[10px] font-bold text-red-500 ml-1">
+                                            {imageError}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

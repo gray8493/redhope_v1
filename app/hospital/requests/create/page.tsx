@@ -66,6 +66,8 @@ export default function CreateRequestPage() {
     const [startTime, setStartTime] = useState("08:00");
     const [endTime, setEndTime] = useState("21:00");
     const [image, setImage] = useState<string>("");
+    const [imageError, setImageError] = useState("");
+    const [isDragging, setIsDragging] = useState(false);
     const [lastChanged, setLastChanged] = useState<'amount' | 'count' | null>(null);
 
     // Initial Load for Edit Mode
@@ -129,6 +131,34 @@ export default function CreateRequestPage() {
             }
         }
     }, [targetCount, lastChanged]);
+
+    const handleFileDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file && (file.type === "image/png" || file.type === "image/jpeg")) {
+            processFile(file);
+        } else if (file) {
+            setImageError("Vui lòng chỉ tải lên file PNG hoặc JPG");
+        }
+    };
+
+    const processFile = (file: File) => {
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+        if (file.size > MAX_SIZE) {
+            setImageError("Kích thước ảnh quá lớn (tối đa 5MB)");
+            return;
+        }
+        setImageError("");
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (reader.readyState === FileReader.DONE && reader.result) {
+                setImage(reader.result as string);
+            }
+        };
+        reader.onerror = () => setImageError("Lỗi khi đọc file ảnh");
+        reader.readAsDataURL(file);
+    };
 
     const applyTemplate = (templateData: any) => {
         setCampaignName(templateData.name);
@@ -517,17 +547,17 @@ export default function CreateRequestPage() {
                                                 onChange={(e) => {
                                                     const file = e.target.files?.[0];
                                                     if (file) {
-                                                        const reader = new FileReader();
-                                                        reader.onloadend = () => {
-                                                            setImage(reader.result as string);
-                                                        };
-                                                        reader.readAsDataURL(file);
+                                                        processFile(file);
                                                     }
                                                 }}
                                             />
                                             <label
                                                 htmlFor="campaign-image"
-                                                className={`w-full h-64 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group ${image ? 'border-transparent' : 'border-slate-300 hover:border-[#6D28D9] hover:bg-slate-50'}`}
+                                                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                                onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                                onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                                                onDrop={handleFileDrop}
+                                                className={`w-full h-64 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group ${image ? 'border-transparent' : isDragging ? 'border-[#6D28D9] bg-[#F5F3FF]' : 'border-slate-300 hover:border-[#6D28D9] hover:bg-slate-50'}`}
                                             >
                                                 {image ? (
                                                     <>
@@ -540,14 +570,19 @@ export default function CreateRequestPage() {
                                                     </>
                                                 ) : (
                                                     <div className="flex flex-col items-center gap-3 text-slate-400">
-                                                        <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center">
+                                                        <div className={`size-16 rounded-full flex items-center justify-center transition-colors ${isDragging ? 'bg-[#6D28D9]/10 text-[#6D28D9]' : 'bg-slate-100'}`}>
                                                             <MaterialIcon name="add_photo_alternate" className="text-3xl" />
                                                         </div>
-                                                        <p className="text-sm font-bold">Nhấn để tải ảnh lên</p>
+                                                        <p className={`text-sm font-bold ${isDragging ? 'text-[#6D28D9]' : ''}`}>{isDragging ? 'Thả file để tải lên' : 'Nhấn để tải ảnh lên'}</p>
                                                         <p className="text-xs">Hoặc kéo thả file vào đây (PNG, JPG)</p>
                                                     </div>
                                                 )}
                                             </label>
+                                            {imageError && (
+                                                <div className="mt-2 text-xs text-red-500 font-bold ml-4">
+                                                    {imageError}
+                                                </div>
+                                            )}
                                             <div className="flex justify-end mt-2">
                                                 {image && (
                                                     <button

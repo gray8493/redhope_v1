@@ -34,8 +34,18 @@ const LoginPage = () => {
             // Lấy thông tin đầy đủ (bao gồm profile từ database) trước khi chuyển hướng
             const fullUserData = await authService.getCurrentUser();
             const actualRole = (fullUserData?.profile?.role || user.user_metadata?.role || 'donor').toLowerCase().trim();
+            const selectedRole = formData.role.toLowerCase().trim();
 
-            console.log(`[Login] Actual Role identified: ${actualRole}. Redirecting...`);
+            console.log(`[Login] Role check: Selected="${selectedRole}", Actual="${actualRole}"`);
+
+            if (selectedRole !== actualRole) {
+                const roleLabel = actualRole === 'admin' ? 'Quản trị' : actualRole === 'hospital' ? 'Bệnh viện' : 'Người hiến';
+                setError(`Tài khoản của bạn có vai trò là "${roleLabel}", không khớp với lựa chọn.`);
+                setLoading(false);
+                return;
+            }
+
+            console.log(`[Login] Role matched. Redirecting to ${actualRole}...`);
 
             // Tự động chuyển hướng dựa trên vai trò thực tế
             if (actualRole === 'admin') {

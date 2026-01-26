@@ -27,7 +27,6 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
             return;
         }
 
-        // 2. Xác định vai trò
         // 2. Xác định vai trò strictly từ data
         const metadataRole = user?.user_metadata?.role;
         const profileRole = profile?.role;
@@ -46,7 +45,6 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
 
         // NẾU VẪN KHÔNG CÓ ROLE (Vẫn đang load) -> TIẾP TỤC ĐỢI
         if (!userRole) {
-            console.log("[RoleGuard DEBUG] Role still missing, waiting...");
             return;
         }
 
