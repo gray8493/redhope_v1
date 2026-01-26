@@ -7,7 +7,7 @@ import MiniFooter from "@/components/MiniFooter";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getCampaignById, updateCampaign, Campaign, getCampaigns, Appointment } from "@/app/utils/campaignStorage";
-
+import { addSupportRequest } from "@/app/utils/supportStorage";
 
 
 const DEFAULT_APPOINTMENTS = [
@@ -239,6 +239,9 @@ export default function CampaignDetailsPage() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isStartTimeOpen, setIsStartTimeOpen] = useState(false);
     const [isEndTimeOpen, setIsEndTimeOpen] = useState(false);
+    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+    const [supportType, setSupportType] = useState<"doctor" | "staff" | "supply" | "emergency">("staff");
+    const [supportMessage, setSupportMessage] = useState("");
 
     const handleTimeManualChange = (field: 'startTime' | 'endTime', value: string) => {
         let val = value.replace(/\D/g, '');
@@ -556,6 +559,25 @@ export default function CampaignDetailsPage() {
         });
     };
 
+    const handleSendSupport = () => {
+        if (!supportMessage.trim()) {
+            alert("Vui lòng nhập mô tả vấn đề!");
+            return;
+        }
+        addSupportRequest({
+            campaignId: campaignInfo.id,
+            campaignName: campaignInfo.name,
+            type: supportType,
+            message: supportMessage,
+            timestamp: new Date().toISOString(),
+            status: "pending"
+        });
+        setIsSupportModalOpen(false);
+        setSupportMessage("");
+        setSupportType("staff");
+        alert("Đã gửi yêu cầu hỗ trợ đến trung tâm điều phối!");
+    };
+
     return (
         <>
             <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -577,7 +599,7 @@ export default function CampaignDetailsPage() {
                     background: white;
                     border: 1px solid #F1F5F9;
                     border-radius: 1.5rem;
-                    padding: 2rem;
+                    padding: 1rem;
                     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 }
@@ -803,6 +825,58 @@ export default function CampaignDetailsPage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Image Edit Section */}
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-slate-700 dark:text-slate-300 text-[13px] font-bold ml-1">Hình ảnh chiến dịch</label>
+                                    <div className="flex items-center gap-4">
+                                        <input
+                                            type="file"
+                                            id="edit-modal-image"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setEditForm({ ...editForm, image: reader.result as string });
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                        <label
+                                            htmlFor="edit-modal-image"
+                                            className={`relative w-full h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden group ${editForm.image ? 'border-transparent' : 'border-slate-200 hover:border-[#6D28D9] bg-slate-50 hover:bg-white'}`}
+                                        >
+                                            {editForm.image ? (
+                                                <>
+                                                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${editForm.image}')` }}></div>
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-lg">
+                                                            <span className="material-symbols-outlined text-[16px]">edit</span> Thay đổi
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-2 text-slate-400">
+                                                    <span className="material-symbols-outlined text-[24px]">add_photo_alternate</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider">Tải ảnh lên</span>
+                                                </div>
+                                            )}
+                                        </label>
+                                        {editForm.image && (
+                                            <button
+                                                onClick={() => setEditForm({ ...editForm, image: "" })}
+                                                className="size-10 rounded-xl border border-slate-200 hover:bg-red-50 hover:border-red-100 hover:text-red-500 text-slate-400 flex items-center justify-center transition-all shrink-0"
+                                                title="Xóa ảnh"
+                                            >
+                                                <span className="material-symbols-outlined text-[20px]">delete</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-5">
@@ -883,6 +957,75 @@ export default function CampaignDetailsPage() {
             )}
 
             {/* End Confirmation Modal */}
+            {isSupportModalOpen && (
+                <div className="modal-overlay animate-in fade-in duration-200" style={{ zIndex: 60 }}>
+                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-[600px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+                        <div className="px-8 py-6 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-red-50/30 dark:bg-red-900/10">
+                            <div className="flex items-center gap-3">
+                                <div className="size-10 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center text-red-600">
+                                    <span className="material-symbols-outlined text-[24px]">medical_services</span>
+                                </div>
+                                <div>
+                                    <h2 className="text-red-600 dark:text-red-400 text-xl font-extrabold tracking-tight">Yêu cầu Hỗ trợ</h2>
+                                    <p className="text-slate-400 text-[12px] font-medium">Gửi yêu cầu chi viện khẩn cấp đến trung tâm</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsSupportModalOpen(false)} className="size-8 rounded-full hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center text-slate-400 transition-colors">
+                                <span className="material-symbols-outlined text-[20px]">close</span>
+                            </button>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Loại hỗ trợ</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[
+                                        { id: 'staff', label: 'Nhân sự', icon: 'group' },
+                                        { id: 'doctor', label: 'Bác sĩ', icon: 'stethoscope' },
+                                        { id: 'supply', label: 'Vật tư', icon: 'inventory_2' },
+                                        { id: 'emergency', label: 'Khẩn cấp', icon: 'warning' }
+                                    ].map(type => (
+                                        <button
+                                            key={type.id}
+                                            onClick={() => setSupportType(type.id as any)}
+                                            className={`flex items-center gap-3 p-3 rounded-xl border-2 font-bold text-sm transition-all ${supportType === type.id
+                                                ? 'border-red-500 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                                                : 'border-slate-100 dark:border-slate-800 text-slate-500 hover:border-red-200 hover:bg-red-50/50'
+                                                }`}
+                                        >
+                                            <span className="material-symbols-outlined">{type.icon}</span>
+                                            {type.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Mô tả vấn đề</label>
+                                <textarea
+                                    className="w-full h-32 p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 focus:border-red-500 focus:ring-0 outline-none text-sm font-medium resize-none"
+                                    placeholder="Nhập chi tiết vấn đề cần hỗ trợ..."
+                                    value={supportMessage}
+                                    onChange={(e) => setSupportMessage(e.target.value)}
+                                ></textarea>
+                            </div>
+                            <div className="flex gap-4 pt-2">
+                                <button
+                                    onClick={() => setIsSupportModalOpen(false)}
+                                    className="flex-1 py-3.5 rounded-full font-bold text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    onClick={handleSendSupport}
+                                    className="flex-1 py-3.5 rounded-full font-bold text-sm bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">send</span> Gửi yêu cầu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {isEndModalOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
@@ -964,6 +1107,13 @@ export default function CampaignDetailsPage() {
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <button
+                                        className="size-12 rounded-full border-2 border-red-50 dark:border-red-900/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 flex items-center justify-center transition-all bg-white dark:bg-slate-900 shadow-sm hover:shadow-red-500/20"
+                                        onClick={() => setIsSupportModalOpen(true)}
+                                        title="Yêu cầu Chi viện"
+                                    >
+                                        <span className="material-symbols-outlined text-[24px]">sos</span>
+                                    </button>
+                                    <button
                                         className="size-12 rounded-full border-2 border-slate-50 dark:border-slate-800 text-slate-400 hover:text-[#6324eb] hover:border-[#6324eb] hover:shadow-lg hover:shadow-indigo-500/10 flex items-center justify-center transition-all bg-white dark:bg-slate-900"
                                         onClick={handleEditClick}
                                     >
@@ -980,27 +1130,27 @@ export default function CampaignDetailsPage() {
                             </div>
 
                             {/* Metric Cards */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
                                 {/* Goal Progress */}
                                 <div className={`metric-card transition-all duration-500 ${progressPercent >= 100 ? 'ring-4 ring-emerald-500/20 border-emerald-500/50 bg-emerald-50/10 dark:bg-emerald-500/5' : ''}`}>
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className={`size-11 rounded-2xl flex items-center justify-center ${progressPercent >= 100 ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-50 dark:bg-indigo-900/30 text-[#6324eb]'}`}>
-                                            <span className="material-symbols-outlined text-[24px]">{progressPercent >= 100 ? 'celebration' : 'analytics'}</span>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className={`size-8 rounded-lg flex items-center justify-center ${progressPercent >= 100 ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-50 dark:bg-indigo-900/30 text-[#6324eb]'}`}>
+                                            <span className="material-symbols-outlined text-[18px]">{progressPercent >= 100 ? 'celebration' : 'analytics'}</span>
                                         </div>
-                                        <span className="text-[11px] font-extrabold text-slate-400/80 uppercase tracking-widest">Tiến độ mục tiêu</span>
+                                        <span className="text-[9px] font-extrabold text-slate-400/80 uppercase tracking-widest">Tiến độ mục tiêu</span>
                                     </div>
-                                    <div className="flex items-baseline gap-2 mb-4">
-                                        <span className={`text-4xl font-black tracking-tight ${progressPercent >= 100 ? 'text-emerald-600' : 'text-slate-900 dark:text-white'}`}>{totalCollected.toFixed(0)}</span>
-                                        <span className="text-slate-400 font-extrabold text-xs uppercase tracking-wider">/ {(targetVolume || 0).toLocaleString()} ml</span>
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <span className={`text-2xl font-black tracking-tight ${progressPercent >= 100 ? 'text-emerald-600' : 'text-slate-900 dark:text-white'}`}>{totalCollected.toFixed(0)}</span>
+                                        <span className="text-slate-400 font-extrabold text-[9px] uppercase tracking-wider">/ {(targetVolume || 0).toLocaleString()} ml</span>
                                     </div>
-                                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-3 rounded-full overflow-hidden mb-4 p-0.5">
+                                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
                                         <div className={`h-full rounded-full transition-all duration-1000 shadow-sm ${progressPercent >= 100 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : 'bg-gradient-to-r from-[#6324eb] to-indigo-400'}`} style={{ width: `${progressPercent}%` }}></div>
                                     </div>
-                                    <div className={`flex justify-between items-center p-3 rounded-2xl ${progressPercent >= 100 ? 'bg-emerald-500/10' : 'bg-slate-50 dark:bg-slate-800/50'}`}>
-                                        <span className={`${progressPercent >= 100 ? 'text-emerald-600' : 'text-[#6324eb]'} text-[11px] font-extrabold uppercase tracking-wide`}>
+                                    <div className={`flex justify-between items-center p-2 rounded-lg ${progressPercent >= 100 ? 'bg-emerald-500/10' : 'bg-slate-50 dark:bg-slate-800/50'}`}>
+                                        <span className={`${progressPercent >= 100 ? 'text-emerald-600' : 'text-[#6324eb]'} text-[9px] font-bold uppercase tracking-wide`}>
                                             {progressPercent >= 100 ? 'Mục tiêu hoàn thành!' : `${progressPercent.toFixed(1)}% Hoàn thành`}
                                         </span>
-                                        <span className={`${progressPercent >= 100 ? 'text-emerald-500' : 'text-slate-400'} text-[11px] font-bold`}>
+                                        <span className={`${progressPercent >= 100 ? 'text-emerald-500' : 'text-slate-400'} text-[9px] font-bold`}>
                                             {progressPercent >= 100 ? 'Vượt chỉ tiêu' : `Còn ${(remaining / 1000).toFixed(1)} Lít nữa`}
                                         </span>
                                     </div>
@@ -1008,28 +1158,28 @@ export default function CampaignDetailsPage() {
 
                                 {/* Donor Registration */}
                                 <div className="metric-card border-orange-100 dark:border-orange-900/20">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className="size-11 rounded-2xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center text-orange-500">
-                                            <span className="material-symbols-outlined text-[24px]">person_check</span>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="size-8 rounded-lg bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center text-orange-500">
+                                            <span className="material-symbols-outlined text-[18px]">person_check</span>
                                         </div>
-                                        <span className="text-[11px] font-extrabold text-slate-400/80 uppercase tracking-widest">Người hiến thực hiện</span>
+                                        <span className="text-[9px] font-extrabold text-slate-400/80 uppercase tracking-widest">Người hiến thực hiện</span>
                                     </div>
-                                    <div className="flex items-baseline gap-2 mb-6">
-                                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{completedAppointments.length}</span>
-                                        <span className="text-slate-400 font-extrabold text-xs uppercase tracking-wider">/ {totalRegistered} Đăng ký</span>
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{completedAppointments.length}</span>
+                                        <span className="text-slate-400 font-extrabold text-[9px] uppercase tracking-wider">/ {totalRegistered} Đăng ký</span>
                                     </div>
-                                    <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl group transition-all">
-                                        <div className="flex -space-x-3">
+                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg group transition-all">
+                                        <div className="flex -space-x-2">
                                             {completedAppointments.slice(0, 3).map((a, i) => (
-                                                <div key={a.id} className="size-8 rounded-full border-4 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-black text-[9px] text-orange-500 shadow-sm">
+                                                <div key={a.id} className="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-black text-[8px] text-orange-500 shadow-sm">
                                                     {a.code}
                                                 </div>
                                             ))}
                                             {completedAppointments.length > 3 && (
-                                                <div className="size-8 rounded-full border-4 border-white dark:border-slate-800 bg-orange-500 flex items-center justify-center text-[10px] text-white font-black">+{completedAppointments.length - 3}</div>
+                                                <div className="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-orange-500 flex items-center justify-center text-[8px] text-white font-black">+{completedAppointments.length - 3}</div>
                                             )}
                                         </div>
-                                        <span className="text-[11px] font-bold text-slate-400 tracking-tight">
+                                        <span className="text-[9px] font-bold text-slate-400 tracking-tight">
                                             {completedAppointments.length === totalRegistered ? "Tất cả đã hoàn thành! ✨" : "Đang thực hiện hiến máu"}
                                         </span>
                                     </div>
@@ -1037,25 +1187,25 @@ export default function CampaignDetailsPage() {
 
                                 {/* Actual Analysis */}
                                 <div className="metric-card">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className="size-11 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-500">
-                                            <span className="material-symbols-outlined text-[24px]">insights</span>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="size-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-500">
+                                            <span className="material-symbols-outlined text-[18px]">insights</span>
                                         </div>
-                                        <span className="text-[11px] font-extrabold text-slate-400/80 uppercase tracking-widest">Phân tích AI</span>
+                                        <span className="text-[9px] font-extrabold text-slate-400/80 uppercase tracking-widest">Phân tích AI</span>
                                     </div>
-                                    <div className="flex items-baseline gap-2 mb-4">
-                                        <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{totalCollected.toLocaleString()}</span>
-                                        <span className="text-slate-400 font-extrabold text-xs uppercase tracking-wider">ml thu được</span>
+                                    <div className="flex items-baseline gap-2 mb-2">
+                                        <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{totalCollected.toLocaleString()}</span>
+                                        <span className="text-slate-400 font-extrabold text-[9px] uppercase tracking-wider">ml thu được</span>
                                     </div>
-                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl space-y-3">
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg space-y-2">
                                         <div className="flex justify-between items-center">
-                                            <span className="text-[11px] font-bold text-slate-400 uppercase">Trạng thái:</span>
-                                            <span className={`text-[11px] font-black uppercase flex items-center gap-1.5 ${analysisColor}`}>
-                                                <span className="material-symbols-outlined text-[16px]">{analysisIcon}</span> {analysisAssessment}
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase">Trạng thái:</span>
+                                            <span className={`text-[9px] font-black uppercase flex items-center gap-1.5 ${analysisColor}`}>
+                                                <span className="material-symbols-outlined text-[14px]">{analysisIcon}</span> {analysisAssessment}
                                             </span>
                                         </div>
                                         <div className="h-px bg-slate-100 dark:bg-slate-700 w-full"></div>
-                                        <div className="flex justify-between items-center text-[11px] font-bold">
+                                        <div className="flex justify-between items-center text-[9px] font-bold">
                                             <span className="text-slate-400 uppercase">Thiếu hụt chỉ tiêu:</span>
                                             <span className="text-[#6324eb]">{deficit.toLocaleString()} ml</span>
                                         </div>

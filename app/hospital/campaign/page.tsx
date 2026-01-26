@@ -21,7 +21,7 @@ import {
     FileText
 } from "lucide-react";
 
-import { getCampaigns, subscribeToCampaignUpdates, Campaign } from "@/app/utils/campaignStorage";
+import { getCampaigns, subscribeToCampaignUpdates, Campaign, deleteCampaign } from "@/app/utils/campaignStorage";
 
 const LOCATION_DATA = {
     "Nội thành Quy Nhơn": ["Trần Hưng Đạo", "Đống Đa", "Hải Cảng", "Lê Lợi", "Trần Phú", "Lê Hồng Phong", "Lý Thường Kiệt", "Nguyễn Văn Cừ", "Ngô Mây", "Ghềnh Ráng", "Quang Trung"],
@@ -653,24 +653,57 @@ export default function CampaignManagementPage() {
                                         </div>
                                     ) : (
                                         filteredDrafts.map(campaign => (
-                                            <div key={campaign.id} className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col group transition-all duration-300 hover:shadow-lg h-full opacity-75 hover:opacity-100">
-                                                <div className="relative h-40 bg-slate-200 dark:bg-slate-800 overflow-hidden grayscale">
-                                                    <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url('${campaign.image}')` }}></div>
+                                            <div key={campaign.id} className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col group transition-all duration-300 hover:shadow-lg h-full">
+                                                <div className="relative h-40 bg-slate-200 dark:bg-slate-800 overflow-hidden grayscale opacity-90 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-500">
+                                                    <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url('${campaign.image || 'https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&q=80&w=1000'}')` }}></div>
                                                     <div className="absolute top-3 left-3">
-                                                        <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm bg-slate-200 text-slate-600 border border-slate-300">
+                                                        <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm bg-slate-100/90 text-slate-600 border border-slate-200 backdrop-blur-sm">
                                                             Bản nháp
                                                         </span>
                                                     </div>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (confirm('Bạn có chắc chắn muốn xóa bản nháp này không?')) {
+                                                                deleteCampaign(campaign.id);
+                                                            }
+                                                        }}
+                                                        className="absolute top-3 right-3 p-1.5 bg-white/90 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg backdrop-blur-md transition-all shadow-sm z-10"
+                                                        title="Xóa bản nháp"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                    </button>
                                                 </div>
                                                 <div className="p-4 flex-1 flex flex-col">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate flex-1 pr-2" title={campaign.name}>{campaign.name}</h3>
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight truncate pr-2" title={campaign.name}>{campaign.name}</h3>
                                                     </div>
-                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2 line-clamp-2 leading-relaxed">{stripHtml(campaign.desc)}</p>
+
+                                                    <div className="space-y-2 mb-4 flex-1">
+                                                        <div className="flex items-center text-xs">
+                                                            <span className="w-28 text-slate-500 font-medium">Mục tiêu:</span>
+                                                            <span className={`font-bold ${campaign.target ? 'text-slate-900 dark:text-white' : 'text-slate-400 italic'}`}>
+                                                                {campaign.target ? `${campaign.target} đơn vị` : 'Chưa rõ'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center text-xs">
+                                                            <span className="w-28 text-slate-500 font-medium">Thời gian bắt đầu:</span>
+                                                            <span className={`font-bold ${campaign.startTime ? 'text-slate-900 dark:text-white' : 'text-slate-400 italic'}`}>
+                                                                {campaign.startTime || 'Chưa rõ'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-start text-xs">
+                                                            <span className="w-28 text-slate-500 font-medium shrink-0">Địa điểm:</span>
+                                                            <span className={`font-bold line-clamp-2 leading-relaxed ${campaign.location ? 'text-slate-900 dark:text-white' : 'text-slate-400 italic'}`}>
+                                                                {campaign.location || 'Chưa rõ'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
 
                                                     <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
-                                                        <Link href={`/hospital/campaign/requests/create` /* TODO: Should allow edit, currently creating new */} className="w-full py-2 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors">
-                                                            <span className="material-symbols-outlined text-[14px]">edit</span> Tiếp tục chỉnh sửa
+                                                        <Link href={`/hospital/requests/create?id=${campaign.id}`} className="w-full py-2.5 bg-slate-50 text-[#6324eb] hover:bg-[#6324eb] hover:text-white border border-slate-200 hover:border-[#6324eb] dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all group-hover:shadow-md">
+                                                            <span className="material-symbols-outlined text-[16px]">edit_square</span>
+                                                            Tiếp tục chỉnh sửa
                                                         </Link>
                                                     </div>
                                                 </div>

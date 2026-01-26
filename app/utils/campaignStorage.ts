@@ -190,6 +190,16 @@ export const updateCampaign = (updatedCampaign: Campaign) => {
     }
 };
 
+export const deleteCampaign = (id: number) => {
+    if (typeof window === 'undefined') return;
+    const campaigns = getCampaigns();
+    const updatedCampaigns = campaigns.filter(c => c.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCampaigns));
+
+    // Dispatch a custom event to notify other components
+    window.dispatchEvent(new Event('campaign-storage-update'));
+};
+
 export const subscribeToCampaignUpdates = (callback: () => void) => {
     if (typeof window === 'undefined') return () => { };
     window.addEventListener('campaign-storage-update', callback);

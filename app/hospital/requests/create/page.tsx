@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { vi } from "date-fns/locale";
 import { HospitalSidebar } from "@/components/HospitalSidebar";
 import { TopNav } from "@/components/TopNav";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { addCampaign, Campaign } from "@/app/utils/campaignStorage";
+import { addCampaign, getCampaignById, updateCampaign, Campaign } from "@/app/utils/campaignStorage";
 import {
     Sparkles,
     Zap,
@@ -46,6 +46,9 @@ const TEMPLATES = [
 
 export default function CreateRequestPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const editId = searchParams.get('id');
+
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     const [selectedBloodTypes, setSelectedBloodTypes] = useState<string[]>(["AB+"]);
@@ -62,7 +65,45 @@ export default function CreateRequestPage() {
     const [desc, setDesc] = useState("");
     const [startTime, setStartTime] = useState("08:00");
     const [endTime, setEndTime] = useState("21:00");
+    const [image, setImage] = useState<string>("");
     const [lastChanged, setLastChanged] = useState<'amount' | 'count' | null>(null);
+
+    // Initial Load for Edit Mode
+    useEffect(() => {
+        if (editId) {
+            const campaignData = getCampaignById(Number(editId));
+            if (campaignData) {
+                setCampaignName(campaignData.name || "");
+                setDesc(campaignData.desc || "");
+                setLocation(campaignData.location || "");
+                setOrganization(campaignData.organization || "Bệnh viện Chợ Rẫy");
+                setTargetAmount(campaignData.target?.toString() || "");
+                setTargetCount(campaignData.target ? Math.ceil(campaignData.target / 0.8).toString() : "");
+                setIsUrgent(campaignData.isUrgent || false);
+                setStartTime(campaignData.startTime || "08:00");
+                setEndTime(campaignData.endTime || "21:00");
+                setRadius(campaignData.radius || "5km (Lân cận)");
+                setImage(campaignData.image || "");
+
+                if (campaignData.bloodTypes && campaignData.bloodTypes.length > 0) {
+                    setSelectedBloodTypes(campaignData.bloodTypes);
+                }
+
+                if (campaignData.date) {
+                    try {
+                        // Attempt to parse 'dd/MM/yyyy'
+                        const parsedDate = parse(campaignData.date, 'dd/MM/yyyy', new Date());
+                        if (!isNaN(parsedDate.getTime())) {
+                            setSelectedDate(parsedDate);
+                        }
+                    } catch (e) {
+                        console.error("Error parsing date", e);
+                    }
+                }
+            }
+        }
+    }, [editId]);
+
 
     // Logic tính toán thông minh hai chiều (Smart Insight)
     useEffect(() => {
@@ -110,8 +151,8 @@ export default function CreateRequestPage() {
             }
         }
 
-        const newCampaign: Campaign = {
-            id: Date.now(),
+        const campaignData: Campaign = {
+            id: editId ? Number(editId) : Date.now(),
             name: campaignName || (isUrgent ? `Yêu cầu Khẩn cấp ${mrn}` : `Yêu cầu mới`),
             desc: desc,
             location: location,
@@ -126,18 +167,23 @@ export default function CreateRequestPage() {
             operationalStatus: isDraft ? "Bản nháp" : "Đang hoạt động",
             isUrgent: isUrgent,
             timeLeft: "Vừa đăng",
-            progress: 0,
-            current: 0,
-            completedCount: 0,
-            registeredCount: 0,
-            image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBZiNSYWEy5ZAjxyaFcmn3iOyddBWPAo-t4t2XsfTJGxeJi9pEE3PcQvHukQOiZiZfZKJ_NqFXxSTeco2-MSerQKRL5_r53tmMnHyXvtxhRQzJ-vzOaZ2giorfxNjOUDLlGVHBskP1VPCvzakxwSAOsMZr4J8ReKbJJN6CCOy0gM-ah-B09uje6IwWuV197aU3UNyQYOKs0zvUVmjFBEd3wBkFq6J8WRnVolp_edDc9AwGCPjvU6M1HOqDmErPtLflVEa6odlYKvEr2",
+            progress: editId ? (getCampaignById(Number(editId))?.progress || 0) : 0,
+            current: editId ? (getCampaignById(Number(editId))?.current || 0) : 0,
+            completedCount: editId ? (getCampaignById(Number(editId))?.completedCount || 0) : 0,
+            registeredCount: editId ? (getCampaignById(Number(editId))?.registeredCount || 0) : 0,
+            image: image || "https://lh3.googleusercontent.com/aida-public/AB6AXuBZiNSYWEy5ZAjxyaFcmn3iOyddBWPAo-t4t2XsfTJGxeJi9pEE3PcQvHukQOiZiZfZKJ_NqFXxSTeco2-MSerQKRL5_r53tmMnHyXvtxhRQzJ-vzOaZ2giorfxNjOUDLlGVHBskP1VPCvzakxwSAOsMZr4J8ReKbJJN6CCOy0gM-ah-B09uje6IwWuV197aU3UNyQYOKs0zvUVmjFBEd3wBkFq6J8WRnVolp_edDc9AwGCPjvU6M1HOqDmErPtLflVEa6odlYKvEr2",
             date: selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: vi }) : "",
             staffCount: 5,
             startTime: startTime,
             endTime: endTime
         };
 
-        addCampaign(newCampaign);
+        if (editId) {
+            updateCampaign(campaignData);
+        } else {
+            addCampaign(campaignData);
+        }
+
         router.push("/hospital/campaign");
     };
 
@@ -454,10 +500,72 @@ export default function CreateRequestPage() {
                                     </div>
                                 </section>
 
-                                {/* Section 4: Description */}
-                                <section className="mb-10">
+                                {/* Section 4: Image */}
+                                <section className="mb-12">
                                     <div className="flex items-center gap-3 mb-8">
                                         <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">4</span>
+                                        <h2 className="text-slate-900 text-lg font-black tracking-tight">Hình ảnh hiển thị</h2>
+                                    </div>
+                                    <div className="flex flex-col gap-4">
+                                        <label className="text-slate-700 text-[13px] font-bold ml-4">Ảnh bìa chiến dịch</label>
+                                        <div className="w-full">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                id="campaign-image"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setImage(reader.result as string);
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                            />
+                                            <label
+                                                htmlFor="campaign-image"
+                                                className={`w-full h-64 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group ${image ? 'border-transparent' : 'border-slate-300 hover:border-[#6D28D9] hover:bg-slate-50'}`}
+                                            >
+                                                {image ? (
+                                                    <>
+                                                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${image}')` }}></div>
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
+                                                                <MaterialIcon name="edit" className="text-lg" /> Thay đổi ảnh
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="flex flex-col items-center gap-3 text-slate-400">
+                                                        <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center">
+                                                            <MaterialIcon name="add_photo_alternate" className="text-3xl" />
+                                                        </div>
+                                                        <p className="text-sm font-bold">Nhấn để tải ảnh lên</p>
+                                                        <p className="text-xs">Hoặc kéo thả file vào đây (PNG, JPG)</p>
+                                                    </div>
+                                                )}
+                                            </label>
+                                            <div className="flex justify-end mt-2">
+                                                {image && (
+                                                    <button
+                                                        onClick={() => setImage("")}
+                                                        className="text-xs text-red-500 font-bold flex items-center gap-1 hover:underline"
+                                                    >
+                                                        <MaterialIcon name="delete" className="text-sm" /> Xóa ảnh
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Section 5: Description */}
+                                <section className="mb-10">
+                                    <div className="flex items-center gap-3 mb-8">
+                                        <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">5</span>
                                         <h2 className="text-slate-900 text-lg font-black tracking-tight">Chi tiết Chiến dịch</h2>
                                     </div>
                                     <div className="flex flex-col gap-2">
