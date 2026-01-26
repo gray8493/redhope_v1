@@ -45,12 +45,8 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
             userRole = "donor";
         }
 
-        // 3. Xử lý Admin
+        // 3. Xử lý Admin: Cho phép vào bất kỳ trang nào (đúng yêu cầu: "có thể vào bất kì trang nào")
         if (userRole === "admin") {
-            if (pathname.startsWith("/complete-profile") || pathname === "/dashboard") {
-                router.push("/admin");
-                return;
-            }
             setAuthorized(true);
             return;
         }
