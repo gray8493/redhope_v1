@@ -1,23 +1,27 @@
-import RoleGuard from '../../components/auth/RoleGuard';
-import { AdminSidebar } from '../../components/AdminSidebar';
-import { TopNav } from '../../components/TopNav';
+import React from 'react';
+import { AdminSidebar } from '@/components/AdminSidebar';
+import AdminHeader from '@/components/AdminHeader';
 
-interface AdminLayoutProps {
-  children: React.ReactNode;
-}
+export default function AdminLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="flex h-screen bg-[#f8f9fa] overflow-hidden">
+            {/* Sidebar */}
+            <AdminSidebar />
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
-  return (
-    <RoleGuard allowedRoles={["admin"]}>
-      <div className="flex h-screen bg-gray-100">
-        <AdminSidebar />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <TopNav title="Hệ thống Quản trị" />
-          <main className="flex-1 p-6 overflow-y-auto">
-            {children}
-          </main>
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col min-w-0 h-full">
+                {/* Header */}
+                <AdminHeader />
+
+                {/* Scrollable Page Content */}
+                <main className="flex-1 p-6 overflow-y-auto">
+                    {children}
+                </main>
+            </div>
         </div>
-      </div>
-    </RoleGuard>
-  );
+    );
 }

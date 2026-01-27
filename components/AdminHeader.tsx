@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+// import { useAuth } from '@/context/AuthContext';
 
 // You can replace these with actual icons from a library like lucide-react
 const BellIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -15,7 +15,7 @@ const BellIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 const AdminHeader = () => {
-  const { signOut } = useAuth();
+  const signOut = async () => { console.log('Sign out'); };
   const [isDropdownOpen, setDropdownOpen] = useState(false);
 
   return (

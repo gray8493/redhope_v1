@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
     ChevronDown,
     SlidersHorizontal,
@@ -105,18 +106,19 @@ const REQUESTS_DATA: BloodRequest[] = [
 
 export default function RequestsPage() {
     const router = useRouter();
+    const { profile } = useAuth();
     const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
     const [activeFilter, setActiveFilter] = useState("Tất cả");
     const [currentPage, setCurrentPage] = useState(1);
-    const [isVerified, setIsVerified] = useState(false);
+
+    // Sử dụng is_verified thực tế từ Profile
+    const isVerified = profile?.is_verified === true;
+
     const itemsPerPage = 6; // Increased from 2 to show more in demo
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const verified = localStorage.getItem('screening_verified') === 'true';
-            setIsVerified(verified);
-        }
-    }, []);
+        // Có thể thêm logic thông báo tại đây nếu cần
+    }, [isVerified]);
 
     // Filter logic
     const filteredData = REQUESTS_DATA.filter(item => {
@@ -137,11 +139,6 @@ export default function RequestsPage() {
     const handleFilterChange = (filter: string) => {
         setActiveFilter(filter);
         setCurrentPage(1); // Reset to first page on filter change
-    };
-
-    const handleResetVerification = () => {
-        localStorage.removeItem('screening_verified');
-        setIsVerified(false);
     };
 
     return (
@@ -166,14 +163,13 @@ export default function RequestsPage() {
                                     {isVerified ? (
                                         <div className="flex items-center gap-3 bg-emerald-500/10 text-emerald-600 px-5 py-3 rounded-xl border border-emerald-500/20">
                                             <ShieldCheck className="w-5 h-5" />
-                                            <span className="text-sm font-black uppercase tracking-wider">Đã xác minh AI</span>
-                                            <button onClick={handleResetVerification} className="ml-2 hover:text-emerald-800"><X className="w-4 h-4" /></button>
+                                            <span className="text-sm font-black uppercase tracking-wider">Đã xác minh</span>
                                         </div>
                                     ) : (
                                         <button
-                                            onClick={() => router.push("/screening")}
+                                            onClick={() => router.push("/complete-profile/verification")}
                                             className="flex min-w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-8 bg-[#6324eb] text-white text-sm font-bold leading-normal tracking-[0.015em] shadow-xl shadow-[#6324eb]/25 hover:bg-[#501ac2] hover:-translate-y-0.5 transition-all">
-                                            <span className="truncate">Kiểm tra ngay</span>
+                                            <span className="truncate">Xác minh ngay</span>
                                         </button>
                                     )}
                                 </div>

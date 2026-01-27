@@ -23,8 +23,19 @@ import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ScreeningPage() {
+    const { profile, loading: authLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!authLoading && profile && profile.is_verified !== true) {
+            alert("Vui lòng hoàn thành xác minh hồ sơ trước khi thực hiện sàng lọc y tế.");
+            router.push("/complete-profile/verification");
+        }
+    }, [profile, authLoading, router]);
+
     const [step, setStep] = useState<"survey" | "analyzing" | "result">("survey");
     const [progress, setProgress] = useState(0);
     const [answers, setAnswers] = useState({
@@ -33,8 +44,6 @@ export default function ScreeningPage() {
         hasTattoo: false,
         weight: "",
     });
-
-    const router = useRouter();
 
     useEffect(() => {
         let interval: NodeJS.Timeout;

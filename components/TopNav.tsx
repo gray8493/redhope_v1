@@ -21,15 +21,19 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { authService } from "@/services/auth.service";
+// import { useAuth } from "@/context/AuthContext";
+// import { authService } from "@/services/auth.service";
 
 interface TopNavProps {
     title?: string;
 }
 
 export function TopNav({ title = "Tổng quan" }: TopNavProps) {
-    const { user, profile, signOut: contextSignOut } = useAuth();
+    // Mock user for UI
+    const profile = { role: 'donor', full_name: 'Minh Quan', email: 'quan@example.com', blood_group: 'O+' };
+    const user = { user_metadata: { full_name: 'Minh Quan' }, email: 'quan@example.com' };
+    const contextSignOut = async () => { console.log('Sign out clicked (Demo)'); window.location.href = '/login'; };
+
     const [showNotifications, setShowNotifications] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const router = useRouter();

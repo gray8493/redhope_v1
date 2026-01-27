@@ -16,16 +16,26 @@ import {
 import { Sidebar } from "@/components/Sidebar";
 import { TopNav } from "@/components/TopNav";
 import MiniFooter from "@/components/MiniFooter";
-import { useAuth } from "@/context/AuthContext";
+// import { useAuth } from "@/context/AuthContext";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { authService } from "@/services/auth.service";
+// import { authService } from "@/services/auth.service";
 import { userService } from "@/services/user.service";
 
 export default function SettingsPage() {
     const router = useRouter();
-    const { user, profile } = useAuth();
+    // Mock Data
+    const user = { id: 'mock-id', email: 'quan@example.com', user_metadata: { full_name: 'Minh Quan' } };
+    const profile = {
+        role: 'donor',
+        full_name: 'Minh Quan',
+        phone: '0901234567',
+        email: 'quan@example.com',
+        address: 'Ho Chi Minh City',
+        blood_group: 'O+'
+    };
+
     const [activeTab, setActiveTab] = useState("profile");
     const [isSaving, setIsSaving] = useState(false);
 
@@ -118,8 +128,8 @@ export default function SettingsPage() {
     };
 
     const handleLogout = async () => {
-        await authService.signOut();
-        router.push("/login");
+        // await authService.signOut();
+        router.push("/login"); // Might 404 now but user deleted auth pages
     };
 
     return (
