@@ -16,25 +16,16 @@ import {
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
-// import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-// import { authService } from "@/services/auth.service";
 import { userService } from "@/services/user.service";
+import { authService } from "@/services/auth.service";
 
 export default function SettingsPage() {
     const router = useRouter();
-    // Mock Data
-    const user = { id: 'mock-id', email: 'quan@example.com', user_metadata: { full_name: 'Minh Quan' } };
-    const profile = {
-        role: 'donor',
-        full_name: 'Minh Quan',
-        phone: '0901234567',
-        email: 'quan@example.com',
-        address: 'Ho Chi Minh City',
-        blood_group: 'O+'
-    };
+    const { user, refreshUser } = useAuth();
 
     const [activeTab, setActiveTab] = useState("profile");
     const [isSaving, setIsSaving] = useState(false);
@@ -47,13 +38,13 @@ export default function SettingsPage() {
 
     // Sync state with profile data
     useEffect(() => {
-        if (profile || user) {
-            setName(profile?.full_name || user?.user_metadata?.full_name || "");
-            setPhone(profile?.phone || "");
-            setEmail(profile?.email || user?.email || "");
-            setAddress(profile?.address || "");
+        if (user) {
+            setName(user.user_metadata?.full_name || user.profile?.full_name || "");
+            setPhone(user.phone || user.profile?.phone || "");
+            setEmail(user.email || user.profile?.email || "");
+            setAddress(user.profile?.address || "");
         }
-    }, [profile, user]);
+    }, [user]);
 
     // Password State
     const [currentPassword, setCurrentPassword] = useState("");
@@ -64,16 +55,27 @@ export default function SettingsPage() {
         if (!user) return;
         setIsSaving(true);
         try {
-            await userService.update(user.id, {
+            // Chuẩn bị dữ liệu update
+            const updateData = {
                 full_name: name,
                 phone: phone,
-                address: address
-            });
+                address: address,
+                email: email, // Giữ email đồng bộ
+                // Giữ lại các trường khác nếu cần thiết, hoặc userService.upsert sẽ merge
+            };
+
+            await userService.upsert(user.id, updateData);
+
+            if (refreshUser) {
+                await refreshUser();
+            }
+
             toast.success("Đã lưu thông tin thành công!", {
                 description: "Thông tin cá nhân của bạn đã được cập nhật trên hệ thống.",
                 duration: 3000,
             });
         } catch (error: any) {
+            console.error("Update error:", error);
             toast.error("Lỗi cập nhật", {
                 description: error.message || "Không thể lưu thông tin. Vui lòng thử lại.",
             });
@@ -82,11 +84,11 @@ export default function SettingsPage() {
         }
     };
 
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         // Validation
-        if (!currentPassword || !newPassword || !confirmPassword) {
+        if (!newPassword || !confirmPassword) {
             toast.error("Vui lòng nhập đầy đủ thông tin!", {
-                description: "Bạn cần nhập mật khẩu hiện tại, mật khẩu mới và xác nhận mật khẩu.",
+                description: "Bạn cần nhập mật khẩu mới và xác nhận mật khẩu.",
             });
             return;
         }
@@ -105,16 +107,25 @@ export default function SettingsPage() {
             return;
         }
 
-        // Simulate API call
-        toast.success("Đổi mật khẩu thành công!", {
-            description: "Mật khẩu của bạn đã được cập nhật.",
-            duration: 3000,
-        });
+        try {
+            const { error } = await authService.updatePassword(newPassword);
 
-        // Clear password fields
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
+            if (error) throw error;
+
+            toast.success("Đổi mật khẩu thành công!", {
+                description: "Mật khẩu của bạn đã được cập nhật.",
+                duration: 3000,
+            });
+
+            // Clear password fields
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+        } catch (error: any) {
+            toast.error("Lỗi đổi mật khẩu", {
+                description: error.message || "Vui lòng thử lại sau.",
+            });
+        }
     };
 
     // Create refs for sections
@@ -128,8 +139,12 @@ export default function SettingsPage() {
     };
 
     const handleLogout = async () => {
-        // await authService.signOut();
-        router.push("/login"); // Might 404 now but user deleted auth pages
+        try {
+            await authService.signOut();
+            router.push("/login");
+        } catch (error) {
+            console.error("Logout failed", error);
+        }
     };
 
     return (
@@ -177,7 +192,7 @@ export default function SettingsPage() {
                                         </div>
                                         <h2 className="text-xl font-bold text-[#120e1b] dark:text-white">{name}</h2>
                                         <p className="text-sm text-[#654d99] dark:text-[#a594c9] mb-4">
-                                            {profile?.role === 'admin' ? "Quản trị viên" : profile?.role === 'hospital' ? "Bệnh viện" : profile?.blood_group ? `Nhóm máu ${profile.blood_group}` : "Thành viên"}
+                                            {user?.role === 'admin' ? "Quản trị viên" : user?.role === 'hospital' ? "Bệnh viện" : user?.profile?.blood_group ? `Nhóm máu ${user.profile.blood_group}` : "Thành viên"}
                                         </p>
 
                                         <div className="flex flex-col gap-2">

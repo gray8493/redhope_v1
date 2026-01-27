@@ -4,6 +4,14 @@ import { useState } from "react";
 import { HospitalSidebar } from "@/components/shared/HospitalSidebar";
 import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Pie, PieChart, Cell } from "recharts";
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+    ChartLegend,
+    ChartLegendContent
+} from "@/components/ui/chart";
 
 export default function ReportsPage() {
     const [timeFilter, setTimeFilter] = useState<'month' | 'quarter' | 'year'>('month');
@@ -66,7 +74,49 @@ export default function ReportsPage() {
         }
     };
 
+    // Transform demographics data for Chart
+    const demographicsData = metricsData[timeFilter].demographics.map(d => ({
+        label: d.label,
+        count: d.pct, // Using percentage as count for visualization
+        fill: d.color.replace("bg-[", "").replace("]", "").replace("bg-", "var(--color-").replace("-400", "-400)").replace("-300", "-300)") // Rough conversion, better to define explicit colors
+    }));
+
+    // Explicit colors for charts
+    const chartColors = {
+        student: "#6366f1",
+        office: "#34d399",
+        freelance: "#fb923c",
+        other: "#cbd5e1",
+        fb: "#4267B2",
+        school: "#EF4444",
+        friends: "#F59E0B",
+        zalo: "#0068FF"
+    };
+
+    // Prepare chart configs
+    const demoChartConfig = {
+        count: { label: "Học sinh/Sinh viên", color: chartColors.student },
+        office: { label: "Văn phòng", color: chartColors.office },
+        freelance: { label: "Lao động tự do", color: chartColors.freelance },
+        other: { label: "Khác", color: chartColors.other },
+    };
+
+    const sourceChartConfig = {
+        count: { label: "Số lượng" },
+        fb: { label: "Facebook", color: chartColors.fb },
+        school: { label: "Trường học", color: chartColors.school },
+        friends: { label: "Bạn bè", color: chartColors.friends },
+        zalo: { label: "Zalo/SMS", color: chartColors.zalo },
+    };
+
     const currentData = metricsData[timeFilter];
+
+    // Remap source data for Pie Chart
+    const sourceData = currentData.source.map((s, idx) => ({
+        browser: s.label,
+        visitors: s.count,
+        fill: Object.values(chartColors)[idx + 4] // Hacky, but works for demo 
+    }));
 
     const getFunnelWidth = (val: number, max: number) => {
         return `${Math.max((val / max) * 100, 5)}%`;
@@ -243,18 +293,45 @@ export default function ReportsPage() {
                                             </div>
                                             <h4 className="text-lg font-bold text-slate-900 dark:text-white">Nhân khẩu học (Nghề nghiệp)</h4>
                                         </div>
-                                        <div className="space-y-6">
-                                            {currentData.demographics.map((item, idx) => (
-                                                <div key={idx}>
-                                                    <div className="flex justify-between mb-2">
-                                                        <span className="text-sm font-bold text-slate-600 dark:text-slate-400">{item.label}</span>
-                                                        <span className="text-sm font-extrabold text-slate-900 dark:text-white">{item.pct}%</span>
-                                                    </div>
-                                                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                                                        <div className={`${item.color} h-full rounded-full`} style={{ width: `${item.pct}%` }}></div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                        <div className="h-[300px] w-full">
+                                            <ChartContainer config={demoChartConfig} className="min-h-[200px] w-full h-full">
+                                                <BarChart
+                                                    accessibilityLayer
+                                                    data={currentData.demographics.map((d, i) => ({
+                                                        label: d.label,
+                                                        count: d.pct,
+                                                        fill: Object.values(chartColors)[i]
+                                                    }))}
+                                                    layout="vertical"
+                                                    margin={{ left: 0, right: 0 }}
+                                                >
+                                                    <CartesianGrid horizontal={false} />
+                                                    <YAxis
+                                                        dataKey="label"
+                                                        type="category"
+                                                        tickLine={false}
+                                                        tickMargin={10}
+                                                        axisLine={false}
+                                                        width={100}
+                                                        className="text-xs font-bold"
+                                                    />
+                                                    <XAxis dataKey="count" type="number" hide />
+                                                    <ChartTooltip
+                                                        cursor={false}
+                                                        content={<ChartTooltipContent indicator="dashed" />}
+                                                    />
+                                                    <Bar dataKey="count" layout="vertical" radius={4} barSize={32}>
+                                                        <LabelList
+                                                            dataKey="count"
+                                                            position="right"
+                                                            offset={8}
+                                                            className="fill-foreground font-bold"
+                                                            fontSize={12}
+                                                            formatter={(value: any) => `${value}%`}
+                                                        />
+                                                    </Bar>
+                                                </BarChart>
+                                            </ChartContainer>
                                         </div>
                                     </div>
 
@@ -267,13 +344,26 @@ export default function ReportsPage() {
                                             <h4 className="text-lg font-bold text-slate-900 dark:text-white">Nguồn giới thiệu</h4>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
-                                            {currentData.source.map((item, idx) => (
-                                                <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-[#2d263d] text-left">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{item.label}</p>
-                                                    <p className="text-xl font-extrabold text-slate-900 dark:text-white">{item.pct}%</p>
-                                                    <p className="text-[10px] text-slate-500 mt-1">{item.count} Người hiến</p>
-                                                </div>
-                                            ))}
+                                            <div className="h-[250px] w-full mx-auto">
+                                                <ChartContainer config={sourceChartConfig} className="mx-auto aspect-square max-h-[250px]">
+                                                    <PieChart>
+                                                        <ChartTooltip
+                                                            cursor={false}
+                                                            content={<ChartTooltipContent hideLabel />}
+                                                        />
+                                                        <Pie
+                                                            data={sourceData}
+                                                            dataKey="visitors"
+                                                            nameKey="browser"
+                                                            innerRadius={60}
+                                                        />
+                                                        <ChartLegend
+                                                            content={<ChartLegendContent nameKey="browser" />}
+                                                            className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+                                                        />
+                                                    </PieChart>
+                                                </ChartContainer>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

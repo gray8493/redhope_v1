@@ -11,6 +11,7 @@ import {
     Star
 } from "lucide-react";
 import { RedHopeLogo, NameRedHope } from "@/components/shared/icons";
+import { Progress } from "@/components/ui/progress";
 
 export function Sidebar() {
     return (
@@ -61,9 +62,7 @@ export function Sidebar() {
                         <p className="text-lg font-black text-slate-900 dark:text-white">750 pts</p>
                     </div>
                 </div>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-[#6324eb] h-full w-3/4"></div>
-                </div>
+                <Progress value={75} className="h-1.5 bg-slate-200 dark:bg-slate-700" />
                 <p className="text-[10px] mt-2 text-slate-500">Còn 250 pts để lên hạng Platinum</p>
             </div>
         </aside>

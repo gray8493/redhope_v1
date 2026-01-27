@@ -21,6 +21,19 @@ import {
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import { voucherService } from "@/services/voucher.service";
 
@@ -97,23 +110,25 @@ export default function RewardsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [rewards, setRewards] = useState<RewardItem[]>([]);
     const [loadingRewards, setLoadingRewards] = useState(true);
+    const [alertMessage, setAlertMessage] = useState<{ type: "default" | "destructive" | "success", title: string, description: string } | null>(null);
+    const [rewardToRedeem, setRewardToRedeem] = useState<RewardItem | null>(null);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     // Fetch real points or default to 0
     const userPoints = user?.profile?.current_points || 0;
 
     useEffect(() => {
         const fetchRewards = async () => {
+            setLoadingRewards(true);
             try {
-                setLoadingRewards(true);
                 const data = await voucherService.getAll();
-
-                // Transform DB data to UI format
+                // Map DB vouchers to UI RewardItems
                 const formattedRewards: RewardItem[] = data.map((v, index) => {
                     const style = getCategoryAndStyle(v.partner_name || "Unknown", index);
                     return {
                         id: v.id,
-                        name: v.partner_name || "Voucher Ưu Đãi",
-                        description: `Voucher ưu đãi hấp dẫn từ ${v.partner_name}. Áp dụng tại toàn bộ hệ thống.`,
+                        name: v.partner_name || "Ưu đãi",
+                        description: `Voucher giảm giá từ ${v.partner_name || "đối tác"}`,
                         points: v.point_cost || 0,
                         category: style.category,
                         icon: style.icon,
@@ -122,10 +137,9 @@ export default function RewardsPage() {
                         badge: style.badge
                     };
                 });
-
                 setRewards(formattedRewards);
             } catch (error) {
-                console.error("Failed to fetch rewards:", error);
+                console.error("Failed to fetch rewards", error);
             } finally {
                 setLoadingRewards(false);
             }
@@ -134,29 +148,54 @@ export default function RewardsPage() {
         fetchRewards();
     }, []);
 
-    // Filter rewards based on active tab and search query
     const filteredRewards = rewards.filter((reward) => {
-        const matchesCategory = activeTab === "all" || activeTab === "history" || reward.category === activeTab;
+        // If tab is history, we don't show rewards anyway, but filter correctly for other tabs
+        if (activeTab === "history") return false;
+        const matchesTab = activeTab === "all" ? true : reward.category === activeTab;
         const matchesSearch = reward.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             reward.description.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
+        return matchesTab && matchesSearch;
     });
 
-    // Filter history based on search query
     const filteredHistory = historyData.filter((item) =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const handleRedeem = (reward: RewardItem) => {
+    const handleRedeemClick = (reward: RewardItem) => {
         if (userPoints < reward.points) {
-            alert("Bạn không đủ điểm để đổi quà này!");
+            setAlertMessage({
+                type: "destructive",
+                title: "Không đủ điểm",
+                description: `Bạn cần thêm ${(reward.points - userPoints).toLocaleString()} điểm để đổi phần quà này.`
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
-        if (confirm(`Bạn có chắc muốn đổi ${reward.points} điểm lấy ưu đãi từ ${reward.name}?`)) {
-            // Future integration: Call redeem API here
-            alert("Đổi quà thành công! Mã voucher đã được gửi vào ví của bạn.");
-        }
+        setRewardToRedeem(reward);
+        setIsConfirmOpen(true);
     };
+
+    const confirmRedeem = () => {
+        if (!rewardToRedeem) return;
+
+        // Future integration: Call redeem API here
+        setAlertMessage({
+            type: "default", // Using default for success styling for now
+            title: "Đổi quà thành công!",
+            description: "Mã voucher đã được gửi vào ví của bạn. Vui lòng kiểm tra email."
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setIsConfirmOpen(false);
+        setRewardToRedeem(null);
+    };
+
+    // Auto clear alert
+    useEffect(() => {
+        if (alertMessage) {
+            const timer = setTimeout(() => setAlertMessage(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [alertMessage]);
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
@@ -170,8 +209,23 @@ export default function RewardsPage() {
 
                     <main className="flex flex-1 justify-center py-8">
                         <div className="flex flex-col max-w-[1200px] flex-1 px-4 md:px-10">
+
+                            {/* Alert Message */}
+                            {alertMessage && (
+                                <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                                    <Alert variant={alertMessage.type === "success" ? "default" : alertMessage.type} className={`${alertMessage.type === 'success' ? 'border-green-500 text-green-700 bg-green-50 dark:bg-green-900/10' : ''}`}>
+                                        {alertMessage.type === 'destructive' ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                                        <AlertTitle>{alertMessage.title}</AlertTitle>
+                                        <AlertDescription>
+                                            {alertMessage.description}
+                                        </AlertDescription>
+                                    </Alert>
+                                </div>
+                            )}
+
                             {/* Hero Section */}
                             <div className="flex flex-wrap justify-between items-end gap-3 mb-6">
+
                                 <div className="flex min-w-72 flex-col gap-3">
                                     <h1 className="text-[#120e1b] dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Đổi quà tri ân</h1>
                                     <p className="text-[#654d99] dark:text-[#a594c9] text-base font-normal leading-normal max-w-2xl">
@@ -210,20 +264,19 @@ export default function RewardsPage() {
 
                             {/* Tabs and Search */}
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#d7d0e7] dark:border-[#2d2545] mb-8 pb-1">
-                                <div className="flex gap-8 overflow-x-auto no-scrollbar">
-                                    {tabs.map((tab) => (
-                                        <button
-                                            key={tab.key}
-                                            onClick={() => setActiveTab(tab.key)}
-                                            className={`flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 whitespace-nowrap px-2 transition-colors ${activeTab === tab.key
-                                                ? "border-b-[#6324eb] text-[#120e1b] dark:text-white"
-                                                : "border-b-transparent text-[#654d99] dark:text-[#a594c9] hover:text-[#6324eb]"
-                                                }`}
-                                        >
-                                            <p className="text-sm font-bold leading-normal tracking-[0.015em]">{tab.label}</p>
-                                        </button>
-                                    ))}
-                                </div>
+                                <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as Category)} className="w-full md:w-auto">
+                                    <TabsList className="bg-transparent p-0 h-auto gap-2 overflow-x-auto no-scrollbar justify-start">
+                                        {tabs.map((tab) => (
+                                            <TabsTrigger
+                                                key={tab.key}
+                                                value={tab.key}
+                                                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-[#6324eb] data-[state=active]:text-[#120e1b] dark:data-[state=active]:text-white rounded-none border-b-[3px] border-transparent pb-[13px] pt-4 px-2 text-[#654d99] dark:text-[#a594c9] text-sm font-bold leading-normal tracking-[0.015em] transition-all"
+                                            >
+                                                {tab.label}
+                                            </TabsTrigger>
+                                        ))}
+                                    </TabsList>
+                                </Tabs>
                                 <div className="w-full md:w-80 pb-2">
                                     <div className="flex w-full items-center rounded-lg h-10 overflow-hidden border border-[#ebe7f3] dark:border-[#2d263d] bg-white dark:bg-[#1c162e]">
                                         <div className="pl-3 text-[#654d99]">
@@ -314,9 +367,9 @@ export default function RewardsPage() {
                                                             {reward.icon}
                                                         </div>
                                                         {reward.badge && (
-                                                            <span className="absolute top-3 right-3 bg-white/90 dark:bg-[#1c162e]/90 px-2 py-1 rounded text-[10px] font-bold text-[#6324eb] border border-[#6324eb]/20">
+                                                            <Badge variant="secondary" className="absolute top-3 right-3 bg-white/90 dark:bg-[#1c162e]/90 text-[#6324eb] border border-[#6324eb]/20 text-[10px] font-bold px-2 py-1">
                                                                 {reward.badge}
-                                                            </span>
+                                                            </Badge>
                                                         )}
                                                     </div>
                                                     <div className="p-5 flex flex-col grow">
@@ -335,7 +388,7 @@ export default function RewardsPage() {
                                                                 </button>
                                                             ) : (
                                                                 <button
-                                                                    onClick={() => handleRedeem(reward)}
+                                                                    onClick={() => handleRedeemClick(reward)}
                                                                     className="bg-[#6324eb] hover:bg-[#6324eb]/90 text-white font-bold py-2 px-6 rounded-lg text-sm transition-transform active:scale-95"
                                                                 >
                                                                     Đổi ngay
@@ -360,6 +413,23 @@ export default function RewardsPage() {
                     <MiniFooter />
                 </div>
             </div>
+
+            <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+                <AlertDialogContent className="bg-white dark:bg-[#1c162e] border-[#ebe7f3] dark:border-[#2d263d]">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-[#120e1b] dark:text-white">Xác nhận đổi quà</AlertDialogTitle>
+                        <AlertDialogDescription className="text-[#654d99] dark:text-[#a594c9]">
+                            Bạn có chắc muốn dùng <span className="font-bold text-[#6324eb]">{rewardToRedeem?.points} điểm</span> để đổi lấy ưu đãi từ <span className="font-bold text-[#120e1b] dark:text-white">{rewardToRedeem?.name}</span> không?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-[#f6f6f8] dark:bg-[#2d263d] text-[#120e1b] dark:text-white border-none hover:bg-[#ebe7f3] dark:hover:bg-[#3d335a]">Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmRedeem} className="bg-[#6324eb] text-white hover:bg-[#501ac2]">
+                            Xác nhận
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

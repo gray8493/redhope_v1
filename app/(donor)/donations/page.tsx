@@ -16,6 +16,14 @@ import {
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
 const ALL_DONATIONS = [
     {
@@ -296,75 +304,73 @@ export default function DonationsPage() {
                                 </div>
                             </div>
 
-                            {/* Reverted Table Design */}
+                            {/* Shadcn Table Design */}
                             <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden mb-10">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="bg-slate-50 dark:bg-slate-800/50">
-                                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Bệnh viện / Cơ sở</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Khối lượng</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Điểm</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Trạng thái</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Hành động</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            {paginatedDonations.length > 0 ? (
-                                                paginatedDonations.map((item) => (
-                                                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                                        <td className="px-6 py-5">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-slate-900 dark:text-white font-bold">{item.date}, {item.year}</span>
-                                                                <span className="text-slate-400 text-[10px] font-medium uppercase mt-0.5">{item.time}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-5">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className={`${item.iconBg} h-10 w-10 rounded-lg flex items-center justify-center ${item.iconColor}`}>
-                                                                    <item.icon className="w-5 h-5" />
-                                                                </div>
-                                                                <span className="text-slate-800 dark:text-slate-200 font-semibold">{item.hospital}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-5 text-center">
-                                                            <span className="text-slate-900 dark:text-white font-bold text-lg">{item.units}</span>
-                                                            <span className="text-[10px] text-slate-400 font-bold uppercase ml-1">Đơn vị</span>
-                                                        </td>
-                                                        <td className="px-6 py-5 text-center">
-                                                            <span className="text-emerald-600 font-bold text-lg">+{item.points}</span>
-                                                        </td>
-                                                        <td className="px-6 py-5 text-center">
-                                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${item.status === "Đã xác minh"
-                                                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20"
-                                                                : "bg-blue-50 text-blue-600 dark:bg-blue-900/20"
-                                                                }`}>
-                                                                {item.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-5 text-right">
-                                                            <button className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 rounded-lg font-bold text-xs transition-colors">
-                                                                <FileText className="w-4 h-4" />
-                                                                Chứng nhận
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td colSpan={6} className="px-8 py-20 text-center">
-                                                        <div className="flex flex-col items-center gap-3 opacity-30">
-                                                            <Search className="w-12 h-12 mb-2" />
-                                                            <p className="font-bold text-xl">Không tìm thấy dữ liệu</p>
-                                                            <p className="text-sm">Vui lòng kiểm tra lại từ khóa hoặc bộ lọc</p>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian</TableHead>
+                                            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Bệnh viện / Cơ sở</TableHead>
+                                            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Khối lượng</TableHead>
+                                            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Điểm</TableHead>
+                                            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Trạng thái</TableHead>
+                                            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Hành động</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {paginatedDonations.length > 0 ? (
+                                            paginatedDonations.map((item) => (
+                                                <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0">
+                                                    <TableCell className="px-6 py-5">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-slate-900 dark:text-white font-bold">{item.date}, {item.year}</span>
+                                                            <span className="text-slate-400 text-[10px] font-medium uppercase mt-0.5">{item.time}</span>
                                                         </div>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                    </TableCell>
+                                                    <TableCell className="px-6 py-5">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`${item.iconBg} h-10 w-10 rounded-lg flex items-center justify-center ${item.iconColor}`}>
+                                                                <item.icon className="w-5 h-5" />
+                                                            </div>
+                                                            <span className="text-slate-800 dark:text-slate-200 font-semibold">{item.hospital}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="px-6 py-5 text-center">
+                                                        <span className="text-slate-900 dark:text-white font-bold text-lg">{item.units}</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase ml-1">Đơn vị</span>
+                                                    </TableCell>
+                                                    <TableCell className="px-6 py-5 text-center">
+                                                        <span className="text-emerald-600 font-bold text-lg">+{item.points}</span>
+                                                    </TableCell>
+                                                    <TableCell className="px-6 py-5 text-center">
+                                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${item.status === "Đã xác minh"
+                                                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20"
+                                                            : "bg-blue-50 text-blue-600 dark:bg-blue-900/20"
+                                                            }`}>
+                                                            {item.status}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="px-6 py-5 text-right">
+                                                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 rounded-lg font-bold text-xs transition-colors">
+                                                            <FileText className="w-4 h-4" />
+                                                            Chứng nhận
+                                                        </button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={6} className="px-8 py-20 text-center">
+                                                    <div className="flex flex-col items-center gap-3 opacity-30">
+                                                        <Search className="w-12 h-12 mb-2" />
+                                                        <p className="font-bold text-xl">Không tìm thấy dữ liệu</p>
+                                                        <p className="text-sm">Vui lòng kiểm tra lại từ khóa hoặc bộ lọc</p>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
                             </div>
 
                             {/* Reverted Pagination */}

@@ -24,4 +24,8 @@ export const authService = {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
     },
+
+    updatePassword: async (password: string) => {
+        return await supabase.auth.updateUser({ password });
+    }
 };

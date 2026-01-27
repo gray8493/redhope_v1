@@ -22,6 +22,22 @@ import {
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogClose,
+} from "@/components/ui/dialog";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // Type Definition
 interface BloodRequest {
@@ -106,13 +122,13 @@ const REQUESTS_DATA: BloodRequest[] = [
 
 export default function RequestsPage() {
     const router = useRouter();
-    const { profile } = useAuth();
+    const { user } = useAuth();
     const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
     const [activeFilter, setActiveFilter] = useState("Tất cả");
     const [currentPage, setCurrentPage] = useState(1);
 
     // Sử dụng is_verified thực tế từ Profile
-    const isVerified = profile?.is_verified === true;
+    const isVerified = user?.profile?.is_verified === true;
 
     const itemsPerPage = 6; // Increased from 2 to show more in demo
 
@@ -178,27 +194,28 @@ export default function RequestsPage() {
                             {/* Filter Chips */}
                             <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-2 no-scrollbar">
                                 {["Tất cả", "O-Negative", "Khẩn cấp", "Gần tôi"].map(f => (
-                                    <button
+                                    <Button
                                         key={f}
                                         onClick={() => handleFilterChange(f)}
-                                        className={`flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-xl px-6 transition-all font-bold text-sm tracking-tight ${activeFilter === f ? "bg-[#6324eb] text-white shadow-lg shadow-indigo-500/20" : "bg-white dark:bg-[#1c162e] text-[#120e1b] dark:text-white border border-[#ebe7f3] dark:border-[#2d263d] hover:border-[#6324eb]/50"}`}
+                                        variant={activeFilter === f ? "default" : "outline"}
+                                        className={`rounded-xl h-11 font-bold ${activeFilter === f ? "bg-[#6324eb] hover:bg-[#501ac2]" : "bg-white dark:bg-[#1c162e] border-slate-200 dark:border-slate-800"}`}
                                     >
                                         {f === "Tất cả" ? "Tất cả nhóm máu" : f === "Gần tôi" ? "Trong bán kính 10km" : f}
-                                    </button>
+                                    </Button>
                                 ))}
-                                <button className="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-xl bg-white dark:bg-[#1c162e] border border-slate-200 dark:border-slate-800 px-6 text-[#120e1b] dark:text-white hover:bg-slate-50 transition-colors">
+                                <Button variant="outline" className="h-11 gap-2 rounded-xl bg-white dark:bg-[#1c162e] border-slate-200 dark:border-slate-800">
                                     <span className="text-sm font-bold">Lọc thêm</span>
                                     <SlidersHorizontal className="w-4 h-4" />
-                                </button>
+                                </Button>
                             </div>
 
                             {/* Grid of Requests */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                                 {(paginatedData ?? []).map((request) => (
-                                    <div
+                                    <Card
                                         key={request.id}
                                         onClick={() => setSelectedRequest(request)}
-                                        className="flex flex-col bg-white dark:bg-[#1c162e] rounded-3xl overflow-hidden shadow-sm border border-[#ebe7f3] dark:border-[#2d263d] hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group cursor-pointer group"
+                                        className="flex flex-col overflow-hidden hover:shadow-2xl hover:shadow-indigo-500/10 transition-all cursor-pointer group bg-white dark:bg-[#1c162e] border-[#ebe7f3] dark:border-[#2d263d]"
                                     >
                                         <div
                                             className="h-56 bg-center bg-no-repeat bg-cover relative"
@@ -232,7 +249,7 @@ export default function RequestsPage() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="p-6">
+                                        <CardContent className="p-6">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
                                                     <h3 className="text-[#120e1b] dark:text-white text-2xl font-black tracking-tight">{request.bloodType}</h3>
@@ -245,57 +262,56 @@ export default function RequestsPage() {
                                             <p className="text-[#654d99] dark:text-[#a594c9] text-sm font-medium mb-6 line-clamp-2 leading-relaxed">
                                                 {request.description}
                                             </p>
-                                            <div className="pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                                                <div className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 rounded-full text-[11px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                                    <Clock className="w-4 h-4 text-[#6324eb]" />
-                                                    <span>{request.timeLeft}</span>
-                                                </div>
-                                                <div className="flex -space-x-3">
-                                                    {[1, 2, 3].map(i => (
-                                                        <div key={i} className="size-8 rounded-full border-4 border-white dark:border-[#1c162e] bg-slate-200 overflow-hidden shadow-sm">
-                                                            <img src={`https://i.pravatar.cc/100?u=${request.id + i}`} alt="User" className="w-full h-full object-cover" />
-                                                        </div>
-                                                    ))}
-                                                    <div className="size-8 rounded-full border-4 border-white dark:border-[#1c162e] bg-indigo-500 flex items-center justify-center text-[10px] text-white font-black">+{request.unitsNeeded}</div>
-                                                </div>
+                                        </CardContent>
+                                        <CardFooter className="px-6 pb-6 pt-0 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                                            <div className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 rounded-full text-[11px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400 mt-4">
+                                                <Clock className="w-4 h-4 text-[#6324eb]" />
+                                                <span>{request.timeLeft}</span>
                                             </div>
-                                        </div>
-                                    </div>
+                                            <div className="flex -space-x-3 mt-4">
+                                                {[1, 2, 3].map(i => (
+                                                    <div key={i} className="size-8 rounded-full border-4 border-white dark:border-[#1c162e] bg-slate-200 overflow-hidden shadow-sm">
+                                                        <img src={`https://i.pravatar.cc/100?u=${request.id + i}`} alt="User" className="w-full h-full object-cover" />
+                                                    </div>
+                                                ))}
+                                                <div className="size-8 rounded-full border-4 border-white dark:border-[#1c162e] bg-indigo-500 flex items-center justify-center text-[10px] text-white font-black">+{request.unitsNeeded}</div>
+                                            </div>
+                                        </CardFooter>
+                                    </Card>
                                 ))}
                             </div>
 
                             {/* Pagination */}
                             <div className="mt-12 flex justify-center">
-                                <nav className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                        disabled={currentPage === 1}
-                                        className={`h-10 w-10 flex items-center justify-center rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'}`}
-                                    >
-                                        <ChevronLeft className="w-5 h-5" />
-                                    </button>
+                                <Pagination>
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious
+                                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                            />
+                                        </PaginationItem>
 
-                                    {Array.from({ length: totalPages || 1 }).map((_, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => setCurrentPage(i + 1)}
-                                            className={`h-10 w-10 flex items-center justify-center rounded-xl font-bold transition-all ${currentPage === i + 1
-                                                ? "bg-[#6324eb] text-white shadow-lg shadow-[#6324eb]/30"
-                                                : "border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] text-[#120e1b] dark:text-white"
-                                                }`}
-                                        >
-                                            {i + 1}
-                                        </button>
-                                    ))}
+                                        {Array.from({ length: totalPages || 1 }).map((_, i) => (
+                                            <PaginationItem key={i}>
+                                                <PaginationLink
+                                                    isActive={currentPage === i + 1}
+                                                    onClick={() => setCurrentPage(i + 1)}
+                                                    className="cursor-pointer"
+                                                >
+                                                    {i + 1}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        ))}
 
-                                    <button
-                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                        disabled={currentPage === totalPages || totalPages === 0}
-                                        className={`h-10 w-10 flex items-center justify-center rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] transition-colors ${currentPage === totalPages || totalPages === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d]'}`}
-                                    >
-                                        <ChevronRight className="w-5 h-5" />
-                                    </button>
-                                </nav>
+                                        <PaginationItem>
+                                            <PaginationNext
+                                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                                className={currentPage === totalPages || totalPages === 0 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                            />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
                             </div>
                         </div>
                     </main>
@@ -305,90 +321,89 @@ export default function RequestsPage() {
             </div>
 
             {/* Detail Modal */}
-            {selectedRequest && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div
-                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        onClick={() => setSelectedRequest(null)}
-                    ></div>
-                    <div className="relative w-full max-w-lg bg-white dark:bg-[#1c162e] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        {/* Modal Header Image */}
-                        <div
-                            className="h-56 bg-cover bg-center relative"
-                            style={{ backgroundImage: `url("${selectedRequest.image}")` }}
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
-                            <button
-                                onClick={() => setSelectedRequest(null)}
-                                className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-colors"
+            <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+                <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-white dark:bg-[#1c162e] border-0 gap-0">
+                    {selectedRequest && (
+                        <>
+                            {/* Modal Header Image */}
+                            <div
+                                className="h-56 bg-cover bg-center relative"
+                                style={{ backgroundImage: `url("${selectedRequest.image}")` }}
                             >
-                                <X className="w-5 h-5" />
-                            </button>
-                            <div className="absolute bottom-6 left-6 text-white">
-                                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400 mb-1 flex items-center gap-2">
-                                    <Building2 className="w-4 h-4" /> {isVerified ? selectedRequest.hospitalName : 'Vị trí đang khóa'}
-                                </p>
-                                <h2 className="text-4xl font-black tracking-tight">{selectedRequest.bloodType}</h2>
-                            </div>
-                        </div>
-
-                        {/* Modal Body */}
-                        <div className="p-8 flex flex-col gap-6">
-                            <div className="flex items-start gap-4 p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${selectedRequest.urgencyColor === 'red' ? 'bg-red-500 text-white' : 'bg-amber-500 text-white'}`}>
-                                    <AlertCircle className="w-6 h-6" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                                <div className="absolute top-4 right-4 z-50">
+                                    <DialogClose asChild>
+                                        <div className="p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-colors cursor-pointer">
+                                            <X className="w-5 h-5" />
+                                        </div>
+                                    </DialogClose>
                                 </div>
-                                <div className="flex-1">
-                                    <h3 className="font-black text-[#120e1b] dark:text-white text-lg tracking-tight uppercase text-xs opacity-50 mb-1">Tình trạng bệnh nhân</h3>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed italic">"{selectedRequest.patientCondition}"</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl">
-                                    <MapPin className="w-5 h-5 text-[#6324eb] mb-2" />
-                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Khoảng cách</p>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedRequest.distance}</p>
-                                </div>
-                                <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl">
-                                    <ShieldCheck className="w-5 h-5 text-emerald-500 mb-2" />
-                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Số lượng</p>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedRequest.unitsNeeded} đơn vị</p>
-                                </div>
-                            </div>
-
-                            {!isVerified && (
-                                <div className="p-5 bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-900/30 flex items-start gap-3">
-                                    <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                                    <p className="text-xs text-amber-800 dark:text-amber-200 font-medium leading-relaxed">
-                                        Để đảm bảo an toàn, địa chỉ chính xác của bệnh viện chỉ hiển thị sau khi bạn hoàn thành sàng lọc sức khỏe AI.
+                                <div className="absolute bottom-6 left-6 text-white">
+                                    <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400 mb-1 flex items-center gap-2">
+                                        <Building2 className="w-4 h-4" /> {isVerified ? selectedRequest.hospitalName : 'Vị trí đang khóa'}
                                     </p>
+                                    <h2 className="text-4xl font-black tracking-tight">{selectedRequest.bloodType}</h2>
                                 </div>
-                            )}
-
-                            <div className="flex gap-4 mt-4">
-                                {isVerified ? (
-                                    <button
-                                        className="flex-1 py-4 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 transition-all active:scale-[0.98] uppercase tracking-widest text-sm"
-                                    >
-                                        Liên hệ bệnh viện
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={() => router.push("/screening")}
-                                        className="flex-1 py-4 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 transition-all active:scale-[0.98] uppercase tracking-widest text-sm"
-                                    >
-                                        Kiểm tra ngay
-                                    </button>
-                                )}
-                                <button className="px-5 py-4 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 text-slate-900 dark:text-white transition-colors">
-                                    <Phone className="w-5 h-5" />
-                                </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+
+                            {/* Modal Body */}
+                            <div className="p-8 flex flex-col gap-6">
+                                <div className="flex items-start gap-4 p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                    <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${selectedRequest.urgencyColor === 'red' ? 'bg-red-500 text-white' : 'bg-amber-500 text-white'}`}>
+                                        <AlertCircle className="w-6 h-6" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-black text-[#120e1b] dark:text-white text-lg tracking-tight uppercase text-xs opacity-50 mb-1">Tình trạng bệnh nhân</h3>
+                                        <p className="text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed italic">"{selectedRequest.patientCondition}"</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl">
+                                        <MapPin className="w-5 h-5 text-[#6324eb] mb-2" />
+                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Khoảng cách</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedRequest.distance}</p>
+                                    </div>
+                                    <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl">
+                                        <ShieldCheck className="w-5 h-5 text-emerald-500 mb-2" />
+                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Số lượng</p>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedRequest.unitsNeeded} đơn vị</p>
+                                    </div>
+                                </div>
+
+                                {!isVerified && (
+                                    <div className="p-5 bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-900/30 flex items-start gap-3">
+                                        <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                                        <p className="text-xs text-amber-800 dark:text-amber-200 font-medium leading-relaxed">
+                                            Để đảm bảo an toàn, địa chỉ chính xác của bệnh viện chỉ hiển thị sau khi bạn hoàn thành sàng lọc sức khỏe AI.
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-4 mt-4">
+                                    {isVerified ? (
+                                        <Button
+                                            className="flex-1 h-12 py-0 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
+                                        >
+                                            Liên hệ bệnh viện
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            onClick={() => router.push("/screening")}
+                                            className="flex-1 h-12 py-0 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
+                                        >
+                                            Kiểm tra ngay
+                                        </Button>
+                                    )}
+                                    <Button variant="outline" className="h-12 w-12 p-0 rounded-xl hover:bg-slate-200 border-slate-200 dark:border-slate-800">
+                                        <Phone className="w-5 h-5" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

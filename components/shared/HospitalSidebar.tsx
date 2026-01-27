@@ -11,6 +11,8 @@ import {
     Activity,
     Plus
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 export function HospitalSidebar() {
     return (
@@ -28,9 +30,11 @@ export function HospitalSidebar() {
                     </div>
 
                     <div className="px-2">
-                        <Link href="/hospital-requests/create" className="flex items-center justify-center gap-2 w-full bg-[#6324eb] hover:bg-[#501ac2] text-white py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-[#6324eb]/20 active:scale-[0.98] group">
-                            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-                            Tạo Yêu cầu
+                        <Link href="/hospital-requests/create">
+                            <Button className="w-full h-12 bg-[#6324eb] hover:bg-[#501ac2] text-white rounded-xl font-bold shadow-lg shadow-[#6324eb]/20 group gap-2">
+                                <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                                Tạo Yêu cầu
+                            </Button>
                         </Link>
                     </div>
 
@@ -67,9 +71,7 @@ export function HospitalSidebar() {
                             <p className="text-sm font-black text-slate-900 dark:text-white">Ổn định</p>
                         </div>
                     </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mb-2">
-                        <div className="bg-emerald-500 h-full w-[85%] rounded-full"></div>
-                    </div>
+                    <Progress value={85} className="h-1.5 mb-2 bg-slate-200 dark:bg-slate-700 [&>div]:bg-emerald-500" />
                     <p className="text-[10px] font-semibold text-slate-500">Đủ đáp ứng 85% nhu cầu tuần tới</p>
                 </div>
             </aside>
