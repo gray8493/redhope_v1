@@ -1,64 +1,54 @@
-import { supabase } from '@/lib/supabase';
-import { Voucher, InsertVoucher, UpdateVoucher } from '@/lib/database.types';
+import { supabase } from "@/lib/supabase";
+import { Voucher } from "@/lib/database.types";
 
 export const voucherService = {
-    async getAll(): Promise<Voucher[]> {
+    async getAll() {
         const { data, error } = await supabase
-            .from('vouchers')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        return data || [];
-    },
-
-    async getById(id: string): Promise<Voucher | null> {
-        const { data, error } = await supabase
-            .from('vouchers')
-            .select('*')
-            .eq('id', id)
-            .single();
+            .from("vouchers")
+            .select("*")
+            .order("created_at", { ascending: false });
 
         if (error) {
-            if (error.code === 'PGRST116') return null;
             throw error;
         }
-        return data;
+
+        return data as Voucher[];
     },
 
-    async create(voucher: InsertVoucher): Promise<Voucher> {
+    async create(voucher: Partial<Voucher>) {
         const { data, error } = await supabase
-            .from('vouchers')
+            .from("vouchers")
             .insert(voucher)
             .select()
             .single();
 
-        if (error) throw error;
-        return data;
+        if (error) {
+            throw error;
+        }
+
+        return data as Voucher;
     },
 
-    async update(id: string, updates: UpdateVoucher): Promise<Voucher> {
+    async update(id: string, updates: Partial<Voucher>) {
         const { data, error } = await supabase
-            .from('vouchers')
+            .from("vouchers")
             .update(updates)
-            .eq('id', id)
+            .eq("id", id)
             .select()
             .single();
 
-        if (error) throw error;
-        return data;
+        if (error) {
+            throw error;
+        }
+
+        return data as Voucher;
     },
 
-    async delete(id: string): Promise<void> {
-        const { data, error } = await supabase
-            .from('vouchers')
-            .delete()
-            .eq('id', id)
-            .select();
+    async delete(id: string) {
+        const { error } = await supabase.from("vouchers").delete().eq("id", id);
 
-        if (error) throw error;
-        if (!data || data.length === 0) {
-            throw new Error('Voucher not found or already deleted');
+        if (error) {
+            throw error;
         }
-    }
+    },
 };

@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import { PlayIcon, HeartPulse, Users, Hospital, Droplet, ArrowRight, Quote } from '../components/icons';
+import Navbar from '@/components/shared/Navbar';
+import Footer from '@/components/shared/Footer';
+import { PlayIcon, HeartPulse, Users, Hospital, Droplet, ArrowRight, Quote } from '@/components/shared/icons';
 
 const Page = () => {
   return (
