@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Wallet,
     Heart,
@@ -15,18 +15,21 @@ import {
     Film,
     Monitor,
     Check,
-    X
+    X,
+    Loader2
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
+import { useAuth } from "@/context/AuthContext";
+import { voucherService } from "@/services/voucher.service";
 
 // Define reward categories
 type Category = "all" | "food" | "shopping" | "health" | "history";
 
 // Define reward item type
 interface RewardItem {
-    id: number;
+    id: string; // Changed from number to string for DB ID
     name: string;
     description: string;
     points: number;
@@ -47,79 +50,36 @@ interface HistoryItem {
     status: "success" | "pending" | "cancelled";
 }
 
-// Rewards data
-const rewardsData: RewardItem[] = [
-    {
-        id: 1,
-        name: "Coffee Bean & Co.",
-        description: "Thưởng thức bất kỳ đồ uống cỡ lớn nào. Áp dụng tại tất cả cửa hàng.",
-        points: 300,
-        category: "food",
-        icon: <Coffee className="w-8 h-8 text-[#6324eb]" />,
-        iconColor: "text-[#6324eb]",
-        gradientColor: "from-[#6324eb]/10",
-        badge: "PHỔ BIẾN"
-    },
-    {
-        id: 2,
-        name: "Green Grocer",
-        description: "Voucher 200k cho rau củ quả tươi hoặc thực phẩm hữu cơ.",
-        points: 800,
-        category: "shopping",
-        icon: <ShoppingBag className="w-8 h-8 text-green-600" />,
-        iconColor: "text-green-600",
-        gradientColor: "from-green-500/10"
-    },
-    {
-        id: 3,
-        name: "Zenith Spa",
-        description: "Liệu trình massage thư giãn 30 phút hoặc chăm sóc da mặt.",
-        points: 1200,
-        category: "health",
-        icon: <Activity className="w-8 h-8 text-blue-500" />,
-        iconColor: "text-blue-500",
-        gradientColor: "from-blue-500/10"
-    },
-    {
-        id: 4,
-        name: "TechHaven",
-        description: "Thẻ quà tặng 500k cho phụ kiện công nghệ.",
-        points: 2000,
-        category: "shopping",
-        icon: <Monitor className="w-8 h-8 text-gray-500" />,
-        iconColor: "text-gray-500",
-        gradientColor: "from-red-500/10",
-        disabled: true
-    },
-    {
-        id: 5,
-        name: "Pizza Palace",
-        description: "Một pizza cỡ vừa với 3 loại topping tùy chọn.",
-        points: 450,
-        category: "food",
-        icon: <Pizza className="w-8 h-8 text-orange-500" />,
-        iconColor: "text-orange-500",
-        gradientColor: "from-orange-500/10"
-    },
-    {
-        id: 6,
-        name: "Starlight Cinemas",
-        description: "Một vé xem phim 2D tiêu chuẩn.",
-        points: 550,
-        category: "food",
-        icon: <Film className="w-8 h-8 text-[#6324eb]" />,
-        iconColor: "text-[#6324eb]",
-        gradientColor: "from-[#6324eb]/10"
-    }
-];
+// Helper to determine category and style based on partner name (for demo purposes if DB lacks category)
+const getCategoryAndStyle = (name: string, index: number) => {
+    const styles = [
+        { category: "food", icon: Coffee, color: "text-[#6324eb]", gradient: "from-[#6324eb]/10" },
+        { category: "shopping", icon: ShoppingBag, color: "text-green-600", gradient: "from-green-500/10" },
+        { category: "health", icon: Activity, color: "text-blue-500", gradient: "from-blue-500/10" },
+        { category: "food", icon: Pizza, color: "text-orange-500", gradient: "from-orange-500/10" },
+        { category: "shopping", icon: Film, color: "text-[#6324eb]", gradient: "from-[#6324eb]/10" },
+        { category: "shopping", icon: Monitor, color: "text-gray-500", gradient: "from-red-500/10" },
+    ];
+    // Deterministic selection
+    const style = styles[index % styles.length];
+    const IconComponent = style.icon;
 
-// History data
+    return {
+        category: style.category as "food" | "shopping" | "health",
+        icon: <IconComponent className={`w-8 h-8 ${style.color}`} />,
+        iconColor: style.color,
+        gradientColor: style.gradient,
+        badge: index === 0 ? "PHỔ BIẾN" : undefined
+    };
+};
+
+// History data (Static for now as history API isn't ready)
 const historyData: HistoryItem[] = [
     { id: 1, name: "Coffee Bean & Co.", points: 300, date: "22/01/2026", status: "success" },
-    { id: 2, name: "Pizza Palace", points: 450, date: "15/01/2026", status: "success" },
-    { id: 3, name: "TechHaven", points: 2000, date: "10/01/2026", status: "cancelled" },
-    { id: 4, name: "Zenith Spa", points: 1200, date: "05/01/2026", status: "pending" },
-    { id: 5, name: "Green Grocer", points: 800, date: "28/12/2025", status: "success" },
+    { id: 2, name: "Trung Nguyên Legend", points: 450, date: "15/01/2026", status: "success" },
+    { id: 3, name: "Grab (50k)", points: 2000, date: "10/01/2026", status: "cancelled" },
+    { id: 4, name: "Pharmacity", points: 1200, date: "05/01/2026", status: "pending" },
+    { id: 5, name: "Bách Hóa Xanh", points: 800, date: "28/12/2025", status: "success" },
 ];
 
 // Tab configuration
@@ -132,12 +92,50 @@ const tabs: { key: Category; label: string }[] = [
 ];
 
 export default function RewardsPage() {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<Category>("all");
     const [searchQuery, setSearchQuery] = useState("");
-    const userPoints = 1250;
+    const [rewards, setRewards] = useState<RewardItem[]>([]);
+    const [loadingRewards, setLoadingRewards] = useState(true);
+
+    // Fetch real points or default to 0
+    const userPoints = user?.profile?.current_points || 0;
+
+    useEffect(() => {
+        const fetchRewards = async () => {
+            try {
+                setLoadingRewards(true);
+                const data = await voucherService.getAll();
+
+                // Transform DB data to UI format
+                const formattedRewards: RewardItem[] = data.map((v, index) => {
+                    const style = getCategoryAndStyle(v.partner_name || "Unknown", index);
+                    return {
+                        id: v.id,
+                        name: v.partner_name || "Voucher Ưu Đãi",
+                        description: `Voucher ưu đãi hấp dẫn từ ${v.partner_name}. Áp dụng tại toàn bộ hệ thống.`,
+                        points: v.point_cost || 0,
+                        category: style.category,
+                        icon: style.icon,
+                        iconColor: style.iconColor,
+                        gradientColor: style.gradientColor,
+                        badge: style.badge
+                    };
+                });
+
+                setRewards(formattedRewards);
+            } catch (error) {
+                console.error("Failed to fetch rewards:", error);
+            } finally {
+                setLoadingRewards(false);
+            }
+        };
+
+        fetchRewards();
+    }, []);
 
     // Filter rewards based on active tab and search query
-    const filteredRewards = rewardsData.filter((reward) => {
+    const filteredRewards = rewards.filter((reward) => {
         const matchesCategory = activeTab === "all" || activeTab === "history" || reward.category === activeTab;
         const matchesSearch = reward.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             reward.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -148,6 +146,17 @@ export default function RewardsPage() {
     const filteredHistory = historyData.filter((item) =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const handleRedeem = (reward: RewardItem) => {
+        if (userPoints < reward.points) {
+            alert("Bạn không đủ điểm để đổi quà này!");
+            return;
+        }
+        if (confirm(`Bạn có chắc muốn đổi ${reward.points} điểm lấy ưu đãi từ ${reward.name}?`)) {
+            // Future integration: Call redeem API here
+            alert("Đổi quà thành công! Mã voucher đã được gửi vào ví của bạn.");
+        }
+    };
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
@@ -287,49 +296,58 @@ export default function RewardsPage() {
                             ) : (
                                 /* Marketplace Grid */
                                 <>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                        {filteredRewards.map((reward) => (
-                                            <div
-                                                key={reward.id}
-                                                className={`flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] transition-all group ${reward.disabled ? "opacity-70" : "hover:shadow-lg cursor-pointer"
-                                                    }`}
-                                            >
-                                                <div className={`aspect-[4/3] w-full bg-[#f6f6f8] dark:bg-[#251e36] flex items-center justify-center p-8 relative overflow-hidden ${reward.disabled ? "grayscale" : ""}`}>
-                                                    <div className={`absolute inset-0 bg-gradient-to-br ${reward.gradientColor} to-transparent ${reward.disabled ? "opacity-30" : "opacity-50"}`}></div>
-                                                    <div className="z-10 bg-white dark:bg-[#1c162e] p-4 rounded-full shadow-md">
-                                                        {reward.icon}
-                                                    </div>
-                                                    {reward.badge && (
-                                                        <span className="absolute top-3 right-3 bg-white/90 dark:bg-[#1c162e]/90 px-2 py-1 rounded text-[10px] font-bold text-[#6324eb] border border-[#6324eb]/20">
-                                                            {reward.badge}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="p-5 flex flex-col grow">
-                                                    <h3 className="text-[#120e1b] dark:text-white text-lg font-bold">{reward.name}</h3>
-                                                    <p className="text-sm text-[#654d99] dark:text-[#a594c9] mt-1 mb-4 grow">{reward.description}</p>
-                                                    <div className="flex items-center justify-between pt-4 border-t border-[#ebe7f3] dark:border-[#2d263d]">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-bold text-[#654d99] dark:text-gray-500 uppercase">Giá đổi</span>
-                                                            <span className={`font-black text-xl ${reward.disabled ? "text-gray-400" : "text-[#6324eb]"}`}>
-                                                                {reward.points.toLocaleString()} pts
-                                                            </span>
+                                    {loadingRewards ? (
+                                        <div className="flex justify-center items-center py-20">
+                                            <Loader2 className="w-10 h-10 text-[#6324eb] animate-spin" />
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                            {filteredRewards.map((reward) => (
+                                                <div
+                                                    key={reward.id}
+                                                    className={`flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] transition-all group ${userPoints < reward.points ? "opacity-90" : "hover:shadow-lg cursor-pointer" // Opacity logic changed from disabled
+                                                        }`}
+                                                >
+                                                    <div className={`aspect-[4/3] w-full bg-[#f6f6f8] dark:bg-[#251e36] flex items-center justify-center p-8 relative overflow-hidden ${userPoints < reward.points ? "grayscale" : ""}`}>
+                                                        <div className={`absolute inset-0 bg-gradient-to-br ${reward.gradientColor} to-transparent ${userPoints < reward.points ? "opacity-30" : "opacity-50"}`}></div>
+                                                        <div className="z-10 bg-white dark:bg-[#1c162e] p-4 rounded-full shadow-md">
+                                                            {reward.icon}
                                                         </div>
-                                                        {reward.disabled ? (
-                                                            <button className="bg-gray-200 dark:bg-[#3d335a] text-gray-400 font-bold py-2 px-4 rounded-lg text-xs cursor-not-allowed">
-                                                                Thiếu {(reward.points - userPoints).toLocaleString()} pts
-                                                            </button>
-                                                        ) : (
-                                                            <button className="bg-[#6324eb] hover:bg-[#6324eb]/90 text-white font-bold py-2 px-6 rounded-lg text-sm transition-transform active:scale-95">
-                                                                Đổi ngay
-                                                            </button>
+                                                        {reward.badge && (
+                                                            <span className="absolute top-3 right-3 bg-white/90 dark:bg-[#1c162e]/90 px-2 py-1 rounded text-[10px] font-bold text-[#6324eb] border border-[#6324eb]/20">
+                                                                {reward.badge}
+                                                            </span>
                                                         )}
                                                     </div>
+                                                    <div className="p-5 flex flex-col grow">
+                                                        <h3 className="text-[#120e1b] dark:text-white text-lg font-bold">{reward.name}</h3>
+                                                        <p className="text-sm text-[#654d99] dark:text-[#a594c9] mt-1 mb-4 grow line-clamp-2">{reward.description}</p>
+                                                        <div className="flex items-center justify-between pt-4 border-t border-[#ebe7f3] dark:border-[#2d263d]">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-bold text-[#654d99] dark:text-gray-500 uppercase">Giá đổi</span>
+                                                                <span className={`font-black text-xl ${userPoints < reward.points ? "text-gray-400" : "text-[#6324eb]"}`}>
+                                                                    {reward.points.toLocaleString()} pts
+                                                                </span>
+                                                            </div>
+                                                            {userPoints < reward.points ? (
+                                                                <button disabled className="bg-gray-200 dark:bg-[#3d335a] text-gray-400 font-bold py-2 px-4 rounded-lg text-xs cursor-not-allowed">
+                                                                    Thiếu {(reward.points - userPoints).toLocaleString()} pts
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleRedeem(reward)}
+                                                                    className="bg-[#6324eb] hover:bg-[#6324eb]/90 text-white font-bold py-2 px-6 rounded-lg text-sm transition-transform active:scale-95"
+                                                                >
+                                                                    Đổi ngay
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {filteredRewards.length === 0 && (
+                                            ))}
+                                        </div>
+                                    )}
+                                    {!loadingRewards && filteredRewards.length === 0 && (
                                         <div className="py-12 text-center text-[#654d99] dark:text-[#a594c9]">
                                             Không tìm thấy ưu đãi trong danh mục này
                                         </div>

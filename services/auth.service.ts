@@ -8,7 +8,7 @@ export const authService = {
 
         // Fetch profile
         const { data: profile } = await supabase
-            .from('profiles')
+            .from('users') // Changed from profiles to users
             .select('*')
             .eq('id', user.id)
             .single();

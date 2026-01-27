@@ -21,30 +21,150 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-// import { useAuth } from "@/context/AuthContext";
-// import { authService } from "@/services/auth.service";
+import { useAuth } from "@/context/AuthContext";
+import {
+    Avatar,
+    AvatarFallback,
+    AvatarImage,
+} from "@/components/ui/avatar"
 
 interface TopNavProps {
     title?: string;
 }
 
 export function TopNav({ title = "Tổng quan" }: TopNavProps) {
-    // Mock user for UI
-    const profile = React.useMemo(() => ({ role: 'donor', full_name: 'Minh Quan', email: 'quan@example.com', blood_group: 'O+' }), []);
-    const user = React.useMemo(() => ({ user_metadata: { full_name: 'Minh Quan' }, email: 'quan@example.com' }), []);
-    const contextSignOut = async () => { console.log('Sign out clicked (Demo)'); window.location.href = '/login'; };
+    const { user: authUser, signOut } = useAuth();
+    const router = useRouter();
 
     const [showNotifications, setShowNotifications] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
-    const router = useRouter();
 
-    // Refs for click outside handling (optional but good UI)
+    // Refs for click outside handling
     const notiRef = useRef<HTMLDivElement>(null);
     const userRef = useRef<HTMLDivElement>(null);
 
-    // Mock Data Definition
-    // Mock Data Definition for Hospital/Admin
+    // Helper to get initials for Avatar Fallback
+    const getInitials = (name: string) => {
+        return name
+            ? name.split(' ').map((n) => n[0]).join('').toUpperCase().substring(0, 2)
+            : 'U';
+    };
+
+    // Derived State from Auth Context
+    const userRole = authUser?.role || 'donor';
+    const userProfile = authUser?.profile || {};
+
+    // Mock Data Definition (Notifications) - Keeping existing logic for now
     const hospitalNotifications = [
+        {
+            id: Date.now() - 1000,
+            title: "⚠️ Cảnh báo Tỷ lệ đăng ký thấp",
+            desc: "Chiến dịch 'Hiến máu Mùa Xuân' diễn ra ngày mai nhưng chỉ đạt 15% lượt đăng ký.",
+            time: "1 giờ trước",
+            unread: true,
+            icon: AlertTriangle,
+            color: "text-amber-500",
+            bg: "bg-amber-50"
+        },
+        // ... (truncated for brevity, logic preserved)
+    ];
+    // Re-declare hospitalNotifications and initialNotifications fully if they were removed, 
+    // but better to just keep them if I'm not replacing the whole file. 
+    // However, since I'm targeting a large block, I should be careful.
+    // The previous implementation of notifications was long. 
+    // I will assume the notification logic remains similar but uses `userRole`.
+
+    // Let's reuse existing notification logic but replace `profile?.role` with `userRole`.
+
+    const [hospitalInfo, setHospitalInfo] = useState<{ name: string; email: string; logo: string | null } | null>(null);
+
+    // Sync hospital profile data
+    useEffect(() => {
+        const loadHospitalInfo = () => {
+            if (userRole === 'hospital') {
+                const saved = localStorage.getItem("redhope_hospital_profile");
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        setHospitalInfo({
+                            name: data.name,
+                            email: data.email,
+                            logo: data.logo
+                        });
+                    } catch (e) {
+                        console.error("Error parsing hospital profile", e);
+                    }
+                }
+            }
+        };
+
+        loadHospitalInfo();
+        window.addEventListener("hospitalProfileUpdated", loadHospitalInfo);
+        window.addEventListener("storage", (e) => {
+            if (e.key === "redhope_hospital_profile") loadHospitalInfo();
+        });
+
+        return () => {
+            window.removeEventListener("hospitalProfileUpdated", loadHospitalInfo);
+            window.removeEventListener("storage", loadHospitalInfo);
+        };
+    }, [userRole]);
+
+    const displayRole = userRole === 'admin'
+        ? "Quản trị viên"
+        : userRole === 'hospital'
+            ? "Bệnh viện"
+            : userRole === 'donor'
+                ? (userProfile?.blood_group ? `Người hiến máu (${userProfile.blood_group})` : "Người hiến máu")
+                : "Thành viên";
+
+    const displayName = userRole === 'hospital' && hospitalInfo?.name
+        ? hospitalInfo.name
+        : (userProfile?.full_name || authUser?.user_metadata?.full_name || authUser?.email || "Người dùng");
+
+    const userEmail = userRole === 'hospital' && hospitalInfo?.email
+        ? hospitalInfo.email
+        : (authUser?.email || "");
+
+    const avatarUrl = userRole === 'hospital' && hospitalInfo?.logo
+        ? hospitalInfo.logo
+        : (authUser?.user_metadata?.avatar_url || ""); // Fallback handled by AvatarFallback
+
+    const settingsPath = userRole === 'hospital' ? "/hospital/settings" : "/settings";
+
+    // ... Notifications setup (Need to make sure notifications state uses `userRole` correctly) ...
+    // Note: I will need to replace the notification initialization logic effectively.
+    // Since `profile` is gone, I need to replace usages of `profile` with `userRole` or `authUser`.
+
+    // !!! IMPORTANT: The previous notification logic was complex and depended on `profile`.
+    // I will try to minimally invade the notification logic by defining `profile` as a proxy object if needed,
+    // OR just update the notification logic. Updating seems better.
+
+    // Re-incorporating notification logic variables...
+    const initialNotifications = [
+        {
+            id: 1,
+            title: "Máu của bạn đã được sử dụng!",
+            desc: "Đơn vị máu hiến ngày 24/10 đã được chuyển đến BV Chợ Rẫy.",
+            time: "2 giờ trước",
+            unread: true,
+            icon: CheckCircle,
+            color: "text-green-500",
+            bg: "bg-green-50"
+        },
+        {
+            id: 2,
+            title: "Lời kêu gọi khẩn cấp nhóm O+",
+            desc: "Bệnh viện 115 đang thiếu hụt nhóm máu của bạn.",
+            time: "5 giờ trước",
+            unread: true,
+            icon: AlertCircle,
+            color: "text-[#6324eb]",
+            bg: "bg-indigo-50"
+        }
+    ];
+
+    const hospitalNotifs = [
         {
             id: Date.now() - 1000,
             title: "⚠️ Cảnh báo Tỷ lệ đăng ký thấp",
@@ -77,40 +197,15 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
         }
     ];
 
-    const initialNotifications = [
-        {
-            id: 1,
-            title: "Máu của bạn đã được sử dụng!",
-            desc: "Đơn vị máu hiến ngày 24/10 đã được chuyển đến BV Chợ Rẫy.",
-            time: "2 giờ trước",
-            unread: true,
-            icon: CheckCircle,
-            color: "text-green-500",
-            bg: "bg-green-50"
-        },
-        {
-            id: 2,
-            title: "Lời kêu gọi khẩn cấp nhóm O+",
-            desc: "Bệnh viện 115 đang thiếu hụt nhóm máu của bạn.",
-            time: "5 giờ trước",
-            unread: true,
-            icon: AlertCircle,
-            color: "text-[#6324eb]",
-            bg: "bg-indigo-50"
-        }
-    ];
-
     const [notifications, setNotifications] = useState(initialNotifications);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load from localStorage
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('notifications_state');
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
-                    // Re-attach icons because JSON.stringify removes functions/components
                     const restored = parsed.map((n: any) => {
                         let Icon = n.type === 'alert' ? AlertTriangle :
                             n.type === 'goal' ? TrendingUp :
@@ -118,26 +213,20 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                                     n.type === 'feedback' ? Star :
                                         n.type === 'system' ? ShieldCheck :
                                             n.type === 'down' ? TrendingDown : Clock;
-
-                        // Fallback to original icon map if type not found
                         if (!n.type) Icon = n.id % 2 === 0 ? AlertTriangle : CheckCircle;
-
-                        return {
-                            ...n,
-                            icon: Icon
-                        };
+                        return { ...n, icon: Icon };
                     });
                     setNotifications(restored);
                 } catch (error) {
                     console.error("Error parsing notifications", error);
-                    setNotifications(profile?.role === 'hospital' ? hospitalNotifications : initialNotifications);
+                    setNotifications(userRole === 'hospital' ? hospitalNotifs : initialNotifications);
                 }
             } else {
-                setNotifications(profile?.role === 'hospital' ? hospitalNotifications : initialNotifications);
+                setNotifications(userRole === 'hospital' ? hospitalNotifs : initialNotifications);
             }
             setIsLoaded(true);
         }
-    }, [profile]);
+    }, [userRole]);
 
     // Global Notification Listener
     useEffect(() => {
@@ -156,18 +245,14 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                             data.type === 'feedback' ? Star :
                                 data.type === 'system' ? ShieldCheck :
                                     data.type === 'down' ? TrendingDown : Clock,
-                color: data.color || (profile?.role === 'hospital' ? "text-[#6324eb]" : "text-[#6324eb]"),
-                bg: data.bg || (profile?.role === 'hospital' ? "bg-indigo-50" : "bg-[#6324eb]/5")
+                color: data.color || (userRole === 'hospital' ? "text-[#6324eb]" : "text-[#6324eb]"),
+                bg: data.bg || (userRole === 'hospital' ? "bg-indigo-50" : "bg-[#6324eb]/5")
             };
             setNotifications(prev => [newNoti, ...prev]);
-
-            // Auto open notifications if it's an alert (optional)
-            // if (data.type === 'alert') setShowNotifications(true);
         };
-
         window.addEventListener('redhope:notification', handleNewNotification);
         return () => window.removeEventListener('redhope:notification', handleNewNotification);
-    }, []);
+    }, [userRole]);
 
     // Save to localStorage
     useEffect(() => {
@@ -176,12 +261,10 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
         }
     }, [notifications, isLoaded]);
 
-    // Mark all as read handler
     const markAllAsRead = () => {
         setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
     };
 
-    // Toggle handlers
     const toggleNoti = () => {
         setShowNotifications(!showNotifications);
         if (showUserMenu) setShowUserMenu(false);
@@ -195,77 +278,14 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
     const handleLogout = async () => {
         try {
             console.log("Logout initiated from TopNav...");
-            // Clear hospital specific profile first
             localStorage.removeItem('redhope_hospital_profile');
-
-            // Call central signOut logic
-            await contextSignOut();
+            await signOut();
+            router.push("/login"); // Explicit redirect
         } catch (error) {
             console.error("Logout failed:", error);
-            // Fallback forced redirect if something goes wrong
             window.location.href = "/login";
         }
     };
-
-    const [hospitalInfo, setHospitalInfo] = useState<{ name: string; email: string; logo: string | null } | null>(null);
-
-    // Sync hospital profile data
-    useEffect(() => {
-        const loadHospitalInfo = () => {
-            if (profile?.role === 'hospital') {
-                const saved = localStorage.getItem("redhope_hospital_profile");
-                if (saved) {
-                    try {
-                        const data = JSON.parse(saved);
-                        setHospitalInfo({
-                            name: data.name,
-                            email: data.email,
-                            logo: data.logo
-                        });
-                    } catch (e) {
-                        console.error("Error parsing hospital profile", e);
-                    }
-                }
-            }
-        };
-
-        loadHospitalInfo();
-
-        // Listen for internal updates within the app
-        window.addEventListener("hospitalProfileUpdated", loadHospitalInfo);
-
-        // Also listen for storage events (if multiple tabs are open)
-        window.addEventListener("storage", (e) => {
-            if (e.key === "redhope_hospital_profile") loadHospitalInfo();
-        });
-
-        return () => {
-            window.removeEventListener("hospitalProfileUpdated", loadHospitalInfo);
-            window.removeEventListener("storage", loadHospitalInfo);
-        };
-    }, [profile]);
-
-    const displayRole = profile?.role === 'admin'
-        ? "Quản trị viên"
-        : profile?.role === 'hospital'
-            ? "Bệnh viện"
-            : profile?.role === 'donor'
-                ? (profile?.blood_group ? `Người hiến máu (${profile.blood_group})` : "Người hiến máu")
-                : "Thành viên";
-
-    const displayName = profile?.role === 'hospital' && hospitalInfo?.name
-        ? hospitalInfo.name
-        : (profile?.full_name || user?.user_metadata?.full_name || "Alex Rivera");
-
-    const userEmail = profile?.role === 'hospital' && hospitalInfo?.email
-        ? hospitalInfo.email
-        : (profile?.email || user?.email || "alex.rivera@example.com");
-
-    const avatarUrl = profile?.role === 'hospital' && hospitalInfo?.logo
-        ? hospitalInfo.logo
-        : "https://lh3.googleusercontent.com/aida-public/AB6AXuAI4faTCJTkv8OO6MUFrzxQB3yJcWE7Zkm3Y9_WkORgcZUhg0mk8rv7geI97EgbgP3xfDraG1Oy9Psl47i83JoPayPQNpCHWNrSkQfnybH55NGY5MeYil6abA0jZHtNJmfXNyZTl8KPnYoPJdsSVNf-MVgxmvZSicOMuVKfMBGWKjOnheH0k_JUU5GhZRy0Go2cQ6u1xBc8VpgcwkOhb7P0b4kGQIcQ_8z8WaWBcp-2kVgx8l9LfAVeffjFZ8WyB63LgiErOcfK7o26";
-
-    const settingsPath = profile?.role === 'hospital' ? "/hospital/settings" : "/settings";
 
     return (
         <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 sticky top-0 z-20 w-full">
@@ -304,12 +324,12 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                                             <p className="text-xs text-[#654d99] dark:text-[#a594c9] leading-relaxed mb-1">{item.desc}</p>
                                             <p className="text-[10px] text-slate-400 font-medium">{item.time}</p>
                                         </div>
-                                        {item.unread && <div className={`size-2 rounded-full mt-1.5 ${profile?.role === 'hospital' ? 'bg-[#6324eb]' : 'bg-[#6324eb]'}`}></div>}
+                                        {item.unread && <div className={`size-2 rounded-full mt-1.5 ${userRole === 'hospital' ? 'bg-[#6324eb]' : 'bg-[#6324eb]'}`}></div>}
                                     </div>
                                 ))}
                             </div>
                             <div className="p-3 text-center border-t border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36]">
-                                <Link href="/notifications" className={`text-sm font-bold ${profile?.role === 'hospital' ? 'text-[#6324eb]' : 'text-[#6324eb]'} hover:underline block w-full`}>Xem tất cả</Link>
+                                <Link href="/notifications" className={`text-sm font-bold ${userRole === 'hospital' ? 'text-[#6324eb]' : 'text-[#6324eb]'} hover:underline block w-full`}>Xem tất cả</Link>
                             </div>
                         </div>
                     )}
@@ -327,13 +347,11 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                             <p className="text-sm font-bold text-slate-900 dark:text-white">{displayName}</p>
                             <p className="text-xs text-slate-500">{displayRole}</p>
                         </div>
-                        <div className={`size-10 rounded-full border-2 overflow-hidden transition-colors ${showUserMenu ? 'border-[#6324eb]' : 'border-emerald-500/20'}`}>
-                            <img
-                                src={avatarUrl}
-                                alt="Avatar"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
+
+                        <Avatar className={`size-10 border-2 transition-colors ${showUserMenu ? 'border-[#6324eb]' : 'border-emerald-500/20'}`}>
+                            <AvatarImage src={avatarUrl || ''} alt={displayName} className="object-cover" />
+                            <AvatarFallback className="bg-[#6324eb] text-white font-bold">{getInitials(displayName)}</AvatarFallback>
+                        </Avatar>
                     </button>
 
                     {/* User Dropdown */}

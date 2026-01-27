@@ -12,9 +12,10 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-// import { authService } from "@/services/auth.service";
+import { BLOOD_GROUPS } from "@/lib/database.types";
+import { userService } from "@/services/user.service";
+import { useAuth } from "@/context/AuthContext";
 // import RoleGuard from "@/components/auth/RoleGuard";
-// import { useAuth } from "@/context/AuthContext";
 
 export default function DonorProfileStep1() {
     return (
@@ -24,31 +25,30 @@ export default function DonorProfileStep1() {
 
 function DonorProfileContent() {
     const router = useRouter();
-    // const { refreshUser } = useAuth();
+    const { user, refreshUser } = useAuth();
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
-    const [userId, setUserId] = useState("mock-user-id");
 
     const [formData, setFormData] = useState({
-        full_name: "Minh Quan",
-        phone: "0901234567",
+        full_name: user?.user_metadata?.full_name || "",
+        phone: user?.phone || "",
         blood_group: "O+",
         gender: "Nam",
-        dob: "1995-01-01",
-        city: "TP.HCM",
-        district: "Quan 1",
-        address: "123 Duong Le Loi"
+        dob: "",
+        city: "",
+        district: "",
+        address: ""
     });
 
     useEffect(() => {
-        // Mock data loading
-        /*
-        const fetchUser = async () => {
-             // ... old logic removed
-        };
-        fetchUser();
-        */
-    }, [router]);
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                full_name: user.user_metadata?.full_name || prev.full_name,
+                phone: user.phone || prev.phone
+            }));
+        }
+    }, [user]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -61,8 +61,7 @@ function DonorProfileContent() {
         setError("");
 
         try {
-            // const user = await authService.getCurrentUser();
-            const role = "donor"; // user?.profile?.role || user?.user_metadata?.role || "donor";
+            const role = user?.role || "donor";
 
             // Clean data: empty strings should be null
             const cleanData = {
@@ -72,22 +71,22 @@ function DonorProfileContent() {
                 city: formData.city || null,
                 district: formData.district || null,
                 address: formData.address || null,
-                email: "quan@example.com", // user?.email || "",
+                email: user?.email,
                 role: role as any
             };
 
-            if (!userId) {
+            if (!user?.id) {
                 console.error("No userId found for submission.");
-                setError("Không thể xác định danh tính người dùng.");
+                setError("Không thể xác định danh tính người dùng. Vui lòng đăng nhập lại.");
                 setSubmitting(false);
                 return;
             }
 
             // 1. Lưu dữ liệu
-            await userService.upsert(userId, cleanData);
+            await userService.upsert(user.id, cleanData);
 
-            // 2. Refresh dữ liệu trong AuthContext (removed)
-            // if (refreshUser) await refreshUser();
+            // 2. Refresh dữ liệu trong AuthContext
+            if (refreshUser) await refreshUser();
 
             // 3. Chuyển hướng
             router.push("/complete-profile/verification");
