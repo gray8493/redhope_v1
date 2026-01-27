@@ -52,8 +52,8 @@ export default function VoucherManagementPage() {
                 // Logic to compute expiry: if v has an expiry field (check as any), use it,
                 // otherwise default to created_at + 90 days, or now + 90 days.
                 let expiry = '';
-                if ((v as any).expiry_date) {
-                    expiry = new Date((v as any).expiry_date).toISOString().split('T')[0];
+                if (v.expiry_date) {
+                    expiry = new Date(v.expiry_date).toISOString().split('T')[0];
                 } else if (v.created_at) {
                     const created = new Date(v.created_at);
                     created.setDate(created.getDate() + 90);
@@ -149,21 +149,37 @@ export default function VoucherManagementPage() {
                     status: updated.status
                 } : v));
             } else {
-                // Create
-                const created = await voucherService.create({
-                    partner_name: formData.name || undefined,
-                    point_cost: formData.points ?? undefined,
-                    status: formData.status || undefined,
-                    code: crypto.randomUUID().substring(0, 8).toUpperCase() // Better random code
-                });
+                // Create with retry logic for unique code
+                let created;
+                let retries = 3;
+                while (retries > 0) {
+                    try {
+                        created = await voucherService.create({
+                            partner_name: formData.name || undefined,
+                            point_cost: formData.points ?? undefined,
+                            status: formData.status || undefined,
+                            code: crypto.randomUUID() // Full UUID for better uniqueness
+                        });
+                        break;
+                    } catch (err: any) {
+                        if (retries > 1 && (err.message?.includes('violates unique constraint') || err.code === '23505')) {
+                            // Assuming Postgres error code 23505 for unique violation
+                            retries--;
+                            continue;
+                        }
+                        throw err;
+                    }
+                }
 
-                // Add to local state (mixin with ui fields)
-                setVouchers(prev => [{
-                    ...created, ...formData,
-                    name: created.partner_name || formData.name,
-                    points: created.point_cost || formData.points,
-                    image: 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&q=80&w=200'
-                } as SentinelVoucher, ...prev]);
+                if (created) {
+                    // Add to local state (mixin with ui fields)
+                    setVouchers(prev => [{
+                        ...created, ...formData,
+                        name: created.partner_name || formData.name,
+                        points: created.point_cost || formData.points,
+                        image: 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&q=80&w=200'
+                    } as SentinelVoucher, ...prev]);
+                }
             }
             setIsModalOpen(false);
         } catch (error: any) {
@@ -214,7 +230,7 @@ export default function VoucherManagementPage() {
                         <span className="material-symbols-outlined">inventory_2</span>
                     </div>
                     <div>
-                        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Kho đang hoạt động</p>
+                        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Kho đang hoạt động (Mô phỏng)</p>
                         <p className="text-2xl font-bold">{vouchers.reduce((acc, v) => acc + (v.stock || 0), 0)}</p>
                     </div>
                 </div>
@@ -281,12 +297,14 @@ export default function VoucherManagementPage() {
                                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                             onClick={() => handleEdit(voucher)}
+                                            aria-label={`Chỉnh sửa ${voucher.name}`}
                                             className="p-2 text-gray-500 hover:text-[#6324eb] hover:bg-[#6324eb]/5 rounded-lg transition-colors"
                                         >
                                             <span className="material-symbols-outlined text-xl">edit</span>
                                         </button>
                                         <button
                                             onClick={() => handleDelete(voucher.id)}
+                                            aria-label={`Xóa ${voucher.name}`}
                                             className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                         >
                                             <span className="material-symbols-outlined text-xl">delete</span>

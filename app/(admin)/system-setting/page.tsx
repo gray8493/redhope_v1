@@ -52,7 +52,10 @@ const SystemSettingsPage = () => {
     const [pointsExpiry, setPointsExpiry] = useState(true);
 
     // Platform Security
+    // Platform Security
     const [twoFactorAuth, setTwoFactorAuth] = useState("Bắt buộc cho tất cả Quản trị viên");
+    const [apiKey, setApiKey] = useState("Loading...");
+    const [fullApiKey, setFullApiKey] = useState<string | null>(null);
 
     // Load settings from localStorage on mount
     useEffect(() => {
@@ -94,6 +97,17 @@ const SystemSettingsPage = () => {
                 } catch (e) { console.error(e); }
             }
         }
+        // Simulate fetching secure key
+        const fetchKey = async () => {
+            // In production: const res = await fetch('/api/admin/keys');
+            // const data = await res.json();
+            // setApiKey(data.masked);
+            // setFullApiKey(data.full); // Or fetch on demand
+            setTimeout(() => {
+                setApiKey("sk-live-•••••••••••qRw");
+            }, 500);
+        };
+        fetchKey();
     }, []);
 
     const handleSave = () => {
@@ -246,7 +260,7 @@ const SystemSettingsPage = () => {
                                         className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all pr-10"
                                         type="number"
                                         value={pointsPerDonation}
-                                        onChange={(e) => setPointsPerDonation(Number(e.target.value))}
+                                        onChange={(e) => setPointsPerDonation(Math.max(0, Number(e.target.value) || 0))}
                                     />
                                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">pts</span>
                                 </div>
@@ -258,7 +272,7 @@ const SystemSettingsPage = () => {
                                         className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all pr-10"
                                         type="number"
                                         value={referralBonus}
-                                        onChange={(e) => setReferralBonus(Number(e.target.value))}
+                                        onChange={(e) => setReferralBonus(Math.max(0, Number(e.target.value) || 0))}
                                     />
                                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">pts</span>
                                 </div>
@@ -272,19 +286,20 @@ const SystemSettingsPage = () => {
                                     className="block w-32 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all"
                                     type="number"
                                     value={exchangeRate}
-                                    onChange={(e) => setExchangeRate(Number(e.target.value))}
+                                    onChange={(e) => setExchangeRate(Math.max(0, Number(e.target.value) || 0))}
                                 />
                                 <span className="text-sm text-gray-400">Điểm</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
                             <input
+                                id="pointsExpiry"
                                 className="w-4 h-4 text-[#6324eb] border-gray-300 rounded focus:ring-[#6324eb]"
                                 type="checkbox"
                                 checked={pointsExpiry}
                                 onChange={(e) => setPointsExpiry(e.target.checked)}
                             />
-                            <label className="text-sm font-medium text-gray-700">Bật hết hạn điểm sau 12 tháng</label>
+                            <label htmlFor="pointsExpiry" className="text-sm font-medium text-gray-700 cursor-pointer">Bật hết hạn điểm sau 12 tháng</label>
                         </div>
                     </div>
                 </div>
@@ -331,8 +346,16 @@ const SystemSettingsPage = () => {
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Khóa API (Đọc/Ghi)</label>
                             <div className="flex gap-2">
-                                <input className="block flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all font-mono" readOnly type="password" defaultValue="sk-live-51Mz2vjKxL1oP9qRw" />
-                                <button className="px-3 py-2 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors">
+                                <input
+                                    className="block flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all font-mono"
+                                    readOnly
+                                    type="text"
+                                    value={apiKey}
+                                />
+                                <button
+                                    onClick={() => alert("Secure copy requires server authentication")}
+                                    className="px-3 py-2 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors"
+                                >
                                     <span className="material-symbols-outlined text-lg">content_copy</span>
                                 </button>
                             </div>

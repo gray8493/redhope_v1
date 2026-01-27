@@ -8,6 +8,7 @@ import { Loader2, Users, Hospital, Ticket, CheckCircle, XCircle } from 'lucide-r
 
 export default function GlobalAnalyticsPage() {
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [stats, setStats] = useState({
         totalDonors: 0,
         donorsByBloodGroup: {} as Record<string, number>,
@@ -57,6 +58,7 @@ export default function GlobalAnalyticsPage() {
                 });
             } catch (error) {
                 console.error("Failed to fetch analytics data:", error);
+                setError((error as Error)?.message ?? 'Failed to load analytics');
             } finally {
                 setLoading(false);
             }
@@ -84,6 +86,25 @@ export default function GlobalAnalyticsPage() {
         );
     }
 
+    if (error) {
+        return (
+            <div className="flex h-[50vh] flex-col items-center justify-center gap-4">
+                <div className="text-red-500 font-bold flex items-center gap-2">
+                    <XCircle className="w-6 h-6" />
+                    {error}
+                </div>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                    Thử lại
+                </button>
+            </div>
+        );
+    }
+
+
+
     return (
         <div className="max-w-7xl mx-auto space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -92,10 +113,12 @@ export default function GlobalAnalyticsPage() {
                     <p className="text-xs text-gray-500 mt-1">Tổng quan dữ liệu thực tế từ hệ thống.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold bg-green-50 text-green-700 px-3 py-1 rounded-full flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        Live Data
-                    </span>
+                    {!error && (
+                        <span className="text-xs font-bold bg-green-50 text-green-700 px-3 py-1 rounded-full flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            Live Data
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -169,20 +192,24 @@ export default function GlobalAnalyticsPage() {
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                     <h3 className="font-bold text-lg text-[#1f1f1f] mb-6">Phân bố Nhóm máu (Người hiến)</h3>
                     <div className="space-y-4">
-                        {Object.entries(stats.donorsByBloodGroup).map(([group, count]) => (
-                            <div key={group}>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="font-medium text-gray-700">{group}</span>
-                                    <span className="text-gray-500">{count} người ({Math.round(count / stats.totalDonors * 100)}%)</span>
+                        {Object.entries(stats.donorsByBloodGroup).map(([group, count]) => {
+                            const total = stats.totalDonors > 0 ? stats.totalDonors : 1;
+                            const percent = stats.totalDonors > 0 ? Math.round(count / total * 100) : 0;
+                            return (
+                                <div key={group}>
+                                    <div className="flex justify-between text-sm mb-1">
+                                        <span className="font-medium text-gray-700">{group}</span>
+                                        <span className="text-gray-500">{count} người ({percent}%)</span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-2.5">
+                                        <div
+                                            className={`h-2.5 rounded-full ${bloodGroupColors[group] || 'bg-gray-400'}`}
+                                            style={{ width: `${stats.totalDonors > 0 ? (count / stats.totalDonors) * 100 : 0}%` }}
+                                        ></div>
+                                    </div>
                                 </div>
-                                <div className="w-full bg-gray-100 rounded-full h-2.5">
-                                    <div
-                                        className={`h-2.5 rounded-full ${bloodGroupColors[group] || 'bg-gray-400'}`}
-                                        style={{ width: `${(count / stats.totalDonors) * 100}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         {Object.keys(stats.donorsByBloodGroup).length === 0 && (
                             <p className="text-center text-gray-500 py-10">Chưa có dữ liệu nhóm máu</p>
                         )}

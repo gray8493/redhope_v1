@@ -2,18 +2,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { hospitalService } from '@/services/hospital.service';
-import { User } from '@/lib/database.types';
+import { Hospital } from '@/lib/database.types';
 import { Loader2, Plus, Search, Trash2, Edit, X, Save } from 'lucide-react';
 
 export default function HospitalDirectoryPage() {
-    const [hospitals, setHospitals] = useState<User[]>([]);
+    const [hospitals, setHospitals] = useState<Hospital[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentHospital, setCurrentHospital] = useState<Partial<User>>({});
+    const [currentHospital, setCurrentHospital] = useState<Partial<Hospital>>({});
     const [mode, setMode] = useState<'add' | 'edit'>('add');
     const [isSaving, setIsSaving] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
         loadHospitals();
@@ -24,7 +25,7 @@ export default function HospitalDirectoryPage() {
         setLoadError(null);
         try {
             const data = await hospitalService.getAll();
-            setHospitals(data as any);
+            setHospitals(data as unknown as Hospital[]);
         } catch (error: any) {
             console.error('Failed to load hospitals:', error);
             setLoadError(error.message || 'Failed to load hospitals');
@@ -35,12 +36,15 @@ export default function HospitalDirectoryPage() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Bạn có chắc chắn muốn xóa bệnh viện này không?')) return;
+        setDeletingId(id);
         try {
             await hospitalService.delete(id);
             setHospitals(prev => prev.filter(h => h.id !== id));
         } catch (error) {
             console.error('Delete failed:', error);
             alert('Xóa thất bại');
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -54,17 +58,20 @@ export default function HospitalDirectoryPage() {
                     hospital_address: currentHospital.hospital_address || undefined,
                     license_number: currentHospital.license_number || undefined,
                     is_verified: currentHospital.is_verified || false,
-                } as any);
-                setHospitals([newHospital as any, ...hospitals]);
+                });
+                setHospitals([newHospital as unknown as Hospital, ...hospitals]);
             } else {
-                if (!currentHospital.id) return;
+                if (!currentHospital.id) {
+                    alert("Lỗi: Không tìm thấy ID bệnh viện để cập nhật.");
+                    return;
+                }
                 const updatedHospital = await hospitalService.update(currentHospital.id, {
                     hospital_name: currentHospital.hospital_name || undefined,
                     hospital_address: currentHospital.hospital_address || undefined,
                     license_number: currentHospital.license_number || undefined,
                     is_verified: currentHospital.is_verified || false,
                 });
-                setHospitals(prev => prev.map(h => h.id === updatedHospital.id ? updatedHospital as any : h));
+                setHospitals(prev => prev.map(h => h.id === updatedHospital.id ? updatedHospital as unknown as Hospital : h));
             }
             setIsModalOpen(false);
         } catch (error: any) {
@@ -81,7 +88,7 @@ export default function HospitalDirectoryPage() {
         setIsModalOpen(true);
     };
 
-    const openEditModal = (hospital: User) => {
+    const openEditModal = (hospital: Hospital) => {
         setMode('edit');
         setCurrentHospital({ ...hospital });
         setIsModalOpen(true);
@@ -194,8 +201,12 @@ export default function HospitalDirectoryPage() {
                                             <button onClick={() => openEditModal(hospital)} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg">
                                                 <Edit className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => handleDelete(hospital.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">
-                                                <Trash2 className="w-4 h-4" />
+                                            <button
+                                                onClick={() => handleDelete(hospital.id)}
+                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
+                                                disabled={deletingId === hospital.id}
+                                            >
+                                                {deletingId === hospital.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                                             </button>
                                         </div>
                                     </td>

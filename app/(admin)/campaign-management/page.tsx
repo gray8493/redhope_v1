@@ -138,8 +138,19 @@ export default function CampaignManagementPage() {
     const [filterStatus, setFilterStatus] = useState("Tất cả trạng thái");
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 4;
+    const [inputError, setInputError] = useState<string | null>(null);
 
     const [campaigns, setCampaigns] = useState(CAMPAIGNS);
+
+    const activeCampaigns = campaigns.filter(c => c.status === "Đang diễn ra").length;
+    const totalParticipants = campaigns.reduce((acc, c) => acc + (c.participants || 0), 0);
+    const avgCompletion = campaigns.length > 0
+        ? Math.round(campaigns.reduce((acc, c) => acc + ((c.participants || 0) / (c.target || 1)), 0) / campaigns.length * 100)
+        : 0;
+
+    const formatNumber = (num: number) => {
+        return num >= 1000 ? (num / 1000).toFixed(1) + 'k' : num.toString();
+    };
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -204,7 +215,46 @@ export default function CampaignManagementPage() {
     };
 
     const handleAddCampaign = () => {
-        if (!newCampaign.name || !newCampaign.hospital) return;
+        setInputError(null);
+        if (!newCampaign.name || !newCampaign.hospital) {
+            setInputError("Vui lòng nhập tên chiến dịch và bệnh viện");
+            return;
+        }
+
+        const target = parseInt(newCampaign.target);
+        if (isNaN(target) || target <= 0) {
+            setInputError("Mục tiêu phải là số nguyên dương");
+            return;
+        }
+
+        if (!newCampaign.location.trim()) {
+            setInputError("Địa điểm không được để trống");
+            return;
+        }
+
+        // Simple date validation (assuming DD/MM/YYYY or ISO)
+        // Ideally use a date picker, but for text input:
+        if (!newCampaign.date) {
+            setInputError("Vui lòng chọn ngày");
+            return;
+        }
+        // Basic check if it seems like a date
+        const dateParts = newCampaign.date.split('/');
+        let validDate = false;
+        if (dateParts.length === 3) {
+            // DD/MM/YYYY
+            const d = new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, parseInt(dateParts[0]));
+            validDate = !isNaN(d.getTime());
+        } else {
+            // Try standard parse
+            const d = new Date(newCampaign.date);
+            validDate = !isNaN(d.getTime());
+        }
+
+        if (!validDate) {
+            setInputError("Ngày không hợp lệ (Định dạng DD/MM/YYYY)");
+            return;
+        }
 
         if (editingId) {
             // Update existing campaign
@@ -294,7 +344,7 @@ export default function CampaignManagementPage() {
                     </div>
                     <div>
                         <p className="text-gray-500 text-xs font-bold uppercase">Chiến dịch đang chạy</p>
-                        <p className="text-xl font-bold text-[#120e1b]">12</p>
+                        <p className="text-xl font-bold text-[#120e1b]">{activeCampaigns}</p>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
@@ -303,7 +353,7 @@ export default function CampaignManagementPage() {
                     </div>
                     <div>
                         <p className="text-gray-500 text-xs font-bold uppercase">Tổng lượt đăng ký</p>
-                        <p className="text-xl font-bold text-[#120e1b]">1.4k</p>
+                        <p className="text-xl font-bold text-[#120e1b]">{formatNumber(totalParticipants)}</p>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
@@ -312,7 +362,7 @@ export default function CampaignManagementPage() {
                     </div>
                     <div>
                         <p className="text-gray-500 text-xs font-bold uppercase">Mục tiêu hoàn thành</p>
-                        <p className="text-xl font-bold text-[#120e1b]">85%</p>
+                        <p className="text-xl font-bold text-[#120e1b]">{avgCompletion}%</p>
                     </div>
                 </div>
             </div>
@@ -520,6 +570,12 @@ export default function CampaignManagementPage() {
                             </button>
                         </div>
                         <div className="p-6 flex flex-col gap-4">
+                            {inputError && (
+                                <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {inputError}
+                                </div>
+                            )}
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-sm font-bold text-gray-700">Tên chiến dịch</label>
                                 <input

@@ -3,6 +3,18 @@
 
 export type UserRole = 'donor' | 'hospital' | 'admin';
 
+export interface Hospital {
+    id: string;
+    hospital_name: string | null;
+    license_number: string | null;
+    hospital_address: string | null;
+    is_verified: boolean | null;
+    role: 'hospital';
+    created_at?: string;
+    email?: string;
+    phone?: string | null;
+}
+
 export interface User {
     id: string;                    // uuid - Primary Key
     full_name: string;             // varchar - NOT NULL
@@ -108,6 +120,7 @@ export interface Voucher {
     point_cost: number | null;
     imported_by: string | null;
     status: string | null;
+    expiry_date?: string | null;
     created_at?: string;
 }
 
