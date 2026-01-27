@@ -238,17 +238,27 @@ export default function CampaignManagementPage() {
             setInputError("Vui lòng chọn ngày");
             return;
         }
-        // Basic check if it seems like a date
+
+        // Strict Date Validation for DD/MM/YYYY
         const dateParts = newCampaign.date.split('/');
         let validDate = false;
         if (dateParts.length === 3) {
-            // DD/MM/YYYY
-            const d = new Date(parseInt(dateParts[2]), parseInt(dateParts[1]) - 1, parseInt(dateParts[0]));
-            validDate = !isNaN(d.getTime());
-        } else {
-            // Try standard parse
+            const day = parseInt(dateParts[0], 10);
+            const month = parseInt(dateParts[1], 10);
+            const year = parseInt(dateParts[2], 10);
+
+            if (month >= 1 && month <= 12 && day >= 1) {
+                const d = new Date(year, month - 1, day);
+                if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) {
+                    validDate = true;
+                }
+            }
+        }
+
+        // Also allow ISO format if needed, or stick to strict DD/MM/YYYY
+        if (!validDate && newCampaign.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
             const d = new Date(newCampaign.date);
-            validDate = !isNaN(d.getTime());
+            if (!isNaN(d.getTime())) validDate = true;
         }
 
         if (!validDate) {
@@ -307,6 +317,7 @@ export default function CampaignManagementPage() {
 
     const openCreateModal = () => {
         setEditingId(null);
+        setInputError(null); // Clear previous errors
         setNewCampaign({
             name: "",
             hospital: "",

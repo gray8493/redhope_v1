@@ -16,6 +16,33 @@ export default function HospitalDirectoryPage() {
     const [loadError, setLoadError] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
+    // Focus management for modal
+    const modalRef = React.useRef<HTMLDivElement>(null);
+    const triggerRef = React.useRef<HTMLButtonElement | null>(null);
+
+    useEffect(() => {
+        if (isModalOpen) {
+            // Save trigger
+            if (document.activeElement instanceof HTMLButtonElement) {
+                triggerRef.current = document.activeElement;
+            }
+            // Trap focus roughly (checking event key)
+            const handleKeyDown = (e: KeyboardEvent) => {
+                if (e.key === 'Escape') {
+                    setIsModalOpen(false);
+                }
+            };
+            document.addEventListener('keydown', handleKeyDown);
+            // Focus modal content
+            setTimeout(() => modalRef.current?.focus(), 100);
+            return () => {
+                document.removeEventListener('keydown', handleKeyDown);
+                // Restore focus
+                triggerRef.current?.focus();
+            };
+        }
+    }, [isModalOpen]);
+
     useEffect(() => {
         loadHospitals();
     }, []);
@@ -112,11 +139,12 @@ export default function HospitalDirectoryPage() {
                         <input
                             type="text"
                             placeholder="Tìm kiếm..."
+                            aria-label="Search hospitals"
                             className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#6324eb]"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
+                        <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" aria-hidden="true" />
                     </div>
                     <button
                         onClick={openAddModal}
@@ -220,7 +248,11 @@ export default function HospitalDirectoryPage() {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div
+                        ref={modalRef}
+                        tabIndex={-1}
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200 outline-none"
+                    >
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                             <h3 className="font-bold text-lg text-gray-800">
                                 {mode === 'add' ? 'Thêm Bệnh Viện' : 'Cập Nhật Thông Tin'}
@@ -232,8 +264,9 @@ export default function HospitalDirectoryPage() {
 
                         <form onSubmit={handleSave} className="p-6 space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Tên bệnh viện</label>
+                                <label htmlFor="hospital_name" className="text-sm font-medium text-gray-700">Tên bệnh viện</label>
                                 <input
+                                    id="hospital_name"
                                     required
                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
                                     value={currentHospital.hospital_name || ''}
@@ -241,16 +274,18 @@ export default function HospitalDirectoryPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Số giấy phép</label>
+                                <label htmlFor="license_number" className="text-sm font-medium text-gray-700">Số giấy phép</label>
                                 <input
+                                    id="license_number"
                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
                                     value={currentHospital.license_number || ''}
                                     onChange={e => setCurrentHospital({ ...currentHospital, license_number: e.target.value })}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Địa chỉ</label>
+                                <label htmlFor="hospital_address" className="text-sm font-medium text-gray-700">Địa chỉ</label>
                                 <input
+                                    id="hospital_address"
                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
                                     value={currentHospital.hospital_address || ''}
                                     onChange={e => setCurrentHospital({ ...currentHospital, hospital_address: e.target.value })}

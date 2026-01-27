@@ -21,6 +21,7 @@ export default function GlobalAnalyticsPage() {
     });
 
     useEffect(() => {
+        let isMounted = true;
         const fetchData = async () => {
             try {
                 // Fetch in parallel
@@ -29,6 +30,8 @@ export default function GlobalAnalyticsPage() {
                     hospitalService.getAll(),
                     voucherService.getAll(),
                 ]);
+
+                if (!isMounted) return;
 
                 // User Stats
                 const bloodGroups: Record<string, number> = {};
@@ -57,14 +60,22 @@ export default function GlobalAnalyticsPage() {
                     totalPointsUsed: points,
                 });
             } catch (error) {
-                console.error("Failed to fetch analytics data:", error);
-                setError((error as Error)?.message ?? 'Failed to load analytics');
+                if (isMounted) {
+                    console.error("Failed to fetch analytics data:", error);
+                    setError((error as Error)?.message ?? 'Failed to load analytics');
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchData();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const bloodGroupColors: Record<string, string> = {

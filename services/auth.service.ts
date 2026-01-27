@@ -2,9 +2,11 @@ import { supabase } from '@/lib/supabase';
 
 export const authService = {
     getCurrentUser: async () => {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session) return null;
+
         const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) throw error;
-        if (!user) return null;
+        if (error || !user) return null;
 
         // Fetch profile
         const { data: profile } = await supabase

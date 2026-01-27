@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { userService } from '@/services/user.service';
+import { hospitalService } from '@/services/hospital.service';
 import { User } from '@/lib/database.types';
 import { Loader2, X, Calendar, MapPin, Droplet, Star, TrendingUp, Plus, Clock, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,21 +17,45 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [selectedDonor, setSelectedDonor] = useState<User | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [stats, setStats] = useState({
+        donors: 0,
+        hospitals: 0,
+        requests: 156,
+        points: 0
+    });
 
     useEffect(() => {
-        const fetchRecentActivity = async () => {
+        const fetchDashboardData = async () => {
             try {
-                // Use limited query on server-side
-                const data = await userService.getRecent(5);
-                setRecentDonors(data);
+                setLoading(true);
+                // Fetch recent activity and all data for stats in parallel
+                const [recent, allUsers, allHospitals] = await Promise.all([
+                    userService.getRecent(5),
+                    userService.getAll(),
+                    hospitalService.getAll()
+                ]);
+
+                setRecentDonors(recent);
+
+                // Calculate Stats
+                const donorsCount = allUsers.filter(u => u.role === 'donor').length;
+                const totalPoints = allUsers.reduce((sum, u) => sum + (u.current_points || 0), 0);
+
+                setStats({
+                    donors: donorsCount,
+                    hospitals: allHospitals.length,
+                    requests: 156, // Pending backend
+                    points: totalPoints
+                });
+
             } catch (error) {
-                console.error("Failed to fetch recent activity:", error);
+                console.error("Failed to fetch dashboard data:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchRecentActivity();
+        fetchDashboardData();
     }, []);
 
     const handleViewDetail = (donor: User) => {
@@ -49,17 +74,24 @@ export default function AdminDashboard() {
                 <Card>
                     <CardContent className="p-5">
                         <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Tổng người hiến</p>
-                        <p className="text-2xl font-bold text-[#120e1b] mt-1">12,842</p>
-                        <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                            <TrendingUp className="w-4 h-4" />
-                            +12% so với tháng trước
-                        </p>
+                        <p className="text-2xl font-bold text-[#120e1b] mt-1">{loading ? '...' : stats.donors.toLocaleString()}</p>
+                        <div className="flex justify-between items-center mt-2">
+                            <p className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded">Hoạt động</p>
+                            <p className="text-xs text-green-600 flex items-center gap-1">
+                                <TrendingUp className="w-4 h-4" />
+                                +12%
+                            </p>
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-5">
                         <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Bệnh viện đối tác</p>
-                        <p className="text-2xl font-bold text-[#120e1b] mt-1">84</p>
+                        {loading ? (
+                            <Loader2 className="w-6 h-6 animate-spin text-gray-500 mt-2" />
+                        ) : (
+                            <p className="text-2xl font-bold text-[#120e1b] mt-1">{stats.hospitals}</p>
+                        )}
                         <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
                             <Plus className="w-4 h-4" />
                             Mới thêm 2 bệnh viện
@@ -69,8 +101,13 @@ export default function AdminDashboard() {
                 <Card>
                     <CardContent className="p-5">
                         <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Yêu cầu máu</p>
-                        <p className="text-2xl font-bold text-[#120e1b] mt-1">156</p>
-                        <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
+                        {loading ? (
+                            <Loader2 className="w-6 h-6 animate-spin text-gray-500 mt-2" />
+                        ) : (
+                            <p className="text-2xl font-bold text-[#120e1b] mt-1">{stats.requests}</p>
+                        )}
+                        <p className="text-[10px] text-gray-400 font-bold bg-gray-100 px-2 py-0.5 rounded mt-2 w-fit">Pending Backend</p>
+                        <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
                             <Clock className="w-4 h-4" />
                             24 yêu cầu đang xử lý
                         </p>
@@ -79,7 +116,11 @@ export default function AdminDashboard() {
                 <Card>
                     <CardContent className="p-5">
                         <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Điểm thưởng cấp</p>
-                        <p className="text-2xl font-bold text-[#120e1b] mt-1">45.2K</p>
+                        {loading ? (
+                            <Loader2 className="w-6 h-6 animate-spin text-gray-500 mt-2" />
+                        ) : (
+                            <p className="text-2xl font-bold text-[#120e1b] mt-1">{(stats.points / 1000).toFixed(1)}K</p>
+                        )}
                         <p className="text-xs text-purple-600 mt-2 flex items-center gap-1">
                             <Award className="w-4 h-4" />
                             Vouchers đã phát hành

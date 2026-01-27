@@ -52,10 +52,8 @@ const SystemSettingsPage = () => {
     const [pointsExpiry, setPointsExpiry] = useState(true);
 
     // Platform Security
-    // Platform Security
     const [twoFactorAuth, setTwoFactorAuth] = useState("Bắt buộc cho tất cả Quản trị viên");
     const [apiKey, setApiKey] = useState("Loading...");
-    const [fullApiKey, setFullApiKey] = useState<string | null>(null);
 
     // Load settings from localStorage on mount
     useEffect(() => {
@@ -203,7 +201,12 @@ const SystemSettingsPage = () => {
                                     value={aiSensitivity}
                                     onChange={(e) => setAiSensitivity(Number(e.target.value))}
                                 />
-                                <span className="text-sm font-bold text-[#6324eb] px-3 py-1 bg-[#6324eb]/10 rounded-lg">Cao ({aiSensitivity}/10)</span>
+                                <span className={`text-sm font-bold px-3 py-1 rounded-lg ${aiSensitivity >= 8 ? 'bg-[#6324eb]/10 text-[#6324eb]' :
+                                        aiSensitivity >= 5 ? 'bg-orange-100 text-orange-600' :
+                                            'bg-red-100 text-red-600'
+                                    }`}>
+                                    {aiSensitivity >= 8 ? 'Cao' : aiSensitivity >= 5 ? 'Trung bình' : 'Thấp'} ({aiSensitivity}/10)
+                                </span>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
