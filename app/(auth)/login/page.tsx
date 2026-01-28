@@ -59,7 +59,7 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
-      setError(err.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại.");
+      setError(err.message === 'Invalid login credentials' ? 'Email hoặc mật khẩu không đúng.' : 'Đăng nhập thất bại. Vui lòng kiểm tra lại.');
     } finally {
       setLoading(false);
     }
@@ -83,107 +83,78 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="font-sans bg-black dark:bg-black min-h-screen flex flex-col transition-colors duration-300">
-      {/* Top Navigation Bar */}
-
-      {/* Main Content Split Pane */}
-      <main className="flex-grow flex items-stretch overflow-hidden">
-        {/* Left Side: Visual/Mission */}
-        <div className="hidden lg:flex lg:w-1/2 relative bg-black items-center justify-center p-20 overflow-hidden text-white border-r border-white/5">
-          <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1615461066841-6116ecaabb04?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center animate-pulse-slow"></div>
-          <div className="absolute inset-0 bg-gradient-to-br from-[#4a0404]/90 via-black/95 to-[#1a0b2e]/90"></div>
-
-          <div className="relative z-10 max-w-lg">
-            <span className="inline-block px-3 py-1 rounded-full bg-[#800000]/20 text-[#cc0000] text-xs font-semibold uppercase tracking-widest mb-6 backdrop-blur-md border border-[#800000]/30">
-              Mạng lưới hiến máu thông minh
-            </span>
-            <h1 className="text-6xl font-black mb-6 leading-tight drop-shadow-2xl text-white">Mỗi giọt máu, <span className="text-[#990000]">một mầm sống.</span></h1>
-            <p className="text-xl text-white/70 leading-relaxed mb-8 font-medium">
-              Kết nối với các bệnh viện, quản lý kho máu hoặc trở thành anh hùng ngay hôm nay. RedHope là nền tảng thống nhất cho một hệ sinh thái hiến máu an toàn và thông minh hơn.
-            </p>
-            <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-lg">
-              <div className="flex -space-x-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="size-10 rounded-full border-2 border-[#800000] bg-gray-900 overflow-hidden shadow-lg">
-                    <img alt={`User ${i}`} src={`https://i.pravatar.cc/100?u=${i + 10}`} />
-                  </div>
-                ))}
-              </div>
-              <span className="text-sm font-bold opacity-80">Tham gia cùng hơn 50,000 người hiến máu trên toàn quốc</span>
-            </div>
+    <div className="min-h-screen flex flex-col bg-white">
+      <main className="flex-grow flex items-stretch">
+        <div className="hidden lg:flex lg:w-1/2 bg-[#6324eb] items-center justify-center p-20 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <svg width="100%" height="100%">
+              <pattern id="pattern-circles" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1" fill="#fff" />
+              </pattern>
+              <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-circles)" />
+            </svg>
           </div>
-
-          <div className="absolute top-[-10%] left-[-10%] size-96 bg-[#800000]/10 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] size-96 bg-[#4b0082]/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="z-10 text-white max-w-lg">
+            <h1 className="text-5xl font-bold mb-6">Mỗi giọt máu trao đi, một cuộc đời ở lại.</h1>
+            <p className="text-xl opacity-90 leading-relaxed">Kết nối với cộng đồng hiến máu an toàn và thông minh hơn cùng REDHOPE.</p>
+          </div>
         </div>
 
-        {/* Right Side: Auth Form */}
-        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 lg:p-12 bg-[#0a0a0b]">
-          {/* Back to Home Button */}
-          <div className="w-full max-w-md mb-4 flex justify-start">
-            <Button asChild variant="ghost" className="gap-2 text-gray-500 hover:text-[#990000] font-bold p-0 transition-colors">
-              <Link href="/">
-                <Home className="size-4" />
-                Quay về trang chủ
-              </Link>
-            </Button>
-          </div>
-
-          <div className="w-full max-w-md space-y-8 bg-[#121214] p-8 md:p-10 rounded-3xl shadow-2xl border border-white/5 relative">
-
+        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 bg-gray-50 overflow-y-auto">
+          <div className="w-full max-w-md space-y-8 bg-white p-10 rounded-3xl shadow-xl border border-gray-100">
             <div className="text-center">
-
-              <h2 className="text-3xl font-black text-white tracking-tight">Chào mừng trở lại</h2>
-              <p className="text-gray-400 mt-2 font-medium tracking-tight">Đăng nhập để vào hệ thống điều hành</p>
+              <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Chào mừng trở lại</h2>
+              <p className="text-gray-500 mt-2 font-medium">Đăng nhập để vào hệ thống điều hành</p>
             </div>
 
-
             {error && (
-              <div className="flex items-start gap-3 p-4 bg-red-950/10 border border-[#800000]/30 rounded-2xl text-red-400 text-sm animate-shake">
-                <div className="mt-0.5"><Info className="w-4 h-4" /></div>
-                <p className="font-medium leading-relaxed">{error}</p>
+              <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl border border-red-100 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                {error}
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div className="space-y-2">
-                <Label className="font-bold text-gray-300 ml-1">Địa chỉ Email</Label>
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div>
+                <Label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Email</Label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-[#cc0000] transition-colors z-10">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
                     <Mail className="w-5 h-5" />
                   </div>
                   <Input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-12 py-6 rounded-2xl bg-black/40 border-white/10 text-white focus:ring-4 focus:ring-[#800000]/20 focus:border-[#800000]"
+                    className="pl-12 py-3.5 rounded-xl border border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all bg-gray-50/50"
                     placeholder="name@example.com"
                     required
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between items-center ml-1">
-                  <Label className="font-bold text-gray-300">Mật khẩu</Label>
-                  <Link href="#" className="text-sm font-bold text-[#cc0000] hover:text-[#ff3333] transition-colors hover:underline">Quên mật khẩu?</Link>
+              <div>
+                <div className="flex justify-between items-center mb-1.5 ml-1">
+                  <Label className="text-sm font-bold text-gray-700">Mật khẩu</Label>
+                  <Link href="/forgot-password" title="Quên mật khẩu?" className="text-xs font-bold text-[#6324eb] hover:underline transition-colors hover:text-[#501ac2]">
+                    Quên mật khẩu?
+                  </Link>
                 </div>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-[#cc0000] transition-colors z-10">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
                     <Lock className="w-5 h-5" />
                   </div>
                   <Input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-12 pr-12 py-6 rounded-2xl bg-black/40 border-white/10 text-white focus:ring-4 focus:ring-[#800000]/20 focus:border-[#800000]"
+                    className="pl-12 pr-12 py-3.5 rounded-xl border border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all bg-gray-50/50"
                     placeholder="••••••••"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-[#cc0000] transition-colors z-10"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#6324eb] transition-colors z-10"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -193,18 +164,18 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full py-7 text-base font-black rounded-2xl bg-[#800000] hover:bg-[#600000] text-white shadow-xl shadow-[#800000]/20 transform active:scale-[0.98] transition-all"
+                className="w-full py-6 bg-[#6324eb] text-white font-bold rounded-xl hover:bg-[#501ac2] shadow-lg shadow-indigo-100 transition-all flex justify-center transform active:scale-[0.98]"
               >
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Đăng nhập vào hệ thống"}
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Đăng nhập"}
               </Button>
             </form>
 
-            <div className="relative">
+            <div className="relative py-2">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/5"></div>
+                <div className="w-full border-t border-gray-100"></div>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-[#121214] text-gray-500 font-medium">Hoặc đăng nhập bằng</span>
+              <div className="relative flex justify-center text-xs uppercase font-bold text-gray-400">
+                <span className="bg-white px-2">Hoặc</span>
               </div>
             </div>
 
@@ -212,7 +183,7 @@ export default function LoginPage() {
               type="button"
               onClick={handleGoogleLogin}
               variant="outline"
-              className="w-full py-6 border-white/10 rounded-2xl font-bold bg-transparent text-white hover:bg-white/5 shadow-none transition-all flex items-center justify-center gap-3"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl bg-white text-gray-700 font-bold hover:bg-gray-50 transition-all shadow-sm"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -232,37 +203,18 @@ export default function LoginPage() {
                   fill="#EA4335"
                 />
               </svg>
-              Đăng nhập với Google
+              Tiếp tục với Google
             </Button>
 
-            <p className="text-center text-sm text-gray-500 font-medium font-sans">
+            <p className="text-center text-sm font-medium text-gray-500">
               Chưa có tài khoản?{' '}
-              <Link href="/register" className="font-black text-[#cc0000] hover:text-[#ff3333] hover:underline transition-colors">Tạo tài khoản mới</Link>
+              <Link href="/register" title="Đăng ký" className="font-bold text-[#6324eb] hover:underline transition-colors">
+                Tham gia ngay
+              </Link>
             </p>
           </div>
         </div>
       </main>
-
-      <style jsx global>{`
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.15; }
-          50% { opacity: 0.25; }
-        }
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-4px); }
-          75% { transform: translateX(4px); }
-        }
-        .animate-pulse-slow { animation: pulse-slow 8s infinite; }
-        .animate-blob { animation: blob 7s infinite; }
-        .animate-shake { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
-        .animation-delay-2000 { animation-delay: 2s; }
-      `}</style>
-    </div >
+    </div>
   );
 }
