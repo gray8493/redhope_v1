@@ -52,7 +52,18 @@ export default function HospitalDirectoryPage() {
         setLoadError(null);
         try {
             const data = await hospitalService.getAll();
-            setHospitals(data as unknown as Hospital[]);
+            // Safer mapping instead of as unknown cast
+            setHospitals(data.map(u => ({
+                id: u.id,
+                hospital_name: u.hospital_name,
+                license_number: u.license_number,
+                hospital_address: u.hospital_address,
+                is_verified: u.is_verified,
+                role: 'hospital' as const,
+                created_at: u.created_at,
+                email: u.email,
+                phone: u.phone
+            })));
         } catch (error: any) {
             console.error('Failed to load hospitals:', error);
             setLoadError(error.message || 'Failed to load hospitals');
@@ -86,7 +97,17 @@ export default function HospitalDirectoryPage() {
                     license_number: currentHospital.license_number || undefined,
                     is_verified: currentHospital.is_verified || false,
                 });
-                setHospitals([newHospital as unknown as Hospital, ...hospitals]);
+                const mapped: Hospital = {
+                    id: newHospital.id,
+                    hospital_name: newHospital.hospital_name,
+                    license_number: newHospital.license_number,
+                    hospital_address: newHospital.hospital_address,
+                    is_verified: newHospital.is_verified,
+                    role: 'hospital',
+                    email: newHospital.email,
+                    phone: newHospital.phone
+                };
+                setHospitals([mapped, ...hospitals]);
             } else {
                 if (!currentHospital.id) {
                     alert("Lỗi: Không tìm thấy ID bệnh viện để cập nhật.");
@@ -98,7 +119,17 @@ export default function HospitalDirectoryPage() {
                     license_number: currentHospital.license_number || undefined,
                     is_verified: currentHospital.is_verified || false,
                 });
-                setHospitals(prev => prev.map(h => h.id === updatedHospital.id ? updatedHospital as unknown as Hospital : h));
+                const mapped: Hospital = {
+                    id: updatedHospital.id,
+                    hospital_name: updatedHospital.hospital_name,
+                    license_number: updatedHospital.license_number,
+                    hospital_address: updatedHospital.hospital_address,
+                    is_verified: updatedHospital.is_verified,
+                    role: 'hospital',
+                    email: updatedHospital.email,
+                    phone: updatedHospital.phone
+                };
+                setHospitals(prev => prev.map(h => h.id === mapped.id ? mapped : h));
             }
             setIsModalOpen(false);
         } catch (error: any) {
@@ -225,14 +256,19 @@ export default function HospitalDirectoryPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button onClick={() => openEditModal(hospital)} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg">
+                                        <div className="flex justify-end gap-2 text-gray-500">
+                                            <button
+                                                onClick={() => openEditModal(hospital)}
+                                                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                                                aria-label={`Chỉnh sửa bệnh viện ${hospital.hospital_name}`}
+                                            >
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(hospital.id)}
-                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
+                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50 transition-colors"
                                                 disabled={deletingId === hospital.id}
+                                                aria-label={`Xóa bệnh viện ${hospital.hospital_name}`}
                                             >
                                                 {deletingId === hospital.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                                             </button>
@@ -251,13 +287,20 @@ export default function HospitalDirectoryPage() {
                     <div
                         ref={modalRef}
                         tabIndex={-1}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="modal-title"
                         className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200 outline-none"
                     >
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <h3 className="font-bold text-lg text-gray-800">
+                            <h3 id="modal-title" className="font-bold text-lg text-gray-800">
                                 {mode === 'add' ? 'Thêm Bệnh Viện' : 'Cập Nhật Thông Tin'}
                             </h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                                aria-label="Đóng cửa sổ"
+                            >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>

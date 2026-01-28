@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-// import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 // You can replace these with actual icons from a library like lucide-react
 const BellIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -15,8 +15,18 @@ const BellIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 const AdminHeader = () => {
-  const signOut = async () => { console.log('Sign out'); };
+  const { signOut, user } = useAuth();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Failed to sign out:', error);
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm">
@@ -38,58 +48,60 @@ const AdminHeader = () => {
             <div>
               <button
                 type="button"
-                className="flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+                className="flex rounded-full bg-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#6324eb] focus:ring-offset-2 border border-gray-100 p-0.5"
                 id="user-menu-button"
                 aria-expanded={isDropdownOpen}
                 aria-haspopup="true"
                 onClick={() => setDropdownOpen(!isDropdownOpen)}
               >
                 <span className="sr-only">Open user menu</span>
-                <Image
-                  className="h-8 w-8 rounded-full"
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                  alt="User avatar"
-                  width={32}
-                  height={32}
-                />
+                <div className="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center bg-gray-100">
+                  {user?.profile?.avatar_url ? (
+                    <Image
+                      className="h-full w-full object-cover"
+                      src={user.profile.avatar_url}
+                      alt="User avatar"
+                      width={32}
+                      height={32}
+                    />
+                  ) : (
+                    <span className="font-bold text-xs text-[#6324eb] uppercase">
+                      {user?.profile?.full_name?.charAt(0) || 'A'}
+                    </span>
+                  )}
+                </div>
               </button>
             </div>
 
             {isDropdownOpen && (
               <div
-                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-xl bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-50 overflow-hidden"
                 role="menu"
                 aria-orientation="vertical"
                 aria-labelledby="user-menu-button"
                 tabIndex={-1}
               >
                 <Link
-                  href="/settings"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  href="/admin-dashboard"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium"
                   role="menuitem"
-                  tabIndex={-1}
-                  id="user-menu-item-0"
+                  onClick={() => setDropdownOpen(false)}
                 >
-                  Your Profile
+                  Dashboard
                 </Link>
                 <Link
-                  href="/settings"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  href="/system-setting"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium"
                   role="menuitem"
-                  tabIndex={-1}
-                  id="user-menu-item-1"
+                  onClick={() => setDropdownOpen(false)}
                 >
                   Settings
                 </Link>
                 <button
                   type="button"
-                  onClick={async () => {
-                    await signOut();
-                  }}
-                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={handleSignOut}
+                  className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 font-bold border-t border-gray-50 mt-1"
                   role="menuitem"
-                  tabIndex={-1}
-                  id="user-menu-item-2"
                 >
                   Sign out
                 </button>

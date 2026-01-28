@@ -4,7 +4,12 @@ import { User, UpdateUser } from '@/lib/database.types';
 export const hospitalService = {
     async getAll(): Promise<User[]> {
         const users = await userService.getAll();
-        return users.filter(u => u.role === 'hospital');
+        return (users.filter(u => u.role === 'hospital')) as User[];
+    },
+
+    async getCount(): Promise<number> {
+        const users = await userService.getAll();
+        return users.filter(u => u.role === 'hospital').length;
     },
 
     async getById(id: string): Promise<User | null> {

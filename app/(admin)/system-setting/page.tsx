@@ -96,16 +96,17 @@ const SystemSettingsPage = () => {
             }
         }
         // Simulate fetching secure key
+        let timeoutId: NodeJS.Timeout;
         const fetchKey = async () => {
-            // In production: const res = await fetch('/api/admin/keys');
-            // const data = await res.json();
-            // setApiKey(data.masked);
-            // setFullApiKey(data.full); // Or fetch on demand
-            setTimeout(() => {
+            timeoutId = setTimeout(() => {
                 setApiKey("sk-live-•••••••••••qRw");
             }, 500);
         };
         fetchKey();
+
+        return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+        };
     }, []);
 
     const handleSave = () => {
@@ -202,8 +203,8 @@ const SystemSettingsPage = () => {
                                     onChange={(e) => setAiSensitivity(Number(e.target.value))}
                                 />
                                 <span className={`text-sm font-bold px-3 py-1 rounded-lg ${aiSensitivity >= 8 ? 'bg-[#6324eb]/10 text-[#6324eb]' :
-                                        aiSensitivity >= 5 ? 'bg-orange-100 text-orange-600' :
-                                            'bg-red-100 text-red-600'
+                                    aiSensitivity >= 5 ? 'bg-orange-100 text-orange-600' :
+                                        'bg-red-100 text-red-600'
                                     }`}>
                                     {aiSensitivity >= 8 ? 'Cao' : aiSensitivity >= 5 ? 'Trung bình' : 'Thấp'} ({aiSensitivity}/10)
                                 </span>
@@ -218,8 +219,8 @@ const SystemSettingsPage = () => {
                                     step="0.1"
                                     min="0.1"
                                     type="number"
-                                    value={minHemoglobin}
-                                    onChange={(e) => setMinHemoglobin(Math.max(0.1, Number(e.target.value)))}
+                                    value={minHemoglobin || ''}
+                                    onChange={(e) => setMinHemoglobin(Math.max(0.1, parseFloat(e.target.value) || 0.1))}
                                 />
                             </div>
                             <div>
@@ -229,8 +230,8 @@ const SystemSettingsPage = () => {
                                     placeholder="50"
                                     min="30"
                                     type="number"
-                                    value={minWeight}
-                                    onChange={(e) => setMinWeight(Math.max(30, Number(e.target.value)))}
+                                    value={minWeight || ''}
+                                    onChange={(e) => setMinWeight(Math.max(30, parseFloat(e.target.value) || 30))}
                                 />
                             </div>
                         </div>
