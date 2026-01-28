@@ -3,12 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Mail, Lock, Eye, EyeOff, Info, ArrowLeft, Home } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Cookies from "js-cookie";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -47,6 +45,7 @@ export default function LoginPage() {
         Cookies.set('auth-token', data.session?.access_token || '', { expires: 7 });
         Cookies.set('user-role', role, { expires: 7 });
 
+        // Logic redirection based on actual DB role
         switch (role) {
           case 'admin':
             router.push('/admin-dashboard');
@@ -59,6 +58,7 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
+      console.error("Login error:", err);
       setError(err.message === 'Invalid login credentials' ? 'Email hoặc mật khẩu không đúng.' : 'Đăng nhập thất bại. Vui lòng kiểm tra lại.');
     } finally {
       setLoading(false);
@@ -83,9 +83,22 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <main className="flex-grow flex items-stretch">
-        <div className="hidden lg:flex lg:w-1/2 bg-[#6324eb] items-center justify-center p-20 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-white font-sans relative">
+      {/* Back to Home Button - Top Left of the whole page */}
+      <Link
+        href="/"
+        className="absolute top-6 left-6 flex items-center gap-2 text-sm font-bold text-white/80 hover:text-white transition-all group z-50"
+      >
+        <div className="flex items-center justify-center size-9 rounded-full bg-white/10 backdrop-blur-md border border-white/20 group-hover:bg-white/20 transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+        </div>
+        <span className="hidden sm:inline">Quay về trang chủ</span>
+      </Link>
+
+      <main className="flex-grow flex items-stretch overflow-hidden">
+        {/* Left Side: Visual/Mission (Hidden on mobile) */}
+        <div className="hidden lg:flex lg:w-1/2 relative bg-[#6324eb] items-center justify-center p-20 overflow-hidden">
+          {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
             <svg width="100%" height="100%">
               <pattern id="pattern-circles" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -94,96 +107,139 @@ export default function LoginPage() {
               <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-circles)" />
             </svg>
           </div>
-          <div className="z-10 text-white max-w-lg">
-            <h1 className="text-5xl font-bold mb-6">Mỗi giọt máu trao đi, một cuộc đời ở lại.</h1>
-            <p className="text-xl opacity-90 leading-relaxed">Kết nối với cộng đồng hiến máu an toàn và thông minh hơn cùng REDHOPE.</p>
+
+          {/* Decorative Blobs */}
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-red-400/20 rounded-full blur-[120px]"></div>
+          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[500px] h-[500px] bg-indigo-500/30 rounded-full blur-[100px]"></div>
+
+          <div className="relative z-10 text-white max-w-lg">
+            <span className="inline-block px-4 py-1 rounded-full bg-white/10 backdrop-blur-md text-[10px] font-extrabold uppercase tracking-[0.2em] mb-6 border border-white/20">
+              Mạng lưới Hiến máu Thông minh
+            </span>
+            <h1 className="text-4xl xl:text-5xl font-extrabold mb-6 leading-[1.15] tracking-tight">
+              Mỗi giọt máu trao đi, <br /> một cuộc đời ở lại.
+            </h1>
+            <p className="text-lg text-white/70 leading-relaxed mb-10 font-medium max-w-md">
+              Kết nối với bệnh viện, quản lý kho máu hoặc trở thành người hùng ngay hôm nay.
+              <span className="font-bold text-white"> REDHOPE</span> là nền tảng thống nhất cho một hệ sinh thái hiến máu an toàn.
+            </p>
+
+            <div className="flex items-center gap-6">
+              <div className="flex -space-x-3">
+                {['D', 'H', 'A'].map((char, i) => (
+                  <div key={i} className="w-12 h-12 rounded-full border-2 border-[#6324eb] bg-white flex items-center justify-center text-sm font-bold text-[#6324eb] shadow-lg">
+                    {char}
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm font-semibold opacity-90">Tham gia cùng 50,000+ người hùng REDHOPE</p>
+            </div>
           </div>
         </div>
 
-        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 bg-gray-50 overflow-y-auto">
-          <div className="w-full max-w-md space-y-8 bg-white p-10 rounded-3xl shadow-xl border border-gray-100">
+        {/* Right Side: Auth Form */}
+        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 lg:p-12 overflow-y-auto bg-gray-50/50 relative">
+          {/* Back to Home Button */}
+          <Link
+            href="/"
+            className="absolute top-8 left-8 flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#6324eb] transition-colors group z-20"
+          >
+            <div className="flex items-center justify-center size-8 rounded-full bg-white shadow-sm border border-gray-100 group-hover:border-[#6324eb]/30 group-hover:bg-[#6324eb]/5 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+            </div>
+            Quay về trang chủ
+          </Link>
+
+          <div className="w-full max-w-md space-y-8 bg-white p-8 lg:p-10 rounded-3xl shadow-2xl shadow-indigo-100/50 border border-gray-100 relative z-10">
+            {/* Heading */}
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Chào mừng trở lại</h2>
-              <p className="text-gray-500 mt-2 font-medium">Đăng nhập để vào hệ thống điều hành</p>
+              <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">Chào mừng trở lại</h2>
+              <p className="text-sm text-gray-500 mt-2 font-medium">Đăng nhập để vào hệ thống điều hành</p>
             </div>
 
+            {/* Error Message */}
             {error && (
-              <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl border border-red-100 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-                <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                {error}
+              <div className="p-4 bg-red-50 text-red-600 text-sm rounded-2xl border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                <div className="w-1.5 h-6 bg-red-500 rounded-full"></div>
+                <p className="font-medium">{error}</p>
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div>
-                <Label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Email</Label>
+            {/* Form */}
+            <form onSubmit={handleLogin} className="space-y-6">
+              {/* Email Field */}
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-gray-700 ml-1">Địa chỉ Email</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
-                    <Mail className="w-5 h-5" />
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors">
+                    <Mail className="h-5 w-5" />
                   </div>
-                  <Input
+                  <input
+                    className="block w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-2xl bg-gray-50/50 text-gray-900 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] transition-all outline-none font-medium"
+                    placeholder="hero@redhope.vn"
+                    required
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-12 py-3.5 rounded-xl border border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all bg-gray-50/50"
-                    placeholder="name@example.com"
-                    required
                   />
                 </div>
               </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-1.5 ml-1">
-                  <Label className="text-sm font-bold text-gray-700">Mật khẩu</Label>
-                  <Link href="/forgot-password" title="Quên mật khẩu?" className="text-xs font-bold text-[#6324eb] hover:underline transition-colors hover:text-[#501ac2]">
+              {/* Password Field */}
+              <div className="space-y-2">
+                <div className="flex justify-between ml-1">
+                  <label className="block text-sm font-bold text-gray-700">Mật khẩu</label>
+                  <Link href="/forgot-password" title="Quên mật khẩu?" className="text-xs font-bold text-[#6324eb] hover:underline">
                     Quên mật khẩu?
                   </Link>
                 </div>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
-                    <Lock className="w-5 h-5" />
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors">
+                    <Lock className="h-5 w-5" />
                   </div>
-                  <Input
+                  <input
+                    className="block w-full pl-12 pr-12 py-3.5 border border-gray-200 rounded-2xl bg-gray-50/50 text-gray-900 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] transition-all outline-none font-medium"
+                    placeholder="••••••••"
+                    required
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-12 pr-12 py-3.5 rounded-xl border border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all bg-gray-50/50"
-                    placeholder="••••••••"
-                    required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#6324eb] transition-colors z-10"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#6324eb] transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
 
-              <Button
+              {/* Submit Button */}
+              <button
+                className="w-full flex items-center justify-center px-4 py-4 border border-transparent text-base font-extrabold rounded-2xl text-white bg-[#6324eb] hover:bg-[#501ac2] focus:outline-none focus:ring-4 focus:ring-indigo-100 shadow-xl shadow-indigo-100 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 type="submit"
                 disabled={loading}
-                className="w-full py-6 bg-[#6324eb] text-white font-bold rounded-xl hover:bg-[#501ac2] shadow-lg shadow-indigo-100 transition-all flex justify-center transform active:scale-[0.98]"
               >
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Đăng nhập"}
-              </Button>
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Đăng nhập ngay"}
+              </button>
             </form>
 
-            <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center">
+            {/* Divider */}
+            <div className="relative">
+              <div aria-hidden="true" className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-100"></div>
               </div>
-              <div className="relative flex justify-center text-xs uppercase font-bold text-gray-400">
-                <span className="bg-white px-2">Hoặc</span>
+              <div className="relative flex justify-center text-xs uppercase font-extrabold text-gray-400">
+                <span className="px-4 bg-white">Hoặc tiếp tục với</span>
               </div>
             </div>
 
-            <Button
-              type="button"
+            {/* Social Auth */}
+            <button
               onClick={handleGoogleLogin}
-              variant="outline"
-              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl bg-white text-gray-700 font-bold hover:bg-gray-50 transition-all shadow-sm"
+              className="w-full flex items-center justify-center px-4 py-3.5 border border-gray-200 rounded-2xl bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-all hover:border-gray-300 gap-3 shadow-sm"
+              disabled={loading}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -203,15 +259,23 @@ export default function LoginPage() {
                   fill="#EA4335"
                 />
               </svg>
-              Tiếp tục với Google
-            </Button>
+              Tài khoản Google
+            </button>
 
+            {/* Footer */}
             <p className="text-center text-sm font-medium text-gray-500">
               Chưa có tài khoản?{' '}
-              <Link href="/register" title="Đăng ký" className="font-bold text-[#6324eb] hover:underline transition-colors">
+              <Link href="/register" title="Tham gia ngay" className="font-bold text-[#6324eb] hover:underline">
                 Tham gia ngay
               </Link>
             </p>
+          </div>
+
+          {/* Footer Small Print */}
+          <div className="mt-10 lg:mt-16 text-center text-xs text-gray-400 space-x-6 font-medium">
+            <Link href="#" className="hover:text-[#6324eb] transition-colors">Chính sách bảo mật</Link>
+            <Link href="#" className="hover:text-[#6324eb] transition-colors">Điều khoản dịch vụ</Link>
+            <span className="opacity-50">© 2026 REDHOPE Global</span>
           </div>
         </div>
       </main>
