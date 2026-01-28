@@ -11,7 +11,12 @@ import {
     Shield,
     Mail,
     Smartphone,
-    Camera
+    Camera,
+    MapPin,
+    Droplet,
+    Calendar,
+    Activity,
+    Info
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
@@ -22,6 +27,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { userService } from "@/services/user.service";
 import { authService } from "@/services/auth.service";
+import { BLOOD_GROUPS } from "@/lib/database.types";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -34,7 +40,16 @@ export default function SettingsPage() {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
+    const [city, setCity] = useState("");
+    const [district, setDistrict] = useState("");
     const [address, setAddress] = useState("");
+    const [bloodGroup, setBloodGroup] = useState("");
+    const [citizenId, setCitizenId] = useState("");
+    const [dob, setDob] = useState("");
+    const [gender, setGender] = useState("");
+    const [weight, setWeight] = useState("");
+    const [lastDonationDate, setLastDonationDate] = useState("");
+    const [healthHistory, setHealthHistory] = useState("");
 
     // Sync state with profile data
     useEffect(() => {
@@ -42,7 +57,16 @@ export default function SettingsPage() {
             setName(user.user_metadata?.full_name || user.profile?.full_name || "");
             setPhone(user.phone || user.profile?.phone || "");
             setEmail(user.email || user.profile?.email || "");
+            setCity(user.profile?.city || "");
+            setDistrict(user.profile?.district || "");
             setAddress(user.profile?.address || "");
+            setBloodGroup(user.profile?.blood_group || "");
+            setCitizenId(user.profile?.citizen_id || "");
+            setDob(user.profile?.dob || "");
+            setGender(user.profile?.gender || "Nam");
+            setWeight(user.profile?.weight?.toString() || "");
+            setLastDonationDate(user.profile?.last_donation_date || "");
+            setHealthHistory(user.profile?.health_history || "");
         }
     }, [user]);
 
@@ -59,9 +83,17 @@ export default function SettingsPage() {
             const updateData = {
                 full_name: name,
                 phone: phone,
+                email: email,
+                city: city,
+                district: district,
                 address: address,
-                email: email, // Giữ email đồng bộ
-                // Giữ lại các trường khác nếu cần thiết, hoặc userService.upsert sẽ merge
+                blood_group: bloodGroup,
+                citizen_id: citizenId,
+                dob: dob || null,
+                gender: gender,
+                weight: weight ? parseFloat(weight) : null,
+                last_donation_date: lastDonationDate || null,
+                health_history: healthHistory,
             };
 
             await userService.upsert(user.id, updateData);
@@ -257,17 +289,20 @@ export default function SettingsPage() {
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Số điện thoại</label>
-                                                <input
-                                                    type="text"
-                                                    value={phone}
-                                                    onChange={(e) => setPhone(e.target.value)}
-                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
-                                                />
+                                                <div className="relative">
+                                                    <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        value={phone}
+                                                        onChange={(e) => setPhone(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col gap-2 md:col-span-2">
+                                            <div className="flex flex-col gap-2">
                                                 <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Email</label>
                                                 <div className="relative">
-                                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                                     <input
                                                         type="email"
                                                         value={email}
@@ -276,13 +311,123 @@ export default function SettingsPage() {
                                                     />
                                                 </div>
                                             </div>
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Số CCCD / Passport</label>
+                                                <div className="relative">
+                                                    <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        value={citizenId}
+                                                        onChange={(e) => setCitizenId(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ngày sinh</label>
+                                                <div className="relative">
+                                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                    <input
+                                                        type="date"
+                                                        value={dob}
+                                                        onChange={(e) => setDob(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Giới tính</label>
+                                                <select
+                                                    value={gender}
+                                                    onChange={(e) => setGender(e.target.value)}
+                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none appearance-none"
+                                                >
+                                                    <option value="Nam">Nam</option>
+                                                    <option value="Nữ">Nữ</option>
+                                                    <option value="Khác">Khác</option>
+                                                </select>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Nhóm máu</label>
+                                                <div className="relative">
+                                                    <Droplet className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />
+                                                    <select
+                                                        value={bloodGroup}
+                                                        onChange={(e) => setBloodGroup(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none appearance-none"
+                                                    >
+                                                        <option value="">Chưa xác định</option>
+                                                        {BLOOD_GROUPS.map(bg => (
+                                                            <option key={bg} value={bg}>{bg}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Cân nặng (kg)</label>
+                                                <input
+                                                    type="number"
+                                                    value={weight}
+                                                    onChange={(e) => setWeight(e.target.value)}
+                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                />
+                                            </div>
+
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Tỉnh / Thành phố</label>
+                                                <div className="relative">
+                                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        value={city}
+                                                        onChange={(e) => setCity(e.target.value)}
+                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Quận / Huyện</label>
+                                                <input
+                                                    type="text"
+                                                    value={district}
+                                                    onChange={(e) => setDistrict(e.target.value)}
+                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                />
+                                            </div>
+
                                             <div className="flex flex-col gap-2 md:col-span-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Địa chỉ</label>
+                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Địa chỉ chi tiết</label>
                                                 <textarea
-                                                    rows={3}
+                                                    rows={2}
                                                     value={address}
                                                     onChange={(e) => setAddress(e.target.value)}
                                                     className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none resize-none"
+                                                ></textarea>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ngày hiến máu gần nhất</label>
+                                                <input
+                                                    type="date"
+                                                    value={lastDonationDate}
+                                                    onChange={(e) => setLastDonationDate(e.target.value)}
+                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                />
+                                            </div>
+
+                                            <div className="flex flex-col gap-2 md:col-span-2">
+                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Tiền sử bệnh lý</label>
+                                                <textarea
+                                                    rows={3}
+                                                    value={healthHistory}
+                                                    onChange={(e) => setHealthHistory(e.target.value)}
+                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none resize-none"
+                                                    placeholder="VD: Không có hoặc ghi tên các bệnh lý nền..."
                                                 ></textarea>
                                             </div>
                                         </div>

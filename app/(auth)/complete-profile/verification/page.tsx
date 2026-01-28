@@ -17,9 +17,11 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { authService } from "@/services/auth.service";
 import { userService } from "@/services/user.service";
+import { useAuth } from "@/context/AuthContext";
 
 export default function VerificationProfilePage() {
     const router = useRouter();
+    const { refreshUser } = useAuth();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
@@ -93,15 +95,19 @@ export default function VerificationProfilePage() {
                 last_donation_date: formData.last_donation_date || null,
                 health_history: formData.health_history?.trim() || null,
                 email: user?.email || "",
-                role: role as any
+                role: role as any,
+                is_verified: true
             };
 
             await userService.upsert(userId, cleanData);
 
+            // 2. Refresh Auth Context to update is_verified status globally
+            if (refreshUser) await refreshUser();
+
             // Simulating a small delay for premium feel
             await new Promise(resolve => setTimeout(resolve, 800));
 
-            router.push("/dashboard");
+            router.push("/screening");
         } catch (err: any) {
             console.error("Verification update failed:", err);
             setError("Lỗi: Có lỗi xảy ra trong quá trình xác minh. Vui lòng thử lại.");

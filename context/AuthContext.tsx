@@ -5,6 +5,7 @@ import { authService } from '@/services/auth.service';
 
 interface AuthContextType {
     user: any;
+    profile: any;
     loading: boolean;
     signOut: () => Promise<void>;
     refreshUser: () => Promise<void>;
@@ -39,7 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, signOut, refreshUser }}>
+        <AuthContext.Provider value={{ user, profile: user?.profile, loading, signOut, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );
