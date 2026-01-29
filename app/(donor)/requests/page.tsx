@@ -140,73 +140,91 @@ export default function RequestsPage() {
                             </div>
 
                             {/* Grid of Requests */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {loading ? (
-                                    [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-64 rounded-2xl" />)
+                                    [1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-80 rounded-2xl" />)
                                 ) : paginatedData.length > 0 ? (
-                                    paginatedData.map((request) => (
-                                        <Card
-                                            key={request.id}
-                                            onClick={() => setSelectedRequest(request)}
-                                            className="flex flex-col overflow-hidden hover:shadow-2xl hover:shadow-indigo-500/10 transition-all cursor-pointer group bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d]"
-                                        >
-                                            <div
-                                                className="h-56 bg-center bg-no-repeat bg-cover relative bg-slate-200"
-                                                style={{ backgroundImage: `url("https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600")` }}
-                                            >
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                                    paginatedData.map((request) => {
+                                        // Helper to get diverse status visuals based on urgency
+                                        const getStatusHelper = (level: string) => {
+                                            switch (level) {
+                                                case 'Emergency':
+                                                    return { label: 'Cần gấp', color: 'text-purple-600 bg-purple-100' };
+                                                case 'High':
+                                                    return { label: 'Sắp hết', color: 'text-purple-600 bg-purple-100' };
+                                                default:
+                                                    return { label: 'Bổ sung', color: 'text-purple-600 bg-purple-100' };
+                                            }
+                                        };
+                                        const statusInfo = getStatusHelper(request.urgency_level);
 
-                                                {!isVerified && (
-                                                    <div className="absolute inset-0 flex items-center justify-center backdrop-blur-xl bg-white/5 group-hover:bg-white/10 transition-colors">
-                                                        <div className="bg-white/90 dark:bg-[#1c162e]/90 p-4 rounded-2xl shadow-2xl flex flex-col items-center gap-3 transform group-hover:scale-105 transition-transform">
-                                                            <div className="size-12 rounded-full bg-[#6324eb]/10 flex items-center justify-center text-[#6324eb]">
-                                                                <Lock className="w-6 h-6" />
-                                                            </div>
-                                                            <div className="text-center">
-                                                                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6324eb] mb-0.5">Vị trí bị khóa</p>
-                                                                <p className="text-[10px] font-bold text-slate-500">Cần xác minh để xem</p>
+                                        return (
+                                            <Card
+                                                key={request.id}
+                                                onClick={() => setSelectedRequest(request)}
+                                                className="flex flex-col overflow-hidden hover:shadow-xl hover:shadow-indigo-500/10 transition-all cursor-pointer group bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] rounded-2xl h-full"
+                                            >
+                                                {/* Header Image Section */}
+                                                <div
+                                                    className="h-48 bg-center bg-no-repeat bg-cover relative bg-slate-200"
+                                                    style={{ backgroundImage: `url("https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600")` }}
+                                                >
+                                                    {/* Gradient Overlay */}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+
+                                                    {/* Blur Overlay if Locked */}
+                                                    {!isVerified && (
+                                                        <div className="absolute inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center">
+                                                            <div className="bg-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transform group-hover:scale-105 transition-transform duration-300">
+                                                                <Lock className="w-4 h-4 text-[#6324eb]" />
+                                                                <span className="text-[#6324eb] text-xs font-black uppercase tracking-wider">Vị trí bị khóa</span>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    )}
 
-                                                <div className="absolute top-4 left-4 flex gap-2">
-                                                    <span className={`px-3 py-1.5 ${getUrgencyClass(request.urgency_level)} text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg`}>{request.urgency_level}</span>
+                                                    {/* Top Badges */}
+                                                    <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
+                                                        <span className={`px-2.5 py-1 ${getUrgencyClass(request.urgency_level)} text-white text-[10px] font-black uppercase tracking-wider rounded-md shadow-sm`}>
+                                                            {request.urgency_level === 'Emergency' ? 'Khẩn cấp' : request.urgency_level === 'High' ? 'Ưu tiên cao' : 'Tiêu chuẩn'}
+                                                        </span>
+                                                        <span className="bg-white/90 text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm">
+                                                            2.4 Km
+                                                        </span>
+                                                    </div>
                                                 </div>
 
-                                                {isVerified && (
-                                                    <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white drop-shadow-lg">
-                                                        <MapPin className="w-4 h-4 text-emerald-400" />
-                                                        <span className="text-sm font-bold truncate max-w-[200px]">{request.hospital?.hospital_name}</span>
+                                                {/* Body Content */}
+                                                <div className="flex flex-col flex-1 p-5">
+                                                    <div className="flex justify-between items-start mb-3 gap-2">
+                                                        <h3 className="text-[#120e1b] dark:text-white text-lg font-black tracking-tight leading-tight">
+                                                            {request.required_blood_group} ({request.required_blood_group})
+                                                        </h3>
+                                                        <span className={`shrink-0 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${statusInfo.color}`}>
+                                                            {statusInfo.label}
+                                                        </span>
                                                     </div>
-                                                )}
-                                            </div>
-                                            <CardContent className="p-6">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div>
-                                                        <h3 className="text-[#120e1b] dark:text-white text-2xl font-black tracking-tight">Nhóm {request.required_blood_group}</h3>
-                                                        <p className="text-[#6324eb] text-xs font-black uppercase tracking-wider mt-1">{request.urgency_level === 'Emergency' ? '⚡ Yêu cầu ưu tiên' : 'Thông thường'}</p>
-                                                    </div>
-                                                    <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center group-hover:border-[#6324eb] transition-colors">
-                                                        <ArrowRight className="w-6 h-6 text-slate-300 group-hover:text-[#6324eb]" />
+
+                                                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium line-clamp-3 leading-relaxed mb-4 flex-1">
+                                                        {request.description}
+                                                    </p>
+
+                                                    {/* Divider */}
+                                                    <div className="h-px w-full bg-slate-100 dark:bg-slate-800 mb-4"></div>
+
+                                                    {/* Footer Info */}
+                                                    <div className="flex items-center justify-between mt-auto">
+                                                        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                                            <Clock className="w-3.5 h-3.5" />
+                                                            <span className="text-[11px] font-bold">Hết hạn sau 4h</span>
+                                                        </div>
+                                                        <span className="text-[#6324eb] text-xs font-bold hover:underline">
+                                                            Xem chi tiết
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                <p className="text-[#654d99] dark:text-[#a594c9] text-sm font-medium mb-6 line-clamp-2 leading-relaxed">
-                                                    {request.description}
-                                                </p>
-                                            </CardContent>
-                                            <CardFooter className="px-6 pb-6 pt-0 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                                                <div className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 rounded-full text-[11px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400 mt-4">
-                                                    <Clock className="w-4 h-4 text-[#6324eb]" />
-                                                    <span>Mới cập nhật</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-4">
-                                                    <div className="size-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] text-white font-black">{request.required_units}</div>
-                                                    <span className="text-xs font-bold text-slate-400">Đơn vị</span>
-                                                </div>
-                                            </CardFooter>
-                                        </Card>
-                                    ))
+                                            </Card>
+                                        );
+                                    })
                                 ) : (
                                     <div className="col-span-full text-center py-20 text-slate-400">Không tìm thấy yêu cầu hiến máu nào.</div>
                                 )}
