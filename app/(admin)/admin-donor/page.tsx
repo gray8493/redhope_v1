@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { userService } from '@/services/user.service';
 import { User } from '@/lib/database.types';
 import { Loader2, Plus, Search, Trash2, Edit, X, Save, AlertCircle } from 'lucide-react';
+import { LocationSelector } from "@/components/shared/LocationSelector";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -42,7 +43,7 @@ export default function DonorManagementPage() {
         setErrorMsg(null);
         try {
             const data = await userService.getAll();
-            setDonors(data);
+            setDonors(data.filter(u => u.role === 'donor'));
         } catch (error: any) {
             console.error('Failed to load donors:', error);
             setErrorMsg('Không thể tải danh sách người dùng. ' + (error.message || ''));
@@ -60,7 +61,7 @@ export default function DonorManagementPage() {
             const data = searchTerm.trim()
                 ? await userService.search(searchTerm)
                 : await userService.getAll();
-            setDonors(data);
+            setDonors(data.filter(u => u.role === 'donor'));
         } catch (error: any) {
             console.error('Search failed:', error);
             setErrorMsg('Tìm kiếm thất bại. ' + (error.message || ''));
@@ -367,25 +368,13 @@ export default function DonorManagementPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">Thành phố</label>
-                                    <input
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
-                                        value={currentUser.city || ''}
-                                        onChange={e => setCurrentUser({ ...currentUser, city: e.target.value })}
-                                        placeholder="Hồ Chí Minh"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">Quận/Huyện</label>
-                                    <input
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
-                                        value={currentUser.district || ''}
-                                        onChange={e => setCurrentUser({ ...currentUser, district: e.target.value })}
-                                        placeholder="Quận 1"
-                                    />
-                                </div>
+                            <div className="space-y-2">
+                                <LocationSelector
+                                    defaultCity={currentUser.city || ''}
+                                    defaultDistrict={currentUser.district || ''}
+                                    onCityChange={(val) => setCurrentUser(prev => ({ ...prev, city: val }))}
+                                    onDistrictChange={(val) => setCurrentUser(prev => ({ ...prev, district: val }))}
+                                />
                             </div>
 
                             <div className="pt-4 flex gap-3 justify-end">

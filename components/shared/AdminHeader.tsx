@@ -103,14 +103,6 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
     <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 sticky top-0 z-20 w-full shrink-0">
       <div className="flex items-center gap-8 flex-1">
         <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">{title}</h2>
-        <div className="hidden md:flex relative max-w-xs w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm nhanh..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-xs focus:ring-2 focus:ring-[#6324eb]/20 outline-none transition-all"
-          />
-        </div>
       </div>
 
       <div className="flex items-center gap-4">
