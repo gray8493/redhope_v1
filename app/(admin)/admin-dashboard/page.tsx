@@ -272,7 +272,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="mt-8">
-                                <Link href="/admin/admin-donor" className="w-full">
+                                <Link href="/admin-donor" className="w-full">
                                     <Button className="w-full h-11 bg-gradient-to-r from-[#6324eb] to-[#501ac2] hover:from-[#501ac2] hover:to-[#3e149c] shadow-lg shadow-purple-200 hover:shadow-purple-300 font-bold text-sm">
                                         Xem quản lý đầy đủ
                                     </Button>
