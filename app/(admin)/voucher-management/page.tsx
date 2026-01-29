@@ -326,12 +326,17 @@ export default function VoucherManagementPage() {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="modal-voucher-title"
+                        className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
+                    >
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                            <h3 className="text-lg font-bold text-[#1f1f1f]">
+                            <h3 id="modal-voucher-title" className="text-lg font-bold text-[#1f1f1f]">
                                 {editingVoucher ? 'Chỉnh sửa Mã ưu đãi' : 'Tạo Mã ưu đãi mới'}
                             </h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600" aria-label="Đóng">
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
@@ -353,8 +358,9 @@ export default function VoucherManagementPage() {
                                     <input
                                         required
                                         type="number"
+                                        min="0"
                                         value={formData.points}
-                                        onChange={e => setFormData({ ...formData, points: Number(e.target.value) })}
+                                        onChange={e => setFormData({ ...formData, points: Math.max(0, Number(e.target.value) || 0) })}
                                         className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
                                     />
                                 </div>
@@ -363,8 +369,9 @@ export default function VoucherManagementPage() {
                                     <input
                                         required
                                         type="number"
+                                        min="0"
                                         value={formData.stock}
-                                        onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
+                                        onChange={e => setFormData({ ...formData, stock: Math.max(0, Number(e.target.value) || 0) })}
                                         className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
                                     />
                                     <p className="text-[10px] text-gray-400 mt-1">*Chỉ lưu giao diện</p>

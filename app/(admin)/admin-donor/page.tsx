@@ -92,7 +92,11 @@ export default function DonorManagementPage() {
                 alert('Thêm mới thành công!');
             } else {
                 // Update
-                if (!currentUser.id) return;
+                if (!currentUser.id) {
+                    setIsSaving(false);
+                    alert("Không tìm thấy ID người dùng để cập nhật.");
+                    return;
+                }
 
                 const updatedUser = await userService.update(currentUser.id, {
                     full_name: currentUser.full_name,

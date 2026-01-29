@@ -11,7 +11,18 @@ export const userService = {
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        return data || [];
+        return (data || []) as User[];
+    },
+
+    // Get donor count
+    async getCount(): Promise<number> {
+        const { count, error } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'donor');
+
+        if (error) throw error;
+        return count || 0;
     },
 
     // Get recent users
