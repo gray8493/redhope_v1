@@ -36,13 +36,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import { voucherService } from "@/services/voucher.service";
+import { pointService } from "@/services/point.service";
 
 // Define reward categories
 type Category = "all" | "food" | "shopping" | "health" | "history";
 
 // Define reward item type
 interface RewardItem {
-    id: string; // Changed from number to string for DB ID
+    id: string;
     name: string;
     description: string;
     points: number;
@@ -54,16 +55,7 @@ interface RewardItem {
     disabled?: boolean;
 }
 
-// Define history item type
-interface HistoryItem {
-    id: number;
-    name: string;
-    points: number;
-    date: string;
-    status: "success" | "pending" | "cancelled";
-}
-
-// Helper to determine category and style based on partner name (for demo purposes if DB lacks category)
+// Helper to determine category and style based on partner name
 const getCategoryAndStyle = (name: string, index: number) => {
     const styles = [
         { category: "food", icon: Coffee, color: "text-[#6324eb]", gradient: "from-[#6324eb]/10" },
@@ -73,7 +65,6 @@ const getCategoryAndStyle = (name: string, index: number) => {
         { category: "shopping", icon: Film, color: "text-[#6324eb]", gradient: "from-[#6324eb]/10" },
         { category: "shopping", icon: Monitor, color: "text-gray-500", gradient: "from-red-500/10" },
     ];
-    // Deterministic selection
     const style = styles[index % styles.length];
     const IconComponent = style.icon;
 
@@ -86,16 +77,6 @@ const getCategoryAndStyle = (name: string, index: number) => {
     };
 };
 
-// History data (Static for now as history API isn't ready)
-const historyData: HistoryItem[] = [
-    { id: 1, name: "Coffee Bean & Co.", points: 300, date: "22/01/2026", status: "success" },
-    { id: 2, name: "Trung Nguyên Legend", points: 450, date: "15/01/2026", status: "success" },
-    { id: 3, name: "Grab (50k)", points: 2000, date: "10/01/2026", status: "cancelled" },
-    { id: 4, name: "Pharmacity", points: 1200, date: "05/01/2026", status: "pending" },
-    { id: 5, name: "Bách Hóa Xanh", points: 800, date: "28/12/2025", status: "success" },
-];
-
-// Tab configuration
 const tabs: { key: Category; label: string }[] = [
     { key: "all", label: "Tất cả" },
     { key: "food", label: "Ăn uống" },
@@ -105,51 +86,70 @@ const tabs: { key: Category; label: string }[] = [
 ];
 
 export default function RewardsPage() {
-    const { user } = useAuth();
+    const { profile, user, refreshUser } = useAuth();
     const [activeTab, setActiveTab] = useState<Category>("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [rewards, setRewards] = useState<RewardItem[]>([]);
+    const [history, setHistory] = useState<any[]>([]);
     const [loadingRewards, setLoadingRewards] = useState(true);
+    const [loadingHistory, setLoadingHistory] = useState(false);
     const [alertMessage, setAlertMessage] = useState<{ type: "default" | "destructive" | "success", title: string, description: string } | null>(null);
     const [rewardToRedeem, setRewardToRedeem] = useState<RewardItem | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isRedeeming, setIsRedeeming] = useState(false);
 
-    // Fetch real points or default to 0
-    const userPoints = user?.profile?.current_points || 0;
+    const userPoints = profile?.current_points || 0;
+
+    const fetchRewards = async () => {
+        setLoadingRewards(true);
+        try {
+            const data = await voucherService.getAll();
+            const formattedRewards: RewardItem[] = data.map((v, index) => {
+                const style = getCategoryAndStyle(v.partner_name || "Unknown", index);
+                return {
+                    id: v.id,
+                    name: v.partner_name || "Ưu đãi",
+                    description: `Voucher giảm giá từ ${v.partner_name || "đối tác"}`,
+                    points: v.point_cost || 0,
+                    category: style.category,
+                    icon: style.icon,
+                    iconColor: style.iconColor,
+                    gradientColor: style.gradientColor,
+                    badge: style.badge
+                };
+            });
+            setRewards(formattedRewards);
+        } catch (error) {
+            console.error("Failed to fetch rewards", error);
+        } finally {
+            setLoadingRewards(false);
+        }
+    };
+
+    const fetchHistory = async () => {
+        if (!user?.id) return;
+        setLoadingHistory(true);
+        try {
+            const data = await pointService.getRedemptions(user.id);
+            setHistory(data);
+        } catch (error) {
+            console.error("Failed to fetch history", error);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchRewards = async () => {
-            setLoadingRewards(true);
-            try {
-                const data = await voucherService.getAll();
-                // Map DB vouchers to UI RewardItems
-                const formattedRewards: RewardItem[] = data.map((v, index) => {
-                    const style = getCategoryAndStyle(v.partner_name || "Unknown", index);
-                    return {
-                        id: v.id,
-                        name: v.partner_name || "Ưu đãi",
-                        description: `Voucher giảm giá từ ${v.partner_name || "đối tác"}`,
-                        points: v.point_cost || 0,
-                        category: style.category,
-                        icon: style.icon,
-                        iconColor: style.iconColor,
-                        gradientColor: style.gradientColor,
-                        badge: style.badge
-                    };
-                });
-                setRewards(formattedRewards);
-            } catch (error) {
-                console.error("Failed to fetch rewards", error);
-            } finally {
-                setLoadingRewards(false);
-            }
-        };
-
         fetchRewards();
     }, []);
 
+    useEffect(() => {
+        if (activeTab === "history") {
+            fetchHistory();
+        }
+    }, [activeTab]);
+
     const filteredRewards = rewards.filter((reward) => {
-        // If tab is history, we don't show rewards anyway, but filter correctly for other tabs
         if (activeTab === "history") return false;
         const matchesTab = activeTab === "all" ? true : reward.category === activeTab;
         const matchesSearch = reward.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -157,8 +157,8 @@ export default function RewardsPage() {
         return matchesTab && matchesSearch;
     });
 
-    const filteredHistory = historyData.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredHistory = history.filter((item) =>
+        item.vouchers?.partner_name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const handleRedeemClick = (reward: RewardItem) => {
@@ -175,21 +175,33 @@ export default function RewardsPage() {
         setIsConfirmOpen(true);
     };
 
-    const confirmRedeem = () => {
-        if (!rewardToRedeem) return;
+    const confirmRedeem = async () => {
+        if (!rewardToRedeem || !user?.id) return;
 
-        // Future integration: Call redeem API here
-        setAlertMessage({
-            type: "default", // Using default for success styling for now
-            title: "Đổi quà thành công!",
-            description: "Mã voucher đã được gửi vào ví của bạn. Vui lòng kiểm tra email."
-        });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setIsConfirmOpen(false);
-        setRewardToRedeem(null);
+        setIsRedeeming(true);
+        try {
+            await pointService.redeemVoucher(user.id, rewardToRedeem.id);
+            setAlertMessage({
+                type: "success",
+                title: "Đổi quà thành công!",
+                description: "Mã voucher đã được gửi vào ví của bạn. Vui lòng kiểm tra email."
+            });
+            await refreshUser();
+            if (activeTab === "history") fetchHistory();
+        } catch (error: any) {
+            setAlertMessage({
+                type: "destructive",
+                title: "Lỗi đổi quà",
+                description: error.message || "Đã có lỗi xảy ra vui lòng thử lại sau."
+            });
+        } finally {
+            setIsRedeeming(false);
+            setIsConfirmOpen(false);
+            setRewardToRedeem(null);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     };
 
-    // Auto clear alert
     useEffect(() => {
         if (alertMessage) {
             const timer = setTimeout(() => setAlertMessage(null), 5000);
@@ -200,21 +212,17 @@ export default function RewardsPage() {
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <div className="flex h-full grow flex-row">
-                {/* Sidebar Navigation */}
                 <Sidebar />
-
-                {/* Main Content & Footer Wrapper */}
                 <div className="flex-1 flex flex-col min-w-0">
-                    <TopNav />
+                    <TopNav title="Phần thưởng" />
 
                     <main className="flex flex-1 justify-center py-8">
                         <div className="flex flex-col max-w-[1200px] flex-1 px-4 md:px-10">
 
-                            {/* Alert Message */}
                             {alertMessage && (
                                 <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
                                     <Alert variant={alertMessage.type === "success" ? "default" : alertMessage.type} className={`${alertMessage.type === 'success' ? 'border-green-500 text-green-700 bg-green-50 dark:bg-green-900/10' : ''}`}>
-                                        {alertMessage.type === 'destructive' ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                                        {alertMessage.type === 'destructive' ? <X className="h-4 w-4" /> : <Check className="h-4 w-4 text-green-600" />}
                                         <AlertTitle>{alertMessage.title}</AlertTitle>
                                         <AlertDescription>
                                             {alertMessage.description}
@@ -223,9 +231,7 @@ export default function RewardsPage() {
                                 </div>
                             )}
 
-                            {/* Hero Section */}
-                            <div className="flex flex-wrap justify-between items-end gap-3 mb-6">
-
+                            <div className="flex flex-wrap justify-between items-end gap-3 mb-6 text-left">
                                 <div className="flex min-w-72 flex-col gap-3">
                                     <h1 className="text-[#120e1b] dark:text-white text-4xl font-black tracking-tight">Đổi quà tri ân</h1>
                                     <p className="text-[#654d99] dark:text-[#a594c9] text-base font-normal leading-normal max-w-2xl">
@@ -237,8 +243,7 @@ export default function RewardsPage() {
                                 </button>
                             </div>
 
-                            {/* Stats Overview */}
-                            <div className="flex flex-wrap gap-4 mb-8">
+                            <div className="flex flex-wrap gap-4 mb-8 text-left">
                                 <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
                                     <div className="flex items-center gap-2 text-[#6324eb]">
                                         <Wallet className="w-5 h-5" />
@@ -249,20 +254,19 @@ export default function RewardsPage() {
                                 <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
                                     <div className="flex items-center gap-2 text-[#6324eb]">
                                         <Heart className="w-5 h-5" />
-                                        <p className="text-[#120e1b] dark:text-white text-base font-medium">Tổng lần hiến</p>
+                                        <p className="text-[#120e1b] dark:text-white text-base font-medium">Lần hiến máu</p>
                                     </div>
-                                    <p className="text-[#120e1b] dark:text-white tracking-light text-3xl font-black leading-tight">12</p>
+                                    <p className="text-[#120e1b] dark:text-white tracking-light text-3xl font-black leading-tight">2</p>
                                 </div>
                                 <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
                                     <div className="flex items-center gap-2 text-[#6324eb]">
                                         <Users className="w-5 h-5" />
                                         <p className="text-[#120e1b] dark:text-white text-base font-medium">Người được cứu</p>
                                     </div>
-                                    <p className="text-[#120e1b] dark:text-white tracking-light text-3xl font-black leading-tight">36</p>
+                                    <p className="text-[#120e1b] dark:text-white tracking-light text-3xl font-black leading-tight">6</p>
                                 </div>
                             </div>
 
-                            {/* Tabs and Search */}
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#d7d0e7] dark:border-[#2d2545] mb-8 pb-1">
                                 <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as Category)} className="w-full md:w-auto">
                                     <TabsList className="bg-transparent p-0 h-auto gap-2 overflow-x-auto no-scrollbar justify-start">
@@ -292,74 +296,62 @@ export default function RewardsPage() {
                                 </div>
                             </div>
 
-                            {/* Content based on active tab */}
                             {activeTab === "history" ? (
-                                /* History Table */
                                 <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] overflow-hidden">
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead>
-                                                <tr className="border-b border-[#ebe7f3] dark:border-[#2d263d] bg-[#f6f6f8] dark:bg-[#251e36]">
-                                                    <th className="text-left py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ưu đãi</th>
-                                                    <th className="text-left py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Điểm</th>
-                                                    <th className="text-left py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ngày đổi</th>
-                                                    <th className="text-left py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Trạng thái</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {filteredHistory.map((item) => (
-                                                    <tr key={item.id} className="border-b border-[#ebe7f3] dark:border-[#2d263d] last:border-b-0 hover:bg-[#f6f6f8] dark:hover:bg-[#251e36] transition-colors">
-                                                        <td className="py-4 px-6">
-                                                            <span className="font-bold text-[#120e1b] dark:text-white">{item.name}</span>
-                                                        </td>
-                                                        <td className="py-4 px-6">
-                                                            <span className="text-[#6324eb] font-bold">-{item.points} pts</span>
-                                                        </td>
-                                                        <td className="py-4 px-6">
-                                                            <span className="text-[#654d99] dark:text-[#a594c9]">{item.date}</span>
-                                                        </td>
-                                                        <td className="py-4 px-6">
-                                                            {item.status === "success" && (
-                                                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold">
-                                                                    <Check className="w-3 h-3" /> Thành công
-                                                                </span>
-                                                            )}
-                                                            {item.status === "pending" && (
-                                                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold">
-                                                                    <Clock className="w-3 h-3" /> Đang xử lý
-                                                                </span>
-                                                            )}
-                                                            {item.status === "cancelled" && (
-                                                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-bold">
-                                                                    <X className="w-3 h-3" /> Đã hủy
-                                                                </span>
-                                                            )}
-                                                        </td>
+                                    {loadingHistory ? (
+                                        <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-[#6324eb]" /></div>
+                                    ) : (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left">
+                                                <thead>
+                                                    <tr className="border-b border-[#ebe7f3] dark:border-[#2d263d] bg-[#f6f6f8] dark:bg-[#251e36]">
+                                                        <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ưu đãi</th>
+                                                        <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Điểm</th>
+                                                        <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ngày đổi</th>
+                                                        <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Trạng thái</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    {filteredHistory.length === 0 && (
-                                        <div className="py-12 text-center text-[#654d99] dark:text-[#a594c9]">
-                                            Không tìm thấy lịch sử đổi quà
+                                                </thead>
+                                                <tbody>
+                                                    {filteredHistory.map((item) => (
+                                                        <tr key={item.id} className="border-b border-[#ebe7f3] dark:border-[#2d263d] last:border-b-0 hover:bg-[#f6f6f8] dark:hover:bg-[#251e36] transition-colors">
+                                                            <td className="py-4 px-6">
+                                                                <span className="font-bold text-[#120e1b] dark:text-white">{item.vouchers?.partner_name}</span>
+                                                            </td>
+                                                            <td className="py-4 px-6">
+                                                                <span className="text-[#6324eb] font-bold">-{item.vouchers?.point_cost} pts</span>
+                                                            </td>
+                                                            <td className="py-4 px-6">
+                                                                <span className="text-[#654d99] dark:text-[#a594c9]">{new Date(item.created_at).toLocaleDateString('vi-VN')}</span>
+                                                            </td>
+                                                            <td className="py-4 px-6">
+                                                                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${item.status === 'Redeemed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                                    {item.status === 'Redeemed' ? <Check className="w-3 h-3" /> : <Clock className="w-3 h-3" />} {item.status}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                            {filteredHistory.length === 0 && (
+                                                <div className="py-12 text-center text-[#654d99] dark:text-[#a594c9]">
+                                                    Không tìm thấy lịch sử đổi quà
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
                             ) : (
-                                /* Marketplace Grid */
                                 <>
                                     {loadingRewards ? (
                                         <div className="flex justify-center items-center py-20">
                                             <Loader2 className="w-10 h-10 text-[#6324eb] animate-spin" />
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 text-left">
                                             {filteredRewards.map((reward) => (
                                                 <div
                                                     key={reward.id}
-                                                    className={`flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] transition-all group ${userPoints < reward.points ? "opacity-90" : "hover:shadow-lg cursor-pointer" // Opacity logic changed from disabled
-                                                        }`}
+                                                    className={`flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] transition-all group ${userPoints < reward.points ? "opacity-90" : "hover:shadow-lg"}`}
                                                 >
                                                     <div className={`aspect-[4/3] w-full bg-[#f6f6f8] dark:bg-[#251e36] flex items-center justify-center p-8 relative overflow-hidden ${userPoints < reward.points ? "grayscale" : ""}`}>
                                                         <div className={`absolute inset-0 bg-gradient-to-br ${reward.gradientColor} to-transparent ${userPoints < reward.points ? "opacity-30" : "opacity-50"}`}></div>
@@ -416,16 +408,16 @@ export default function RewardsPage() {
 
             <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
                 <AlertDialogContent className="bg-white dark:bg-[#1c162e] border-[#ebe7f3] dark:border-[#2d263d]">
-                    <AlertDialogHeader>
+                    <AlertDialogHeader className="text-left">
                         <AlertDialogTitle className="text-[#120e1b] dark:text-white">Xác nhận đổi quà</AlertDialogTitle>
                         <AlertDialogDescription className="text-[#654d99] dark:text-[#a594c9]">
                             Bạn có chắc muốn dùng <span className="font-bold text-[#6324eb]">{rewardToRedeem?.points} điểm</span> để đổi lấy ưu đãi từ <span className="font-bold text-[#120e1b] dark:text-white">{rewardToRedeem?.name}</span> không?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="bg-[#f6f6f8] dark:bg-[#2d263d] text-[#120e1b] dark:text-white border-none hover:bg-[#ebe7f3] dark:hover:bg-[#3d335a]">Hủy</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmRedeem} className="bg-[#6324eb] text-white hover:bg-[#501ac2]">
-                            Xác nhận
+                        <AlertDialogCancel disabled={isRedeeming} className="bg-[#f6f6f8] dark:bg-[#2d263d] text-[#120e1b] dark:text-white border-none hover:bg-[#ebe7f3] dark:hover:bg-[#3d335a]">Hủy</AlertDialogCancel>
+                        <AlertDialogAction disabled={isRedeeming} onClick={confirmRedeem} className="bg-[#6324eb] text-white hover:bg-[#501ac2]">
+                            {isRedeeming ? <Loader2 className="animate-spin" /> : "Xác nhận"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

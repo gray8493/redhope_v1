@@ -3,47 +3,86 @@ import { userService } from './user.service';
 
 export const bloodService = {
     /**
-     * Xác nhận hiến máu thành công và cộng điểm cho người hiến
-     * @param donationId ID của bản ghi hiến máu
-     * @param donorId ID của người hiến máu (user_id)
-     * @param points Số điểm được cộng (mặc định là 100)
+     * Xác nhận hiến máu thành công. 
+     * DB Trigger sẽ tự động cộng điểm và cập nhật trạng thái appointment.
      */
-    completeDonation: async (donationId: string, donorId: string, points: number = 100) => {
+    completeDonation: async (appointmentId: string, donorId: string, hospitalId: string, volumeMl: number) => {
         try {
-            // 1. Cập nhật trạng thái bản ghi hiến máu thành 'completed'
-            const { error: donationError } = await supabase
-                .from('donations')
-                .update({
-                    status: 'completed',
-                    points_earned: points
+            const { data, error } = await supabase
+                .from('donation_records')
+                .insert({
+                    appointment_id: appointmentId,
+                    donor_id: donorId,
+                    hospital_id: hospitalId,
+                    volume_ml: volumeMl,
+                    verified_at: new Date().toISOString()
                 })
-                .eq('id', donationId);
+                .select()
+                .single();
 
-            if (donationError) throw donationError;
+            if (error) throw error;
 
-            // 2. Cộng điểm cho người hiến máu thông qua userService
-            await userService.addPoints(donorId, points);
+            // Trigger on_donation_verified sẽ tự động:
+            // 1. Cập nhật appointments.status = 'Completed'
+            // 2. Cộng 100 điểm cho users.current_points
 
-            // 3. (Tùy chọn) Có thể thêm thông báo tự động ở đây
-            await supabase.from('notifications').insert({
-                user_id: donorId,
-                title: 'Hiến máu thành công!',
-                message: `Cảm ơn bạn đã hiến máu cứu người. Bạn vừa được cộng ${points} điểm vào tài khoản.`,
-                type: 'reward'
-            });
-
-            return { success: true };
+            return { success: true, data };
         } catch (error: any) {
             console.error('[BloodService] Error completing donation:', error);
             throw error;
         }
     },
 
-    getBloodAvailability: async () => {
-        const { data, error } = await supabase
-            .from('blood_inventory')
-            .select('*');
-        if (error) return [];
-        return data;
+    async getHospitalStats(hospitalId: string) {
+        try {
+            const { data, error } = await supabase
+                .from('donation_records')
+                .select('volume_ml, blood_group_confirmed')
+                .eq('hospital_id', hospitalId);
+
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('[BloodService] Error getting hospital stats:', error);
+            throw error;
+        }
+    },
+
+    async getDonorStats(donorId: string) {
+        try {
+            const { data, error } = await supabase
+                .from('donation_records')
+                .select('volume_ml')
+                .eq('donor_id', donorId);
+
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('[BloodService] Error getting donor stats:', error);
+            throw error;
+        }
+    },
+
+    async getDonations(donorId: string) {
+        try {
+            const { data, error } = await supabase
+                .from('donation_records')
+                .select(`
+                    *,
+                    hospital:hospital_id (
+                        hospital_name,
+                        city,
+                        district
+                    )
+                `)
+                .eq('donor_id', donorId)
+                .order('verified_at', { ascending: false });
+
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('[BloodService] Error fetching donations:', error);
+            throw error;
+        }
     }
 };

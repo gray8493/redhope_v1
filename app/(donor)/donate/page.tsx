@@ -7,44 +7,171 @@ import {
     Trophy,
     TrendingUp,
     Users,
-    Star,
-    Wallet
+    Wallet,
+    Loader2
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, CheckCircle2, Copy } from "lucide-react";
+import { donationService } from "@/services/donation.service";
+import { useAuth } from "@/context/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+
+interface DonationStats {
+    totalAmount: number;
+    totalDonors: number;
+    totalTransactions: number;
+}
+
+interface LeaderboardItem {
+    donor_id: string;
+    donor_name: string;
+    total_amount: number;
+    donation_count: number;
+}
+
+interface RecentDonation {
+    id: string;
+    donor_name: string;
+    amount: number;
+    created_at: string;
+    is_anonymous: boolean;
+}
 
 export default function DonatePage() {
-    const [amount, setAmount] = useState<string>("100.000");
+    const { user, profile } = useAuth();
+
+
+    const [amount, setAmount] = useState<string>("100000");
     const [paymentMethod, setPaymentMethod] = useState<string>("momo");
     const [showQRModal, setShowQRModal] = useState(false);
     const [showCardModal, setShowCardModal] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isAnonymous, setIsAnonymous] = useState(false);
+    const [currentDonationId, setCurrentDonationId] = useState<string | null>(null);
 
-    const donationPresets = ["50.000", "100.000", "200.000", "500.000"];
+    // Data states
+    const [stats, setStats] = useState<DonationStats>({ totalAmount: 0, totalDonors: 0, totalTransactions: 0 });
+    const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
+    const [recentDonations, setRecentDonations] = useState<RecentDonation[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const handleConfirmDonation = () => {
+    const donationPresets = ["50000", "100000", "200000", "500000"];
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const [statsData, leaderboardData, recentData] = await Promise.all([
+                    donationService.getStats(),
+                    donationService.getLeaderboard(7),
+                    donationService.getRecentDonations(5)
+                ]);
+                setStats(statsData);
+                setLeaderboard(leaderboardData);
+                setRecentDonations(recentData);
+            } catch (error) {
+                console.error("Error fetching donation data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const formatAmount = (value: string) => {
+        const num = parseInt(value.replace(/\D/g, ''), 10);
+        if (isNaN(num)) return "";
+        return num.toLocaleString('vi-VN');
+    };
+
+    const parseAmount = (value: string) => {
+        return parseInt(value.replace(/\D/g, ''), 10) || 0;
+    };
+
+    const formatCurrency = (amount: number) => {
+        if (amount >= 1000000000) return `${(amount / 1000000000).toFixed(1)} Tỷ`;
+        if (amount >= 1000000) return `${(amount / 1000000).toFixed(0)} Tr`;
+        if (amount >= 1000) return `${(amount / 1000).toFixed(0)}K`;
+        return amount.toLocaleString('vi-VN');
+    };
+
+    const handleConfirmDonation = async () => {
+        const amountValue = parseAmount(amount);
+        if (amountValue < 10000) {
+            toast.error("Số tiền tối thiểu là 10.000đ");
+            return;
+        }
+
         setIsProcessing(true);
-        // Simulate a small delay for "processing"
-        setTimeout(() => {
-            setIsProcessing(false);
+        try {
+            const donation = await donationService.createDonation({
+                donorId: user?.id,
+                donorName: profile?.full_name || "Người dùng",
+                amount: amountValue,
+                paymentMethod: paymentMethod as 'momo' | 'bank_transfer',
+                isAnonymous
+            });
+
+            setCurrentDonationId(donation.id);
+
             if (paymentMethod === "momo") {
                 setShowQRModal(true);
             } else {
                 setShowCardModal(true);
             }
-        }, 800);
+        } catch (error) {
+            toast.error("Không thể tạo giao dịch. Vui lòng thử lại.");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handlePaymentComplete = async () => {
+        if (!currentDonationId) return;
+
+        try {
+            await donationService.confirmPayment(currentDonationId);
+            toast.success("Cảm ơn bạn đã quyên góp cho cộng đồng!");
+
+            // Refresh data
+            const [statsData, recentData] = await Promise.all([
+                donationService.getStats(),
+                donationService.getRecentDonations(5)
+            ]);
+            setStats(statsData);
+            setRecentDonations(recentData);
+        } catch (error) {
+            toast.error("Không thể xác nhận thanh toán.");
+        }
+
+        setShowQRModal(false);
+        setShowCardModal(false);
+        setCurrentDonationId(null);
+    };
+
+    const timeAgo = (dateString: string) => {
+        const now = new Date();
+        const date = new Date(dateString);
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+
+        if (diffMins < 1) return "Vừa xong";
+        if (diffMins < 60) return `${diffMins} phút trước`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours} giờ trước`;
+        const diffDays = Math.floor(diffHours / 24);
+        return `${diffDays} ngày trước`;
     };
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#fff5f5] dark:bg-[#1f1212] font-sans text-[#450a0a] dark:text-red-50">
             <div className="flex h-full grow flex-row">
-                {/* Sidebar Navigation */}
                 <Sidebar />
 
-                {/* Main Content & Footer Wrapper */}
                 <div className="flex-1 flex flex-col min-w-0">
                     <TopNav title="" />
 
@@ -62,11 +189,19 @@ export default function DonatePage() {
                                     <div className="flex flex-wrap gap-4 mt-2">
                                         <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors border border-white/10">
                                             <Users className="w-5 h-5" />
-                                            <span className="font-bold">12,500+ Nhà hảo tâm</span>
+                                            {loading ? (
+                                                <Skeleton className="h-5 w-24 bg-white/20" />
+                                            ) : (
+                                                <span className="font-bold">{stats.totalDonors.toLocaleString('vi-VN')}+ Nhà hảo tâm</span>
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors border border-white/10">
                                             <TrendingUp className="w-5 h-5" />
-                                            <span className="font-bold">5.2 Tỷ VNĐ đã quyên góp</span>
+                                            {loading ? (
+                                                <Skeleton className="h-5 w-32 bg-white/20" />
+                                            ) : (
+                                                <span className="font-bold">{formatCurrency(stats.totalAmount)} VNĐ đã quyên góp</span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -96,7 +231,7 @@ export default function DonatePage() {
                                                                 : "border-red-200 dark:border-red-900/30 text-[#450a0a] dark:text-red-200 hover:border-[#7f1d1d]"
                                                                 }`}
                                                         >
-                                                            {preset}đ
+                                                            {formatAmount(preset)}đ
                                                         </button>
                                                     ))}
                                                 </div>
@@ -109,12 +244,23 @@ export default function DonatePage() {
                                                         type="text"
                                                         className="w-full bg-[#fef2f2] dark:bg-[#1f1212] border-none rounded-xl py-4 px-4 text-xl font-bold text-[#450a0a] dark:text-white focus:ring-2 focus:ring-[#7f1d1d] placeholder:text-red-400"
                                                         placeholder="Nhập số tiền (VNĐ)"
-                                                        value={amount}
-                                                        onChange={(e) => setAmount(e.target.value)}
+                                                        value={formatAmount(amount)}
+                                                        onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))}
                                                     />
                                                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7f1d1d] font-bold">VNĐ</span>
                                                 </div>
                                             </div>
+
+                                            {/* Anonymous checkbox */}
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isAnonymous}
+                                                    onChange={(e) => setIsAnonymous(e.target.checked)}
+                                                    className="w-5 h-5 rounded border-red-300 text-[#7f1d1d] focus:ring-[#7f1d1d]"
+                                                />
+                                                <span className="text-sm font-medium text-[#450a0a] dark:text-red-200">Quyên góp ẩn danh</span>
+                                            </label>
 
                                             <div>
                                                 <label className="block text-sm font-bold text-[#7f1d1d] dark:text-red-400 mb-3 uppercase tracking-wider">Phương thức thanh toán</label>
@@ -136,18 +282,18 @@ export default function DonatePage() {
                                                         </div>
                                                     </button>
                                                     <button
-                                                        onClick={() => setPaymentMethod("card")}
-                                                        className={`flex items-center gap-4 p-4 rounded-xl border transition-all group text-left hover:shadow-md ${paymentMethod === "card"
+                                                        onClick={() => setPaymentMethod("bank_transfer")}
+                                                        className={`flex items-center gap-4 p-4 rounded-xl border transition-all group text-left hover:shadow-md ${paymentMethod === "bank_transfer"
                                                             ? "border-[#7f1d1d] bg-[#7f1d1d]/5 shadow-md shadow-[#7f1d1d]/10"
                                                             : "border-red-200 dark:border-red-900/30 bg-white dark:bg-[#2a1a1a]"
                                                             }`}
                                                     >
-                                                        <div className={`size-10 rounded-full flex items-center justify-center transition-colors ${paymentMethod === "card" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
+                                                        <div className={`size-10 rounded-full flex items-center justify-center transition-colors ${paymentMethod === "bank_transfer" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
                                                             }`}>
                                                             <CreditCard className="w-6 h-6" />
                                                         </div>
                                                         <div>
-                                                            <p className={`font-bold transition-colors ${paymentMethod === "card" ? "text-[#7f1d1d]" : "text-[#450a0a] dark:text-white group-hover:text-[#7f1d1d]"}`}>Thẻ Ngân hàng / Visa</p>
+                                                            <p className={`font-bold transition-colors ${paymentMethod === "bank_transfer" ? "text-[#7f1d1d]" : "text-[#450a0a] dark:text-white group-hover:text-[#7f1d1d]"}`}>Thẻ Ngân hàng / Visa</p>
                                                             <p className="text-xs text-[#7f1d1d] dark:text-red-300">Chuyển khoản trực tiếp</p>
                                                         </div>
                                                     </button>
@@ -160,30 +306,44 @@ export default function DonatePage() {
                                                 className="w-full py-4 bg-[#7f1d1d] hover:bg-[#450a0a] text-white text-lg font-black rounded-xl shadow-xl shadow-[#7f1d1d]/30 transition-all active:scale-[0.98] mt-2 ring-offset-2 focus:ring-2 ring-[#7f1d1d] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                             >
                                                 {isProcessing ? (
-                                                    <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
                                                 ) : null}
-                                                {isProcessing ? "Đang xử lý..." : `Tiến hành Quyên góp ${amount && `${amount}đ`}`}
+                                                {isProcessing ? "Đang xử lý..." : `Tiến hành Quyên góp ${formatAmount(amount)}đ`}
                                             </button>
                                         </div>
                                     </div>
 
+                                    {/* Recent Activity */}
                                     <div className="bg-white dark:bg-[#2a1a1a] rounded-xl border border-red-100 dark:border-red-900/30 p-6 shadow-sm">
                                         <h3 className="font-bold text-lg mb-4 text-[#450a0a] dark:text-red-100">Hoạt động gần đây</h3>
                                         <div className="space-y-4">
-                                            {[1, 2, 3].map((_, i) => (
-                                                <div key={i} className="flex items-center justify-between pb-4 border-b border-red-100 dark:border-red-900/20 last:border-0 last:pb-0">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center font-bold text-xs text-[#7f1d1d]">
-                                                            ND
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-bold text-[#450a0a] dark:text-white">Người dùng ẩn danh</p>
-                                                            <p className="text-xs text-[#7f1d1d] dark:text-red-300">Vừa quyên góp</p>
-                                                        </div>
+                                            {loading ? (
+                                                [1, 2, 3].map((i) => (
+                                                    <div key={i} className="flex items-center justify-between pb-4 border-b border-red-100 dark:border-red-900/20 last:border-0">
+                                                        <Skeleton className="h-10 w-40" />
+                                                        <Skeleton className="h-6 w-20" />
                                                     </div>
-                                                    <span className="text-[#15803d] font-bold text-sm">+50.000đ</span>
-                                                </div>
-                                            ))}
+                                                ))
+                                            ) : recentDonations.length > 0 ? (
+                                                recentDonations.map((donation) => (
+                                                    <div key={donation.id} className="flex items-center justify-between pb-4 border-b border-red-100 dark:border-red-900/20 last:border-0 last:pb-0">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="size-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center font-bold text-xs text-[#7f1d1d]">
+                                                                {donation.is_anonymous ? "AD" : donation.donor_name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-bold text-[#450a0a] dark:text-white">
+                                                                    {donation.is_anonymous ? "Người dùng ẩn danh" : donation.donor_name}
+                                                                </p>
+                                                                <p className="text-xs text-[#7f1d1d] dark:text-red-300">{timeAgo(donation.created_at)}</p>
+                                                            </div>
+                                                        </div>
+                                                        <span className="text-[#15803d] font-bold text-sm">+{formatAmount(donation.amount.toString())}đ</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-center text-sm text-[#7f1d1d]/60 py-4">Chưa có hoạt động quyên góp nào</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -195,73 +355,52 @@ export default function DonatePage() {
                                             <h2 className="text-xl font-bold flex items-center gap-2 text-[#7f1d1d]">
                                                 <Trophy className="w-6 h-6 fill-current" /> Bảng vàng Vinh danh
                                             </h2>
-                                            <p className="text-sm text-[#7f1d1d] mt-1 dark:text-red-300">Top nhà hảo tâm tháng này</p>
+                                            <p className="text-sm text-[#7f1d1d] mt-1 dark:text-red-300">Top nhà hảo tâm</p>
                                         </div>
 
                                         <div className="flex-1 overflow-y-auto">
-                                            {/* Top 1 */}
-                                            <div className="p-4 flex items-center gap-4 bg-red-50 dark:bg-red-900/10 border-b border-red-100 dark:border-red-900/30">
-                                                <div className="flex-none font-black text-2xl text-[#7f1d1d] w-8 text-center drop-shadow-sm">1</div>
-                                                <div className="size-12 rounded-full border-2 border-[#7f1d1d] p-0.5">
-                                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" alt="Top 1" className="w-full h-full rounded-full bg-white" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-[#450a0a] dark:text-white truncate">Nguyễn Văn An</p>
-                                                    <p className="text-xs text-[#991b1b] dark:text-red-400 font-bold">VIP Donor</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-sm font-black text-[#7f1d1d]">150tr</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Top 2 */}
-                                            <div className="p-4 flex items-center gap-4 border-b border-red-100 dark:border-red-900/30">
-                                                <div className="flex-none font-black text-xl text-slate-400 w-8 text-center">2</div>
-                                                <div className="size-10 rounded-full border-2 border-slate-300 p-0.5">
-                                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" alt="Top 2" className="w-full h-full rounded-full bg-white" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-[#450a0a] dark:text-white truncate">Trần Thị Bích</p>
-                                                    <p className="text-xs text-[#7f1d1d] dark:text-red-300">Quyên góp 12 lần</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-sm font-black text-[#7f1d1d]">85tr</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Top 3 */}
-                                            <div className="p-4 flex items-center gap-4 border-b border-red-100 dark:border-red-900/30">
-                                                <div className="flex-none font-black text-xl text-[#450a0a] w-8 text-center">3</div>
-                                                <div className="size-10 rounded-full border-2 border-[#450a0a] p-0.5">
-                                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Michael" alt="Top 3" className="w-full h-full rounded-full bg-white" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-[#450a0a] dark:text-white truncate">Lê Hoàng Nam</p>
-                                                    <p className="text-xs text-[#7f1d1d] dark:text-red-300">Quyên góp 8 lần</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-sm font-black text-[#7f1d1d]">50tr</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Top 4-10 */}
-                                            {[4, 5, 6, 7].map((rank) => (
-                                                <div key={rank} className="p-4 flex items-center gap-4 border-b border-red-100 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
-                                                    <div className="flex-none font-bold text-sm text-slate-400 w-8 text-center">{rank}</div>
-                                                    <div className="size-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${rank}`} alt={`Rank ${rank}`} className="w-full h-full" />
+                                            {loading ? (
+                                                [1, 2, 3, 4, 5].map((i) => (
+                                                    <div key={i} className="p-4 flex items-center gap-4 border-b border-red-100 dark:border-red-900/30">
+                                                        <Skeleton className="h-10 w-full" />
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-[#450a0a] dark:text-white truncate">Nhà hảo tâm {rank}</p>
+                                                ))
+                                            ) : leaderboard.length > 0 ? (
+                                                leaderboard.map((donor, index) => (
+                                                    <div
+                                                        key={donor.donor_id}
+                                                        className={`p-4 flex items-center gap-4 border-b border-red-100 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors ${index === 0 ? 'bg-red-50 dark:bg-red-900/10' : ''}`}
+                                                    >
+                                                        <div className={`flex-none font-black w-8 text-center ${index === 0 ? 'text-2xl text-[#7f1d1d] drop-shadow-sm' : index < 3 ? 'text-xl text-slate-400' : 'text-sm text-slate-400'}`}>
+                                                            {index + 1}
+                                                        </div>
+                                                        <div className={`rounded-full overflow-hidden ${index === 0 ? 'size-12 border-2 border-[#7f1d1d] p-0.5' : index < 3 ? 'size-10 border-2 border-slate-300 p-0.5' : 'size-8 bg-slate-200 dark:bg-slate-700'}`}>
+                                                            <img
+                                                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${donor.donor_name}`}
+                                                                alt={donor.donor_name}
+                                                                className="w-full h-full rounded-full bg-white"
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className={`font-bold truncate ${index === 0 ? 'text-sm text-[#450a0a] dark:text-white' : 'text-sm text-[#450a0a] dark:text-white'}`}>
+                                                                {donor.donor_name}
+                                                            </p>
+                                                            <p className="text-xs text-[#7f1d1d] dark:text-red-300">
+                                                                {index === 0 ? 'VIP Donor' : `Quyên góp ${donor.donation_count} lần`}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-sm font-black text-[#7f1d1d]">{formatCurrency(donor.total_amount)}</p>
+                                                        </div>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <p className="text-sm font-bold text-[#7f1d1d]">10tr</p>
-                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="p-8 text-center text-[#7f1d1d]/60">
+                                                    <Trophy className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                                                    <p className="text-sm">Chưa có nhà hảo tâm nào</p>
                                                 </div>
-                                            ))}
+                                            )}
                                         </div>
-
-
                                     </div>
 
                                     {/* Motivation Card */}
@@ -298,11 +437,10 @@ export default function DonatePage() {
                             </button>
                             <QrCode className="w-12 h-12 mx-auto mb-2" />
                             <h3 className="text-xl font-black">Thanh toán qua MoMo</h3>
-                            <p className="text-white/80 text-sm">Quét mã để quyên góp {amount}đ</p>
+                            <p className="text-white/80 text-sm">Quét mã để quyên góp {formatAmount(amount)}đ</p>
                         </div>
                         <div className="p-8 text-center flex flex-col items-center">
                             <div className="bg-white p-4 rounded-2xl shadow-inner border-4 border-pink-50 mb-6">
-                                {/* Simulated QR Image */}
                                 <div className="size-48 bg-[#fdf2f8] rounded-xl flex items-center justify-center relative overflow-hidden ring-1 ring-pink-100">
                                     <div className="grid grid-cols-4 gap-2 opacity-20">
                                         {Array.from({ length: 16 }).map((_, i) => <div key={i} className="size-8 bg-pink-900 rounded-sm"></div>)}
@@ -317,15 +455,15 @@ export default function DonatePage() {
                             <div className="w-full space-y-3 mb-6">
                                 <div className="flex justify-between text-sm py-2 border-b border-red-50 dark:border-red-900/20">
                                     <span className="text-red-400 font-medium">Số tiền:</span>
-                                    <span className="text-[#450a0a] dark:text-white font-black">{amount} VNĐ</span>
+                                    <span className="text-[#450a0a] dark:text-white font-black">{formatAmount(amount)} VNĐ</span>
                                 </div>
                                 <div className="flex justify-between text-sm py-2 border-b border-red-50 dark:border-red-900/20">
                                     <span className="text-red-400 font-medium">Nội dung:</span>
-                                    <span className="text-[#450a0a] dark:text-white font-black">QH {Math.floor(Math.random() * 100000)}</span>
+                                    <span className="text-[#450a0a] dark:text-white font-black">REDHOPE {currentDonationId?.slice(-6).toUpperCase()}</span>
                                 </div>
                             </div>
                             <button
-                                onClick={() => setShowQRModal(false)}
+                                onClick={handlePaymentComplete}
                                 className="w-full py-4 bg-pink-600 hover:bg-pink-700 text-white font-black rounded-xl transition-all shadow-lg shadow-pink-600/20"
                             >
                                 Tôi đã thanh toán
@@ -346,7 +484,7 @@ export default function DonatePage() {
                             </button>
                             <CreditCard className="w-12 h-12 mx-auto mb-2" />
                             <h3 className="text-xl font-black">Chuyển khoản Ngân hàng</h3>
-                            <p className="text-white/80 text-sm">Vui lòng chuyển chính xác {amount}đ</p>
+                            <p className="text-white/80 text-sm">Vui lòng chuyển chính xác {formatAmount(amount)}đ</p>
                         </div>
                         <div className="p-8">
                             <div className="space-y-4 mb-8">
@@ -371,11 +509,11 @@ export default function DonatePage() {
                             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 flex items-start gap-3 mb-6">
                                 <CheckCircle2 className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
                                 <p className="text-xs text-yellow-800 dark:text-yellow-200 leading-relaxed font-medium">
-                                    Ghi chú chuyển khoản: <span className="font-black">REDHOPE {Math.floor(Math.random() * 100000)}</span>. Tiền sẽ được cập nhật sau 1-3 phút.
+                                    Ghi chú chuyển khoản: <span className="font-black">REDHOPE {currentDonationId?.slice(-6).toUpperCase()}</span>. Tiền sẽ được cập nhật sau 1-3 phút.
                                 </p>
                             </div>
                             <button
-                                onClick={() => setShowCardModal(false)}
+                                onClick={handlePaymentComplete}
                                 className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-all shadow-lg shadow-blue-600/20"
                             >
                                 Hoàn tất chuyển khoản

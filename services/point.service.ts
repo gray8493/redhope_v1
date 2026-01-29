@@ -69,8 +69,77 @@ export const pointService = {
     },
 
     async redeemVoucher(userId: string, voucherId: string) {
-        // Logic for redeeming vouchers
-        console.log(`Redeeming voucher ${voucherId} for user ${userId}`);
-        return { success: true };
+        try {
+            // 1. Lấy thông tin voucher và người dùng
+            const [{ data: voucher }, { data: user }] = await Promise.all([
+                supabase.from('vouchers').select('*').eq('id', voucherId).single(),
+                supabase.from('users').select('current_points').eq('id', userId).single()
+            ]);
+
+            if (!voucher || !user) throw new Error('Dữ liệu không hợp lệ');
+
+            // 2. Kiểm tra điều kiện
+            if (user.current_points < voucher.point_cost) {
+                throw new Error('Bạn không đủ điểm để đổi voucher này');
+            }
+            if (voucher.stock_quantity <= 0) {
+                throw new Error('Voucher đã hết lượt đổi');
+            }
+
+            // 3. Thực hiện giao dịch (Trừ điểm & Tạo bản ghi đổi quà)
+            // Lưu ý: Trong thực tế nên dùng RPC hoặc Database Transaction
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({ current_points: user.current_points - voucher.point_cost })
+                .eq('id', userId);
+
+            if (updateError) throw updateError;
+
+            const { data: redemption, error: redeemError } = await supabase
+                .from('user_redemptions')
+                .insert({
+                    user_id: userId,
+                    voucher_id: voucherId,
+                    status: 'Redeemed'
+                })
+                .select()
+                .single();
+
+            if (redeemError) throw redeemError;
+
+            // 4. Giảm số lượng voucher trong kho
+            await supabase
+                .from('vouchers')
+                .update({ stock_quantity: voucher.stock_quantity - 1 })
+                .eq('id', voucherId);
+
+            return { success: true, redemption };
+        } catch (error: any) {
+            console.error('[PointService] Error redeeming voucher:', error);
+            throw error;
+        }
+    },
+    async getRedemptions(userId: string) {
+        try {
+            const { data, error } = await supabase
+                .from('user_redemptions')
+                .select(`
+                    id,
+                    status,
+                    created_at,
+                    vouchers (
+                        partner_name,
+                        point_cost
+                    )
+                `)
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('[PointService] Error fetching redemptions:', error);
+            throw error;
+        }
     }
 };
