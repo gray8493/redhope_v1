@@ -248,30 +248,42 @@ export default function CampaignManagementPage() {
             return;
         }
 
-        // Strict Date Validation for DD/MM/YYYY
-        const dateParts = newCampaign.date.split('/');
-        let validDate = false;
-        if (dateParts.length === 3) {
-            const day = parseInt(dateParts[0], 10);
-            const month = parseInt(dateParts[1], 10);
-            const year = parseInt(dateParts[2], 10);
+        // Validate Date (Single or Range)
+        const validateDate = (dateStr: string) => {
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return false;
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const year = parseInt(parts[2], 10);
 
-            if (month >= 1 && month <= 12 && day >= 1) {
-                const d = new Date(year, month - 1, day);
-                if (d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) {
-                    validDate = true;
-                }
+            if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+            if (month < 1 || month > 12) return false;
+
+            const date = new Date(year, month - 1, day);
+            return date.getDate() === day &&
+                date.getMonth() === month - 1 &&
+                date.getFullYear() === year;
+        };
+
+        const dateInput = newCampaign.date.trim();
+        let validDate = false;
+
+        // Pattern 1: Single Date (DD/MM/YYYY)
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateInput)) {
+            validDate = validateDate(dateInput);
+        }
+        // Pattern 2: Date Range (DD/MM/YYYY - DD/MM/YYYY)
+        else if (dateInput.includes('-')) {
+            const parts = dateInput.split('-').map(s => s.trim());
+            if (parts.length === 2 &&
+                /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parts[0]) &&
+                /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parts[1])) {
+                validDate = validateDate(parts[0]) && validateDate(parts[1]);
             }
         }
 
-        // Also allow ISO format if needed, or stick to strict DD/MM/YYYY
-        if (!validDate && newCampaign.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            const d = new Date(newCampaign.date);
-            if (!isNaN(d.getTime())) validDate = true;
-        }
-
         if (!validDate) {
-            setInputError("Ngày không hợp lệ (Định dạng DD/MM/YYYY)");
+            setInputError("Ngày không hợp lệ. Vui lòng nhập DD/MM/YYYY hoặc khoảng thời gian (VD: 24/02/2024 - 28/02/2024)");
             return;
         }
 
@@ -613,7 +625,7 @@ export default function CampaignManagementPage() {
                                         value={newCampaign.date}
                                         onChange={(e) => setNewCampaign({ ...newCampaign, date: e.target.value })}
                                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
-                                        placeholder="DD/MM/YYYY"
+                                        placeholder="DD/MM/YYYY hoặc khoảng thời gian..."
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1.5">
