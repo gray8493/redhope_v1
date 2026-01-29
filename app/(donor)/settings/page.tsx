@@ -35,6 +35,7 @@ export default function SettingsPage() {
 
     const [activeTab, setActiveTab] = useState("profile");
     const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Profile State
     const [name, setName] = useState("");
@@ -47,28 +48,55 @@ export default function SettingsPage() {
     const [citizenId, setCitizenId] = useState("");
     const [dob, setDob] = useState("");
     const [gender, setGender] = useState("");
+    // Các field UI nhưng chưa có trong DB schema
     const [weight, setWeight] = useState("");
     const [lastDonationDate, setLastDonationDate] = useState("");
     const [healthHistory, setHealthHistory] = useState("");
 
-    // Sync state with profile data
+    // Fetch real data from database on mount
     useEffect(() => {
-        if (user) {
-            setName(user.user_metadata?.full_name || user.profile?.full_name || "");
-            setPhone(user.phone || user.profile?.phone || "");
-            setEmail(user.email || user.profile?.email || "");
-            setCity(user.profile?.city || "");
-            setDistrict(user.profile?.district || "");
-            setAddress(user.profile?.address || "");
-            setBloodGroup(user.profile?.blood_group || "");
-            setCitizenId(user.profile?.citizen_id || "");
-            setDob(user.profile?.dob || "");
-            setGender(user.profile?.gender || "Nam");
-            setWeight(user.profile?.weight?.toString() || "");
-            setLastDonationDate(user.profile?.last_donation_date || "");
-            setHealthHistory(user.profile?.health_history || "");
-        }
-    }, [user]);
+        const fetchProfileData = async () => {
+            if (!user?.id) {
+                setIsLoading(false);
+                return;
+            }
+
+            setIsLoading(true);
+            try {
+                // Fetch fresh data directly from database
+                const profile = await userService.getById(user.id);
+
+                if (profile) {
+                    setName(profile.full_name || "");
+                    setPhone(profile.phone || "");
+                    setEmail(profile.email || user.email || "");
+                    setCity(profile.city || "");
+                    setDistrict(profile.district || "");
+                    setAddress(profile.address || "");
+                    setBloodGroup(profile.blood_group || "");
+                    setCitizenId(profile.citizen_id || "");
+                    setDob(profile.dob || "");
+                    setGender(profile.gender || "Nam");
+                } else {
+                    // Fallback to auth user data if no profile yet
+                    setName(user.user_metadata?.full_name || "");
+                    setEmail(user.email || "");
+                }
+            } catch (error) {
+                console.error("Error fetching profile:", error);
+                // Fallback to user data from auth context
+                if (user) {
+                    setName(user.user_metadata?.full_name || user.profile?.full_name || "");
+                    setPhone(user.profile?.phone || "");
+                    setEmail(user.email || "");
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchProfileData();
+    }, [user?.id]);
 
     // Password State
     const [currentPassword, setCurrentPassword] = useState("");
@@ -79,24 +107,28 @@ export default function SettingsPage() {
         if (!user) return;
         setIsSaving(true);
         try {
-            // Chuẩn bị dữ liệu update
-            const updateData = {
+            // Chỉ gửi các field có trong database schema
+            const updateData: Record<string, any> = {
                 full_name: name,
-                phone: phone,
+                phone: phone || null,
                 email: email,
-                city: city,
-                district: district,
-                address: address,
-                blood_group: bloodGroup,
-                citizen_id: citizenId,
+                city: city || null,
+                district: district || null,
+                address: address || null,
+                blood_group: bloodGroup || null,
+                citizen_id: citizenId || null,
                 dob: dob || null,
-                gender: gender,
-                weight: weight ? parseFloat(weight) : null,
-                last_donation_date: lastDonationDate || null,
-                health_history: healthHistory,
+                gender: gender || null,
             };
 
-            await userService.upsert(user.id, updateData);
+            // Loại bỏ các field undefined/null nếu không muốn ghi đè
+            Object.keys(updateData).forEach(key => {
+                if (updateData[key] === undefined) {
+                    delete updateData[key];
+                }
+            });
+
+            await userService.update(user.id, updateData);
 
             if (refreshUser) {
                 await refreshUser();
@@ -108,8 +140,13 @@ export default function SettingsPage() {
             });
         } catch (error: any) {
             console.error("Update error:", error);
+            // Extract better error message
+            const errorMessage = error?.message || error?.details ||
+                (typeof error === 'object' && Object.keys(error).length === 0
+                    ? "Không có quyền cập nhật. Vui lòng đăng nhập lại."
+                    : "Không thể lưu thông tin. Vui lòng thử lại.");
             toast.error("Lỗi cập nhật", {
-                description: error.message || "Không thể lưu thông tin. Vui lòng thử lại.",
+                description: errorMessage,
             });
         } finally {
             setIsSaving(false);
@@ -211,12 +248,18 @@ export default function SettingsPage() {
                                     {/* Profile Card */}
                                     <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm text-center">
                                         <div className="relative mx-auto w-24 h-24 mb-4">
-                                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-[#2d263d] shadow-lg">
-                                                <img
-                                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI4faTCJTkv8OO6MUFrzxQB3yJcWE7Zkm3Y9_WkORgcZUhg0mk8rv7geI97EgbgP3xfDraG1Oy9Psl47i83JoPayPQNpCHWNrSkQfnybH55NGY5MeYil6abA0jZHtNJmfXNyZTl8KPnYoPJdsSVNf-MVgxmvZSicOMuVKfMBGWKjOnheH0k_JUU5GhZRy0Go2cQ6u1xBc8VpgcwkOhb7P0b4kGQIcQ_8z8WaWBcp-2kVgx8l9LfAVeffjFZ8WyB63LgiErOcfK7o26"
-                                                    alt="Avatar"
-                                                    className="w-full h-full object-cover"
-                                                />
+                                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-[#2d263d] shadow-lg bg-[#6324eb] flex items-center justify-center">
+                                                {user?.user_metadata?.avatar_url ? (
+                                                    <img
+                                                        src={user.user_metadata.avatar_url}
+                                                        alt="Avatar"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <span className="text-white text-2xl font-bold">
+                                                        {name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'U'}
+                                                    </span>
+                                                )}
                                             </div>
                                             <button className="absolute bottom-0 right-0 p-2 bg-[#6324eb] text-white rounded-full hover:bg-[#501ac2] transition-colors border-2 border-white dark:border-[#1c162e]">
                                                 <Camera className="w-4 h-4" />

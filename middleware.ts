@@ -4,58 +4,102 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    const authCookie = request.cookies.get('auth-token');
+    const authToken = request.cookies.get('auth-token')?.value;
     const userRole = request.cookies.get('user-role')?.value;
 
-    const protectedPaths = [
-        '/admin-dashboard', '/admin-donor', '/admin-hospitals', '/campaign-management', '/voucher-management', '/global-ana', '/system-setting',
-        '/hospital-dashboard', '/hospital-campaign', '/hospital-reports', '/hospital-settings',
-        '/dashboard', '/profile'
+    // Define route groups
+    const adminRoutes = [
+        '/admin-dashboard',
+        '/admin-donor',
+        '/admin-hospitals',
+        '/campaign-management',
+        '/voucher-management',
+        '/global-ana',
+        '/system-setting'
     ];
-    const isProtected = protectedPaths.some(path => pathname.startsWith(path));
 
-    if (isProtected && !authCookie) {
-        return NextResponse.redirect(new URL('/login', request.url));
+    const hospitalRoutes = [
+        '/hospital-dashboard',
+        '/hospital-campaign',
+        '/hospital-reports',
+        '/hospital-requests',
+        '/hospital-settings',
+        '/support'
+    ];
+
+    const donorRoutes = [
+        '/dashboard',
+        '/donate',
+        '/donations',
+        '/rewards',
+        '/requests',
+        '/notifications',
+        '/screening',
+        '/settings'
+    ];
+
+    // Check if current path matches any protected route
+    const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
+    const isHospitalRoute = hospitalRoutes.some(route => pathname.startsWith(route));
+    const isDonorRoute = donorRoutes.some(route => pathname.startsWith(route));
+    const isProtectedRoute = isAdminRoute || isHospitalRoute || isDonorRoute;
+
+    // Redirect to login if not authenticated
+    if (isProtectedRoute && !authToken) {
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
     }
 
-    // Admin có quyền vào mọi trang
+    // Admin has access to all routes
     if (userRole === 'admin') {
         return NextResponse.next();
     }
 
-    // Bảo vệ trang Admin
-    const isAdminPath = [
-        '/admin-dashboard', '/admin-donor', '/admin-hospitals', '/campaign-management', '/voucher-management', '/global-ana', '/system-setting'
-    ].some(path => pathname.startsWith(path));
-
-    if (isAdminPath && userRole !== 'admin') {
+    // Protect Admin routes
+    if (isAdminRoute && userRole !== 'admin') {
         return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 
-    // Bảo vệ trang Hospital
-    const isHospitalPath = [
-        '/hospital-dashboard', '/hospital-campaign', '/hospital-reports', '/hospital-settings'
-    ].some(path => pathname.startsWith(path));
-
-    if (isHospitalPath && userRole !== 'hospital') {
+    // Protect Hospital routes
+    if (isHospitalRoute && userRole !== 'hospital' && userRole !== 'admin') {
         return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 
-    // Bảo vệ trang Donor (giả sử là dashboard hoặc profile)
-    if ((pathname.startsWith('/dashboard') || pathname.startsWith('/donor')) && userRole !== 'donor') {
+    // Protect Donor routes (allow donors only, but admin/hospital can also access for flexibility)
+    if (isDonorRoute && !['donor', 'admin'].includes(userRole || '')) {
         return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 
     return NextResponse.next();
 }
 
-// Chỉ chạy middleware cho các đường dẫn cụ thể
+// Match all protected routes
 export const config = {
     matcher: [
-        '/admin/:path*',
-        '/hospital/:path*',
+        // Admin routes
+        '/admin-dashboard/:path*',
+        '/admin-donor/:path*',
+        '/admin-hospitals/:path*',
+        '/campaign-management/:path*',
+        '/voucher-management/:path*',
+        '/global-ana/:path*',
+        '/system-setting/:path*',
+        // Hospital routes
+        '/hospital-dashboard/:path*',
+        '/hospital-campaign/:path*',
+        '/hospital-reports/:path*',
+        '/hospital-requests/:path*',
+        '/hospital-settings/:path*',
+        '/support/:path*',
+        // Donor routes
         '/dashboard/:path*',
-        '/rewards/:path*',
+        '/donate/:path*',
         '/donations/:path*',
+        '/rewards/:path*',
+        '/requests/:path*',
+        '/notifications/:path*',
+        '/screening/:path*',
+        '/settings/:path*',
     ],
 };
