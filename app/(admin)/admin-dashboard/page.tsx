@@ -10,7 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export default function AdminDashboard() {
     const [recentDonors, setRecentDonors] = useState<User[]>([]);
@@ -196,6 +197,9 @@ export default function AdminDashboard() {
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-white border-0 gap-0">
+                    <VisuallyHidden>
+                        <DialogTitle>Chi tiết người hiến máu</DialogTitle>
+                    </VisuallyHidden>
                     <div className="bg-white rounded-3xl w-full overflow-hidden">
                         {/* Header Background with Pattern */}
                         <div className="relative h-32 bg-gradient-to-br from-[#6324eb] to-[#925eff] overflow-hidden">

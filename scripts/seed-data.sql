@@ -50,7 +50,7 @@ INSERT INTO public.blood_requests (id, hospital_id, required_blood_group, requir
 
 -- =============================================
 -- 4. APPOINTMENTS TABLE (5 lịch hẹn hiến máu)
--- =============================================
+-- =============================================    
 INSERT INTO public.appointments (id, user_id, campaign_id, scheduled_time, qr_code, status, created_at) VALUES
 ('50000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', '2026-02-01 09:00:00+07', 'QR-REDHOPE-001-AN', 'Booked', NOW()),
 ('50000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002', '2026-02-10 10:30:00+07', 'QR-REDHOPE-002-BINH', 'Booked', NOW()),

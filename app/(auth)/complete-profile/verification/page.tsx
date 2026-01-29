@@ -99,7 +99,16 @@ export default function VerificationProfilePage() {
                 is_verified: true
             };
 
-            await userService.upsert(userId, cleanData);
+            // Try upsert first, fallback to update if fails
+            console.log("Attempting upsert for userId:", userId, "with data:", cleanData);
+
+            try {
+                await userService.upsert(userId, cleanData);
+            } catch (upsertErr: any) {
+                console.warn("Upsert failed, trying update instead:", upsertErr?.message || upsertErr);
+                // Fallback: Try direct update instead
+                await userService.update(userId, cleanData);
+            }
 
             // 2. Refresh Auth Context to update is_verified status globally
             if (refreshUser) await refreshUser();
@@ -109,8 +118,11 @@ export default function VerificationProfilePage() {
 
             router.push("/screening");
         } catch (err: any) {
-            console.error("Verification update failed:", err);
-            setError("Lỗi: Có lỗi xảy ra trong quá trình xác minh. Vui lòng thử lại.");
+            // Enhanced error logging
+            const errorMessage = err?.message || JSON.stringify(err) || "Unknown error";
+            const errorCode = err?.code || "N/A";
+            console.error("Verification update failed:", { message: errorMessage, code: errorCode, details: err });
+            setError(`Lỗi: ${errorMessage}. Vui lòng thử lại hoặc liên hệ hỗ trợ.`);
         } finally {
             setSubmitting(false);
         }
