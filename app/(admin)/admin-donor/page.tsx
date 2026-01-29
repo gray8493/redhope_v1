@@ -3,7 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import { userService } from '@/services/user.service';
 import { User } from '@/lib/database.types';
-import { Loader2, Plus, Search, Trash2, Edit, X, Save } from 'lucide-react';
+import { Loader2, Plus, Search, Trash2, Edit, X, Save, AlertCircle } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 export default function DonorManagementPage() {
     // State
@@ -15,6 +27,10 @@ export default function DonorManagementPage() {
     const [mode, setMode] = useState<'add' | 'edit'>('add');
     const [isSaving, setIsSaving] = useState(false);
 
+    // UI States
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
     // Initial Load
     useEffect(() => {
         loadDonors();
@@ -23,12 +39,13 @@ export default function DonorManagementPage() {
     // Fetch Data
     const loadDonors = async () => {
         setLoading(true);
+        setErrorMsg(null);
         try {
             const data = await userService.getAll();
             setDonors(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to load donors:', error);
-            alert('Không thể tải danh sách người dùng');
+            setErrorMsg('Không thể tải danh sách người dùng. ' + (error.message || ''));
         } finally {
             setLoading(false);
         }
@@ -38,30 +55,38 @@ export default function DonorManagementPage() {
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setErrorMsg(null);
         try {
             const data = searchTerm.trim()
                 ? await userService.search(searchTerm)
                 : await userService.getAll();
             setDonors(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Search failed:', error);
-            alert('Tìm kiếm thất bại');
+            setErrorMsg('Tìm kiếm thất bại. ' + (error.message || ''));
         } finally {
             setLoading(false);
         }
     };
 
-    // Delete Handler
-    const handleDelete = async (id: string) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa người này không? Hành động này không thể hoàn tác.')) return;
+    // Delete Handler Steps
+    const confirmDelete = (id: string) => {
+        setDeleteId(id);
+    };
+
+    const handleDeleteConfirmed = async () => {
+        if (!deleteId) return;
 
         try {
-            await userService.delete(id);
-            setDonors(prev => prev.filter(d => d.id !== id));
-            alert('Đã xóa thành công!');
-        } catch (error) {
+            await userService.delete(deleteId);
+            setDonors(prev => prev.filter(d => d.id !== deleteId));
+            toast.success("Đã xóa người dùng thành công!");
+        } catch (error: any) {
             console.error('Delete failed:', error);
-            alert('Xóa thất bại');
+            setErrorMsg('Xóa thất bại. ' + (error.message || ''));
+            toast.error("Xóa thất bại: " + error.message);
+        } finally {
+            setDeleteId(null);
         }
     };
 
@@ -69,12 +94,15 @@ export default function DonorManagementPage() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
+        setErrorMsg(null);
 
         try {
             if (mode === 'add') {
                 // Validate
                 if (!currentUser.email || !currentUser.full_name) {
-                    alert('Vui lòng điền tên và email');
+                    setErrorMsg('Vui lòng điền tên và email');
+                    toast.warning("Vui lòng nhập đầy đủ thông tin bắt buộc!");
+                    setIsSaving(false);
                     return;
                 }
 
@@ -89,12 +117,12 @@ export default function DonorManagementPage() {
                 });
 
                 setDonors([newUser, ...donors]);
-                alert('Thêm mới thành công!');
+                toast.success("Thêm người hiến mới thành công!");
             } else {
                 // Update
                 if (!currentUser.id) {
                     setIsSaving(false);
-                    alert("Không tìm thấy ID người dùng để cập nhật.");
+                    setErrorMsg("Không tìm thấy ID người dùng để cập nhật.");
                     return;
                 }
 
@@ -108,12 +136,12 @@ export default function DonorManagementPage() {
                 });
 
                 setDonors(prev => prev.map(d => d.id === updatedUser.id ? updatedUser : d));
-                alert('Cập nhật thành công!');
+                toast.success("Cập nhật thông tin thành công!");
             }
             setIsModalOpen(false);
         } catch (error: any) {
             console.error('Save failed:', error);
-            alert('Lỗi: ' + (error.message || 'Không thể lưu'));
+            toast.error("Lỗi: " + (error.message || "Không thể lưu thay đổi"));
         } finally {
             setIsSaving(false);
         }
@@ -123,22 +151,22 @@ export default function DonorManagementPage() {
     const openAddModal = () => {
         setMode('add');
         setCurrentUser({ current_points: 0 });
+        setErrorMsg(null);
         setIsModalOpen(true);
     };
 
     const openEditModal = (user: User) => {
         setMode('edit');
         setCurrentUser({ ...user });
+        setErrorMsg(null);
         setIsModalOpen(true);
     };
 
     // Stats
     const totalDonors = donors.length;
-    const verifiedDonors = donors.length; // Fake status for now
-    const pendingDonors = 0;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
             {/* Header */}
             <div className="flex justify-between items-end">
                 <div className="flex flex-col gap-1">
@@ -166,6 +194,15 @@ export default function DonorManagementPage() {
                 </div>
             </div>
 
+            {/* Error Alert */}
+            {errorMsg && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Lỗi</AlertTitle>
+                    <AlertDescription>{errorMsg}</AlertDescription>
+                </Alert>
+            )}
+
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
@@ -177,28 +214,6 @@ export default function DonorManagementPage() {
                         <p className="text-xl font-bold text-[#120e1b]">{totalDonors}</p>
                     </div>
                 </div>
-                {/* 
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 opacity-50">
-                    <div className="size-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
-                        <span className="material-symbols-outlined">pending_actions</span>
-                    </div>
-                    <div>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Đang chờ xác minh</p>
-                        <p className="text-xl font-bold text-[#120e1b]">-</p>
-                        <p className="text-[10px] text-gray-400 italic">Tính năng đang phát triển</p>
-                    </div>
-                </div>
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 opacity-50">
-                    <div className="size-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-                        <span className="material-symbols-outlined">verified</span>
-                    </div>
-                    <div>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Người hiến đã xác minh</p>
-                        <p className="text-xl font-bold text-[#120e1b]">-</p>
-                         <p className="text-[10px] text-gray-400 italic">Tính năng đang phát triển</p>
-                    </div>
-                </div> 
-                */}
             </div>
 
             {/* Table */}
@@ -273,7 +288,7 @@ export default function DonorManagementPage() {
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(donor.id)}
+                                                    onClick={() => confirmDelete(donor.id)}
                                                     className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
                                                     title="Xóa"
                                                 >
@@ -289,7 +304,7 @@ export default function DonorManagementPage() {
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Modal - Could be moved to separate component later */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
@@ -394,6 +409,24 @@ export default function DonorManagementPage() {
                     </div>
                 </div>
             )}
+
+            {/* Alert Dialog for Delete Confirmation */}
+            <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Hành động này không thể hoàn tác. Người dùng này sẽ bị xóa khỏi hệ thống vĩnh viễn cùng với các dữ liệu liên quan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteConfirmed} className="bg-red-600 hover:bg-red-700 text-white">
+                            Xóa ngay
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -3,7 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import { hospitalService } from '@/services/hospital.service';
 import { Hospital } from '@/lib/database.types';
-import { Loader2, Plus, Search, Trash2, Edit, X, Save } from 'lucide-react';
+import { Loader2, Plus, Search, Trash2, Edit, X, Save, AlertCircle } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 export default function HospitalDirectoryPage() {
     const [hospitals, setHospitals] = useState<Hospital[]>([]);
@@ -22,22 +34,18 @@ export default function HospitalDirectoryPage() {
 
     useEffect(() => {
         if (isModalOpen) {
-            // Save trigger
             if (document.activeElement instanceof HTMLButtonElement) {
                 triggerRef.current = document.activeElement;
             }
-            // Trap focus roughly (checking event key)
             const handleKeyDown = (e: KeyboardEvent) => {
                 if (e.key === 'Escape') {
                     setIsModalOpen(false);
                 }
             };
             document.addEventListener('keydown', handleKeyDown);
-            // Focus modal content
             setTimeout(() => modalRef.current?.focus(), 100);
             return () => {
                 document.removeEventListener('keydown', handleKeyDown);
-                // Restore focus
                 triggerRef.current?.focus();
             };
         }
@@ -52,7 +60,6 @@ export default function HospitalDirectoryPage() {
         setLoadError(null);
         try {
             const data = await hospitalService.getAll();
-            // Safer mapping instead of as unknown cast
             setHospitals(data.map(u => ({
                 id: u.id,
                 hospital_name: u.hospital_name,
@@ -66,21 +73,27 @@ export default function HospitalDirectoryPage() {
             })));
         } catch (error: any) {
             console.error('Failed to load hospitals:', error);
-            setLoadError(error.message || 'Failed to load hospitals');
+            const msg = error.message || 'Failed to load hospitals';
+            setLoadError(msg);
+            toast.error("Lỗi tải dữ liệu: " + msg);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa bệnh viện này không?')) return;
+    const confirmDelete = (id: string) => {
         setDeletingId(id);
+    };
+
+    const handleDeleteConfirmed = async () => {
+        if (!deletingId) return;
         try {
-            await hospitalService.delete(id);
-            setHospitals(prev => prev.filter(h => h.id !== id));
-        } catch (error) {
+            await hospitalService.delete(deletingId);
+            setHospitals(prev => prev.filter(h => h.id !== deletingId));
+            toast.success("Đã xóa bệnh viện thành công!");
+        } catch (error: any) {
             console.error('Delete failed:', error);
-            alert('Xóa thất bại');
+            toast.error("Xóa thất bại: " + (error.message || 'Lỗi không xác định'));
         } finally {
             setDeletingId(null);
         }
@@ -108,9 +121,10 @@ export default function HospitalDirectoryPage() {
                     phone: newHospital.phone
                 };
                 setHospitals([mapped, ...hospitals]);
+                toast.success("Thêm bệnh viện mới thành công!");
             } else {
                 if (!currentHospital.id) {
-                    alert("Lỗi: Không tìm thấy ID bệnh viện để cập nhật.");
+                    toast.error("Lỗi: Không tìm thấy ID bệnh viện để cập nhật.");
                     return;
                 }
                 const updatedHospital = await hospitalService.update(currentHospital.id, {
@@ -130,11 +144,12 @@ export default function HospitalDirectoryPage() {
                     phone: updatedHospital.phone
                 };
                 setHospitals(prev => prev.map(h => h.id === mapped.id ? mapped : h));
+                toast.success("Cập nhật thông tin thành công!");
             }
             setIsModalOpen(false);
         } catch (error: any) {
-            console.error('Save failed:', error);
-            alert('Lỗi: ' + (error.message || 'Không thể lưu'));
+            console.error('Save failed:', JSON.stringify(error, null, 2));
+            toast.error("Lỗi lưu dữ liệu: " + (error.message || error.details || error.hint || 'Không thể lưu (Lỗi không xác định)'));
         } finally {
             setIsSaving(false);
         }
@@ -152,7 +167,7 @@ export default function HospitalDirectoryPage() {
         setIsModalOpen(true);
     };
 
-    // Filter locally for now
+    // Filter locally
     const filteredHospitals = hospitals.filter(h =>
         h.hospital_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         h.hospital_address?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -187,7 +202,16 @@ export default function HospitalDirectoryPage() {
                 </div>
             </div>
 
-            {/* Stats (Static for now as DB doesn't have enough data) */}
+            {/* Error Alert */}
+            {loadError && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Lỗi</AlertTitle>
+                    <AlertDescription>{loadError}</AlertDescription>
+                </Alert>
+            )}
+
+            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
                     <div className="bg-blue-50 p-3 rounded-lg text-blue-600">
@@ -198,7 +222,6 @@ export default function HospitalDirectoryPage() {
                         <p className="text-xl font-bold text-[#1f1f1f]">{hospitals.length}</p>
                     </div>
                 </div>
-                {/* ... other stats ... */}
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -215,15 +238,6 @@ export default function HospitalDirectoryPage() {
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 <tr><td colSpan={4} className="text-center py-10"><Loader2 className="animate-spin w-6 h-6 mx-auto" /></td></tr>
-                            ) : loadError ? (
-                                <tr>
-                                    <td colSpan={4} className="text-center py-10 text-red-500">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <span className="material-symbols-outlined text-4xl">error</span>
-                                            <p>{loadError}</p>
-                                        </div>
-                                    </td>
-                                </tr>
                             ) : filteredHospitals.length === 0 ? (
                                 <tr>
                                     <td colSpan={4} className="text-center py-10 text-gray-500">
@@ -265,12 +279,11 @@ export default function HospitalDirectoryPage() {
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(hospital.id)}
+                                                onClick={() => confirmDelete(hospital.id)}
                                                 className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50 transition-colors"
-                                                disabled={deletingId === hospital.id}
                                                 aria-label={`Xóa bệnh viện ${hospital.hospital_name}`}
                                             >
-                                                {deletingId === hospital.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </td>
@@ -356,6 +369,24 @@ export default function HospitalDirectoryPage() {
                     </div>
                 </div>
             )}
+
+            {/* Delete Dialog */}
+            <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Xóa bệnh viện này?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bạn có chắc chắn muốn xóa bệnh viện này không? Hành động này không thể hoàn tác.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteConfirmed} className="bg-red-600 text-white hover:bg-red-700">
+                            Xóa ngay
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
