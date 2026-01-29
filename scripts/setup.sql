@@ -1,165 +1,177 @@
-// ==============================
-// REDHOPE - SIMPLIFIED DATABASE (DBML)
-// - Financial donation stored in users (aggregate)
-// - No checkins table (demo scope)
-// ==============================
+-- ============================================
+-- REDHOPE DATABASE SETUP & REPAIR SCRIPT
+-- Combined Fixes for Schema, RLS, and Admin Permissions
+-- Run this script in Supabase SQL Editor to fix everything.
+-- ============================================
 
-// ---------- USERS ----------
-Table users {
-  id uuid [pk, note: "Primary ID"]
-  full_name varchar [not null]
-  email varchar [unique, not null]
-  phone varchar
+BEGIN;
 
-  citizen_id varchar [not null, unique, note: "CCCD bắt buộc"]
-  password_hash varchar
+-- 1. SCHEMA UPDATES & MISSING COLUMNS
+-- ============================================
 
-  role varchar [not null, note: "user/admin/hospital"]
+-- USER Table Fixes
+ALTER TABLE public.users 
+    ALTER COLUMN id SET DEFAULT gen_random_uuid();
 
-  // Donor info
-  blood_group varchar [note: "A, B, AB, O"]
-  organization varchar
-  city varchar
-  district varchar
+-- Add missing Donor columns if they don't exist
+ALTER TABLE public.users 
+    ADD COLUMN IF NOT EXISTS weight FLOAT,
+    ADD COLUMN IF NOT EXISTS height FLOAT,
+    ADD COLUMN IF NOT EXISTS health_history TEXT,
+    ADD COLUMN IF NOT EXISTS last_donation_date DATE,
+    ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
-  // Hospital info (role=hospital)
-  hospital_code varchar [unique]
-  hospital_name varchar
-  license_number varchar
-  address varchar
-  is_verified boolean [default: false]
+-- Add missing Hospital columns if they don't exist
+ALTER TABLE public.users 
+    ADD COLUMN IF NOT EXISTS hospital_name VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS hospital_address TEXT,
+    ADD COLUMN IF NOT EXISTS license_number VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false;
 
-  // Rewards
-  current_points int [default: 0]
+-- 1.1 SYSTEM SETTINGS TABLE (NEW)
+-- Singleton table to store global configuration
+CREATE TABLE IF NOT EXISTS public.system_settings (
+    id INTEGER PRIMARY KEY DEFAULT 1, -- Singleton ID
+    low_stock_alert BOOLEAN DEFAULT false,
+    donation_reminder BOOLEAN DEFAULT true,
+    emergency_broadcast BOOLEAN DEFAULT false,
+    
+    ai_sensitivity INTEGER DEFAULT 7,
+    min_hemoglobin FLOAT DEFAULT 12.5,
+    min_weight FLOAT DEFAULT 50,
+    question_version TEXT DEFAULT 'V4.2 - Tiêu chuẩn Toàn cầu (Hoạt động)',
+    
+    points_per_donation INTEGER DEFAULT 1000,
+    referral_bonus INTEGER DEFAULT 250,
+    exchange_rate INTEGER DEFAULT 500,
+    points_expiry BOOLEAN DEFAULT true,
+    
+    two_factor_auth TEXT DEFAULT 'Bắt buộc cho tất cả Quản trị viên',
+    
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    CONSTRAINT singleton_check CHECK (id = 1)
+);
 
-  // Financial donation (aggregate for demo)
-  total_donation_amount decimal [default: 0, note: "Tổng tiền đã ủng hộ"]
-  last_donation_at timestamp
-  last_donation_message text
+-- Insert default row if not exists
+INSERT INTO public.system_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
-  created_at timestamp
-}
 
-// ---------- CAMPAIGNS ----------
-Table campaigns {
-  id uuid [pk]
-  hospital_id uuid [ref: > users.id, note: "Organizer (role=hospital)"]
+-- 2. HELPER FUNCTIONS
+-- ============================================
 
-  name varchar [not null]
-  organizer_name varchar
-  location_name varchar
+-- Create safe is_admin function to avoid RLS recursion
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  -- Direct check bypassing RLS
+  RETURN EXISTS (
+    SELECT 1 
+    FROM public.users 
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-  city varchar
-  district varchar
+-- 3. ROW LEVEL SECURITY (RLS) POLICIES
+-- ============================================
 
-  start_time timestamp
-  end_time timestamp
+-- 3.1 TABLE: USERS
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
-  target_units int [default: 0]
-  is_allowed boolean [default: false]
-  status varchar [not null, default: "draft", note: "draft/active/ended/cancelled"]
+-- Drop old/conflicting policies
+DROP POLICY IF EXISTS "Users can view own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can create own profile" ON public.users;
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.users;
+DROP POLICY IF EXISTS "Admins can view all users" ON public.users;
+DROP POLICY IF EXISTS "Admins can update all users" ON public.users;
+DROP POLICY IF EXISTS "Admins can create users" ON public.users;
+DROP POLICY IF EXISTS "Admins can delete users" ON public.users;
 
-  created_at timestamp
-}
+-- Admin Policies (Full Access)
+CREATE POLICY "Admins can view all users" ON public.users FOR SELECT USING (public.is_admin());
+CREATE POLICY "Admins can insert users" ON public.users FOR INSERT WITH CHECK (public.is_admin());
+CREATE POLICY "Admins can update all users" ON public.users FOR UPDATE USING (public.is_admin());
+CREATE POLICY "Admins can delete users" ON public.users FOR DELETE USING (public.is_admin());
 
-// ---------- BLOOD REQUESTS ----------
-Table blood_requests {
-  id uuid [pk]
-  hospital_id uuid [ref: > users.id]
+-- User Policies (Self Access)
+CREATE POLICY "Users can view own profile" ON public.users 
+    FOR SELECT USING (auth.uid() = id);
 
-  required_blood_group varchar
-  required_units int [default: 0]
+CREATE POLICY "Users can update own profile" ON public.users 
+    FOR UPDATE USING (auth.uid() = id);
 
-  target_organization varchar
-  city varchar
-  district varchar
+-- Allow new users to sign up (Mock users created by Admin are covered by Admin policy)
+-- Note: 'auth.uid() = id' check fails during initial Insert for some flows, 
+-- but usually handled by Service Role or Admin. 
+-- Adding a policy for self-registration if needed:
+CREATE POLICY "Users can insert own profile" ON public.users 
+    FOR INSERT WITH CHECK (auth.uid() = id);
 
-  urgency_level varchar
-  status varchar [not null, default: "Open", note: "Open/Closed"]
-  created_at timestamp
-}
 
-// ---------- NOTIFICATIONS ----------
-Table notifications {
-  id uuid [pk]
-  request_id uuid [ref: > blood_requests.id]
-  user_id uuid [ref: > users.id]
+-- 3.2 TABLE: CAMPAIGNS
+ALTER TABLE public.campaigns ENABLE ROW LEVEL SECURITY;
 
-  content text
-  is_read boolean [default: false]
-  sent_at timestamp
-  read_at timestamp
-}
+DROP POLICY IF EXISTS "Everyone can view active campaigns" ON public.campaigns;
+DROP POLICY IF EXISTS "Hospitals can manage own campaigns" ON public.campaigns;
+DROP POLICY IF EXISTS "Admins can manage campaigns" ON public.campaigns;
 
-// ---------- AI SCREENING ----------
-Table screening_logs {
-  id uuid [pk]
-  user_id uuid [ref: > users.id]
-  campaign_id uuid [ref: > campaigns.id]
+-- Public View
+CREATE POLICY "Everyone can view active campaigns" ON public.campaigns 
+    FOR SELECT USING (true); -- Or limit to status='active'
 
-  ai_result boolean
-  health_details jsonb
-  created_at timestamp
-}
+-- Hospital Access (Manage Own)
+CREATE POLICY "Hospitals can manage own campaigns" ON public.campaigns 
+    FOR ALL USING (auth.uid() = hospital_id);
 
-// ---------- APPOINTMENTS ----------
-Table appointments {
-  id uuid [pk]
-  user_id uuid [ref: > users.id]
-  campaign_id uuid [ref: > campaigns.id]
+-- Admin Access
+CREATE POLICY "Admins can manage campaigns" ON public.campaigns 
+    FOR ALL USING (public.is_admin());
 
-  scheduled_time timestamp
-  qr_code varchar [unique, note: "QR token (dùng cho đối soát onsite - demo)"]
-  status varchar [not null, default: "Booked", note: "Booked/Cancelled/Completed"]
-  created_at timestamp
 
-  Indexes {
-    (user_id, campaign_id) [unique, name: "uniq_user_campaign_one_booking"]
-  }
-}
+-- 3.3 TABLE: BLOOD_REQUESTS
+ALTER TABLE public.blood_requests ENABLE ROW LEVEL SECURITY;
 
-// ---------- DONATION RECORDS ----------
-Table donation_records {
-  id uuid [pk]
-  appointment_id uuid [ref: - appointments.id, note: "1 appointment -> 1 donation record"]
+DROP POLICY IF EXISTS "Everyone can view active requests" ON public.blood_requests;
+DROP POLICY IF EXISTS "Hospitals can manage own requests" ON public.blood_requests;
+DROP POLICY IF EXISTS "Admins can manage requests" ON public.blood_requests;
 
-  volume_ml int
-  verified_by uuid [ref: > users.id, note: "role=hospital"]
-  verified_at timestamp
-  note text
+-- Public View
+CREATE POLICY "Everyone can view active requests" ON public.blood_requests 
+    FOR SELECT USING (true);
 
-  Indexes {
-    (appointment_id) [unique, name: "uniq_donation_per_appointment"]
-  }
-}
+-- Hospital Access
+CREATE POLICY "Hospitals can manage own requests" ON public.blood_requests 
+    FOR ALL USING (auth.uid() = hospital_id);
 
-// ---------- VOUCHERS ----------
-Table vouchers {
-  id uuid [pk]
-  title varchar
-  partner_name varchar
-  point_cost int [not null]
-  stock_quantity int [default: 0]
+-- Admin Access
+CREATE POLICY "Admins can manage requests" ON public.blood_requests 
+    FOR ALL USING (public.is_admin());
 
-  imported_by uuid [ref: > users.id, note: "role=admin"]
 
-  code varchar [unique]
-  status varchar [not null, default: "Available", note: "Available/Used"]
-  expires_at timestamp
-  created_at timestamp
-}
+-- 3.4 TABLE: SYSTEM_SETTINGS
+ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
 
-// ---------- USER REDEMPTIONS ----------
-Table user_redemptions {
-  id uuid [pk]
-  user_id uuid [ref: > users.id]
-  voucher_id uuid [ref: > vouchers.id]
+DROP POLICY IF EXISTS "Public read settings" ON public.system_settings;
+DROP POLICY IF EXISTS "Admins update settings" ON public.system_settings;
 
-  redeemed_at timestamp
-  status varchar [not null, default: "Redeemed"]
+-- Allow Read Access for All Authenticated Users
+CREATE POLICY "Public read settings" ON public.system_settings 
+    FOR SELECT USING (true);
 
-  Indexes {
-    (user_id, voucher_id) [unique, name: "uniq_user_voucher_once"]
-  }
-}
+-- Allow Admin Update
+CREATE POLICY "Admins update settings" ON public.system_settings 
+    FOR UPDATE USING (public.is_admin());
 
+
+-- 4. CLEANUP & CACHE REFRESH
+-- ============================================
+
+COMMIT;
+
+-- Force refreshing the schema cache
+NOTIFY pgrst, 'reload schema';
+
+-- Verification Output
+SELECT 'Database setup completed successfully' as status;

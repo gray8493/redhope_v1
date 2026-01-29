@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { AdminSidebar } from '@/components/shared/AdminSidebar';
+import { settingService, SystemSettings } from '@/services/setting.service';
+import { Loader2, Save, RefreshCw } from 'lucide-react';
+import { toast } from "sonner";
 
 const Toggle = ({
     checked,
@@ -34,6 +35,9 @@ const Toggle = ({
 );
 
 const SystemSettingsPage = () => {
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
     // Notification Settings
     const [lowStockAlert, setLowStockAlert] = useState(false);
     const [donationReminder, setDonationReminder] = useState(true);
@@ -55,131 +59,145 @@ const SystemSettingsPage = () => {
     const [twoFactorAuth, setTwoFactorAuth] = useState("Bắt buộc cho tất cả Quản trị viên");
     const [apiKey, setApiKey] = useState("Loading...");
 
-    // Load settings from localStorage on mount
+    // Load settings from DB on mount
     useEffect(() => {
-        const savedSettings = localStorage.getItem('system_settings_all');
-        if (savedSettings) {
-            try {
-                const parsed = JSON.parse(savedSettings);
-                // Notifications
-                setLowStockAlert(parsed.lowStockAlert ?? false);
-                setDonationReminder(parsed.donationReminder ?? true);
-                setEmergencyBroadcast(parsed.emergencyBroadcast ?? false);
+        loadSettings();
 
-                // AI Screening
-                setAiSensitivity(parsed.aiSensitivity ?? 7);
-                setMinHemoglobin(parsed.minHemoglobin ?? 12.5);
-                setMinWeight(parsed.minWeight ?? 50);
-                if (parsed.questionVersion) setQuestionVersion(parsed.questionVersion);
-
-                // Rewards & Points
-                setPointsPerDonation(parsed.pointsPerDonation ?? 1000);
-                setReferralBonus(parsed.referralBonus ?? 250);
-                setExchangeRate(parsed.exchangeRate ?? 500);
-                setPointsExpiry(parsed.pointsExpiry ?? true);
-
-                // Security
-                if (parsed.twoFactorAuth) setTwoFactorAuth(parsed.twoFactorAuth);
-            } catch (e) {
-                console.error("Failed to parse settings", e);
-            }
-        } else {
-            // Check for legacy settings key and migrate if needed
-            const legacySettings = localStorage.getItem('system_settings_notifications');
-            if (legacySettings) {
-                try {
-                    const parsed = JSON.parse(legacySettings);
-                    setLowStockAlert(parsed.lowStockAlert ?? false);
-                    setDonationReminder(parsed.donationReminder ?? true);
-                    setEmergencyBroadcast(parsed.emergencyBroadcast ?? false);
-                } catch (e) { console.error(e); }
-            }
-        }
         // Simulate fetching secure key
-        let timeoutId: NodeJS.Timeout;
-        const fetchKey = async () => {
-            timeoutId = setTimeout(() => {
-                setApiKey("sk-live-•••••••••••qRw");
-            }, 500);
-        };
-        fetchKey();
-
-        return () => {
-            if (timeoutId) clearTimeout(timeoutId);
-        };
+        setTimeout(() => {
+            setApiKey("sk-live-•••••••••••qRw");
+        }, 500);
     }, []);
 
-    const handleSave = () => {
-        // Save to localStorage
-        const settings = {
-            lowStockAlert,
-            donationReminder,
-            emergencyBroadcast,
-            aiSensitivity,
-            minHemoglobin,
-            minWeight,
-            questionVersion,
-            pointsPerDonation,
-            referralBonus,
-            exchangeRate,
-            pointsExpiry,
-            twoFactorAuth
-        };
-        localStorage.setItem('system_settings_all', JSON.stringify(settings));
+    const loadSettings = async () => {
+        setLoading(true);
+        try {
+            const data = await settingService.getSettings();
 
-        // In a real app, you would also make an API call here.
-        alert('Lưu thay đổi thành công!');
-    };
+            // Map DB snake_case to React camelCase state
+            setLowStockAlert(data.low_stock_alert);
+            setDonationReminder(data.donation_reminder);
+            setEmergencyBroadcast(data.emergency_broadcast);
 
-    const handleReset = () => {
-        if (window.confirm("Bạn có chắc chắn muốn khôi phục tất cả cài đặt về mặc định không?")) {
-            // Define defaults
-            const defaults = {
-                lowStockAlert: false,
-                donationReminder: true,
-                emergencyBroadcast: false,
-                aiSensitivity: 7,
-                minHemoglobin: 12.5,
-                minWeight: 50,
-                questionVersion: "V4.2 - Tiêu chuẩn Toàn cầu (Hoạt động)",
-                pointsPerDonation: 1000,
-                referralBonus: 250,
-                exchangeRate: 500,
-                pointsExpiry: true,
-                twoFactorAuth: "Bắt buộc cho tất cả Quản trị viên"
-            };
+            setAiSensitivity(data.ai_sensitivity);
+            setMinHemoglobin(data.min_hemoglobin);
+            setMinWeight(data.min_weight);
+            setQuestionVersion(data.question_version);
 
-            // Set state
-            setLowStockAlert(defaults.lowStockAlert);
-            setDonationReminder(defaults.donationReminder);
-            setEmergencyBroadcast(defaults.emergencyBroadcast);
-            setAiSensitivity(defaults.aiSensitivity);
-            setMinHemoglobin(defaults.minHemoglobin);
-            setMinWeight(defaults.minWeight);
-            setQuestionVersion(defaults.questionVersion);
-            setPointsPerDonation(defaults.pointsPerDonation);
-            setReferralBonus(defaults.referralBonus);
-            setExchangeRate(defaults.exchangeRate);
-            setPointsExpiry(defaults.pointsExpiry);
-            setTwoFactorAuth(defaults.twoFactorAuth);
+            setPointsPerDonation(data.points_per_donation);
+            setReferralBonus(data.referral_bonus);
+            setExchangeRate(data.exchange_rate);
+            setPointsExpiry(data.points_expiry);
 
-            // Save defaults to localStorage
-            localStorage.setItem('system_settings_all', JSON.stringify(defaults));
+            setTwoFactorAuth(data.two_factor_auth);
 
-            alert('Đã khôi phục cài đặt mặc định!');
+        } catch (error) {
+            console.error("Failed to load settings", error);
+            toast.error("Không thể tải cấu hình hệ thống");
+        } finally {
+            setLoading(false);
         }
     };
 
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            // Map React camelCase back to snake_case for DB
+            const settingsToSave: Partial<SystemSettings> = {
+                low_stock_alert: lowStockAlert,
+                donation_reminder: donationReminder,
+                emergency_broadcast: emergencyBroadcast,
+
+                ai_sensitivity: aiSensitivity,
+                min_hemoglobin: minHemoglobin,
+                min_weight: minWeight,
+                question_version: questionVersion,
+
+                points_per_donation: pointsPerDonation,
+                referral_bonus: referralBonus,
+                exchange_rate: exchangeRate,
+                points_expiry: pointsExpiry,
+
+                two_factor_auth: twoFactorAuth
+            };
+
+            await settingService.updateSettings(settingsToSave);
+            toast.success("Lưu thay đổi thành công!");
+        } catch (error: any) {
+            console.error("Save failed", error);
+            toast.error("Lưu thất bại: " + (error.message || 'Lỗi hệ thống'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleReset = async () => {
+        if (!confirm("Bạn có chắc chắn muốn khôi phục tất cả cài đặt về mặc định không?")) return;
+
+        setSaving(true);
+        try {
+            // Define defaults
+            const defaults: Partial<SystemSettings> = {
+                low_stock_alert: false,
+                donation_reminder: true,
+                emergency_broadcast: false,
+                ai_sensitivity: 7,
+                min_hemoglobin: 12.5,
+                min_weight: 50,
+                question_version: "V4.2 - Tiêu chuẩn Toàn cầu (Hoạt động)",
+                points_per_donation: 1000,
+                referral_bonus: 250,
+                exchange_rate: 500,
+                points_expiry: true,
+                two_factor_auth: "Bắt buộc cho tất cả Quản trị viên"
+            };
+
+            await settingService.updateSettings(defaults);
+
+            // Reload state
+            await loadSettings(); // This will refresh UI with defaults
+
+            toast.success("Đã khôi phục cài đặt mặc định!");
+        } catch (error: any) {
+            console.error("Reset failed", error);
+            toast.error("Khôi phục thất bại: " + error.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-[#6324eb]" />
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div className="max-w-6xl mx-auto space-y-8 pb-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm sticky top-4 z-10 backdrop-blur-sm bg-white/90">
                 <div className="flex flex-col gap-1">
                     <h2 className="text-2xl font-bold text-[#1f1f1f]">Cài đặt Hệ thống</h2>
                     <p className="text-gray-500 text-sm">Cấu hình các tham số toàn cầu và nền tảng.</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <button onClick={handleReset} className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-[#1f1f1f] transition-colors">Khôi phục mặc định</button>
-                    <button onClick={handleSave} className="px-6 py-2 bg-[#6324eb] text-white text-sm font-bold rounded-lg hover:bg-opacity-90 shadow-sm transition-all">Lưu thay đổi</button>
+                    <button
+                        onClick={handleReset}
+                        disabled={saving}
+                        className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-[#1f1f1f] transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
+                        Khôi phục mặc định
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="px-6 py-2 bg-[#6324eb] text-white text-sm font-bold rounded-lg hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2 disabled:opacity-70"
+                    >
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        Lưu thay đổi
+                    </button>
                 </div>
             </div>
 
