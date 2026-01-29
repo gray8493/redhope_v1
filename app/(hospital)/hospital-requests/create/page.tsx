@@ -7,7 +7,9 @@ import { format, parse } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { addCampaign, getCampaignById, updateCampaign, Campaign } from "@/app/utils/campaignStorage";
+import { addCampaign, getCampaignById, updateCampaign, Campaign } from "@/app/utils/campaignStorage"; // Keep for types if needed, or remove later
+import { campaignService } from "@/services/campaign.service";
+import { useAuth } from "@/context/AuthContext";
 import {
     Sparkles,
     Zap,
@@ -46,6 +48,7 @@ export default function CreateRequestPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const editId = searchParams.get('id');
+    const { user, profile } = useAuth();
 
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -170,49 +173,66 @@ export default function CreateRequestPage() {
         setLastChanged('amount'); // Trigger re-calc
     };
 
-    const handleCreate = (isDraft: boolean) => {
-        const pTargetAmount = parseFloat(targetAmount) || 0;
+    const handleCreate = async (isDraft: boolean) => {
+        // Parse float then round to integer because DB expects Integer
+        const rawTargetAmount = parseFloat(targetAmount) || 0;
+        const pTargetAmount = Math.round(rawTargetAmount); // Changed to round for better accuracy
+        console.log("Processing target amount:", { raw: targetAmount, parsed: rawTargetAmount, rounded: pTargetAmount });
+
         if (!isDraft) {
-            if (!campaignName || !location || selectedBloodTypes.length === 0 || !selectedDate || pTargetAmount <= 0) {
+            if (!campaignName || !location || !selectedDate || pTargetAmount <= 0) {
                 alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
                 return;
             }
         }
 
-        const campaignData: Campaign = {
-            id: editId ? Number(editId) : Date.now(),
-            name: campaignName || (isUrgent ? `Yêu cầu Khẩn cấp ${mrn}` : `Yêu cầu mới`),
-            desc: desc,
-            location: location,
-            organization: organization,
-            radius: radius,
-            target: pTargetAmount,
-            bloodType: selectedBloodTypes.length === 1 ? selectedBloodTypes[0] : "Hỗn hợp",
-            bloodTypes: selectedBloodTypes,
-            bloodClass: "text-slate-600 bg-slate-100",
-            status: isUrgent ? "Khẩn cấp" : "Tiêu chuẩn",
-            statusClass: isUrgent ? "bg-indigo-600 text-white" : "bg-blue-600 text-white",
-            operationalStatus: isDraft ? "Bản nháp" : "Đang hoạt động",
-            isUrgent: isUrgent,
-            timeLeft: "Vừa đăng",
-            progress: editId ? (getCampaignById(Number(editId))?.progress || 0) : 0,
-            current: editId ? (getCampaignById(Number(editId))?.current || 0) : 0,
-            completedCount: editId ? (getCampaignById(Number(editId))?.completedCount || 0) : 0,
-            registeredCount: editId ? (getCampaignById(Number(editId))?.registeredCount || 0) : 0,
-            image: image || "https://lh3.googleusercontent.com/aida-public/AB6AXuBZiNSYWEy5ZAjxyaFcmn3iOyddBWPAo-t4t2XsfTJGxeJi9pEE3PcQvHukQOiZiZfZKJ_NqFXxSTeco2-MSerQKRL5_r53tmMnHyXvtxhRQzJ-vzOaZ2giorfxNjOUDLlGVHBskP1VPCvzakxwSAOsMZr4J8ReKbJJN6CCOy0gM-ah-B09uje6IwWuV197aU3UNyQYOKs0zvUVmjFBEd3wBkFq6J8WRnVolp_edDc9AwGCPjvU6M1HOqDmErPtLflVEa6odlYKvEr2",
-            date: selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: vi }) : "",
-            staffCount: 5,
-            startTime: startTime,
-            endTime: endTime
-        };
+        try {
+            if (!user) {
+                alert("Vui lòng đăng nhập tài khoản bệnh viện!");
+                router.push('/login');
+                return;
+            }
 
-        if (editId) {
-            updateCampaign(campaignData);
-        } else {
-            addCampaign(campaignData);
+            // Combine Date + Time
+            const startDateTime = selectedDate ? new Date(selectedDate) : new Date();
+            const [startH, startM] = startTime.split(':').map(Number);
+            startDateTime.setHours(startH, startM, 0, 0);
+
+            const endDateTime = selectedDate ? new Date(selectedDate) : new Date();
+            const [endH, endM] = endTime.split(':').map(Number);
+            endDateTime.setHours(endH, endM, 0, 0);
+
+            // Construct payload for Supabase 'campaigns' table
+            const payload = {
+                hospital_id: user.id,
+                name: campaignName || (isUrgent ? `Yêu cầu Khẩn cấp ${mrn}` : `Yêu cầu mới`),
+                description: desc, // Note: DB column is 'description', page state is 'desc'
+                location_name: location,
+                city: profile?.city || "Hồ Chí Minh", // Fallback or get from form
+                district: profile?.district || "Quận 1",
+                start_time: startDateTime.toISOString(),
+                end_time: endDateTime.toISOString(),
+                target_units: pTargetAmount,
+                status: isDraft ? "draft" : "active",
+                // Note: 'image' column missing in seed-data, ignoring for now or check if added
+                // location (address) -> location_name
+            };
+
+            console.log("Submitting campaign:", payload);
+
+            if (editId) {
+                await campaignService.updateCampaign(editId, payload);
+                alert("Cập nhật chiến dịch thành công!");
+            } else {
+                await campaignService.createCampaign(payload);
+                alert("Tạo chiến dịch mới thành công!");
+            }
+
+            router.push("/hospital/campaign"); // Redirect to campaign list
+        } catch (error: any) {
+            console.error("Failed to create campaign:", error);
+            alert(`Lỗi khi tạo chiến dịch: ${error.message || "Vui lòng thử lại"}`);
         }
-
-        router.push("/hospital/campaign");
     };
 
     const toggleBloodType = (type: string) => {

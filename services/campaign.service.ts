@@ -46,5 +46,39 @@ export const campaignService = {
         const { data, error } = await query;
         if (error) throw error;
         return data || [];
+    },
+
+    async createCampaign(campaignData: any) {
+        const { data, error } = await supabase
+            .from('campaigns')
+            .insert(campaignData)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async updateCampaign(id: string, campaignData: any) {
+        const { data, error } = await supabase
+            .from('campaigns')
+            .update(campaignData)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async createBloodRequest(requestData: any) {
+        const { data, error } = await supabase
+            .from('blood_requests')
+            .insert(requestData)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
     }
 };

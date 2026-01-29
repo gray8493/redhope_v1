@@ -25,7 +25,9 @@ import {
     Dialog,
     DialogContent,
     DialogClose,
+    DialogTitle,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
     Pagination,
     PaginationContent,
@@ -271,6 +273,9 @@ export default function RequestsPage() {
             {/* Detail Modal */}
             <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
                 <DialogContent className="sm:max-w-lg p-0 overflow-hidden bg-white dark:bg-[#1c162e] border-0 gap-0">
+                    <VisuallyHidden>
+                        <DialogTitle>Chi tiết yêu cầu hiến máu</DialogTitle>
+                    </VisuallyHidden>
                     {selectedRequest && (
                         <>
                             <div
