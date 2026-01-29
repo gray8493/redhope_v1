@@ -127,6 +127,7 @@ export const pointService = {
                     id,
                     status,
                     created_at,
+                    voucher_id,
                     vouchers (
                         partner_name,
                         point_cost
@@ -135,11 +136,24 @@ export const pointService = {
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                // RLS policy error - return empty array gracefully
+                if (error.code === '42501' || Object.keys(error).length === 0) {
+                    console.warn('[PointService] RLS policy may be blocking access. Please run fix-all-rls-policies.sql in Supabase.');
+                    return [];
+                }
+                throw error;
+            }
             return data || [];
-        } catch (error) {
-            console.error('[PointService] Error fetching redemptions:', error);
-            throw error;
+        } catch (error: any) {
+            // Handle RLS policy issues gracefully
+            const errorStr = JSON.stringify(error);
+            if (errorStr === '{}' || !error?.message) {
+                console.warn('[PointService] RLS policy may be blocking access. Please run fix-all-rls-policies.sql in Supabase.');
+                return [];
+            }
+            console.warn('[PointService] Error fetching redemptions:', error?.message || error);
+            return []; // Return empty array instead of throwing
         }
     }
 };
