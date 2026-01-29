@@ -140,3 +140,42 @@ export interface UpdateVoucher {
     imported_by?: string;
     status?: string;
 }
+
+// Notification types
+export interface Notification {
+    id: string;
+    user_id: string;
+    title: string;
+    content: string;
+    action_type: string | null;
+    action_url: string | null;
+    is_read: boolean;
+    metadata: Record<string, any>;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface InsertNotification {
+    user_id: string;
+    title: string;
+    content: string;
+    action_type?: string | null;
+    action_url?: string | null;
+    is_read?: boolean;
+    metadata?: Record<string, any>;
+}
+
+export interface UpdateNotification {
+    title?: string;
+    content?: string;
+    action_type?: string | null;
+    action_url?: string | null;
+    is_read?: boolean;
+    metadata?: Record<string, any>;
+}
+
+export type NotificationActionType =
+    | 'view_campaign'
+    | 'view_appointment'
+    | 'view_registrations'
+    | null;

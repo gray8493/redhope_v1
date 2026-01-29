@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { notificationService } from './notification.service';
 
 export const campaignService = {
     async getAll(hospitalId?: string) {
@@ -56,7 +57,39 @@ export const campaignService = {
             .single();
 
         if (error) throw error;
+
+        // Gửi thông báo đến donors phù hợp (cùng tỉnh/thành)
+        try {
+            await notificationService.sendCampaignNotification(data.id);
+        } catch (notifError) {
+            console.error('Failed to send campaign notifications:', notifError);
+            // Không throw error để không ảnh hưởng đến việc tạo chiến dịch
+        }
+
         return data;
+    },
+
+    async getCampaignRegistrations(campaignId: string) {
+        const { data, error } = await supabase
+            .from('appointments')
+            .select(`
+                *,
+                user:users(
+                    id,
+                    full_name,
+                    email,
+                    phone,
+                    blood_group,
+                    city,
+                    district,
+                    address
+                )
+            `)
+            .eq('campaign_id', campaignId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
     },
 
     async updateCampaign(id: string, campaignData: any) {

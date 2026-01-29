@@ -22,6 +22,9 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { notificationService } from "@/services";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import {
     Avatar,
     AvatarFallback,
@@ -197,36 +200,157 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
         }
     ];
 
-    const [notifications, setNotifications] = useState(initialNotifications);
+    const [notifications, setNotifications] = useState<any[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('notifications_state');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    const restored = parsed.map((n: any) => {
-                        let Icon = n.type === 'alert' ? AlertTriangle :
-                            n.type === 'goal' ? TrendingUp :
-                                n.type === 'check' ? CheckCircle2 :
-                                    n.type === 'feedback' ? Star :
-                                        n.type === 'system' ? ShieldCheck :
-                                            n.type === 'down' ? TrendingDown : Clock;
-                        if (!n.type) Icon = n.id % 2 === 0 ? AlertTriangle : CheckCircle;
-                        return { ...n, icon: Icon };
-                    });
-                    setNotifications(restored);
-                } catch (error) {
-                    console.error("Error parsing notifications", error);
-                    setNotifications(userRole === 'hospital' ? hospitalNotifs : initialNotifications);
+    // Fetch notifications from database
+    const fetchNotifications = async () => {
+        if (!authUser?.id) return;
+
+        try {
+            const data = await notificationService.getNotifications(authUser.id);
+
+            // Map notifications to include icons
+            const mappedNotifications = data.map((n: any) => {
+                let icon = CheckCircle;
+                let color = "text-[#6324eb]";
+                let bg = "bg-[#6324eb]/5";
+
+                // Determine icon based on action_type or title
+                if (n.action_type === 'view_campaign' || n.title.includes('chiến dịch')) {
+                    icon = AlertCircle;
+                    color = "text-[#6324eb]";
+                    bg = "bg-indigo-50";
+                } else if (n.action_type === 'view_appointment' || n.title.includes('Đăng ký')) {
+                    icon = CheckCircle;
+                    color = "text-green-500";
+                    bg = "bg-green-50";
+                } else if (n.action_type === 'view_registrations' || n.title.includes('đăng ký mới')) {
+                    icon = Users;
+                    color = "text-blue-500";
+                    bg = "bg-blue-50";
+                } else if (n.title.includes('Cảnh báo') || n.title.includes('⚠️')) {
+                    icon = AlertTriangle;
+                    color = "text-amber-500";
+                    bg = "bg-amber-50";
+                } else if (n.title.includes('từ chối') || n.title.includes('❌')) {
+                    icon = AlertCircle;
+                    color = "text-red-500";
+                    bg = "bg-red-50";
                 }
-            } else {
-                setNotifications(userRole === 'hospital' ? hospitalNotifs : initialNotifications);
-            }
-            setIsLoaded(true);
+
+                return {
+                    id: n.id,
+                    title: n.title,
+                    desc: n.content,
+                    time: getTimeAgo(n.created_at),
+                    unread: !n.is_read,
+                    icon,
+                    color,
+                    bg,
+                    action_url: n.action_url,
+                };
+            });
+
+            setNotifications(mappedNotifications);
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
         }
-    }, [userRole]);
+    };
+
+    // Helper function to format time ago
+    const getTimeAgo = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (seconds < 60) return 'Vừa xong';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
+        if (seconds < 604800) return `${Math.floor(seconds / 86400)} ngày trước`;
+        return `${Math.floor(seconds / 604800)} tuần trước`;
+    };
+
+    // Initial fetch
+    useEffect(() => {
+        fetchNotifications();
+        setIsLoaded(true);
+    }, [authUser?.id]);
+
+    // Supabase Realtime subscription for new notifications
+    useEffect(() => {
+        if (!authUser?.id) return;
+
+        const channel = supabase
+            .channel('notifications-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'notifications',
+                    filter: `user_id=eq.${authUser.id}`,
+                },
+                (payload) => {
+                    console.log('New notification received:', payload);
+
+                    const newNotification = payload.new;
+
+                    // Determine icon and colors
+                    let icon = CheckCircle;
+                    let color = "text-[#6324eb]";
+                    let bg = "bg-[#6324eb]/5";
+
+                    if (newNotification.action_type === 'view_campaign' || newNotification.title.includes('chiến dịch')) {
+                        icon = AlertCircle;
+                        color = "text-[#6324eb]";
+                        bg = "bg-indigo-50";
+                    } else if (newNotification.action_type === 'view_appointment' || newNotification.title.includes('Đăng ký')) {
+                        icon = CheckCircle;
+                        color = "text-green-500";
+                        bg = "bg-green-50";
+                    } else if (newNotification.action_type === 'view_registrations' || newNotification.title.includes('đăng ký mới')) {
+                        icon = Users;
+                        color = "text-blue-500";
+                        bg = "bg-blue-50";
+                    } else if (newNotification.title.includes('Cảnh báo') || newNotification.title.includes('⚠️')) {
+                        icon = AlertTriangle;
+                        color = "text-amber-500";
+                        bg = "bg-amber-50";
+                    }
+
+                    const mappedNotification = {
+                        id: newNotification.id,
+                        title: newNotification.title,
+                        desc: newNotification.content,
+                        time: 'Vừa xong',
+                        unread: true,
+                        icon,
+                        color,
+                        bg,
+                        action_url: newNotification.action_url,
+                    };
+
+                    // Add to notifications list
+                    setNotifications(prev => [mappedNotification, ...prev]);
+
+                    // Show toast notification
+                    toast.success(newNotification.title, {
+                        description: newNotification.content,
+                        duration: 5000,
+                        action: newNotification.action_url ? {
+                            label: 'Xem',
+                            onClick: () => router.push(newNotification.action_url),
+                        } : undefined,
+                    });
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [authUser?.id, router]);
 
     // Global Notification Listener
     useEffect(() => {
@@ -261,8 +385,37 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
         }
     }, [notifications, isLoaded]);
 
-    const markAllAsRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+    const markAllAsRead = async () => {
+        if (!authUser?.id) return;
+
+        try {
+            await notificationService.markAllAsRead(authUser.id);
+            setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+        } catch (error) {
+            console.error('Error marking all as read:', error);
+        }
+    };
+
+    const handleNotificationClick = async (notification: any) => {
+        try {
+            // Mark as read
+            if (notification.unread) {
+                await notificationService.markAsRead(notification.id);
+                setNotifications(prev =>
+                    prev.map(n => n.id === notification.id ? { ...n, unread: false } : n)
+                );
+            }
+
+            // Close dropdown
+            setShowNotifications(false);
+
+            // Navigate if has action_url
+            if (notification.action_url) {
+                router.push(notification.action_url);
+            }
+        } catch (error) {
+            console.error('Error handling notification click:', error);
+        }
     };
 
     const toggleNoti = () => {
@@ -314,19 +467,30 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                                 <button onClick={markAllAsRead} className="text-xs font-bold text-[#6324eb] hover:underline">Đánh dấu đã đọc</button>
                             </div>
                             <div className="max-h-[400px] overflow-y-auto">
-                                {notifications.map((item) => (
-                                    <div key={item.id} className={`p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors cursor-pointer flex gap-3 ${item.unread ? 'bg-[#6324eb]/5' : ''}`}>
-                                        <div className={`size-10 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0`}>
-                                            <item.icon className={`w-5 h-5 ${item.color}`} />
+                                {notifications.length > 0 ? (
+                                    notifications.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => handleNotificationClick(item)}
+                                            className={`p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors cursor-pointer flex gap-3 ${item.unread ? 'bg-[#6324eb]/5' : ''}`}
+                                        >
+                                            <div className={`size-10 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0`}>
+                                                <item.icon className={`w-5 h-5 ${item.color}`} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-bold text-[#120e1b] dark:text-white mb-1">{item.title}</p>
+                                                <p className="text-xs text-[#654d99] dark:text-[#a594c9] leading-relaxed mb-1">{item.desc}</p>
+                                                <p className="text-[10px] text-slate-400 font-medium">{item.time}</p>
+                                            </div>
+                                            {item.unread && <div className={`size-2 rounded-full mt-1.5 ${userRole === 'hospital' ? 'bg-[#6324eb]' : 'bg-[#6324eb]'}`}></div>}
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-bold text-[#120e1b] dark:text-white mb-1">{item.title}</p>
-                                            <p className="text-xs text-[#654d99] dark:text-[#a594c9] leading-relaxed mb-1">{item.desc}</p>
-                                            <p className="text-[10px] text-slate-400 font-medium">{item.time}</p>
-                                        </div>
-                                        {item.unread && <div className={`size-2 rounded-full mt-1.5 ${userRole === 'hospital' ? 'bg-[#6324eb]' : 'bg-[#6324eb]'}`}></div>}
+                                    ))
+                                ) : (
+                                    <div className="p-8 text-center text-slate-500">
+                                        <Bell className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                                        <p className="text-sm">Không có thông báo</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
                             <div className="p-3 text-center border-t border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36]">
                                 <Link href="/notifications" className={`text-sm font-bold ${userRole === 'hospital' ? 'text-[#6324eb]' : 'text-[#6324eb]'} hover:underline block w-full`}>Xem tất cả</Link>

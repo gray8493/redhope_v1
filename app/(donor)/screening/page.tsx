@@ -20,7 +20,7 @@ import {
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { aiService } from "@/services/ai.service";
 import { Progress } from "@/components/ui/progress";
@@ -161,8 +161,10 @@ const SCREENING_QUESTIONS: Question[] = [
 ];
 
 export default function ScreeningPage() {
-    const { profile, loading: authLoading } = useAuth();
+    const { profile, user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const campaignId = searchParams.get('campaignId');
 
     useEffect(() => {
         if (!authLoading && profile && profile.is_verified !== true) {
@@ -175,6 +177,7 @@ export default function ScreeningPage() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<number, any>>({});
     const [progress, setProgress] = useState(0);
+    const [isCreatingAppointment, setIsCreatingAppointment] = useState(false);
     const [aiResult, setAiResult] = useState<{
         status: "eligible" | "ineligible" | "warning";
         score: number;
@@ -499,14 +502,53 @@ export default function ScreeningPage() {
                                                 {aiResult.status === 'eligible' ? (
                                                     <>
                                                         <Button
-                                                            onClick={() => {
-                                                                localStorage.setItem('screening_verified', 'true');
-                                                                router.push("/requests");
+                                                            disabled={isCreatingAppointment || !campaignId}
+                                                            onClick={async () => {
+                                                                if (!campaignId || !user?.id) {
+                                                                    alert('Thiếu thông tin chiến dịch hoặc người dùng');
+                                                                    return;
+                                                                }
+
+                                                                setIsCreatingAppointment(true);
+                                                                try {
+                                                                    const response = await fetch('/api/appointments/create', {
+                                                                        method: 'POST',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({
+                                                                            userId: user.id,
+                                                                            campaignId: campaignId,
+                                                                        }),
+                                                                    });
+
+                                                                    const result = await response.json();
+
+                                                                    if (response.ok) {
+                                                                        localStorage.setItem('screening_verified', 'true');
+                                                                        alert('✅ Đăng ký thành công! Bạn sẽ nhận được thông báo xác nhận.');
+                                                                        router.push(`/appointments/${result.appointment.id}`);
+                                                                    } else {
+                                                                        alert(`Lỗi: ${result.error || 'Không thể tạo lịch hẹn'}`);
+                                                                    }
+                                                                } catch (error) {
+                                                                    console.error('Error creating appointment:', error);
+                                                                    alert('Có lỗi xảy ra khi tạo lịch hẹn. Vui lòng thử lại.');
+                                                                } finally {
+                                                                    setIsCreatingAppointment(false);
+                                                                }
                                                             }}
-                                                            className="flex-1 bg-[#6324eb] hover:bg-[#501ac2] text-white py-8 rounded-2xl font-black transition-all flex items-center justify-center gap-4 shadow-2xl shadow-[#6324eb]/30 text-lg uppercase tracking-widest"
+                                                            className="flex-1 bg-[#6324eb] hover:bg-[#501ac2] text-white py-8 rounded-2xl font-black transition-all flex items-center justify-center gap-4 shadow-2xl shadow-[#6324eb]/30 text-lg uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                                                         >
-                                                            Đến địa điểm hiến máu
-                                                            <ArrowRight className="w-6 h-6" />
+                                                            {isCreatingAppointment ? (
+                                                                <>
+                                                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                                                    Đang đăng ký...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    Đăng ký chiến dịch
+                                                                    <ArrowRight className="w-6 h-6" />
+                                                                </>
+                                                            )}
                                                         </Button>
                                                         <Button variant="outline" className="flex-1 py-8 border-2 border-slate-100 dark:border-slate-800 rounded-2xl font-black text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-lg uppercase tracking-widest">
                                                             Tải Báo cáo AI (.PDF)

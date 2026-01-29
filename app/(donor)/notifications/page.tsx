@@ -1,75 +1,114 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle, Clock, AlertCircle, ArrowLeft, Bell } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, ArrowLeft, Bell, Users, AlertTriangle, Search } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { TopNav } from "@/components/shared/TopNav";
+import { useAuth } from "@/context/AuthContext";
+import { notificationService } from "@/services";
 
 export default function NotificationsPage() {
-    // Duplicate initial state structure for type safety/fallback
-    const initialNotifications = [
-        {
-            id: 1,
-            title: "Máu của bạn đã được sử dụng!",
-            desc: "Đơn vị máu hiến ngày 24/10 đã được chuyển đến BV Chợ Rẫy.",
-            time: "2 giờ trước",
-            unread: true,
-            icon: CheckCircle,
-            color: "text-green-500",
-            bg: "bg-green-50"
-        },
-        {
-            id: 2,
-            title: "Lời kêu gọi khẩn cấp nhóm O+",
-            desc: "Bệnh viện 115 đang thiếu hụt nhóm máu của bạn.",
-            time: "5 giờ trước",
-            unread: true,
-            icon: AlertCircle,
-            color: "text-red-500",
-            bg: "bg-red-50"
-        },
-        {
-            id: 3,
-            title: "Nhắc nhở lịch hẹn",
-            desc: "Bạn có thể hiến máu lại bắt đầu từ tuần tới.",
-            time: "1 ngày trước",
-            unread: false,
-            icon: Clock,
-            color: "text-blue-500",
-            bg: "bg-blue-50"
-        }
-    ];
+    const { user } = useAuth();
+    const router = useRouter();
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [filter, setFilter] = useState<'all' | 'unread'>('all');
+    const [searchQuery, setSearchQuery] = useState('');
 
-    const [notifications, setNotifications] = useState(initialNotifications);
-    const [isLoaded, setIsLoaded] = useState(false);
+    // Fetch notifications
+    const fetchNotifications = async () => {
+        if (!user?.id) return;
 
-    // Load from localStorage linked with TopNav state
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('notifications_state');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    // Re-attach icons
-                    const restored = parsed.map((n: any) => ({
-                        ...n,
-                        icon: n.id === 1 ? CheckCircle : n.id === 2 ? AlertCircle : Clock
-                    }));
-                    setNotifications(restored);
-                } catch (error) {
-                    console.error("Error parsing notifications", error);
+        try {
+            setIsLoading(true);
+            const data = await notificationService.getNotifications(user.id);
+
+            // Map to include icons
+            const mapped = data.map((n: any) => {
+                let icon = CheckCircle;
+                let color = "text-green-500";
+                let bg = "bg-green-50";
+
+                if (n.action_type === 'view_campaign' || n.title.includes('chiến dịch')) {
+                    icon = AlertCircle;
+                    color = "text-[#6324eb]";
+                    bg = "bg-[#6324eb]/5";
+                } else if (n.action_type === 'view_registrations' || n.title.includes('đăng ký')) {
+                    icon = Users;
+                    color = "text-blue-500";
+                    bg = "bg-blue-50";
+                } else if (n.title.includes('Cảnh báo')) {
+                    icon = AlertTriangle;
+                    color = "text-amber-500";
+                    bg = "bg-amber-50";
                 }
-            }
-            setIsLoaded(true);
+
+                return {
+                    id: n.id,
+                    title: n.title,
+                    desc: n.content,
+                    time: getTimeAgo(n.created_at),
+                    unread: !n.is_read,
+                    icon,
+                    color,
+                    bg,
+                    action_url: n.action_url,
+                };
+            });
+
+            setNotifications(mapped);
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        } finally {
+            setIsLoading(false);
         }
-    }, []);
+    };
+
+    const getTimeAgo = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (seconds < 60) return 'Vừa xong';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
+        if (seconds < 604800) return `${Math.floor(seconds / 86400)} ngày trước`;
+        return `${Math.floor(seconds / 604800)} tuần trước`;
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, [user?.id]);
+
+    const handleNotificationClick = async (notification: any) => {
+        try {
+            if (notification.unread) {
+                await notificationService.markAsRead(notification.id);
+                setNotifications(prev =>
+                    prev.map(n => n.id === notification.id ? { ...n, unread: false } : n)
+                );
+            }
+
+            if (notification.action_url) {
+                router.push(notification.action_url);
+            }
+        } catch (error) {
+            console.error('Error handling notification click:', error);
+        }
+    };
+
+    const filteredNotifications = notifications
+        .filter(n => filter === 'all' || (filter === 'unread' && n.unread))
+        .filter(n =>
+            searchQuery === '' ||
+            n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            n.desc.toLowerCase().includes(searchQuery.toLowerCase())
+        );
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0f0a19]">
             <div className="flex">
-                {/* Sidebar placeholder or layout wrapper if needed, but for now assuming standalone or wrapped in layout */}
-                {/* Using dashboard layout usually wraps this, but checking file path app/notifications/page.tsx implies it inherits root layout */}
-
                 <main className="flex-1">
                     <TopNav title="Thông báo" />
 
@@ -84,11 +123,52 @@ export default function NotificationsPage() {
                             </h1>
                         </div>
 
+                        {/* Filters */}
+                        <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-slate-200 dark:border-[#2d263d] p-4 flex flex-col sm:flex-row gap-4">
+                            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                                <button
+                                    onClick={() => setFilter('all')}
+                                    className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filter === 'all' ? 'bg-white dark:bg-[#1c162e] text-[#6324eb] shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                                >
+                                    Tất cả
+                                </button>
+                                <button
+                                    onClick={() => setFilter('unread')}
+                                    className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filter === 'unread' ? 'bg-white dark:bg-[#1c162e] text-[#6324eb] shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                                >
+                                    Chưa đọc ({notifications.filter(n => n.unread).length})
+                                </button>
+                            </div>
+
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Tìm kiếm thông báo..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Notifications List */}
                         <div className="bg-white dark:bg-[#1c162e] rounded-xl shadow-sm border border-slate-200 dark:border-[#2d263d] overflow-hidden">
-                            {notifications.length > 0 ? (
+                            {isLoading ? (
+                                <div className="p-12 text-center">
+                                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                                        <Bell className="w-8 h-8 text-slate-400" />
+                                    </div>
+                                    <p className="text-slate-500">Đang tải...</p>
+                                </div>
+                            ) : filteredNotifications.length > 0 ? (
                                 <div className="divide-y divide-slate-100 dark:divide-[#2d263d]">
-                                    {notifications.map((item) => (
-                                        <div key={item.id} className={`p-6 hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors flex gap-4 ${item.unread ? 'bg-[#6324eb]/5' : ''}`}>
+                                    {filteredNotifications.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => handleNotificationClick(item)}
+                                            className={`p-6 hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors flex gap-4 cursor-pointer ${item.unread ? 'bg-[#6324eb]/5' : ''}`}
+                                        >
                                             <div className={`size-12 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0`}>
                                                 <item.icon className={`w-6 h-6 ${item.color}`} />
                                             </div>
@@ -111,7 +191,9 @@ export default function NotificationsPage() {
                                         <Bell className="w-8 h-8 text-slate-400" />
                                     </div>
                                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Không có thông báo</h3>
-                                    <p className="text-slate-500">Bạn chưa có thông báo nào mới.</p>
+                                    <p className="text-slate-500">
+                                        {filter === 'unread' ? 'Bạn đã đọc tất cả thông báo!' : 'Bạn chưa có thông báo nào mới.'}
+                                    </p>
                                 </div>
                             )}
                         </div>
