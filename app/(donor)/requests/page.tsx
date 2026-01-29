@@ -117,6 +117,36 @@ const REQUESTS_DATA: BloodRequest[] = [
         image: "https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?auto=format&fit=crop&q=80&w=600",
         unitsNeeded: 2,
         patientCondition: "Mất máu cấp do chấn thương bụng.",
+    },
+    {
+        id: 5,
+        bloodType: "AB Positive (AB+)",
+        urgency: "Định kỳ",
+        urgencyClass: "bg-emerald-500",
+        urgencyColor: "emerald",
+        distance: "5.8 Km",
+        timeLeft: "Hết hạn trong 3 ngày",
+        description: "Bệnh viện Đa khoa Quốc tế cần dự trữ nhóm máu AB+ cho các ca ghép tạng.",
+        hospitalName: "Bệnh viện Vinmec",
+        address: "208 Nguyễn Hữu Cảnh, Quận Bình Thạnh, TP.HCM",
+        image: "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=600",
+        unitsNeeded: 8,
+        patientCondition: "Hỗ trợ các ca phẫu thuật ghép tạng theo kế hoạch.",
+    },
+    {
+        id: 6,
+        bloodType: "A Negative (A-)",
+        urgency: "Cần gấp",
+        urgencyClass: "bg-red-500",
+        urgencyColor: "red",
+        distance: "3.2 Km",
+        timeLeft: "Hết hạn trong 6h",
+        description: "Sản phụ cần máu nhóm A- cấp cứu do băng huyết sau sinh.",
+        hospitalName: "Bệnh viện Từ Dũ",
+        address: "284 Cống Quỳnh, Quận 1, TP.HCM",
+        image: "https://images.unsplash.com/photo-1505751172107-16068252250c?auto=format&fit=crop&q=80&w=600",
+        unitsNeeded: 4,
+        patientCondition: "Băng huyết sau sinh, tình trạng nguy kịch.",
     }
 ];
 
@@ -130,7 +160,7 @@ export default function RequestsPage() {
     // Sử dụng is_verified thực tế từ Profile
     const isVerified = user?.profile?.is_verified === true;
 
-    const itemsPerPage = 6; // Increased from 2 to show more in demo
+    const itemsPerPage = 2; // Reduced to 2 to show pagination clearly
 
     useEffect(() => {
         // Có thể thêm logic thông báo tại đây nếu cần
@@ -170,7 +200,7 @@ export default function RequestsPage() {
                             {/* Page Heading */}
                             <div className="flex flex-wrap justify-between items-end gap-3 mb-6">
                                 <div className="flex min-w-72 flex-col gap-2">
-                                    <h1 className="text-[#120e1b] dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Yêu cầu hiến máu</h1>
+                                    <h1 className="text-[#120e1b] dark:text-white text-4xl font-black tracking-tight">Yêu cầu hiến máu</h1>
                                     <p className="text-[#654d99] dark:text-[#a594c9] text-base font-normal leading-normal max-w-2xl">
                                         Nhu cầu khẩn cấp từ các cơ sở y tế trong khu vực của bạn. {isVerified ? 'Cảm ơn bạn đã hoàn thành sàng lọc sức khỏe.' : 'Cần sàng lọc an toàn để xem chi tiết vị trí bệnh viện.'}
                                     </p>

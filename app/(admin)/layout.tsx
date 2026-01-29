@@ -8,14 +8,14 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex h-screen bg-[#f8f9fa] overflow-hidden">
+        <div className="flex h-screen bg-[#f8f9fa] dark:bg-[#161121] overflow-hidden">
             {/* Sidebar */}
             <AdminSidebar />
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0 h-full">
                 {/* Header */}
-                <AdminHeader />
+                <AdminHeader title="Hệ thống Quản trị" />
 
                 {/* Scrollable Page Content */}
                 <main className="flex-1 p-6 overflow-y-auto">

@@ -60,7 +60,7 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-6 ">
                         <div className="flex flex-wrap justify-between items-end">
                             <div className="flex flex-col gap-1">
-                                <h1 className="text-slate-900 dark:text-white text-3xl font-black tracking-tight">Chào {firstName}!</h1>
+                                <h1 className="text-slate-900 dark:text-white text-4xl font-black tracking-tight">Chào {firstName}!</h1>
                                 <p className="text-slate-500 text-sm font-medium">Hôm nay là một ngày tuyệt vời để chia sẻ sự sống.</p>
                             </div>
                             <div className="flex items-center gap-3">

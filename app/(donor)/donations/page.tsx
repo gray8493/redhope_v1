@@ -24,6 +24,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const ALL_DONATIONS = [
     {
@@ -220,7 +228,7 @@ export default function DonationsPage() {
                         <div className="max-w-[1400px] w-full px-6 md:px-12">
                             {/* Page Heading */}
                             <div className="mb-10">
-                                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-3">
+                                <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-3">
                                     Lịch sử hiến máu
                                 </h1>
                                 <p className="text-slate-500 dark:text-slate-400 text-lg max-w-3xl leading-relaxed">
@@ -373,42 +381,38 @@ export default function DonationsPage() {
                                 </Table>
                             </div>
 
-                            {/* Reverted Pagination */}
+                            {/* Shadcn Pagination */}
                             {totalPages > 1 && (
                                 <div className="mt-8 flex justify-center mb-16">
-                                    <nav className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => handlePageChange(currentPage - 1)}
-                                            disabled={currentPage === 1}
-                                            className={`h-10 w-10 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 transition-colors
-                                                ${currentPage === 1 ? "opacity-30 cursor-not-allowed" : ""}`}
-                                        >
-                                            <ChevronLeft className="w-5 h-5" />
-                                        </button>
+                                    <Pagination>
+                                        <PaginationContent>
+                                            <PaginationItem>
+                                                <PaginationPrevious
+                                                    onClick={() => handlePageChange(currentPage - 1)}
+                                                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                                />
+                                            </PaginationItem>
 
-                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                            <button
-                                                key={page}
-                                                onClick={() => handlePageChange(page)}
-                                                className={`h-10 w-10 flex items-center justify-center rounded-lg border transition-all text-sm font-bold
-                                                ${currentPage === page
-                                                        ? "bg-[#6324eb] text-white border-[#6324eb]"
-                                                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50"
-                                                    }`}
-                                            >
-                                                {page}
-                                            </button>
-                                        ))}
+                                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                                <PaginationItem key={page}>
+                                                    <PaginationLink
+                                                        onClick={() => handlePageChange(page)}
+                                                        isActive={currentPage === page}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        {page}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            ))}
 
-                                        <button
-                                            onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === totalPages}
-                                            className={`h-10 w-10 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 transition-colors
-                                                ${currentPage === totalPages ? "opacity-30 cursor-not-allowed" : ""}`}
-                                        >
-                                            <ChevronRight className="w-5 h-5" />
-                                        </button>
-                                    </nav>
+                                            <PaginationItem>
+                                                <PaginationNext
+                                                    onClick={() => handlePageChange(currentPage + 1)}
+                                                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                                />
+                                            </PaginationItem>
+                                        </PaginationContent>
+                                    </Pagination>
                                 </div>
                             )}
                         </div>

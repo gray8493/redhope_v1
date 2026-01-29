@@ -15,6 +15,15 @@ import {
     AlertCircle
 } from 'lucide-react';
 import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
     Popover,
     PopoverContent,
     PopoverTrigger,
@@ -517,47 +526,36 @@ export default function CampaignManagementPage() {
                     </table>
                 </div>
 
-                <div className="p-6 border-t border-gray-50 flex items-center justify-between mt-auto">
-                    <p className="text-sm text-gray-500 font-medium">
-                        Hiển thị {filteredCampaigns.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}-
-                        {Math.min(currentPage * ITEMS_PER_PAGE, filteredCampaigns.length)} trên tổng số {filteredCampaigns.length} chiến dịch
-                    </p>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className={`px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold transition-all
-                                ${currentPage === 1 ? "text-gray-400 bg-gray-50 cursor-not-allowed" : "text-gray-500 hover:bg-gray-50 hover:text-[#6324eb]"}`}
-                        >
-                            Trước
-                        </button>
-
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                            <button
-                                key={page}
-                                onClick={() => handlePageChange(page)}
-                                className={`px-4 py-2 border rounded-lg text-sm font-bold transition-all
-                                    ${currentPage === page
-                                        ? "bg-[#6324eb] text-white border-[#6324eb]"
-                                        : "border-gray-200 text-[#120e1b] hover:bg-gray-50"}`}
-                            >
-                                {page}
-                            </button>
-                        ))}
-
-                        <button
-                            onClick={() => {
-                                if (currentPage < totalPages && totalPages > 0) {
-                                    handlePageChange(currentPage + 1);
-                                }
-                            }}
-                            disabled={currentPage >= totalPages || totalPages === 0}
-                            className={`px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold transition-all
-                                ${currentPage >= totalPages || totalPages === 0 ? "text-gray-400 bg-gray-50 cursor-not-allowed" : "text-gray-500 hover:bg-gray-50 hover:text-[#6324eb]"}`}
-                        >
-                            Tiếp
-                        </button>
-                    </div>
+                <div className="p-6 border-t border-gray-50 flex items-center justify-center mt-auto">
+                    {totalPages > 1 && (
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                                {Array.from({ length: totalPages }).map((_, i) => (
+                                    <PaginationItem key={i}>
+                                        <PaginationLink
+                                            isActive={currentPage === i + 1}
+                                            onClick={() => handlePageChange(i + 1)}
+                                            className="cursor-pointer"
+                                        >
+                                            {i + 1}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                    <PaginationNext
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    )}
                 </div>
             </div>
 

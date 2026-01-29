@@ -54,7 +54,7 @@ export default function LoginPage() {
             router.push('/hospital-dashboard');
             break;
           default:
-            router.push('/dashboard');
+            router.push('/requests');
         }
       }
     } catch (err: any) {
@@ -140,15 +140,7 @@ export default function LoginPage() {
         {/* Right Side: Auth Form */}
         <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 lg:p-12 overflow-y-auto bg-gray-50/50 relative">
           {/* Back to Home Button */}
-          <Link
-            href="/"
-            className="absolute top-8 left-8 flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#6324eb] transition-colors group z-20"
-          >
-            <div className="flex items-center justify-center size-8 rounded-full bg-white shadow-sm border border-gray-100 group-hover:border-[#6324eb]/30 group-hover:bg-[#6324eb]/5 transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-            </div>
-            Quay về trang chủ
-          </Link>
+
 
           <div className="w-full max-w-md space-y-8 bg-white p-8 lg:p-10 rounded-3xl shadow-2xl shadow-indigo-100/50 border border-gray-100 relative z-10">
             {/* Heading */}

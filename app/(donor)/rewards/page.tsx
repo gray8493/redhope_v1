@@ -227,7 +227,7 @@ export default function RewardsPage() {
                             <div className="flex flex-wrap justify-between items-end gap-3 mb-6">
 
                                 <div className="flex min-w-72 flex-col gap-3">
-                                    <h1 className="text-[#120e1b] dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Đổi quà tri ân</h1>
+                                    <h1 className="text-[#120e1b] dark:text-white text-4xl font-black tracking-tight">Đổi quà tri ân</h1>
                                     <p className="text-[#654d99] dark:text-[#a594c9] text-base font-normal leading-normal max-w-2xl">
                                         Bạn có <span className="font-bold text-[#6324eb]">{userPoints.toLocaleString()} điểm</span> khả dụng. Cảm ơn bạn đã chung tay cứu người!
                                     </p>

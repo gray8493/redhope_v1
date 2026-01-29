@@ -22,6 +22,7 @@ import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { aiService } from "@/services/ai.service";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -205,39 +206,22 @@ export default function ScreeningPage() {
         return () => clearInterval(interval);
     }, [step]);
 
-    const generateAiAnalysis = () => {
-        // Mock AI Logic based on answers
-        const riskAnswers = Object.values(answers).filter(a => a.isRisk).length;
-        const textAnswers = SCREENING_QUESTIONS
-            .filter(q => q.type === "text")
-            .map(q => answers[q.id]?.value || "");
-
-        const hasCriticalRisk = Object.values(answers).some(a => a.isRisk && (a.id === 3 || a.id === 2));
-
-        let status: "eligible" | "ineligible" | "warning" = "eligible";
-        let score = 100 - (riskAnswers * 10);
-        let analysis = "";
-        let recommendations: string[] = [];
-
-        if (hasCriticalRisk) {
-            status = "ineligible";
-            score = 30;
-            analysis = "Dựa trên phân tích Neural AI, bạn hiện không đủ điều kiện hiến máu do phát hiện các yếu tố rủi ro cao về bệnh truyền nhiễm hoặc thuốc kháng sinh.";
-            recommendations = ["Vui lòng tham khảo ý kiến bác sĩ chuyên khoa", "Theo dõi sức khỏe và quay lại sau 6 tháng"];
-        } else if (riskAnswers > 2) {
-            status = "warning";
-            score = 75;
-            analysis = "AI phát hiện một vài chỉ số sức khỏe của bạn đang ở ngưỡng cần lưu ý. Bạn chưa đủ điều kiện hiến máu ngay lập tức.";
-            recommendations = ["Nghỉ ngơi thêm và kiểm tra lại sau 1 tuần", "Đảm bảo cân nặng và huyết áp ổn định"];
-        } else {
-            status = "eligible";
-            score = 95 - (riskAnswers * 2);
-            analysis = "Hệ thống AI không phát hiện bất kỳ rủi ro sức khỏe nào. Các chỉ số sinh học và tiền sử bệnh lý của bạn rất tốt, đạt tiêu chuẩn an toàn của WHO.";
-            recommendations = ["Giữ tâm trạng thoải mái", "Uống đủ nước trước khi đến địa điểm hiến máu"];
+    const generateAiAnalysis = async () => {
+        try {
+            const result = await aiService.analyzeScreening(answers);
+            setAiResult(result);
+            setStep("result");
+        } catch (error) {
+            console.error("AI Analysis failed:", error);
+            // Fallback
+            setAiResult({
+                status: "warning",
+                score: 70,
+                analysis: "Hệ thống AI đang bận, đã chuyển sang chế độ phân tích dự phòng.",
+                recommendations: ["Thử lại sau ít phút", "Đảm bảo kết nối internet"]
+            });
+            setStep("result");
         }
-
-        setAiResult({ status, score, analysis, recommendations });
-        setStep("result");
     };
 
     const handleNext = () => {
@@ -254,15 +238,20 @@ export default function ScreeningPage() {
         }
     };
 
-    const handleAnswer = (value: any, isRisk: boolean = false) => {
+    const handleAnswer = (id: number, value: any, isRisk: boolean = false) => {
         setAnswers(prev => ({
             ...prev,
-            [currentQuestion.id]: { value, isRisk, id: currentQuestion.id }
+            [id]: { value, isRisk, id }
         }));
     };
 
-    const isCurrentAnswered = answers[currentQuestion.id] !== undefined &&
-        (currentQuestion.type === "choice" || answers[currentQuestion.id].value.trim() !== "");
+    const isAllAnswered = Object.keys(answers).length === totalQuestions &&
+        SCREENING_QUESTIONS.every(q => {
+            const ans = answers[q.id];
+            if (!ans) return false;
+            if (q.type === "text") return ans.value.trim().length > 0;
+            return true;
+        });
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white transition-colors duration-500">
@@ -292,73 +281,108 @@ export default function ScreeningPage() {
                             </div>
 
                             {step === "survey" && (
-                                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <Card className="bg-white dark:bg-[#1c162e] rounded-3xl shadow-xl shadow-indigo-500/5 border border-[#ebe7f3] dark:border-[#2d263d] p-8 md:p-12">
-                                        <div className="mb-10 flex flex-col items-center text-center">
-                                            <Badge variant="outline" className="mb-4 border-[#6324eb] text-[#6324eb] px-4 py-1 rounded-full font-black text-[10px] uppercase tracking-widest">
-                                                Câu hỏi {currentQuestionIndex + 1} / {totalQuestions}
-                                            </Badge>
-                                            <h2 className="text-[#120e1b] dark:text-white text-3xl font-black leading-tight mb-4 tracking-tight px-4">{currentQuestion.text}</h2>
-                                            <div className="w-full max-w-md mt-2">
-                                                <Progress value={surveyProgress} className="h-2" />
+                                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                                    {/* PHẦN 1: KIỂM TRA NHANH CHỈ SỐ SỨC KHỎE */}
+                                    <Card className="bg-white dark:bg-[#1c162e] rounded-[2rem] shadow-xl shadow-indigo-500/5 border border-[#ebe7f3] dark:border-[#2d263d] p-8 md:p-12">
+                                        <div className="mb-12 flex items-center gap-6 border-b border-slate-50 dark:border-slate-800 pb-8">
+                                            <div className="size-14 rounded-2xl bg-gradient-to-br from-[#6324eb] to-[#a855f7] flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                                                <Zap className="w-7 h-7" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-3xl font-black text-[#120e1b] dark:text-white tracking-tight">Phần 1: Chỉ số Sức khỏe Nhanh</h3>
+                                                <p className="text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wide mt-1">Vui lòng chọn các phương án phản ánh đúng nhất tình trạng hiện tại</p>
                                             </div>
                                         </div>
 
-                                        <div className="min-h-[200px] flex flex-col justify-center">
-                                            {currentQuestion.type === "choice" ? (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto w-full">
-                                                    {currentQuestion.options?.map((opt) => (
-                                                        <div
-                                                            key={opt.value}
-                                                            onClick={() => handleAnswer(opt.value, opt.isRisk)}
-                                                            className={`p-6 border-2 rounded-2xl transition-all cursor-pointer flex items-center justify-between group ${answers[currentQuestion.id]?.value === opt.value ? 'border-[#6324eb] bg-[#6324eb]/5 shadow-lg shadow-indigo-500/10' : 'border-slate-100 dark:border-slate-800 hover:border-[#6324eb]/30 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                                                        >
-                                                            <div className="flex items-center gap-4">
-                                                                <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${answers[currentQuestion.id]?.value === opt.value ? 'bg-[#6324eb] text-white rotate-6' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:rotate-6'}`}>
-                                                                    <Activity className="w-5 h-5" />
-                                                                </div>
-                                                                <span className={`font-bold transition-colors ${answers[currentQuestion.id]?.value === opt.value ? 'text-[#120e1b] dark:text-white scale-105' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>{opt.label}</span>
-                                                            </div>
-                                                            {answers[currentQuestion.id]?.value === opt.value && (
-                                                                <div className="size-6 rounded-full bg-[#6324eb] flex items-center justify-center animate-in zoom-in">
-                                                                    <CheckCircle className="w-4 h-4 text-white" />
-                                                                </div>
-                                                            )}
+                                        <div className="space-y-12">
+                                            {SCREENING_QUESTIONS.filter(q => q.type === "choice").map((q, idx) => (
+                                                <div key={q.id} className="group">
+                                                    <div className="flex items-start gap-5 mb-6">
+                                                        <div className="flex flex-col items-center">
+                                                            <span className="text-[10px] font-black text-[#6324eb] bg-[#6324eb]/10 px-3 py-1 rounded-full uppercase tracking-tighter mb-2">Q{idx + 1}</span>
+                                                            <div className="w-px h-full bg-slate-100 dark:bg-slate-800 flex-1"></div>
                                                         </div>
-                                                    ))}
+                                                        <h4 className="text-xl font-black text-[#120e1b] dark:text-white leading-snug pt-1">{q.text}</h4>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-12">
+                                                        {q.options?.map((opt) => (
+                                                            <div
+                                                                key={opt.value}
+                                                                onClick={() => handleAnswer(q.id, opt.value, opt.isRisk)}
+                                                                className={`p-6 border-2 rounded-2xl transition-all cursor-pointer flex items-center justify-between group/opt ${answers[q.id]?.value === opt.value ? 'border-[#6324eb] bg-[#6324eb]/5 shadow-xl shadow-indigo-500/10 scale-[1.02]' : 'border-slate-100 dark:border-slate-800 hover:border-[#6324eb]/30 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                                            >
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${answers[q.id]?.value === opt.value ? 'bg-[#6324eb] text-white rotate-6' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover/opt:rotate-6'}`}>
+                                                                        <Activity className="w-5 h-5" />
+                                                                    </div>
+                                                                    <span className={`font-bold transition-colors ${answers[q.id]?.value === opt.value ? 'text-[#120e1b] dark:text-white' : 'text-slate-500 group-hover/opt:text-slate-700 dark:group-hover/opt:text-slate-300'}`}>{opt.label}</span>
+                                                                </div>
+                                                                {answers[q.id]?.value === opt.value && (
+                                                                    <div className="size-6 rounded-full bg-[#6324eb] flex items-center justify-center animate-in zoom-in">
+                                                                        <CheckCircle className="w-4 h-4 text-white" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            ) : (
-                                                <div className="max-w-2xl mx-auto w-full">
-                                                    <textarea
-                                                        className="w-full h-40 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-[#120e1b] dark:text-white focus:border-[#6324eb] focus:ring-4 focus:ring-[#6324eb]/10 transition-all outline-none font-medium resize-none"
-                                                        placeholder={currentQuestion.placeholder}
-                                                        value={answers[currentQuestion.id]?.value || ""}
-                                                        onChange={(e) => handleAnswer(e.target.value)}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="mt-14 flex items-center justify-between border-t border-slate-50 dark:border-slate-800 pt-8">
-                                            <Button
-                                                variant="ghost"
-                                                onClick={handleBack}
-                                                disabled={currentQuestionIndex === 0}
-                                                className="px-8 py-6 rounded-2xl font-black text-[#120e1b] dark:text-white transition-all flex items-center gap-3 uppercase tracking-widest text-xs"
-                                            >
-                                                <ArrowLeft className="w-4 h-4" />
-                                                Quay lại
-                                            </Button>
-                                            <Button
-                                                disabled={!isCurrentAnswered}
-                                                onClick={handleNext}
-                                                className="bg-[#6324eb] text-white px-12 py-7 rounded-2xl font-black hover:bg-[#501ac2] transition-all flex items-center gap-3 shadow-xl shadow-[#6324eb]/25 hover:-translate-y-1 active:translate-y-0 uppercase tracking-widest text-xs disabled:opacity-50 disabled:translate-y-0"
-                                            >
-                                                {currentQuestionIndex === totalQuestions - 1 ? "Xem kết quả AI" : "Tiếp theo"}
-                                                <ArrowRight className="w-4 h-4" />
-                                            </Button>
+                                            ))}
                                         </div>
                                     </Card>
+
+                                    {/* PHẦN 2: THÔNG TIN SỨC KHỎE CHI TIẾT */}
+                                    <Card className="bg-white dark:bg-[#1c162e] rounded-[2rem] shadow-xl shadow-indigo-500/5 border border-[#ebe7f3] dark:border-[#2d263d] p-8 md:p-12">
+                                        <div className="mb-12 flex items-center gap-6 border-b border-slate-50 dark:border-slate-800 pb-8">
+                                            <div className="size-14 rounded-2xl bg-gradient-to-br from-[#a855f7] to-[#ec4899] flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+                                                <ClipboardCheck className="w-7 h-7" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-3xl font-black text-[#120e1b] dark:text-white tracking-tight">Phần 2: Thông tin Chi tiết</h3>
+                                                <p className="text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wide mt-1">Mô tả cụ thể để AI có thể đánh giá chính xác nhất</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-12">
+                                            {SCREENING_QUESTIONS.filter(q => q.type === "text").map((q, idx) => (
+                                                <div key={q.id} className="group">
+                                                    <div className="flex items-start gap-5 mb-6">
+                                                        <div className="flex flex-col items-center">
+                                                            <span className="text-[10px] font-black text-[#a855f7] bg-[#a855f7]/10 px-3 py-1 rounded-full uppercase tracking-tighter mb-2">Q{idx + 11}</span>
+                                                            <div className="w-px h-full bg-slate-100 dark:bg-slate-800 flex-1"></div>
+                                                        </div>
+                                                        <h4 className="text-xl font-black text-[#120e1b] dark:text-white leading-snug pt-1">{q.text}</h4>
+                                                    </div>
+                                                    <div className="pl-12">
+                                                        <textarea
+                                                            className="w-full h-40 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-[#120e1b] dark:text-white focus:border-[#a855f7] focus:ring-4 focus:ring-[#a855f7]/10 transition-all outline-none font-medium resize-none text-lg shadow-inner"
+                                                            placeholder={q.placeholder}
+                                                            value={answers[q.id]?.value || ""}
+                                                            onChange={(e) => handleAnswer(q.id, e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
+
+                                    {/* FOOTER ACTION */}
+                                    <div className="flex flex-col items-center gap-6 py-12 border-t border-[#d7d0e7] dark:border-[#2d263d]">
+                                        <div className="text-center">
+                                            <p className="text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-widest mb-2">Cam kết trung thực</p>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm">Bằng việc nhấn nút bên dưới, bạn xác nhận các thông tin khai báo trên là hoàn toàn đúng sự thật.</p>
+                                        </div>
+                                        <Button
+                                            disabled={!isAllAnswered}
+                                            onClick={() => setStep("analyzing")}
+                                            className="bg-[#6324eb] text-white px-16 py-10 rounded-3xl font-black hover:bg-[#501ac2] transition-all flex flex-col items-center gap-2 shadow-2xl shadow-[#6324eb]/25 hover:-translate-y-2 active:translate-y-0 disabled:opacity-50 disabled:translate-y-0"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-2xl uppercase tracking-tighter">Gửi kết quả & Phân tích AI</span>
+                                                <BrainCircuit className="w-8 h-8 animate-pulse" />
+                                            </div>
+                                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">Cần hoàn thành tất cả {totalQuestions} câu hỏi</span>
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
 
@@ -414,8 +438,8 @@ export default function ScreeningPage() {
                             {step === "result" && aiResult && (
                                 <div className="animate-in fade-in slide-in-from-top-12 duration-1000 ease-out">
                                     <Card className={`rounded-[3rem] shadow-2xl border-4 overflow-hidden relative p-10 md:p-16 ${aiResult.status === 'eligible' ? 'border-emerald-500/20 bg-white dark:bg-[#1c162e]' :
-                                            aiResult.status === 'warning' ? 'border-amber-500/20 bg-white dark:bg-[#1c162e]' :
-                                                'border-red-500/20 bg-white dark:bg-[#1c162e]'
+                                        aiResult.status === 'warning' ? 'border-amber-500/20 bg-white dark:bg-[#1c162e]' :
+                                            'border-red-500/20 bg-white dark:bg-[#1c162e]'
                                         }`}>
 
                                         <div className={`absolute top-0 right-0 size-80 rounded-full blur-[100px] opacity-10 -mr-40 -mt-40 ${aiResult.status === 'eligible' ? 'bg-emerald-500' : aiResult.status === 'warning' ? 'bg-amber-500' : 'bg-red-500'
@@ -423,8 +447,8 @@ export default function ScreeningPage() {
 
                                         <div className="relative z-10 flex flex-col items-center text-center">
                                             <div className={`size-28 rounded-full flex items-center justify-center text-white mb-10 shadow-2xl transform hover:scale-110 transition-transform duration-500 ${aiResult.status === 'eligible' ? 'bg-emerald-500 shadow-emerald-500/40' :
-                                                    aiResult.status === 'warning' ? 'bg-amber-500 shadow-amber-500/40' :
-                                                        'bg-red-500 shadow-red-500/40'
+                                                aiResult.status === 'warning' ? 'bg-amber-500 shadow-amber-500/40' :
+                                                    'bg-red-500 shadow-red-500/40'
                                                 }`}>
                                                 {aiResult.status === 'eligible' ? <CheckCircle className="w-14 h-14" /> :
                                                     aiResult.status === 'warning' ? <AlertCircle className="w-14 h-14" /> :

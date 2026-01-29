@@ -194,7 +194,7 @@ export default function SettingsPage() {
 
                             {/* Page Header */}
                             <div>
-                                <h1 className="text-3xl font-black text-[#120e1b] dark:text-white mb-2">Cài đặt</h1>
+                                <h1 className="text-4xl font-black tracking-tight text-[#120e1b] dark:text-white mb-2">Cài đặt</h1>
                                 <p className="text-[#654d99] dark:text-[#a594c9]">Quản lý thông tin cá nhân và tùy chọn ứng dụng của bạn.</p>
                             </div>
 

@@ -65,7 +65,7 @@ export async function GET(request: Request) {
                         redirectPath = '/hospital-dashboard';
                         break;
                     default:
-                        redirectPath = '/dashboard';
+                        redirectPath = '/requests';
                 }
             }
 
