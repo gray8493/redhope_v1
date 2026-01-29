@@ -66,7 +66,17 @@ export default function RegisterPage() {
       }
     } catch (err: any) {
       console.error("Registration error:", err);
-      setError(err.message || "Đăng ký thất bại. Vui lòng thử lại.");
+      // Map common Supabase Auth errors to Vietnamese messages
+      const errorMap: Record<string, string> = {
+        'User already registered': 'Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.',
+        'Invalid email': 'Địa chỉ email không hợp lệ.',
+        'Signup requires a valid password': 'Mật khẩu không hợp lệ.',
+        'Password should be at least 6 characters': 'Mật khẩu phải có ít nhất 6 ký tự.',
+        'Email rate limit exceeded': 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
+      };
+      const errorMessage = errorMap[err?.message] || err?.message ||
+        err?.error_description || "Đăng ký thất bại. Vui lòng thử lại.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
