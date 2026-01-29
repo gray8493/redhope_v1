@@ -7,7 +7,11 @@ import {
   LogOut,
   Settings,
   ShieldCheck,
-  Search
+  Search,
+  CheckCheck,
+  CheckCircle,
+  AlertTriangle,
+  Info
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -27,7 +31,10 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
   const router = useRouter();
 
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
   const userRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   // Derived State from Auth Context
   const userRole = authUser?.role || 'admin';
@@ -48,6 +55,9 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
       if (userRef.current && !userRef.current.contains(event.target as Node)) {
         setShowUserMenu(false);
       }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -60,6 +70,32 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
     } catch (error) {
       console.error("Logout failed:", error);
       window.location.href = "/login";
+    }
+  };
+
+  // State for mock notifications
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: 'info', title: 'Người hiến mới đăng ký', desc: 'Có 5 người dùng vừa đăng ký hiến máu tại khu vực TP.HCM.', time: 'vừa xong', read: false },
+    { id: 2, type: 'warning', title: 'Yêu cầu máu khẩn cấp', desc: 'Bệnh viện Chợ Rẫy cần gấp 50 đơn vị nhóm máu O- cho ca phẫu thuật.', time: '15 phút trước', read: false },
+    { id: 3, type: 'success', title: 'Chiến dịch hoàn thành', desc: 'Chiến dịch "Giọt máu hồng" đã đạt 100% chỉ tiêu. Vui lòng duyệt báo cáo.', time: '1 giờ trước', read: false },
+    { id: 4, type: 'info', title: 'Hệ thống bảo trì', desc: 'Hệ thống sẽ bảo trì định kỳ vào 02:00 AM ngày mai.', time: '3 giờ trước', read: true },
+  ]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleMarkAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const handleMarkAsRead = (id: number) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const getIconByType = (type: string) => {
+    switch (type) {
+      case 'success': return <div className="p-2 bg-emerald-100 text-emerald-500 rounded-full"><CheckCircle className="w-5 h-5" /></div>;
+      case 'warning': return <div className="p-2 bg-rose-100 text-rose-500 rounded-full"><AlertTriangle className="w-5 h-5" /></div>;
+      case 'info': default: return <div className="p-2 bg-blue-100 text-blue-500 rounded-full"><Info className="w-5 h-5" /></div>;
     }
   };
 
@@ -79,10 +115,60 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
 
       <div className="flex items-center gap-4">
         {/* Notifications Icon */}
-        <button className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all relative">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
-        </button>
+        <div className="relative" ref={notificationRef}>
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className={`p-2 rounded-lg transition-all relative ${showNotifications ? 'bg-slate-100 text-[#6324eb]' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
+            )}
+          </button>
+
+          {/* Notifications Dropdown */}
+          {showNotifications && (
+            <div className="absolute right-0 top-full mt-3 w-96 bg-white dark:bg-[#1c162e] rounded-2xl shadow-xl border border-slate-100 dark:border-[#2d263d] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right z-50">
+              <div className="p-4 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-[#1c162e]">
+                <h3 className="font-bold text-base text-[#120e1b] dark:text-white">Thông báo</h3>
+                {unreadCount > 0 && (
+                  <button onClick={handleMarkAllRead} className="text-xs font-bold text-[#6324eb] hover:bg-[#6324eb]/10 px-2 py-1 rounded transition-colors">
+                    Đánh dấu đã đọc
+                  </button>
+                )}
+              </div>
+              <div className="max-h-[400px] overflow-y-auto">
+                {notifications.length > 0 ? (
+                  notifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      onClick={() => handleMarkAsRead(notif.id)}
+                      className={`p-4 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors cursor-pointer flex gap-4 ${!notif.read ? 'bg-slate-50/50 dark:bg-[#251e36]/30' : ''}`}
+                    >
+                      <div className="shrink-0 mt-1">
+                        {getIconByType(notif.type)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-1">
+                          <p className={`text-sm font-bold ${!notif.read ? 'text-[#120e1b] dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>{notif.title}</p>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-2">{notif.desc}</p>
+                        <p className="text-[10px] text-slate-400 font-bold">{notif.time}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-slate-400 text-xs">Không có thông báo nào</div>
+                )}
+              </div>
+              <div className="p-2 border-t border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-[#251e36]/50">
+                <Link href="/admin-notifications" className="block w-full text-center py-2 text-xs font-bold text-[#6324eb] hover:bg-[#6324eb]/5 rounded-lg transition-colors">
+                  Xem tất cả
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
 

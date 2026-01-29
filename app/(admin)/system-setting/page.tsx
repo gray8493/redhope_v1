@@ -387,20 +387,7 @@ const SystemSettingsPage = () => {
                     </div>
                 </div>
             </div>
-            <div className="flex items-center justify-between p-6 bg-[#6324eb]/5 rounded-xl border border-[#6324eb]/10">
-                <div className="flex items-center gap-4 text-[#6324eb]">
-                    <span className="material-symbols-outlined text-2xl">info</span>
-                    <p className="text-sm font-medium">Mọi thay đổi được thực hiện tại đây sẽ được ghi lại và kiểm toán để tuân thủ bảo mật. Những thay đổi ngưỡng đáng kể có thể yêu cầu xem xét thủ công.</p>
-                </div>
-                <div className="flex gap-4">
-                    <button
-                        onClick={handleSave}
-                        className="px-10 py-2.5 bg-[#6324eb] text-white font-bold rounded-lg hover:shadow-lg hover:shadow-[#6324eb]/20 transition-all"
-                    >
-                        Lưu tất cả thay đổi
-                    </button>
-                </div>
-            </div>
+
         </div>
     );
 };
