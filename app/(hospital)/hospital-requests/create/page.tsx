@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { addCampaign, getCampaignById, updateCampaign, Campaign } from "@/app/utils/campaignStorage"; // Keep for types if needed, or remove later
 import { campaignService } from "@/services/campaign.service";
 import { useAuth } from "@/context/AuthContext";
+import { LocationSelector } from "@/components/shared/LocationSelector";
+
 import {
     Sparkles,
     Zap,
@@ -63,6 +65,8 @@ export default function CreateRequestPage() {
     const [targetAmount, setTargetAmount] = useState("");
     const [radius, setRadius] = useState("5km (Lân cận)");
     const [location, setLocation] = useState("Khoa Cấp cứu - BV Chợ Rẫy");
+    const [city, setCity] = useState("");
+    const [district, setDistrict] = useState("");
     const [desc, setDesc] = useState("");
     const [startTime, setStartTime] = useState("08:00");
     const [endTime, setEndTime] = useState("21:00");
@@ -74,7 +78,7 @@ export default function CreateRequestPage() {
     // Initial Load for Edit Mode
     useEffect(() => {
         if (editId) {
-            const campaignData = getCampaignById(Number(editId));
+            const campaignData = getCampaignById(Number(editId)) as any;
             if (campaignData) {
                 setCampaignName(campaignData.name || "");
                 setDesc(campaignData.desc || "");
@@ -87,6 +91,8 @@ export default function CreateRequestPage() {
                 setEndTime(campaignData.endTime || "21:00");
                 setRadius(campaignData.radius || "5km (Lân cận)");
                 setImage(campaignData.image || "");
+                if (campaignData.city) setCity(campaignData.city);
+                if (campaignData.district) setDistrict(campaignData.district);
 
                 if (campaignData.bloodTypes && campaignData.bloodTypes.length > 0) {
                     setSelectedBloodTypes(campaignData.bloodTypes);
@@ -208,8 +214,8 @@ export default function CreateRequestPage() {
                 name: campaignName || (isUrgent ? `Yêu cầu Khẩn cấp ${mrn}` : `Yêu cầu mới`),
                 description: desc, // Note: DB column is 'description', page state is 'desc'
                 location_name: location,
-                city: profile?.city || "Hồ Chí Minh", // Fallback or get from form
-                district: profile?.district || "Quận 1",
+                city: city || profile?.city || "Hồ Chí Minh",
+                district: district || profile?.district || "Quận 1",
                 start_time: startDateTime.toISOString(),
                 end_time: endDateTime.toISOString(),
                 target_units: pTargetAmount,
@@ -444,6 +450,14 @@ export default function CreateRequestPage() {
                             </div>
                             <div className="flex flex-col gap-8">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                    <div className="md:col-span-2">
+                                        <LocationSelector
+                                            defaultCity={city}
+                                            defaultDistrict={district}
+                                            onCityChange={setCity}
+                                            onDistrictChange={setDistrict}
+                                        />
+                                    </div>
                                     <div className={`flex flex-col gap-2 ${organization !== "Cộng đồng (Công khai)" ? "md:col-span-2" : ""}`}>
                                         <label className="text-slate-700 text-[13px] font-bold ml-4">Điểm tiếp nhận</label>
                                         <div className="relative">

@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { BLOOD_GROUPS } from "@/lib/database.types";
 import { userService } from "@/services/user.service";
 import { useAuth } from "@/context/AuthContext";
+import { LocationSelector } from "@/components/shared/LocationSelector";
 // import RoleGuard from "@/components/auth/RoleGuard";
 
 export default function DonorProfileStep1() {
@@ -61,6 +62,27 @@ function DonorProfileContent() {
         setError("");
 
         try {
+            // Validate Age >= 18
+            if (formData.dob) {
+                const birthDate = new Date(formData.dob);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+
+                if (age < 18) {
+                    setError("Theo quy định, bạn cần đủ 18 tuổi trở lên để tham gia hiến máu.");
+                    setSubmitting(false);
+                    return;
+                }
+            } else {
+                setError("Vui lòng nhập ngày sinh.");
+                setSubmitting(false);
+                return;
+            }
+
             const role = user?.role || "donor";
 
             // Clean data: empty strings should be null
@@ -238,29 +260,14 @@ function DonorProfileContent() {
                                         <p className="text-[#4c669a] dark:text-gray-400 text-sm">Thông tin hỗ trợ kết nối với các điểm hiến máu gần nhất.</p>
                                     </div>
 
-                                    <label className="flex flex-col gap-2">
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Tỉnh / Thành phố</span>
-                                        <input
-                                            required
-                                            type="text"
-                                            name="city"
-                                            value={formData.city}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] outline-none text-sm"
+                                    <div className="col-span-1 md:col-span-2">
+                                        <LocationSelector
+                                            defaultCity={formData.city}
+                                            defaultDistrict={formData.district}
+                                            onCityChange={(val) => setFormData(prev => ({ ...prev, city: val }))}
+                                            onDistrictChange={(val) => setFormData(prev => ({ ...prev, district: val }))}
                                         />
-                                    </label>
-
-                                    <label className="flex flex-col gap-2">
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Quận / Huyện</span>
-                                        <input
-                                            required
-                                            type="text"
-                                            name="district"
-                                            value={formData.district}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] outline-none text-sm"
-                                        />
-                                    </label>
+                                    </div>
 
                                     <label className="flex flex-col gap-2 col-span-1 md:col-span-2">
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Địa chỉ chi tiết</span>

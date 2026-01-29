@@ -16,13 +16,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { LocationSelector } from "@/components/shared/LocationSelector";
+
+// Extended interface to handle UI specific fields if not in DB types yet
+interface UIHospital extends Hospital {
+    city?: string;
+    district?: string;
+}
 
 export default function HospitalDirectoryPage() {
-    const [hospitals, setHospitals] = useState<Hospital[]>([]);
+    const [hospitals, setHospitals] = useState<UIHospital[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentHospital, setCurrentHospital] = useState<Partial<Hospital>>({});
+    const [currentHospital, setCurrentHospital] = useState<Partial<UIHospital>>({});
     const [mode, setMode] = useState<'add' | 'edit'>('add');
     const [isSaving, setIsSaving] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -69,7 +76,10 @@ export default function HospitalDirectoryPage() {
                 role: 'hospital' as const,
                 created_at: u.created_at,
                 email: u.email,
-                phone: u.phone
+                phone: u.phone,
+                // If backend returns city/district, map them here. Assuming they might be in 'u' as any
+                city: (u as any).city,
+                district: (u as any).district
             })));
         } catch (error: any) {
             console.error('Failed to load hospitals:', error);
@@ -103,14 +113,19 @@ export default function HospitalDirectoryPage() {
         e.preventDefault();
         setIsSaving(true);
         try {
+            // Prepare payload with city/district
+            const payload = {
+                hospital_name: currentHospital.hospital_name || undefined,
+                hospital_address: currentHospital.hospital_address || undefined,
+                license_number: currentHospital.license_number || undefined,
+                is_verified: currentHospital.is_verified || false,
+                city: currentHospital.city,
+                district: currentHospital.district
+            };
+
             if (mode === 'add') {
-                const newHospital = await hospitalService.create({
-                    hospital_name: currentHospital.hospital_name || undefined,
-                    hospital_address: currentHospital.hospital_address || undefined,
-                    license_number: currentHospital.license_number || undefined,
-                    is_verified: currentHospital.is_verified || false,
-                });
-                const mapped: Hospital = {
+                const newHospital = await hospitalService.create(payload);
+                const mapped: UIHospital = {
                     id: newHospital.id,
                     hospital_name: newHospital.hospital_name,
                     license_number: newHospital.license_number,
@@ -118,7 +133,9 @@ export default function HospitalDirectoryPage() {
                     is_verified: newHospital.is_verified,
                     role: 'hospital',
                     email: newHospital.email,
-                    phone: newHospital.phone
+                    phone: newHospital.phone,
+                    city: (newHospital as any).city || currentHospital.city,
+                    district: (newHospital as any).district || currentHospital.district
                 };
                 setHospitals([mapped, ...hospitals]);
                 toast.success("Thêm bệnh viện mới thành công!");
@@ -127,13 +144,8 @@ export default function HospitalDirectoryPage() {
                     toast.error("Lỗi: Không tìm thấy ID bệnh viện để cập nhật.");
                     return;
                 }
-                const updatedHospital = await hospitalService.update(currentHospital.id, {
-                    hospital_name: currentHospital.hospital_name || undefined,
-                    hospital_address: currentHospital.hospital_address || undefined,
-                    license_number: currentHospital.license_number || undefined,
-                    is_verified: currentHospital.is_verified || false,
-                });
-                const mapped: Hospital = {
+                const updatedHospital = await hospitalService.update(currentHospital.id, payload);
+                const mapped: UIHospital = {
                     id: updatedHospital.id,
                     hospital_name: updatedHospital.hospital_name,
                     license_number: updatedHospital.license_number,
@@ -141,7 +153,9 @@ export default function HospitalDirectoryPage() {
                     is_verified: updatedHospital.is_verified,
                     role: 'hospital',
                     email: updatedHospital.email,
-                    phone: updatedHospital.phone
+                    phone: updatedHospital.phone,
+                    city: (updatedHospital as any).city || currentHospital.city,
+                    district: (updatedHospital as any).district || currentHospital.district
                 };
                 setHospitals(prev => prev.map(h => h.id === mapped.id ? mapped : h));
                 toast.success("Cập nhật thông tin thành công!");
@@ -161,7 +175,7 @@ export default function HospitalDirectoryPage() {
         setIsModalOpen(true);
     };
 
-    const openEditModal = (hospital: Hospital) => {
+    const openEditModal = (hospital: UIHospital) => {
         setMode('edit');
         setCurrentHospital({ ...hospital });
         setIsModalOpen(true);
@@ -170,7 +184,8 @@ export default function HospitalDirectoryPage() {
     // Filter locally
     const filteredHospitals = hospitals.filter(h =>
         h.hospital_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        h.hospital_address?.toLowerCase().includes(searchTerm.toLowerCase())
+        h.hospital_address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        h.city?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -260,6 +275,7 @@ export default function HospitalDirectoryPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="text-sm text-gray-700">{hospital.hospital_address}</span>
+                                        {hospital.city && <div className="text-xs text-gray-500">{hospital.district}, {hospital.city}</div>}
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${hospital.is_verified
@@ -338,8 +354,19 @@ export default function HospitalDirectoryPage() {
                                     onChange={e => setCurrentHospital({ ...currentHospital, license_number: e.target.value })}
                                 />
                             </div>
+
+                            {/* Location Selector */}
                             <div className="space-y-2">
-                                <label htmlFor="hospital_address" className="text-sm font-medium text-gray-700">Địa chỉ</label>
+                                <LocationSelector
+                                    defaultCity={currentHospital.city}
+                                    defaultDistrict={currentHospital.district}
+                                    onCityChange={(val) => setCurrentHospital(prev => ({ ...prev, city: val }))}
+                                    onDistrictChange={(val) => setCurrentHospital(prev => ({ ...prev, district: val }))}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label htmlFor="hospital_address" className="text-sm font-medium text-gray-700">Địa chỉ chi tiết</label>
                                 <input
                                     id="hospital_address"
                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
@@ -347,6 +374,7 @@ export default function HospitalDirectoryPage() {
                                     onChange={e => setCurrentHospital({ ...currentHospital, hospital_address: e.target.value })}
                                 />
                             </div>
+
                             <div className="flex items-center gap-2">
                                 <input
                                     type="checkbox"

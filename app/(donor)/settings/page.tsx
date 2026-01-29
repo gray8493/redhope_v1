@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { userService } from "@/services/user.service";
 import { authService } from "@/services/auth.service";
 import { BLOOD_GROUPS } from "@/lib/database.types";
+import { LocationSelector } from "@/components/shared/LocationSelector";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -106,6 +107,26 @@ export default function SettingsPage() {
     const handleSave = async () => {
         if (!user) return;
         setIsSaving(true);
+
+        // Validate Age (Client-side)
+        if (dob) {
+            const birthDate = new Date(dob);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            if (age < 18) {
+                toast.error("Không đủ điều kiện tuổi!", {
+                    description: "Bạn cần phải đủ 18 tuổi trở lên để cập nhật thông tin hiến máu.",
+                });
+                setIsSaving(false);
+                return;
+            }
+        }
+
         try {
             // Chỉ gửi các field có trong database schema
             const updateData: Record<string, any> = {
@@ -420,26 +441,12 @@ export default function SettingsPage() {
                                                 />
                                             </div>
 
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Tỉnh / Thành phố</label>
-                                                <div className="relative">
-                                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                                    <input
-                                                        type="text"
-                                                        value={city}
-                                                        onChange={(e) => setCity(e.target.value)}
-                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Quận / Huyện</label>
-                                                <input
-                                                    type="text"
-                                                    value={district}
-                                                    onChange={(e) => setDistrict(e.target.value)}
-                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                            <div className="md:col-span-2">
+                                                <LocationSelector
+                                                    defaultCity={city}
+                                                    defaultDistrict={district}
+                                                    onCityChange={(val) => setCity(val)}
+                                                    onDistrictChange={(val) => setDistrict(val)}
                                                 />
                                             </div>
 
