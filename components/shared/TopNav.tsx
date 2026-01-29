@@ -349,7 +349,9 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                         </div>
 
                         <Avatar className={`size-10 border-2 transition-colors ${showUserMenu ? 'border-[#6324eb]' : 'border-emerald-500/20'}`}>
-                            <AvatarImage src={avatarUrl || ''} alt={displayName} className="object-cover" />
+                            {avatarUrl ? (
+                                <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />
+                            ) : null}
                             <AvatarFallback className="bg-[#6324eb] text-white font-bold">{getInitials(displayName)}</AvatarFallback>
                         </Avatar>
                     </button>
