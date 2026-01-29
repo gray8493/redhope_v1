@@ -1,5 +1,6 @@
+"use client";
 import * as React from "react"
-import { AlertCircle, ChevronLeft, ChevronRight, MapPin, Droplets, Calendar, ArrowRight } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, MapPin, Droplets, Calendar, ArrowRight, Loader2 } from "lucide-react";
 import Autoplay from "embla-carousel-autoplay"
 
 import {
@@ -9,16 +10,33 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel"
+import { campaignService } from "@/services/campaign.service";
+import { toast } from "sonner";
+import Link from "next/link";
 
-const SLIDES = [
+interface SlideData {
+    id: string | number;
+    theme: string;
+    badge: string;
+    badgeColor: string;
+    title: string;
+    description: string;
+    buttonText: string;
+    buttonLink?: string;
+    icon: any;
+    imageElement: React.ReactNode;
+}
+
+const DEFAULT_SLIDES: SlideData[] = [
     {
-        id: 1,
+        id: 'default-1',
         theme: "blue",
         badge: "CẦN MÁU KHẨN CẤP",
         badgeColor: "bg-red-500",
         title: "Trạng thái Nhóm máu O+",
         description: "Các bệnh viện tại TP.HCM đang thiếu hụt nhóm máu của bạn. Một lần hiến máu của bạn có thể cứu sống 3 người hôm nay.",
         buttonText: "Tìm điểm hiến máu gần nhất",
+        buttonLink: "/donate",
         icon: MapPin,
         imageElement: (
             <div className="w-24 h-32 bg-[#1a1f36] rounded-xl border border-white/10 flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
@@ -28,62 +46,81 @@ const SLIDES = [
                 <div className="absolute bottom-0 w-full h-1 bg-red-500"></div>
             </div>
         )
-    },
-    {
-        id: 2,
-        theme: "orange",
-        badge: "CHIẾN DỊCH ĐẶC BIỆT",
-        badgeColor: "bg-orange-500",
-        title: "Lễ hội Xuân Hồng 2024",
-        description: "Tham gia hiến máu đầu năm - Nhân đôi phúc lộc. Nhận ngay quà tặng đặc biệt và huy hiệu giới hạn.",
-        buttonText: "Đăng ký tham gia ngay",
-        icon: Calendar,
-        imageElement: (
-            <div className="w-24 h-32 bg-gradient-to-b from-orange-900 to-[#1a1f36] rounded-xl border border-orange-500/30 flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
-                <div className="absolute top-1 left-1"><Calendar className="w-5 h-5 text-orange-500" /></div>
-                <h2 className="text-2xl font-black text-orange-400 mb-1 leading-tight text-center px-2">XUÂN<br />HỒNG</h2>
-                <p className="text-[9px] text-orange-200 mt-1 font-bold uppercase tracking-wider">20/01 - 20/02</p>
-            </div>
-        )
-    },
-    {
-        id: 3,
-        theme: "purple",
-        badge: "TIN TỨC CỘNG ĐỒNG",
-        badgeColor: "bg-purple-500",
-        title: "Kỷ lục hiến máu mới",
-        description: "Tháng vừa qua, cộng đồng BloodLink đã cứu giúp hơn 500 bệnh nhân. Xem báo cáo tác động chi tiết.",
-        buttonText: "Xem báo cáo tác động",
-        icon: ArrowRight,
-        imageElement: (
-            <div className="w-24 h-32 bg-gradient-to-br from-[#6324eb] to-blue-600 rounded-xl flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-500 shadow-lg">
-                <div className="text-white text-center">
-                    <p className="text-sm font-bold opacity-80">Đã cứu</p>
-                    <h2 className="text-3xl font-black text-white mb-1">500+</h2>
-                    <p className="text-[10px] font-bold uppercase tracking-wider">Người</p>
-                </div>
-            </div>
-        )
     }
 ];
 
 export function DashboardCarousel() {
     const plugin = React.useRef(
         Autoplay({ delay: 5000, stopOnInteraction: true })
-    )
+    );
+
+    const [slides, setSlides] = React.useState<SlideData[]>(DEFAULT_SLIDES);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const fetchCampaigns = async () => {
+            try {
+                const campaigns = await campaignService.getActive();
+                if (campaigns && campaigns.length > 0) {
+                    const campaignSlides: SlideData[] = campaigns.map((campaign: any) => {
+                        const startDate = new Date(campaign.start_time);
+                        const day = startDate.getDate();
+                        const month = startDate.getMonth() + 1; // 0-indexed
+
+                        // Strip HTML tags from description if present
+                        const cleanDescription = (campaign.description || "").replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ');
+
+                        return {
+                            id: campaign.id,
+                            theme: "orange",
+                            badge: "CHIẾN DỊCH SẮP TỚI",
+                            badgeColor: "bg-orange-500",
+                            title: campaign.name,
+                            description: `${campaign.location_name} • ${startDate.toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}. ${cleanDescription || "Hãy tham gia hiến máu cứu người."}`,
+                            buttonText: "Đăng ký ngay",
+                            buttonLink: `/campaigns/${campaign.id}`,
+                            icon: Calendar,
+                            imageElement: (
+                                <div className="w-24 h-32 bg-gradient-to-b from-orange-900 to-[#1a1f36] rounded-xl border border-orange-500/30 flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
+                                    <div className="absolute top-1 left-1"><Calendar className="w-5 h-5 text-orange-500" /></div>
+                                    <h2 className="text-3xl font-black text-orange-400 mb-0 leading-none">{day}</h2>
+                                    <p className="text-sm font-bold text-orange-200 uppercase mb-1">Tháng {month}</p>
+                                    <div className="w-8 h-0.5 bg-orange-500/50 rounded-full"></div>
+                                </div>
+                            )
+                        };
+                    });
+                    // Combine default generic slides with real campaigns
+                    // Put campaigns first
+                    setSlides([...campaignSlides, ...DEFAULT_SLIDES]);
+                } else {
+                    // Keep defaults if no campaigns
+                    setSlides(DEFAULT_SLIDES);
+                }
+            } catch (error) {
+                console.error("Failed to fetch campaigns for carousel", error);
+                // Keep defaults on error
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCampaigns();
+    }, []);
 
     return (
         <Carousel
             plugins={[plugin.current]}
-            className="w-full h-44 rounded-2xl overflow-hidden shadow-xl group bg-[#0f1221]"
+            className="w-full h-[300px] rounded-2xl overflow-hidden shadow-xl group bg-[#0f1221] relative"
             onMouseEnter={plugin.current.stop}
             onMouseLeave={plugin.current.reset}
         >
             <CarouselContent>
-                {SLIDES.map((slide) => (
+                {slides.map((slide) => (
                     <CarouselItem key={slide.id}>
-                        <div className="w-full flex-shrink-0 h-44 relative p-5 md:p-6 flex items-center justify-between text-white">
-                            <div className="absolute top-0 right-0 w-48 h-48 bg-slate-800 rounded-full filter blur-[100px] opacity-20 translate-x-1/2 -translate-y-1/2"></div>
+                        <div className="w-full flex-shrink-0 h-[300px] relative p-8 md:p-10 flex items-center justify-between text-white">
+                            {/* Background Effect */}
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-slate-800 rounded-full filter blur-[100px] opacity-20 translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
 
                             <div className="flex flex-col gap-2 max-w-lg z-10">
                                 <div className="flex items-center gap-2">
@@ -95,14 +132,23 @@ export function DashboardCarousel() {
                                 </div>
 
                                 <div>
-                                    <h2 className="text-xl md:text-2xl font-black tracking-tight mb-1 leading-tight">{slide.title}</h2>
+                                    <h2 className="text-xl md:text-2xl font-black tracking-tight mb-1 leading-tight line-clamp-1">{slide.title}</h2>
                                     <p className="text-slate-300 text-xs md:text-sm font-medium leading-relaxed line-clamp-2">{slide.description}</p>
                                 </div>
 
-                                <button className="mt-1 w-fit bg-[#6324eb] hover:bg-[#501ac2] text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-[#6324eb]/25 group-hover:translate-x-1">
-                                    <slide.icon className="w-3 h-3" />
-                                    {slide.buttonText}
-                                </button>
+                                {slide.buttonLink ? (
+                                    <Link href={slide.buttonLink}>
+                                        <button className="mt-1 w-fit bg-[#6324eb] hover:bg-[#501ac2] text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-[#6324eb]/25 group-hover:translate-x-1">
+                                            <slide.icon className="w-3 h-3" />
+                                            {slide.buttonText}
+                                        </button>
+                                    </Link>
+                                ) : (
+                                    <button className="mt-1 w-fit bg-[#6324eb] hover:bg-[#501ac2] text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-[#6324eb]/25 group-hover:translate-x-1">
+                                        <slide.icon className="w-3 h-3" />
+                                        {slide.buttonText}
+                                    </button>
+                                )}
                             </div>
 
                             <div className="hidden md:flex items-center justify-center mr-4 z-10">
@@ -112,8 +158,17 @@ export function DashboardCarousel() {
                     </CarouselItem>
                 ))}
             </CarouselContent>
-            <CarouselPrevious className="left-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 hover:bg-black/40 border-none text-white" />
-            <CarouselNext className="right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 hover:bg-black/40 border-none text-white" />
+
+            {/* Navigation Controls */}
+            <CarouselPrevious className="left-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 hover:bg-black/40 border-none text-white absolute top-1/2 -translate-y-1/2 z-20" />
+            <CarouselNext className="right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 hover:bg-black/40 border-none text-white absolute top-1/2 -translate-y-1/2 z-20" />
+
+            {/* Loading Overlay */}
+            {loading && (
+                <div className="absolute inset-0 bg-[#0f1221] z-30 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-[#6324eb] animate-spin" />
+                </div>
+            )}
         </Carousel>
     )
 }

@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
     const { user, profile } = useAuth();
-    const [requests, setRequests] = useState<any[]>([]);
+    const [campaigns, setCampaigns] = useState<any[]>([]);
     const [vouchers, setVouchers] = useState<any[]>([]);
     const [donorStats, setDonorStats] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,12 +38,12 @@ export default function DashboardPage() {
         const fetchData = async () => {
             if (!user?.id) return;
             try {
-                const [reqData, vData, sData] = await Promise.all([
-                    campaignService.getRequests(),
+                const [campData, vData, sData] = await Promise.all([
+                    campaignService.getActive(),
                     voucherService.getAll(),
                     bloodService.getDonorStats(user.id)
                 ]);
-                setRequests(reqData.slice(0, 4));
+                setCampaigns(campData.slice(0, 4));
                 setVouchers(vData.slice(0, 2));
                 setDonorStats(sData);
             } catch (error) {
@@ -173,42 +173,53 @@ export default function DashboardPage() {
 
                     <div className="flex flex-col gap-4 text-left">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Yêu cầu khẩn cấp hiện tại</h3>
-                            <Link href="/requests" className="text-[#6324eb] text-sm font-bold hover:underline">Xem thêm</Link>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Chiến dịch hiến máu đang diễn ra</h3>
+                            <Link href="/campaigns" className="text-[#6324eb] text-sm font-bold hover:underline">Xem tất cả</Link>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {loading ? (
                                 [1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
-                            ) : requests.length > 0 ? (
-                                requests.map(req => (
-                                    <Card key={req.id} className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] hover:border-[#6324eb]/50 transition-all cursor-pointer group">
-                                        <CardContent className="p-4">
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-10 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 group-hover:text-[#6324eb] transition-colors">
-                                                        <Hospital className="w-5 h-5" />
+                            ) : campaigns.length > 0 ? (
+                                campaigns.map(camp => (
+                                    <Link href={`/campaigns/${camp.id}`} key={camp.id}>
+                                        <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] hover:border-[#6324eb]/50 transition-all cursor-pointer group h-full">
+                                            <CardContent className="p-4 flex flex-col h-full gap-3">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="size-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center text-[#6324eb] group-hover:bg-[#6324eb] group-hover:text-white transition-all">
+                                                            <Award className="w-5 h-5" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-group-hover:text-[#6324eb] transition-colors">{camp.name}</p>
+                                                            <p className="text-xs text-slate-500 line-clamp-1">{camp.hospital?.hospital_name || "Bệnh viện tổ chức"}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{req.hospital?.hospital_name || "Bệnh viện"}</p>
-                                                        <p className="text-xs text-slate-500 line-clamp-1">{req.hospital?.district}, {req.hospital?.city}</p>
+                                                    <Badge variant="outline" className="border-indigo-100 text-indigo-600 dark:border-indigo-900 dark:text-indigo-400 text-[10px] uppercase font-bold px-2">
+                                                        Active
+                                                    </Badge>
+                                                </div>
+
+                                                <div className="mt-auto space-y-2">
+                                                    <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                                                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                                        <span className="line-clamp-1">{camp.location_name || camp.hospital?.hospital_address} ({camp.hospital?.city})</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                                                {new Date(camp.start_time).toLocaleDateString('vi-VN')}
+                                                            </p>
+                                                        </div>
+                                                        <p className="text-xs font-medium text-slate-500">Mục tiêu: {camp.target_units} đv</p>
                                                     </div>
                                                 </div>
-                                                <Badge variant={req.urgency_level === 'Emergency' ? 'destructive' : 'secondary'} className="uppercase text-[10px] px-2 py-0.5">
-                                                    {req.urgency_level}
-                                                </Badge>
-                                            </div>
-                                            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
-                                                <div className="flex items-center gap-2">
-                                                    <Droplet className="w-3 h-3 text-red-500" />
-                                                    <p className="text-xs font-bold text-slate-900 dark:text-white">Nhóm: {req.required_blood_group}</p>
-                                                </div>
-                                                <p className="text-xs font-medium text-slate-500">Cần: {req.required_units} đơn vị</p>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                            </CardContent>
+                                        </Card>
+                                    </Link>
                                 ))
                             ) : (
-                                <p className="text-sm text-slate-400 py-4 col-span-full text-center">Không có yêu cầu khẩn cấp nào lúc này.</p>
+                                <p className="text-sm text-slate-400 py-4 col-span-full text-center">Không có chiến dịch nào đang diễn ra.</p>
                             )}
                         </div>
                     </div>
