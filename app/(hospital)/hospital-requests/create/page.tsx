@@ -212,7 +212,7 @@ export default function CreateRequestPage() {
             const payload = {
                 hospital_id: user.id,
                 name: campaignName || (isUrgent ? `Yêu cầu Khẩn cấp ${mrn}` : `Yêu cầu mới`),
-                description: desc, // Note: DB column is 'description', page state is 'desc'
+                description: desc,
                 location_name: location,
                 city: city || profile?.city || "Hồ Chí Minh",
                 district: district || profile?.district || "Quận 1",
@@ -220,21 +220,46 @@ export default function CreateRequestPage() {
                 end_time: endDateTime.toISOString(),
                 target_units: pTargetAmount,
                 status: isDraft ? "draft" : "active",
-                // Note: 'image' column missing in seed-data, ignoring for now or check if added
-                // location (address) -> location_name
+            };
+
+            // Sync with local storage for demo purposes
+            const localStorageCampaign: Campaign = {
+                id: editId ? Number(editId) : 0,
+                name: campaignName,
+                desc: desc,
+                location: location,
+                bloodType: selectedBloodTypes.length > 1 ? "Hỗn hợp" : selectedBloodTypes[0] || "Tất cả",
+                bloodClass: isUrgent ? "text-red-600 bg-red-50 dark:bg-red-900/20" : "text-blue-600 bg-blue-50 dark:bg-blue-900/20",
+                status: isUrgent ? "KHẨN CẤP" : "TIÊU CHUẨN",
+                statusClass: isUrgent ? "bg-red-600 text-white" : "bg-blue-500 text-white",
+                operationalStatus: isDraft ? "Bản nháp" : "Đang hoạt động",
+                isUrgent: isUrgent,
+                timeLeft: "Hôm nay",
+                progress: 0,
+                target: pTargetAmount,
+                current: 0,
+                image: image || "https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&q=80&w=1000",
+                date: selectedDate ? format(selectedDate, "dd/MM/yyyy") : "",
+                startTime: startTime,
+                endTime: endTime,
+                bloodTypes: selectedBloodTypes,
+                organization: organization,
+                radius: radius
             };
 
             console.log("Submitting campaign:", payload);
 
             if (editId) {
                 await campaignService.updateCampaign(editId, payload);
+                updateCampaign(localStorageCampaign);
                 alert("Cập nhật chiến dịch thành công!");
             } else {
                 await campaignService.createCampaign(payload);
+                addCampaign(localStorageCampaign);
                 alert("Tạo chiến dịch mới thành công!");
             }
 
-            router.push("/hospital/campaign"); // Redirect to campaign list
+            router.push("/hospital-campaign"); // Redirect to campaign list
         } catch (error: any) {
             console.error("Failed to create campaign:", error);
             alert(`Lỗi khi tạo chiến dịch: ${error.message || "Vui lòng thử lại"}`);

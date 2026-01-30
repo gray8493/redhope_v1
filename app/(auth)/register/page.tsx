@@ -176,7 +176,10 @@ export default function RegisterPage() {
 
         {/* Right Side: Register Form */}
         <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 lg:p-12 bg-gray-50/50 overflow-y-auto relative">
+<<<<<<< HEAD
           {/* Back to Home Button */}
+=======
+>>>>>>> 7525f15 (feat: chuẩn hóa trạng thái chiến dịch, cập nhật Dashboard bệnh viện và đồng bộ dữ liệu real-time)
 
 
           <div className="w-full max-w-md space-y-8 bg-white p-8 lg:p-10 rounded-[32px] shadow-2xl shadow-indigo-100/50 border border-gray-100 relative z-10">

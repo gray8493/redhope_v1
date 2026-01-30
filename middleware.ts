@@ -86,12 +86,12 @@ export const config = {
         '/global-ana/:path*',
         '/system-setting/:path*',
         // Hospital routes
-        '/hospital-dashboard/:path*',
-        '/hospital-campaign/:path*',
-        '/hospital-reports/:path*',
-        '/hospital-requests/:path*',
-        '/hospital-settings/:path*',
-        '/support/:path*',
+        '/hospital/dashboard/:path*',
+        '/hospital/campaign/:path*',
+        '/hospital/reports/:path*',
+        '/hospital/requests/:path*',
+        '/hospital/settings/:path*',
+        '/hospital/support/:path*',
         // Donor routes
         '/dashboard/:path*',
         '/donate/:path*',

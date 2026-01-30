@@ -56,7 +56,7 @@ export default function CampaignManagementPage() {
         setActiveTab(tab);
         const params = new URLSearchParams(searchParams.toString());
         params.set('tab', tab);
-        router.push(`/hospital/campaign?${params.toString()}`, { scroll: false });
+        router.push(`/hospital-campaign?${params.toString()}`, { scroll: false });
     };
     const [historyTab, setHistoryTab] = useState('all');
     const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([]);
@@ -157,18 +157,20 @@ export default function CampaignManagementPage() {
         return todayTime >= start && todayTime <= end;
     };
 
-    // Filter Active Campaigns (Not Ended, Not Expired, Not Draft)
+    // Filter Active Campaigns (Sync with Dashboard logic)
     const activeList = activeCampaigns.filter(c =>
-        c.operationalStatus !== "Đã kết thúc" &&
-        c.operationalStatus !== "Bản nháp" &&
-        !isCampaignExpired(c)
+        (c.operationalStatus === "Đang hoạt động" || c.operationalStatus === "Tạm dừng" || !c.operationalStatus) &&
+        c.status !== "Bản nháp"
     );
 
-    // Filter campaigns for Daily Statistics (Active or Ended Today)
-    const todayList = activeCampaigns.filter(c =>
-        c.operationalStatus !== "Bản nháp" &&
-        isCampaignToday(c)
+    // Filter campaigns for Statistics (All Operational: Active or Paused)
+    const operationalList = activeCampaigns.filter(c =>
+        (c.operationalStatus === "Đang hoạt động" || c.operationalStatus === "Tạm dừng" || !c.operationalStatus) &&
+        c.status !== "Bản nháp"
     );
+
+    // Keep todayList for specific "Today" labels if needed, but the user wants real-time stats across active operations
+    const activeStatsList = operationalList;
 
     const filteredCampaigns = activeList.filter(campaign => {
         const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -292,7 +294,6 @@ export default function CampaignManagementPage() {
                     backdrop-filter: blur(4px);
                 }
             `}</style>
-            return (
             <main className="p-8 max-w-[1400px] w-full mx-auto">
 
 
@@ -310,9 +311,9 @@ export default function CampaignManagementPage() {
                         <div>
                             <p className="text-sm font-medium text-slate-500">Tổng lượng máu</p>
                             <p className="text-2xl font-black text-slate-900 dark:text-white">
-                                {todayList.reduce((sum, c) => sum + (c.current || 0), 0).toLocaleString()} <span className="text-sm font-normal text-slate-400">ml</span>
+                                {activeStatsList.reduce((sum: number, c: Campaign) => sum + (c.current || 0), 0).toLocaleString()} <span className="text-sm font-normal text-slate-400">Đv</span>
                             </p>
-                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Thu thập hôm nay</p>
+                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Đang vận hành</p>
                         </div>
                     </div>
                     <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
@@ -322,8 +323,8 @@ export default function CampaignManagementPage() {
                             <div className="flex items-baseline gap-2">
                                 <p className="text-2xl font-black text-slate-900 dark:text-white">
                                     {(() => {
-                                        const donated = todayList.reduce((sum, c) => sum + (c.completedCount || (c.appointments?.filter(a => a.status === 'Hoàn thành').length || 0)), 0);
-                                        const registered = todayList.reduce((sum, c) => sum + (c.registeredCount || (c.appointments?.length || 0)), 0);
+                                        const donated = activeStatsList.reduce((sum: number, c: Campaign) => sum + (c.completedCount || (c.appointments?.filter(a => a.status === 'Hoàn thành').length || 0)), 0);
+                                        const registered = activeStatsList.reduce((sum: number, c: Campaign) => sum + (c.registeredCount || (c.appointments?.length || 0)), 0);
                                         const percent = registered > 0 ? Math.round((donated / registered) * 100) : 0;
                                         return (
                                             <>
@@ -336,18 +337,18 @@ export default function CampaignManagementPage() {
                                     })()}
                                 </p>
                             </div>
-                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Đã hiến / Đăng ký</p>
+                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Đã hiến / Đăng ký tổng</p>
                         </div>
                     </div>
                     <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
                         <div className="size-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"><Clock className="w-6 h-6" /></div>
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Hoãn hiến hôm nay</p>
+                            <p className="text-sm font-medium text-slate-500">Hoãn hiến hệ thống</p>
                             <p className="text-2xl font-black text-orange-600">
-                                {todayList.reduce((sum, c) => sum + (c.deferredCount || (c.appointments?.filter(a => a.status === 'Đã hoãn' || a.status === 'Hoãn hiến').length || 0)), 0)}
+                                {activeStatsList.reduce((sum: number, c: Campaign) => sum + (c.deferredCount || (c.appointments?.filter(a => a.status === 'Đã hoãn' || a.status === 'Hoãn hiến').length || 0)), 0)}
                                 <span className="text-sm font-normal text-slate-400 ml-2 text-slate-400">Người</span>
                             </p>
-                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần hỗ trợ hồ sơ</p>
+                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần hỗ trợ theo dõi</p>
                         </div>
                     </div>
                     <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-indigo-50 dark:border-indigo-900/30 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
@@ -355,7 +356,7 @@ export default function CampaignManagementPage() {
                         <div>
                             <p className="text-sm font-medium text-slate-500">Thiếu hụt chỉ tiêu</p>
                             <p className="text-2xl font-black text-[#6324eb]">
-                                {todayList.filter(c => (c.current < c.target)).length} <span className="text-sm font-normal text-slate-400">Đợt</span>
+                                {activeStatsList.filter((c: Campaign) => (c.current < c.target)).length} <span className="text-sm font-normal text-slate-400">Đợt</span>
                             </p>
                             <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần đẩy mạnh truyền thông</p>
                         </div>
@@ -566,7 +567,7 @@ export default function CampaignManagementPage() {
                                             )}
                                             {/* Status Badge (Operational) */}
                                             <div className="absolute top-3 left-3">
-                                                <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm ${campaign.operationalStatus === 'Tạm dừng' ? 'bg-slate-600 text-white' : 'bg-white/90 text-slate-700'} border border-slate-200`}>
+                                                <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm ${campaign.operationalStatus === 'Tạm dừng' ? 'bg-amber-500 text-white' : 'bg-white/90 text-slate-700'} border border-slate-200`}>
                                                     {campaign.operationalStatus || 'Đang hoạt động'}
                                                 </span>
                                             </div>
@@ -615,7 +616,7 @@ export default function CampaignManagementPage() {
                                                 <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
                                                     <Clock className="w-3 h-3" /> {campaign.timeLeft}
                                                 </span>
-                                                <Link className="text-[11px] font-bold text-[#6324eb] hover:text-[#6324eb]/80 transition-colors uppercase tracking-tight flex items-center gap-1" href={`/hospital/campaign/${campaign.id}?fromTab=${activeTab}`}>
+                                                <Link className="text-[11px] font-bold text-[#6324eb] hover:text-[#6324eb]/80 transition-colors uppercase tracking-tight flex items-center gap-1" href={`/hospital-campaign/${campaign.id}?fromTab=${activeTab}`}>
                                                     Chi tiết <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                                                 </Link>
                                             </div>
@@ -657,7 +658,7 @@ export default function CampaignManagementPage() {
                                                     <div className="h-full bg-blue-500" style={{ width: `${campaign.progress}%` }}></div>
                                                 </div>
                                             </div>
-                                            <Link className="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 text-[#6324eb] transition-colors" href={`/hospital/campaign/${campaign.id}?fromTab=${activeTab}`}>
+                                            <Link className="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 text-[#6324eb] transition-colors" href={`/hospital-campaign/${campaign.id}?fromTab=${activeTab}`}>
                                                 <span className="material-symbols-outlined">arrow_forward</span>
                                             </Link>
                                         </div>
@@ -764,7 +765,7 @@ export default function CampaignManagementPage() {
                                         </div>
 
                                         <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
-                                            <Link href={`/hospital/requests/create?id=${campaign.id}`} className="w-full py-2.5 bg-slate-50 text-[#6324eb] hover:bg-[#6324eb] hover:text-white border border-slate-200 hover:border-[#6324eb] dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all group-hover:shadow-md">
+                                            <Link href={`/hospital-requests/create?id=${campaign.id}`} className="w-full py-2.5 bg-slate-50 text-[#6324eb] hover:bg-[#6324eb] hover:text-white border border-slate-200 hover:border-[#6324eb] dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all group-hover:shadow-md">
                                                 <span className="material-symbols-outlined text-[16px]">edit_square</span>
                                                 Tiếp tục chỉnh sửa
                                             </Link>
@@ -872,7 +873,7 @@ export default function CampaignManagementPage() {
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-2">
-                                                            <Link className="text-[#6324eb] text-sm font-bold hover:underline" href={`/hospital/campaign/${campaign.id}?fromTab=${activeTab}`}>Xem</Link>
+                                                            <Link className="text-[#6324eb] text-sm font-bold hover:underline" href={`/hospital-campaign/${campaign.id}?fromTab=${activeTab}`}>Xem</Link>
                                                         </div>
                                                     </td>
                                                 </tr>

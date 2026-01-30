@@ -9,7 +9,8 @@ import {
     Settings,
     Building2,
     Activity,
-    Plus
+    Plus,
+    Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -24,40 +25,44 @@ export function HospitalSidebar() {
                             <Building2 className="w-6 h-6" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-slate-900 dark:text-white text-lg font-bold leading-tight">Bệnh viện</span>
-                            <span className="text-slate-500 text-xs font-semibold">Cổng Nhân viên</span>
+                            <span className="text-slate-900 dark:text-white text-base font-bold leading-tight">Bệnh viện</span>
+                            <span className="text-slate-500 text-[10px] font-semibold">Cổng Nhân viên</span>
                         </div>
                     </div>
 
                     <div className="px-2">
                         <Link href="/hospital-requests/create">
-                            <Button className="w-full h-12 bg-[#6324eb] hover:bg-[#501ac2] text-white rounded-xl font-bold shadow-lg shadow-[#6324eb]/20 group gap-2">
-                                <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                            <Button className="w-full h-10 bg-[#6324eb] hover:bg-[#501ac2] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#6324eb]/20 group gap-2">
+                                <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                                 Tạo Yêu cầu
                             </Button>
                         </Link>
                     </div>
 
                     <nav className="flex flex-col gap-2">
-                        <Link href="/hospital-dashboard" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
+                        <Link href="/hospital-dashboard" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
                             <LayoutDashboard className="w-5 h-5" />
-                            <p className="text-sm">Bảng điều khiển</p>
+                            <p className="text-[13px]">Bảng điều khiển</p>
                         </Link>
-                        <Link href="/hospital-requests" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
+                        <Link href="/hospital-requests" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
                             <Droplet className="w-5 h-5" />
-                            <p className="text-sm">Yêu cầu máu</p>
+                            <p className="text-[13px]">Yêu cầu máu</p>
                         </Link>
-                        <Link href="/hospital-campaign" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
+                        <Link href="/hospital-campaign" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
                             <Package className="w-5 h-5" />
-                            <p className="text-sm">Chiến dịch</p>
+                            <p className="text-[13px]">Chiến dịch</p>
                         </Link>
-                        <Link href="/hospital-reports" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
+                        <Link href="/hospital-reports" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
                             <BarChart className="w-5 h-5" />
-                            <p className="text-sm">Báo cáo</p>
+                            <p className="text-[13px]">Báo cáo</p>
                         </Link>
-                        <Link href="/hospital-settings" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
+                        <Link href="/hospital-notifications" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
+                            <Bell className="w-5 h-5" />
+                            <p className="text-[13px]">Thông báo</p>
+                        </Link>
+                        <Link href="/hospital-settings" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
                             <Settings className="w-5 h-5" />
-                            <p className="text-sm">Cài đặt</p>
+                            <p className="text-[13px]">Cài đặt</p>
                         </Link>
                     </nav>
                 </div>

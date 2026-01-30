@@ -100,9 +100,9 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
   };
 
   return (
-    <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 sticky top-0 z-20 w-full shrink-0">
+    <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-6 py-3 sticky top-0 z-20 w-full shrink-0">
       <div className="flex items-center gap-8 flex-1">
-        <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">{title}</h2>
+        {/* Title and Search removed per user request */}
       </div>
 
       <div className="flex items-center gap-4">
@@ -154,7 +154,10 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
                 )}
               </div>
               <div className="p-2 border-t border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-[#251e36]/50">
-                <Link href="/admin-notifications" className="block w-full text-center py-2 text-xs font-bold text-[#6324eb] hover:bg-[#6324eb]/5 rounded-lg transition-colors">
+                <Link
+                  href={userRole === 'hospital' ? "/hospital-notifications" : "/admin-notifications"}
+                  className="block w-full text-center py-2 text-xs font-bold text-[#6324eb] hover:bg-[#6324eb]/5 rounded-lg transition-colors"
+                >
                   Xem tất cả
                 </Link>
               </div>

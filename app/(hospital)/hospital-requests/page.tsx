@@ -1,328 +1,716 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
+import { format, parse } from "date-fns";
+import { vi } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { getCampaignById, addCampaign, updateCampaign as updateCampaignLocal } from "@/app/utils/campaignStorage";
+import { campaignService } from "@/services/campaign.service";
+import { useAuth } from "@/context/AuthContext";
 import {
-    ChevronDown,
-    SlidersHorizontal,
-    ChevronLeft,
-    ChevronRight,
-    Eye,
-    Edit2,
-    Trash2,
-    MoreVertical,
-    ArrowLeft
+    Sparkles,
+    Zap,
+    AlertTriangle,
+    CheckCircle,
+    Info
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { HospitalSidebar } from "@/components/shared/HospitalSidebar";
-import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
 
-// Type Definition
-interface BloodRequest {
-    id: string;
-    patientCode: string;
-    bloodType: string;
-    quantity: number;
-    urgency: string;
-    urgencyClass: string;
-    progress: number;
-    status: "pending" | "active" | "completed" | "cancelled";
-    createdDate: string;
-    hospitalName: string;
-}
+// Tải ReactQuill phía client
+const ReactQuill = dynamic(() => import("react-quill-new"), {
+    ssr: false,
+    loading: () => <div className="h-32 bg-slate-100 animate-pulse rounded-3xl" />
+});
+import "react-quill-new/dist/quill.snow.css";
 
-// Mock Data - Extended list
-const REQUESTS_DATA: BloodRequest[] = [
+// --- Dữ liệu Mẫu (Templates) ---
+const TEMPLATES = [
     {
-        id: "1",
-        patientCode: "P-9821",
-        bloodType: "O Positive (O+)",
-        quantity: 2,
-        urgency: "Nguy kịch",
-        urgencyClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-        progress: 80,
-        status: "active",
-        createdDate: "2026-01-23",
-        hospitalName: "Bệnh viện Chợ Rẫy"
-    },
-    {
-        id: "2",
-        patientCode: "P-9844",
-        bloodType: "AB Negative (AB-)",
-        quantity: 1,
-        urgency: "Cao",
-        urgencyClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-        progress: 25,
-        status: "active",
-        createdDate: "2026-01-22",
-        hospitalName: "Bệnh viện Ung Bướu"
-    },
-    {
-        id: "3",
-        patientCode: "P-9850",
-        bloodType: "B Positive (B+)",
-        quantity: 4,
-        urgency: "Trung bình",
-        urgencyClass: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-        progress: 50,
-        status: "active",
-        createdDate: "2026-01-21",
-        hospitalName: "Bệnh viện Quận 7"
-    },
-    {
-        id: "4",
-        patientCode: "P-9851",
-        bloodType: "A Negative (A-)",
-        quantity: 3,
-        urgency: "Nguy kịch",
-        urgencyClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-        progress: 60,
-        status: "active",
-        createdDate: "2026-01-20",
-        hospitalName: "Bệnh viện 115"
-    },
-    {
-        id: "5",
-        patientCode: "P-9852",
-        bloodType: "O Negative (O-)",
-        quantity: 5,
-        urgency: "Nguy kịch",
-        urgencyClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-        progress: 40,
-        status: "active",
-        createdDate: "2026-01-19",
-        hospitalName: "Bệnh viện Nhi Đồng"
-    },
-    {
-        id: "6",
-        patientCode: "P-9853",
-        bloodType: "AB Positive (AB+)",
-        quantity: 2,
-        urgency: "Cao",
-        urgencyClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-        progress: 70,
-        status: "active",
-        createdDate: "2026-01-18",
-        hospitalName: "Bệnh viện Quân Y 103"
-    },
-    {
-        id: "7",
-        patientCode: "P-9854",
-        bloodType: "B Negative (B-)",
-        quantity: 6,
-        urgency: "Cao",
-        urgencyClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-        progress: 35,
-        status: "pending",
-        createdDate: "2026-01-17",
-        hospitalName: "Bệnh viện Gia Định"
-    },
-    {
-        id: "8",
-        patientCode: "P-9855",
-        bloodType: "A Positive (A+)",
-        quantity: 4,
-        urgency: "Trung bình",
-        urgencyClass: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-        progress: 55,
-        status: "completed",
-        createdDate: "2026-01-16",
-        hospitalName: "Bệnh viện Từ Dũ"
-    },
-    {
-        id: "9",
-        patientCode: "P-9856",
-        bloodType: "O Positive (O+)",
-        quantity: 3,
-        urgency: "Trung bình",
-        urgencyClass: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-        progress: 45,
-        status: "active",
-        createdDate: "2026-01-15",
-        hospitalName: "Bệnh viện Thống Nhất"
+        id: "emergency",
+        name: "Khẩn cấp",
+        color: "bg-indigo-500",
+        data: {
+            name: "Yêu cầu Máu Khẩn cấp - Tai nạn liên hoàn",
+            org: "Bệnh viện Chợ Rẫy",
+            desc: "<h3>Tình trạng khẩn cấp!</h3><p>Cần gấp nhóm máu hiếm phục vụ cấp cứu các nạn nhân tai nạn giao thông. Rất mong sự hỗ trợ kịp thời từ cộng đồng.</p>",
+            targetAmount: "50",
+            location: "Khoa Cấp cứu - BV Chợ Rẫy",
+            isUrgent: true,
+            startTime: "08:00",
+            endTime: "23:00"
+        }
     }
 ];
 
 export default function HospitalRequestsPage() {
     const router = useRouter();
-    const [currentPage, setCurrentPage] = useState(1);
-    const [activeFilter, setActiveFilter] = useState("Tất cả");
-    const itemsPerPage = 10;
+    const searchParams = useSearchParams();
+    const editId = searchParams.get('id');
+    const { user, profile } = useAuth();
 
-    // Filter logic
-    const filteredData = REQUESTS_DATA.filter(item => {
-        if (activeFilter === "Tất cả") return true;
-        if (activeFilter === "Nguy kịch") return item.urgency === "Nguy kịch";
-        if (activeFilter === "Cao") return item.urgency === "Cao";
-        if (activeFilter === "Trung bình") return item.urgency === "Trung bình";
-        return true;
-    });
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [selectedBloodTypes, setSelectedBloodTypes] = useState<string[]>(["AB+"]);
+    const [isUrgent, setIsUrgent] = useState(false);
 
-    // Pagination logic
-    const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
-    const paginatedData = filteredData.length === 0 ? [] : filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    // Form States
+    const [campaignName, setCampaignName] = useState("");
+    const [mrn, setMrn] = useState("");
+    const [organization, setOrganization] = useState("Bệnh viện Chợ Rẫy");
+    const [targetCount, setTargetCount] = useState("");
+    const [targetAmount, setTargetAmount] = useState("");
+    const [radius, setRadius] = useState("5km (Lân cận)");
+    const [location, setLocation] = useState("Khoa Cấp cứu - BV Chợ Rẫy");
+    const [desc, setDesc] = useState("");
+    const [startTime, setStartTime] = useState("08:00");
+    const [endTime, setEndTime] = useState("21:00");
+    const [image, setImage] = useState<string>("");
+    const [imageError, setImageError] = useState("");
+    const [isDragging, setIsDragging] = useState(false);
+    const [lastChanged, setLastChanged] = useState<'amount' | 'count' | null>(null);
 
-    const handleFilterChange = (filter: string) => {
-        setActiveFilter(filter);
-        setCurrentPage(1);
+    // Initial Load for Edit Mode
+    useEffect(() => {
+        if (editId) {
+            const campaignData = getCampaignById(Number(editId));
+            if (campaignData) {
+                setCampaignName(campaignData.name || "");
+                setDesc(campaignData.desc || "");
+                setLocation(campaignData.location || "");
+                setOrganization(campaignData.organization || "Bệnh viện Chợ Rẫy");
+                setTargetAmount(campaignData.target?.toString() || "");
+                setTargetCount(campaignData.target ? Math.ceil(campaignData.target / 0.8).toString() : "");
+                setIsUrgent(campaignData.isUrgent || false);
+                setStartTime(campaignData.startTime || "08:00");
+                setEndTime(campaignData.endTime || "21:00");
+                setRadius(campaignData.radius || "5km (Lân cận)");
+                setImage(campaignData.image || "");
+
+                if (campaignData.bloodTypes && campaignData.bloodTypes.length > 0) {
+                    setSelectedBloodTypes(campaignData.bloodTypes);
+                }
+
+                if (campaignData.date) {
+                    try {
+                        const parsedDate = parse(campaignData.date, 'dd/MM/yyyy', new Date());
+                        if (!isNaN(parsedDate.getTime())) {
+                            setSelectedDate(parsedDate);
+                        }
+                    } catch (e) {
+                        console.error("Error parsing date", e);
+                    }
+                }
+            }
+        }
+    }, [editId]);
+
+
+    // Logic tính toán thông minh hai chiều (Smart Insight)
+    useEffect(() => {
+        if (lastChanged === 'amount') {
+            const amount = parseFloat(targetAmount);
+            if (!isNaN(amount) && amount > 0) {
+                const suggestCount = Math.ceil(amount / 0.8);
+                setTargetCount(suggestCount.toString());
+            } else if (targetAmount === '') {
+                setTargetCount('');
+            }
+        }
+    }, [targetAmount, lastChanged]);
+
+    useEffect(() => {
+        if (lastChanged === 'count') {
+            const count = parseInt(targetCount);
+            if (!isNaN(count) && count > 0) {
+                const expectedAmount = (count * 0.8).toFixed(1);
+                setTargetAmount(expectedAmount.toString());
+            } else if (targetCount === '') {
+                setTargetAmount('');
+            }
+        }
+    }, [targetCount, lastChanged]);
+
+    const handleFileDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file && (file.type === "image/png" || file.type === "image/jpeg")) {
+            processFile(file);
+        } else if (file) {
+            setImageError("Vui lòng chỉ tải lên file PNG hoặc JPG");
+        }
     };
 
+    const processFile = (file: File) => {
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+        if (file.size > MAX_SIZE) {
+            setImageError("Kích thước ảnh quá lớn (tối đa 5MB)");
+            return;
+        }
+        setImageError("");
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (reader.readyState === FileReader.DONE && reader.result) {
+                setImage(reader.result as string);
+            }
+        };
+        reader.onerror = () => setImageError("Lỗi khi đọc file ảnh");
+        reader.readAsDataURL(file);
+    };
+
+    const applyTemplate = (templateData: any) => {
+        setCampaignName(templateData.name);
+        setOrganization(templateData.org);
+        setDesc(templateData.desc);
+        setTargetAmount(templateData.targetAmount);
+        setLocation(templateData.location);
+        setIsUrgent(templateData.isUrgent);
+        if (templateData.startTime) setStartTime(templateData.startTime);
+        if (templateData.endTime) setEndTime(templateData.endTime);
+        setLastChanged('amount'); // Trigger re-calc
+    };
+
+    const handleCreate = async (isDraft: boolean) => {
+        const rawTargetAmount = parseFloat(targetAmount) || 0;
+        const pTargetAmount = Math.round(rawTargetAmount);
+
+        if (!isDraft) {
+            if (!campaignName || !location || !selectedDate || pTargetAmount <= 0) {
+                alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
+                return;
+            }
+        }
+
+        try {
+            // Local Storage Persistence (To show up in /hospital-campaign)
+            const dateStr = selectedDate ? format(selectedDate, "dd/MM/yyyy") : format(new Date(), "dd/MM/yyyy");
+
+            // Map form to Campaign interface
+            const localPayload: any = {
+                name: campaignName || (isUrgent ? `Yêu cầu Khẩn cấp ${mrn}` : `Yêu cầu mới`),
+                desc: desc,
+                location: location,
+                bloodType: selectedBloodTypes[0] || "Tất cả",
+                bloodTypes: selectedBloodTypes,
+                bloodClass: "text-red-600 bg-red-50 dark:bg-red-900/20",
+                status: isUrgent ? "Khẩn cấp" : "Đang mở",
+                statusClass: isUrgent ? "bg-red-600 text-white" : "bg-[#6324eb] text-white",
+                operationalStatus: isDraft ? "Bản nháp" : "Đang hoạt động",
+                isUrgent: isUrgent,
+                timeLeft: "Mới tạo",
+                progress: 0,
+                target: pTargetAmount,
+                current: 0,
+                image: image || "https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&q=80&w=1000",
+                date: dateStr,
+                startTime: startTime,
+                endTime: endTime,
+                organization: organization,
+                radius: radius,
+                appointments: []
+            };
+
+            if (editId) {
+                const idNum = Number(editId);
+                updateCampaignLocal({ ...localPayload, id: idNum });
+                alert("Cập nhật chiến dịch thành công!");
+            } else {
+                addCampaign(localPayload);
+                alert("Tạo yêu cầu mới thành công! Bạn có thể xem tại mục Chiến dịch.");
+            }
+
+            // Also keep Supabase call if we want backend sync, but prioritized Local for UI
+            try {
+                const startDateTime = selectedDate ? new Date(selectedDate) : new Date();
+                const [startH, startM] = startTime.split(':').map(Number);
+                startDateTime.setHours(startH, startM, 0, 0);
+
+                const endDateTime = selectedDate ? new Date(selectedDate) : new Date();
+                const [endH, endM] = endTime.split(':').map(Number);
+                endDateTime.setHours(endH, endM, 0, 0);
+
+                const supabasePayload = {
+                    hospital_id: user?.id,
+                    name: localPayload.name,
+                    description: desc,
+                    location_name: location,
+                    city: profile?.city || "Hồ Chí Minh",
+                    district: profile?.district || "Quận 1",
+                    start_time: startDateTime.toISOString(),
+                    end_time: endDateTime.toISOString(),
+                    target_units: pTargetAmount,
+                    status: isDraft ? "draft" : "active",
+                };
+                await campaignService.createCampaign(supabasePayload);
+            } catch (supaErr) {
+                console.warn("Supabase sync failed (offline or auth issue), but local saved.", supaErr);
+            }
+
+            router.push("/hospital-campaign");
+        } catch (error: any) {
+            console.error("Failed to create campaign:", error);
+            alert(`Lỗi khi tạo yêu cầu: ${error.message || "Vui lòng thử lại"}`);
+        }
+    };
+
+    const toggleBloodType = (type: string) => {
+        setSelectedBloodTypes(prev =>
+            prev.includes(type)
+                ? prev.filter(t => t !== type)
+                : [...prev, type]
+        );
+    };
+
+    const MaterialIcon = ({ name, className = "" }: { name: string, className?: string }) => (
+        <span className={`material-symbols-outlined ${className}`}>{name}</span>
+    );
+
     return (
-        <div className="flex flex-col max-w-[1400px] flex-1 px-4 md:px-10 py-8 mx-auto">
-            {/* Page Heading */}
-            <div className="flex flex-wrap justify-between items-end gap-3 mb-6">
-                <div className="flex min-w-72 flex-col gap-2">
-                    <h1 className="text-[#120e1b] dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Yêu cầu Máu</h1>
-                    <p className="text-[#654d99] dark:text-[#a594c9] text-base font-normal leading-normal max-w-2xl">
-                        Tất cả các yêu cầu máu từ bệnh viện. Quản lý và theo dõi tiến độ của từng yêu cầu.
-                    </p>
-                </div>
-                <button
-                    onClick={() => router.push("/hospital")}
-                    className="flex items-center gap-2 px-6 h-12 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] rounded-lg text-[#120e1b] dark:text-white font-semibold hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors"
-                >
-                    <ArrowLeft className="w-5 h-5" />
-                    <span>Quay về</span>
-                </button>
-            </div>
+        <div className="flex flex-col w-full min-h-full font-sans text-slate-900 antialiased text-left">
+            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+            <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
-            {/* Filter Chips */}
-            <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                <button
-                    onClick={() => handleFilterChange("Tất cả")}
-                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-all ${activeFilter === "Tất cả" ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white"
-                        }`}
-                >
-                    <span className="text-sm font-medium">Tất cả</span>
-                </button>
-                <button
-                    onClick={() => handleFilterChange("Nguy kịch")}
-                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-all ${activeFilter === "Nguy kịch" ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white"
-                        }`}
-                >
-                    <span className="text-sm font-medium">Nguy kịch</span>
-                </button>
-                <button
-                    onClick={() => handleFilterChange("Cao")}
-                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-all ${activeFilter === "Cao" ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white"
-                        }`}
-                >
-                    <span className="text-sm font-medium">Cao</span>
-                </button>
-                <button
-                    onClick={() => handleFilterChange("Trung bình")}
-                    className={`flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg px-4 transition-all ${activeFilter === "Trung bình" ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20" : "bg-[#ebe7f3] dark:bg-[#2d263d] text-[#120e1b] dark:text-white"
-                        }`}
-                >
-                    <span className="text-sm font-medium">Trung bình</span>
-                </button>
-                <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#ebe7f3] dark:bg-[#2d263d] px-4 text-[#120e1b] dark:text-white hover:bg-[#dcd6e8] transition-colors">
-                    <span className="text-sm font-medium">Bộ lọc khác</span>
-                    <SlidersHorizontal className="w-4 h-4" />
-                </button>
-            </div>
+            <main className="flex flex-1 justify-center py-10 px-6">
+                <div className="flex flex-col max-w-[1200px] flex-1 px-4 md:px-6 py-6 mx-auto">
 
-            {/* Table */}
-            <div className="bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] rounded-2xl overflow-hidden shadow-sm mb-8">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-50 dark:bg-[#251e36] text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-[#ebe7f3] dark:border-[#2d263d]">
-                            <tr>
-                                <th className="px-6 py-4">Mã Bệnh nhân</th>
-                                <th className="px-6 py-4">Nhóm máu</th>
-                                <th className="px-6 py-4">Số lượng</th>
-                                <th className="px-6 py-4">Khẩn cấp</th>
-                                <th className="px-6 py-4">Tiến độ</th>
-                                <th className="px-6 py-4">Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#ebe7f3] dark:divide-[#2d263d]">
-                            {paginatedData.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-10 text-center text-slate-500 dark:text-slate-400 font-medium">
-                                        Không tìm thấy yêu cầu máu nào phù hợp với bộ lọc này.
-                                    </td>
-                                </tr>
-                            ) : (
-                                paginatedData.map((request) => (
-                                    <tr key={request.id} className="hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors">
-                                        <td className="px-6 py-5 text-sm font-bold text-[#120e1b] dark:text-white">{request.patientCode}</td>
-                                        <td className="px-6 py-5">
-                                            <span className="px-3 py-1.5 bg-slate-100 dark:bg-[#251e36] text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold">{request.bloodType}</span>
-                                        </td>
-                                        <td className="px-6 py-5 text-sm font-medium text-slate-600 dark:text-slate-400">{request.quantity} Đơn vị</td>
-                                        <td className="px-6 py-5">
-                                            <span className={`px-2.5 py-1 ${request.urgencyClass} rounded-md text-[10px] font-bold uppercase tracking-wide`}>
-                                                {request.urgency}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-24 bg-slate-200 dark:bg-[#2d263d] rounded-full h-2">
-                                                    <div
-                                                        className="bg-[#6324eb] h-2 rounded-full transition-all"
-                                                        style={{ width: `${request.progress}%` }}
-                                                    ></div>
+                    {/* Header Section */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-2">
+                        <div className="flex flex-col gap-1">
+                            <h1 className="text-slate-900 text-3xl font-black tracking-tight">Tạo Yêu cầu <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6]">Máu Mới</span></h1>
+                            <p className="text-slate-500 text-sm font-medium">Hệ thống AI sẽ tự động điều phối tới người hiến tiềm năng nhất.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Mẫu nhanh:</span>
+                            {TEMPLATES.map(t => (
+                                <button
+                                    key={t.id}
+                                    onClick={() => applyTemplate(t.data)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-full text-[12px] font-bold text-slate-600 hover:border-[#6D28D9]/40 hover:text-[#6D28D9] transition-all shadow-sm"
+                                >
+                                    <span className={`size-2 rounded-full ${t.color}`}></span> {t.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Main Form Card */}
+                    <div className={`bg-white border rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] transition-all duration-500 ${isUrgent ? 'border-indigo-300 shadow-indigo-500/10' : 'border-slate-200'}`}>
+
+                        {/* Emergency Toggle Banner */}
+                        <div className={`mb-10 rounded-2xl p-5 flex items-center justify-between border transition-all ${isUrgent ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200/60'}`}>
+                            <div className="flex items-center gap-4">
+                                <div className={`size-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isUrgent ? 'bg-indigo-500 animate-pulse shadow-indigo-200' : 'bg-indigo-500 shadow-indigo-200'}`}>
+                                    <MaterialIcon name={isUrgent ? "priority_high" : "check"} className="font-black" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <p className={`text-sm font-black uppercase tracking-tight ${isUrgent ? 'text-indigo-600' : 'text-indigo-600'}`}>
+                                        Chế độ {isUrgent ? 'Khẩn cấp' : 'Tiêu chuẩn'}
+                                    </p>
+                                    <p className="text-slate-500 text-[13px] font-medium">
+                                        {isUrgent ? 'Ưu tiên cao nhất qua SMS & App Push.' : 'Thông báo bình thường tới cộng đồng.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsUrgent(!isUrgent)}
+                                className={`px-6 py-2.5 rounded-full text-xs font-black transition-all border-2 active:scale-95 ${isUrgent
+                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-200'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600'}`}
+                            >
+                                {isUrgent ? 'Đang bật' : 'Bật KHẨN CẤP'}
+                            </button>
+                        </div>
+
+                        {/* Section 1: Tổ chức */}
+                        <section className="mb-12">
+                            <div className="flex items-center gap-3 mb-8">
+                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">1</span>
+                                <h2 className="text-slate-900 text-lg font-black tracking-tight">Thông tin Tổ chức</h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-slate-700 text-[13px] font-bold ml-4">Tên Chiến dịch <span className="text-indigo-500">*</span></label>
+                                    <input
+                                        value={campaignName}
+                                        onChange={(e) => setCampaignName(e.target.value)}
+                                        className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 transition-all px-6 outline-none shadow-sm"
+                                        placeholder="Yêu cầu Máu Khẩn cấp..."
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-slate-700 text-[13px] font-bold ml-4">Mã Quản lý / Sự Kiện</label>
+                                    <input
+                                        value={mrn}
+                                        onChange={(e) => setMrn(e.target.value)}
+                                        className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 transition-all px-6 outline-none shadow-sm"
+                                        placeholder="Vd: EV-2024-001"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2 md:col-span-2">
+                                    <label className="text-slate-700 text-[13px] font-bold ml-4">Đơn vị tiếp nhận <span className="text-indigo-500">*</span></label>
+                                    <div className="relative">
+                                        <select
+                                            value={organization}
+                                            onChange={(e) => setOrganization(e.target.value)}
+                                            className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 transition-all px-6 outline-none appearance-none shadow-sm"
+                                        >
+                                            <option>Bệnh viện Chợ Rẫy</option>
+                                            <option>Cộng đồng (Công khai)</option>
+                                            <option>Hội Chữ Thập Đỏ</option>
+                                            <option>Đại học FPT</option>
+                                        </select>
+                                        <MaterialIcon name="expand_more" className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-sm" />
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section 2: Blood Requirements */}
+                        <section className="mb-12">
+                            <div className="flex items-center gap-3 mb-8">
+                                <span className="section-number flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">2</span>
+                                <h2 className="text-slate-900 text-lg font-black tracking-tight">Yêu cầu về Máu</h2>
+                            </div>
+                            <div className="flex flex-col gap-8">
+                                <div>
+                                    <p className="text-slate-700 text-[13px] font-bold mb-4 ml-4">Nhóm máu cần thiết</p>
+                                    <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+                                        {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
+                                            <button
+                                                key={type}
+                                                onClick={() => toggleBloodType(type)}
+                                                className={`flex h-11 items-center justify-center rounded-full border text-xs font-bold transition-all duration-300 ${selectedBloodTypes.includes(type)
+                                                    ? 'bg-[#F5F3FF] border-[#6D28D9] text-[#6D28D9] shadow-lg shadow-[#6D28D9]/10 scale-105 border-2'
+                                                    : 'bg-white border-slate-300 text-slate-500 hover:border-[#6D28D9]/30 hover:bg-[#F5F3FF]/30 hover:text-[#6D28D9]'
+                                                    }`}
+                                            >
+                                                {type}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Smart Insight AI Block */}
+                                <div className="bg-gradient-to-r from-[#6D28D9]/5 to-[#A78BFA]/5 border border-[#6D28D9]/10 rounded-[1.5rem] p-5 flex flex-col md:flex-row items-center gap-6 shadow-inner">
+                                    <div className="flex items-center gap-3 shrink-0">
+                                        <div className="size-10 bg-[#6D28D9]/10 rounded-2xl flex items-center justify-center text-[#6D28D9]">
+                                            <MaterialIcon name="psychology" className="text-[22px] fill-1" />
+                                        </div>
+                                        <div className="text-left">
+                                            <h3 className="text-[#6D28D9] font-black text-xs tracking-tight">Dự báo thông minh</h3>
+                                            <p className="text-[10px] text-[#6D28D9]/60 font-black uppercase tracking-widest">IA Insight v2.8</p>
+                                        </div>
+                                    </div>
+                                    <div className="h-8 w-px bg-[#6D28D9]/10 hidden md:block"></div>
+                                    <div className="flex flex-1 gap-6 justify-around w-full">
+                                        <div className="text-center md:text-left">
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Cần thiết</p>
+                                            <p className="text-[#6D28D9] text-xl font-black">~{targetCount || "63"} <span className="text-[10px] font-medium text-slate-400 uppercase">người</span></p>
+                                        </div>
+                                        <div className="text-center md:text-left">
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Mục tiêu</p>
+                                            <p className="text-[#6D28D9] text-xl font-black">{targetAmount || "50"} <span className="text-[10px] font-medium text-slate-400 uppercase">đơn vị</span></p>
+                                        </div>
+                                        <div className="hidden sm:block text-center md:text-left">
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Tỉ lệ đạt</p>
+                                            <p className="text-emerald-500 text-xl font-black">80%</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-slate-700 text-[13px] font-bold ml-4">Số lượng người hiến dự kiến</label>
+                                        <input
+                                            type="number"
+                                            value={targetCount}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setLastChanged('count');
+                                                setTargetCount(val);
+                                            }}
+                                            className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-6 outline-none shadow-sm"
+                                            placeholder="Vd: 63"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-slate-700 text-[13px] font-bold ml-4">Mục tiêu (Đơn vị) <span className="text-indigo-500">*</span></label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                value={targetAmount}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setLastChanged('amount');
+                                                    setTargetAmount(val);
+                                                }}
+                                                className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 pl-6 pr-16 outline-none shadow-sm"
+                                                placeholder="50"
+                                            />
+                                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-black uppercase tracking-widest">Đơn vị</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section 3: Logistics */}
+                        <section className="mb-12">
+                            <div className="flex items-center gap-3 mb-8">
+                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">3</span>
+                                <h2 className="text-slate-900 text-lg font-black tracking-tight">Địa điểm & Hậu cần</h2>
+                            </div>
+                            <div className="flex flex-col gap-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                    <div className={`flex flex-col gap-2 ${organization !== "Cộng đồng (Công khai)" ? "md:col-span-2" : ""}`}>
+                                        <label className="text-slate-700 text-[13px] font-bold ml-4">Điểm tiếp nhận</label>
+                                        <div className="relative">
+                                            <MaterialIcon name="search" className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+                                            <input
+                                                value={location}
+                                                onChange={(e) => setLocation(e.target.value)}
+                                                className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 pl-12 pr-6 outline-none shadow-sm"
+                                                placeholder="Khoa Cấp cứu - BV Chợ Rẫy"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {organization === "Cộng đồng (Công khai)" && (
+                                        <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <label className="text-slate-700 text-[13px] font-bold ml-4">Phạm vi thông báo</label>
+                                            <div className="relative">
+                                                <select
+                                                    value={radius}
+                                                    onChange={(e) => setRadius(e.target.value)}
+                                                    className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-6 outline-none appearance-none shadow-sm"
+                                                >
+                                                    <option>5km (Lân cận)</option>
+                                                    <option>10km (Toàn thành phố)</option>
+                                                    <option>Toàn quốc</option>
+                                                </select>
+                                                <MaterialIcon name="expand_more" className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-sm" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Map Visualization */}
+                                <div className="w-full h-52 rounded-[2rem] overflow-hidden border border-slate-100 bg-slate-50 relative group shadow-lg">
+                                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuByvIDTN70XMAX1SWdkUy-gnDtoZseAgFgvqS2YmQ00PVPjTgrdh8o_nKOOAvhyoPfE-CXmPNBnSs4fAy-VQbWTfU9TiEQURHVwxaIkd6CQQYUhYb4S1WPSUAPKfSu_D0fHbxdwl-61mVf5RnxQlUActS5U8abYPvFs2WrQooHfygaMcJHzHH5CDgSeQhTw-pMWRStIMirJq2ESCD4SU0TDuX7fPqVTsKfCId2ke717J1Z_VMXJH8CRbr8vGGnD-a_jBhrVbrr-xbI')" }}></div>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <MaterialIcon name="location_on" className="text-indigo-500 text-6xl drop-shadow-2xl fill-1 animate-bounce" />
+                                    </div>
+                                    <div className="absolute bottom-5 left-5 right-5 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white max-w-[320px]">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-[#F5F3FF] p-2.5 rounded-xl text-[#6D28D9] shrink-0">
+                                                <MaterialIcon name="local_hospital" className="text-[20px]" />
+                                            </div>
+                                            <div className="overflow-hidden text-left">
+                                                <p className="text-slate-900 font-black text-[13px] truncate">Bệnh viện Chợ Rẫy</p>
+                                                <p className="text-slate-500 text-[10px] font-bold truncate">201B Nguyễn Chí Thanh, Q5, TP.HCM</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-slate-700 text-[13px] font-bold ml-4">Ngày diễn ra</label>
+                                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                                            <PopoverTrigger asChild>
+                                                <button className="flex w-full items-center justify-between rounded-full h-12 text-sm border border-slate-300/80 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-6 outline-none transition-all text-left shadow-sm">
+                                                    <span className={selectedDate ? "font-bold" : "text-slate-400"}>
+                                                        {selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: vi }) : "Chọn ngày..."}
+                                                    </span>
+                                                    <MaterialIcon name="calendar_month" className="text-slate-400 text-lg" />
+                                                </button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0 rounded-3xl overflow-hidden shadow-2xl border-slate-200" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={selectedDate}
+                                                    onSelect={(date) => {
+                                                        setSelectedDate(date);
+                                                        setIsCalendarOpen(false);
+                                                    }}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-slate-700 text-[13px] font-bold ml-4">Thời gian tổ chức</label>
+                                        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                                            <input
+                                                type="time"
+                                                value={startTime}
+                                                onChange={(e) => setStartTime(e.target.value)}
+                                                className="rounded-full h-12 text-sm border border-slate-300/80 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-5 outline-none text-center shadow-sm"
+                                            />
+                                            <span className="text-slate-300 text-[11px] font-black italic px-1 uppercase">đến</span>
+                                            <input
+                                                type="time"
+                                                value={endTime}
+                                                onChange={(e) => setEndTime(e.target.value)}
+                                                className="rounded-full h-12 text-sm border border-slate-300/80 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-5 outline-none text-center shadow-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section 4: Image */}
+                        <section className="mb-12">
+                            <div className="flex items-center gap-3 mb-8">
+                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">4</span>
+                                <h2 className="text-slate-900 text-lg font-black tracking-tight">Hình ảnh hiển thị</h2>
+                            </div>
+                            <div className="flex flex-col gap-4">
+                                <label className="text-slate-700 text-[13px] font-bold ml-4">Ảnh bìa chiến dịch</label>
+                                <div className="w-full">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        id="campaign-image"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                processFile(file);
+                                            }
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor="campaign-image"
+                                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                        onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                        onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                                        onDrop={handleFileDrop}
+                                        className={`w-full h-64 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group ${image ? 'border-transparent' : isDragging ? 'border-[#6D28D9] bg-[#F5F3FF]' : 'border-slate-300 hover:border-[#6D28D9] hover:bg-slate-50'}`}
+                                    >
+                                        {image ? (
+                                            <>
+                                                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${image}')` }}></div>
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
+                                                        <MaterialIcon name="edit" className="text-lg" /> Thay đổi ảnh
+                                                    </div>
                                                 </div>
-                                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 w-8">{request.progress}%</span>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-3 text-slate-400">
+                                                <div className={`size-16 rounded-full flex items-center justify-center transition-colors ${isDragging ? 'bg-[#6D28D9]/10 text-[#6D28D9]' : 'bg-slate-100'}`}>
+                                                    <MaterialIcon name="add_photo_alternate" className="text-3xl" />
+                                                </div>
+                                                <p className={`text-sm font-bold ${isDragging ? 'text-[#6D28D9]' : ''}`}>{isDragging ? 'Thả file để tải lên' : 'Nhấn để tải ảnh lên'}</p>
+                                                <p className="text-xs">Hoặc kéo thả file vào đây (PNG, JPG)</p>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex items-center gap-2">
-                                                <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-[#6324eb]">
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
-                                                <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-[#6324eb]">
-                                                    <Edit2 className="w-4 h-4" />
-                                                </button>
-                                                <button className="p-2 hover:bg-slate-100 dark:hover:bg-[#251e36] rounded-lg transition-colors text-slate-500 hover:text-indigo-500">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                        )}
+                                    </label>
+                                    {imageError && (
+                                        <div className="mt-2 text-xs text-red-500 font-bold ml-4">
+                                            {imageError}
+                                        </div>
+                                    )}
+                                    <div className="flex justify-end mt-2">
+                                        {image && (
+                                            <button
+                                                onClick={() => setImage("")}
+                                                className="text-xs text-red-500 font-bold flex items-center gap-1 hover:underline"
+                                            >
+                                                <MaterialIcon name="delete" className="text-sm" /> Xóa ảnh
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
 
-            {/* Pagination */}
-            <div className="mt-8 flex justify-between items-center">
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Hiển thị {filteredData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} đến {Math.min(currentPage * itemsPerPage, filteredData.length)} của {filteredData.length} yêu cầu
-                </p>
-                <nav className="flex items-center gap-2">
-                    <button
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors disabled:opacity-50"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    {Array.from({ length: totalPages }).map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setCurrentPage(i + 1)}
-                            className={`h-10 w-10 flex items-center justify-center rounded-lg font-bold transition-all ${currentPage === i + 1
-                                ? "bg-[#6324eb] text-white shadow-lg shadow-[#6324eb]/30"
-                                : "border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] text-[#120e1b] dark:text-white"
-                                }`}
-                        >
-                            {i + 1}
-                        </button>
-                    ))}
-                    <button
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        disabled={currentPage === totalPages}
-                        className="h-10 w-10 flex items-center justify-center rounded-lg border border-[#ebe7f3] dark:border-[#2d263d] hover:bg-[#ebe7f3] dark:hover:bg-[#2d263d] transition-colors disabled:opacity-50"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
-                </nav>
-            </div>
-            <MiniFooter />
+                        {/* Section 5: Description */}
+                        <section className="mb-10">
+                            <div className="flex items-center gap-3 mb-8">
+                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">5</span>
+                                <h2 className="text-slate-900 text-lg font-black tracking-tight">Chi tiết Chiến dịch</h2>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-slate-700 text-[13px] font-bold ml-4 mb-2">Lời kêu gọi & Thông tin thêm</label>
+                                <div className="quill-wrapper rounded-[2.5rem] overflow-hidden border border-slate-300 shadow-sm bg-white">
+                                    <ReactQuill
+                                        theme="snow"
+                                        value={desc}
+                                        onChange={setDesc}
+                                        placeholder="Viết nội dung truyền cảm hứng tới người hiến..."
+                                        className="min-h-[220px]"
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-col sm:flex-row items-center gap-4 pt-8">
+                            <button
+                                onClick={() => handleCreate(false)}
+                                className={`w-full sm:flex-[2] h-15 h-14 rounded-full font-black text-base shadow-2xl transition-all flex items-center justify-center gap-3 group active:scale-95 ${isUrgent
+                                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-indigo-500/30 hover:shadow-indigo-500/50'
+                                    : 'bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white shadow-indigo-500/30 hover:shadow-indigo-500/50'}`}
+                            >
+                                <MaterialIcon name="send" className="text-[20px] group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                Đăng Yêu cầu {isUrgent ? 'KHẨN CẤP' : 'Công khai'}
+                            </button>
+                            <button
+                                onClick={() => handleCreate(true)}
+                                className="w-full sm:flex-1 h-14 bg-slate-100 text-slate-600 rounded-full font-black text-base hover:bg-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95"
+                            >
+                                <MaterialIcon name="drafts" className="text-[20px]" />
+                                Lưu bản nháp
+                            </button>
+                        </div>
+                    </div>
+
+                    <MiniFooter />
+                </div>
+            </main>
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .quill-wrapper .ql-toolbar {
+                    border-top: none !important;
+                    border-left: none !important;
+                    border-right: none !important;
+                    border-bottom: 1px solid #f1f5f9 !important;
+                    padding: 12px 24px !important;
+                    background: #fbfbfc !important;
+                }
+                .quill-wrapper .ql-container {
+                    border: none !important;
+                    font-family: 'Plus Jakarta Sans', sans-serif !important;
+                    font-size: 14px !important;
+                }
+                .quill-wrapper .ql-editor {
+                    padding: 24px !important;
+                    min-height: 220px !important;
+                }
+                .quill-wrapper .ql-editor.ql-blank::before {
+                    left: 24px !important;
+                    font-style: normal !important;
+                    color: #94a3b8 !important;
+                }
+                input[type="time"]::-webkit-calendar-picker-indicator {
+                    filter: invert(0.5);
+                    cursor: pointer;
+                }
+                .material-symbols-outlined {
+                    font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+                }
+                .fill-1 {
+                    font-variation-settings: 'FILL' 1 !important;
+                }
+            `}} />
         </div>
     );
 }

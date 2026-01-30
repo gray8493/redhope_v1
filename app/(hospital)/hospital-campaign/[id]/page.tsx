@@ -7,7 +7,8 @@ import MiniFooter from "@/components/shared/MiniFooter";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getCampaignById, updateCampaign, Campaign, getCampaigns, Appointment } from "@/app/utils/campaignStorage";
-import { addSupportRequest } from "@/app/utils/supportStorage";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
 const DEFAULT_APPOINTMENTS = [
@@ -251,9 +252,7 @@ export default function CampaignDetailsPage() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isStartTimeOpen, setIsStartTimeOpen] = useState(false);
     const [isEndTimeOpen, setIsEndTimeOpen] = useState(false);
-    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
-    const [supportType, setSupportType] = useState<"doctor" | "staff" | "supply" | "emergency">("staff");
-    const [supportMessage, setSupportMessage] = useState("");
+    const [activeBloodDropdown, setActiveBloodDropdown] = useState<number | null>(null);
 
     const handleTimeManualChange = (field: 'startTime' | 'endTime', value: string) => {
         let val = value.replace(/\D/g, '');
@@ -264,23 +263,25 @@ export default function CampaignDetailsPage() {
         setEditForm(prev => ({ ...prev, [field]: val }));
     };
 
-    // Handle click outside dropdown to close it
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const dropdown = document.getElementById('status-dropdown-container');
             if (dropdown && !dropdown.contains(event.target as Node)) {
                 setIsDropdownOpen(false);
             }
+
+            // Handle blood dropdowns
+            if (activeBloodDropdown !== null) {
+                const target = event.target as HTMLElement;
+                if (!target.closest('.blood-dropdown-trigger')) {
+                    setActiveBloodDropdown(null);
+                }
+            }
         };
 
-        if (isDropdownOpen) {
-            window.addEventListener('click', handleClickOutside);
-        } else {
-            window.removeEventListener('click', handleClickOutside);
-        }
-
+        window.addEventListener('click', handleClickOutside);
         return () => window.removeEventListener('click', handleClickOutside);
-    }, [isDropdownOpen]);
+    }, [isDropdownOpen, activeBloodDropdown]);
     const [editForm, setEditForm] = useState<Campaign>(campaignInfo);
     const [imageError, setImageError] = useState("");
 
@@ -448,6 +449,14 @@ export default function CampaignDetailsPage() {
     const handleDonatedChange = (id: number, volume: number) => {
         setAppointments(prev => prev.map(a => a.id === id ? { ...a, donated: volume } : a));
     };
+
+    const handleBloodChange = (id: number, blood: string) => {
+        setAppointments(prev => prev.map(a => a.id === id ? {
+            ...a,
+            blood: blood,
+            bloodClass: getBloodClass(blood)
+        } : a));
+    };
     const handleDefer = (id: number) => {
         setAppointments(prev => prev.map(a => a.id === id ? {
             ...a,
@@ -468,6 +477,16 @@ export default function CampaignDetailsPage() {
                 statusClass: "px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded"
             } : a);
         });
+        pushNotification("Hồ sơ đã được lưu thành công!", "success");
+    };
+
+    const handleEditAppointment = (id: number) => {
+        setAppointments(prev => prev.map(a => a.id === id ? {
+            ...a,
+            status: "Đang tiến hành",
+            statusClass: "px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded"
+        } : a));
+        pushNotification("Bạn có thể chỉnh sửa lại hồ sơ", "info");
     };
     const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
     const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
@@ -534,6 +553,9 @@ export default function CampaignDetailsPage() {
             ...editForm,
             bloodType: selectedBloodType,
             bloodClass: getBloodClass(selectedBloodType),
+            // Ensure status and statusClass are updated based on isUrgent
+            status: editForm.isUrgent ? "KHẨN CẤP" : "TIÊU CHUẨN",
+            statusClass: editForm.isUrgent ? "bg-red-600 text-white" : "bg-blue-500 text-white",
             // Ensure operationalStatus is updated from the select input
             operationalStatus: editForm.operationalStatus,
             timeLeft: newTimeLeft
@@ -572,29 +594,6 @@ export default function CampaignDetailsPage() {
         });
     };
 
-    const handleSendSupport = async () => {
-        if (!supportMessage.trim()) {
-            pushNotification("Vui lòng nhập mô tả vấn đề!", "error");
-            return;
-        }
-        try {
-            await addSupportRequest({
-                campaignId: campaignInfo.id,
-                campaignName: campaignInfo.name,
-                type: supportType,
-                message: supportMessage,
-                timestamp: new Date().toISOString(),
-                status: "pending"
-            });
-            setIsSupportModalOpen(false);
-            setSupportMessage("");
-            setSupportType("staff");
-            pushNotification("Đã gửi yêu cầu hỗ trợ đến trung tâm điều phối!", "success");
-        } catch (error) {
-            console.error("Support request failed:", error);
-            pushNotification("Không thể gửi yêu cầu hỗ trợ. Vui lòng thử lại sau.", "error");
-        }
-    };
 
     return (
         <>
@@ -706,8 +705,8 @@ export default function CampaignDetailsPage() {
                                     <span className="material-symbols-outlined text-[24px]">edit_calendar</span>
                                 </div>
                                 <div>
-                                    <h2 className="text-slate-900 dark:text-white text-xl font-extrabold tracking-tight">Chỉnh sửa Chiến dịch</h2>
-                                    <p className="text-slate-400 text-[12px] font-medium">Cập nhật thông tin yêu cầu hiến máu</p>
+                                    <h2 className="text-slate-900 dark:text-white text-lg font-extrabold tracking-tight">Chỉnh sửa Chiến dịch</h2>
+                                    <p className="text-slate-400 text-[11px] font-medium">Cập nhật thông tin yêu cầu hiến máu</p>
                                 </div>
                             </div>
                             <button
@@ -719,7 +718,32 @@ export default function CampaignDetailsPage() {
                         </div>
 
                         {/* Modal Body */}
-                        <div className="px-10 pr-12 py-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                        <div className="px-10 pr-12 py-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar text-left">
+                            {/* Urgency Toggle Section */}
+                            <div className={`rounded-2xl p-4 flex items-center justify-between border transition-all ${editForm.isUrgent ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className={`size-10 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${editForm.isUrgent ? 'bg-red-500 animate-pulse' : 'bg-blue-500'}`}>
+                                        <span className="material-symbols-outlined text-[20px]">{editForm.isUrgent ? 'priority_high' : 'check'}</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <p className={`text-xs font-black uppercase tracking-tight ${editForm.isUrgent ? 'text-red-600' : 'text-blue-600'}`}>
+                                            Chế độ {editForm.isUrgent ? 'Khẩn cấp' : 'Tiêu chuẩn'}
+                                        </p>
+                                        <p className="text-slate-500 text-[11px] font-medium">
+                                            {editForm.isUrgent ? 'Ưu tiên cao nhất.' : 'Thông báo bình thường.'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setEditForm(prev => ({ ...prev, isUrgent: !prev.isUrgent }))}
+                                    className={`px-5 py-2 rounded-full text-[11px] font-black transition-all border-2 active:scale-95 ${editForm.isUrgent
+                                        ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-200'
+                                        : 'bg-white text-blue-600 border-blue-200 hover:border-blue-400 hover:text-blue-700'}`}
+                                >
+                                    {editForm.isUrgent ? 'Đang bật' : 'Bật KHẨN CẤP'}
+                                </button>
+                            </div>
+
                             <div className="space-y-6">
                                 <div className="grid grid-cols-3 gap-6">
                                     <div className="col-span-2 flex flex-col gap-2">
@@ -728,7 +752,7 @@ export default function CampaignDetailsPage() {
                                             className="pill-input dark:bg-slate-800 dark:border-slate-700 font-bold px-8"
                                             type="text"
                                             value={editForm.name}
-                                            onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                            onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
@@ -738,7 +762,7 @@ export default function CampaignDetailsPage() {
                                                 className="pill-input !pl-14 dark:bg-slate-800 dark:border-slate-700 font-bold"
                                                 type="text"
                                                 value={editForm.date}
-                                                onChange={e => setEditForm({ ...editForm, date: e.target.value })}
+                                                onChange={e => setEditForm(prev => ({ ...prev, date: e.target.value }))}
                                             />
                                             <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-[#6D28D9] text-[20px]">calendar_month</span>
                                         </div>
@@ -753,7 +777,7 @@ export default function CampaignDetailsPage() {
                                                 className="pill-input !pl-14 dark:bg-slate-800 dark:border-slate-700 font-bold"
                                                 type="text"
                                                 value={editForm.location}
-                                                onChange={e => setEditForm({ ...editForm, location: e.target.value })}
+                                                onChange={e => setEditForm(prev => ({ ...prev, location: e.target.value }))}
                                             />
                                             <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-[#6D28D9] text-[20px]">location_on</span>
                                         </div>
@@ -788,7 +812,7 @@ export default function CampaignDetailsPage() {
                                                             return (
                                                                 <button
                                                                     key={t}
-                                                                    onClick={() => { setEditForm({ ...editForm, startTime: t }); setIsStartTimeOpen(false); }}
+                                                                    onClick={() => { setEditForm(prev => ({ ...prev, startTime: t })); setIsStartTimeOpen(false); }}
                                                                     className={`w-full flex items-center justify-between px-5 py-2.5 text-xs font-bold transition-all ${editForm.startTime === t ? 'text-[#6D28D9] bg-purple-50 dark:bg-purple-900/20' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                                                                 >
                                                                     <span>{t}</span>
@@ -829,7 +853,7 @@ export default function CampaignDetailsPage() {
                                                             return (
                                                                 <button
                                                                     key={t}
-                                                                    onClick={() => { setEditForm({ ...editForm, endTime: t }); setIsEndTimeOpen(false); }}
+                                                                    onClick={() => { setEditForm(prev => ({ ...prev, endTime: t })); setIsEndTimeOpen(false); }}
                                                                     className={`w-full flex items-center justify-between px-5 py-2.5 text-xs font-bold transition-all ${editForm.endTime === t ? 'text-[#6D28D9] bg-purple-50 dark:bg-purple-900/20' : 'text-slate-600 dark:text-slate-400'}`}
                                                                 >
                                                                     <span>{t}</span>
@@ -867,7 +891,7 @@ export default function CampaignDetailsPage() {
                                                     const reader = new FileReader();
                                                     reader.onloadend = () => {
                                                         if (reader.readyState === FileReader.DONE && reader.result) {
-                                                            setEditForm({ ...editForm, image: reader.result as string });
+                                                            setEditForm(prev => ({ ...prev, image: reader.result as string }));
                                                         }
                                                     };
                                                     reader.onerror = () => {
@@ -945,7 +969,7 @@ export default function CampaignDetailsPage() {
                                                 className="pill-input dark:bg-slate-800 dark:border-slate-700 pr-12 font-bold"
                                                 type="number"
                                                 value={editForm.target}
-                                                onChange={e => setEditForm({ ...editForm, target: Number(e.target.value) })}
+                                                onChange={e => setEditForm(prev => ({ ...prev, target: Number(e.target.value) }))}
                                             />
                                             <span className="absolute right-7 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest pointer-events-none">ML</span>
                                         </div>
@@ -956,7 +980,7 @@ export default function CampaignDetailsPage() {
                                             <select
                                                 className="pill-input appearance-none dark:bg-slate-800 dark:border-slate-700 pr-12 font-bold cursor-pointer"
                                                 value={editForm.operationalStatus || "Đang hoạt động"}
-                                                onChange={e => setEditForm({ ...editForm, operationalStatus: e.target.value })}
+                                                onChange={e => setEditForm(prev => ({ ...prev, operationalStatus: e.target.value }))}
                                             >
                                                 <option value="Đang hoạt động">Đang hoạt động</option>
                                                 <option value="Tạm dừng">Tạm dừng</option>
@@ -988,76 +1012,6 @@ export default function CampaignDetailsPage() {
                                     className="px-8 h-12 bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white rounded-full text-sm font-extrabold shadow-[0_10px_15px_-3px_rgba(109,40,217,0.2)] hover:scale-[1.02] active:scale-95 transition-all"
                                 >
                                     Lưu thay đổi
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* End Confirmation Modal */}
-            {isSupportModalOpen && (
-                <div className="modal-overlay animate-in fade-in duration-200" style={{ zIndex: 60 }}>
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-[600px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-                        <div className="px-8 py-6 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-red-50/30 dark:bg-red-900/10">
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center text-red-600">
-                                    <span className="material-symbols-outlined text-[24px]">medical_services</span>
-                                </div>
-                                <div>
-                                    <h2 className="text-red-600 dark:text-red-400 text-xl font-extrabold tracking-tight">Yêu cầu Hỗ trợ</h2>
-                                    <p className="text-slate-400 text-[12px] font-medium">Gửi yêu cầu chi viện khẩn cấp đến trung tâm</p>
-                                </div>
-                            </div>
-                            <button onClick={() => setIsSupportModalOpen(false)} className="size-8 rounded-full hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center text-slate-400 transition-colors">
-                                <span className="material-symbols-outlined text-[20px]">close</span>
-                            </button>
-                        </div>
-                        <div className="p-8 space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Loại hỗ trợ</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {[
-                                        { id: 'staff', label: 'Nhân sự', icon: 'group' },
-                                        { id: 'doctor', label: 'Bác sĩ', icon: 'stethoscope' },
-                                        { id: 'supply', label: 'Vật tư', icon: 'inventory_2' },
-                                        { id: 'emergency', label: 'Khẩn cấp', icon: 'warning' }
-                                    ].map(type => (
-                                        <button
-                                            key={type.id}
-                                            onClick={() => setSupportType(type.id as any)}
-                                            className={`flex items-center gap-3 p-3 rounded-xl border-2 font-bold text-sm transition-all ${supportType === type.id
-                                                ? 'border-red-500 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-                                                : 'border-slate-100 dark:border-slate-800 text-slate-500 hover:border-red-200 hover:bg-red-50/50'
-                                                }`}
-                                        >
-                                            <span className="material-symbols-outlined">{type.icon}</span>
-                                            {type.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Mô tả vấn đề</label>
-                                <textarea
-                                    className="w-full h-32 p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 focus:border-red-500 focus:ring-0 outline-none text-sm font-medium resize-none"
-                                    placeholder="Nhập chi tiết vấn đề cần hỗ trợ..."
-                                    value={supportMessage}
-                                    onChange={(e) => setSupportMessage(e.target.value)}
-                                ></textarea>
-                            </div>
-                            <div className="flex gap-4 pt-2">
-                                <button
-                                    onClick={() => setIsSupportModalOpen(false)}
-                                    className="flex-1 py-3.5 rounded-full font-bold text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                >
-                                    Hủy bỏ
-                                </button>
-                                <button
-                                    onClick={handleSendSupport}
-                                    className="flex-1 py-3.5 rounded-full font-bold text-sm bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30 transition-all flex items-center justify-center gap-2"
-                                >
-                                    <span className="material-symbols-outlined text-[18px]">send</span> Gửi yêu cầu
                                 </button>
                             </div>
                         </div>
@@ -1112,354 +1066,428 @@ export default function CampaignDetailsPage() {
                     </div>
                 </div>
             )}
-            <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f7f8] dark:bg-[#161121] font-sans text-slate-900 dark:text-white">
-                <div className="flex h-full grow flex-row">
-                    <HospitalSidebar />
-                    <div className="flex-1 flex flex-col min-w-0">
-                        <TopNav title="Chi tiết & Phân tích Chiến dịch" />
-
-                        <main className="flex-1 p-12 max-w-[1800px] w-full mx-auto">
-                            {/* Campaign Header */}
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none">
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex items-center gap-4">
-                                        <Link href={`/hospital/campaign?tab=${fromTab}`} className="size-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-[#6324eb] hover:bg-white hover:shadow-md transition-all">
-                                            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-                                        </Link>
-                                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{campaignInfo.name}</h1>
-                                        <div className="flex gap-2">
-                                            {campaignInfo.isUrgent && (
-                                                <span className="px-4 py-1.5 bg-indigo-50 text-[#6324eb] text-[11px] font-extrabold rounded-full flex items-center gap-1.5 border border-indigo-100 animate-pulse">
-                                                    <span className="size-1.5 bg-[#6324eb] rounded-full"></span> KHẨN CẤP
-                                                </span>
-                                            )}
-                                            <span className={`px-4 py-1.5 ${campaignInfo.operationalStatus === 'Đang hoạt động' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'} text-[11px] font-extrabold rounded-full flex items-center gap-1.5 border`}>
-                                                <span className={`size-1.5 ${campaignInfo.operationalStatus === 'Đang hoạt động' ? 'bg-emerald-500' : 'bg-amber-500'} rounded-full`}></span> {campaignInfo.operationalStatus || "Đang hoạt động"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-6 text-sm font-semibold text-slate-400 ml-14">
-                                        <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">calendar_month</span> {campaignInfo.startTime && campaignInfo.endTime ? `${campaignInfo.startTime} - ${campaignInfo.endTime} • ` : ''}{campaignInfo.date}</span>
-                                        <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">location_on</span> {campaignInfo.location}</span>
-                                        <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">group</span> {campaignInfo.staffCount} Nhân viên</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <button
-                                        className="size-12 rounded-full border-2 border-red-50 dark:border-red-900/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 flex items-center justify-center transition-all bg-white dark:bg-slate-900 shadow-sm hover:shadow-red-500/20"
-                                        onClick={() => setIsSupportModalOpen(true)}
-                                        title="Yêu cầu Chi viện"
-                                    >
-                                        <span className="material-symbols-outlined text-[24px]">sos</span>
-                                    </button>
-                                    <button
-                                        className="size-12 rounded-full border-2 border-slate-50 dark:border-slate-800 text-slate-400 hover:text-[#6324eb] hover:border-[#6324eb] hover:shadow-lg hover:shadow-indigo-500/10 flex items-center justify-center transition-all bg-white dark:bg-slate-900"
-                                        onClick={handleEditClick}
-                                    >
-                                        <span className="material-symbols-outlined text-[22px]">edit</span>
-                                    </button>
-                                    <button className="size-12 rounded-full border-2 border-slate-50 dark:border-slate-800 text-slate-400 hover:text-[#6324eb] flex items-center justify-center transition-all bg-white dark:bg-slate-900">
-                                        <span className="material-symbols-outlined text-[22px]">share</span>
-                                    </button>
-                                    <button className="px-8 h-12 bg-[#6324eb] text-white rounded-full text-sm font-extrabold flex items-center gap-3 hover:bg-[#501ac2] hover:shadow-xl hover:shadow-indigo-500/20 transition-all">
-                                        <span className="material-symbols-outlined text-[20px]">table_view</span>
-                                        Xuất Dữ liệu
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Metric Cards */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-                                {/* Goal Progress */}
-                                <div className={`metric-card transition-all duration-500 ${progressPercent >= 100 ? 'ring-4 ring-emerald-500/20 border-emerald-500/50 bg-emerald-50/10 dark:bg-emerald-500/5' : ''}`}>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className={`size-8 rounded-lg flex items-center justify-center ${progressPercent >= 100 ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-50 dark:bg-indigo-900/30 text-[#6324eb]'}`}>
-                                            <span className="material-symbols-outlined text-[18px]">{progressPercent >= 100 ? 'celebration' : 'analytics'}</span>
-                                        </div>
-                                        <span className="text-[9px] font-extrabold text-slate-400/80 uppercase tracking-widest">Tiến độ mục tiêu</span>
-                                    </div>
-                                    <div className="flex items-baseline gap-2 mb-2">
-                                        <span className={`text-2xl font-black tracking-tight ${progressPercent >= 100 ? 'text-emerald-600' : 'text-slate-900 dark:text-white'}`}>{totalCollected.toFixed(0)}</span>
-                                        <span className="text-slate-400 font-extrabold text-[9px] uppercase tracking-wider">/ {(targetVolume || 0).toLocaleString()} ml</span>
-                                    </div>
-                                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
-                                        <div className={`h-full rounded-full transition-all duration-1000 shadow-sm ${progressPercent >= 100 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : 'bg-gradient-to-r from-[#6324eb] to-indigo-400'}`} style={{ width: `${progressPercent}%` }}></div>
-                                    </div>
-                                    <div className={`flex justify-between items-center p-2 rounded-lg ${progressPercent >= 100 ? 'bg-emerald-500/10' : 'bg-slate-50 dark:bg-slate-800/50'}`}>
-                                        <span className={`${progressPercent >= 100 ? 'text-emerald-600' : 'text-[#6324eb]'} text-[9px] font-bold uppercase tracking-wide`}>
-                                            {progressPercent >= 100 ? 'Mục tiêu hoàn thành!' : `${progressPercent.toFixed(1)}% Hoàn thành`}
-                                        </span>
-                                        <span className={`${progressPercent >= 100 ? 'text-emerald-500' : 'text-slate-400'} text-[9px] font-bold`}>
-                                            {progressPercent >= 100 ? 'Vượt chỉ tiêu' : `Còn ${(remaining / 1000).toFixed(1)} Lít nữa`}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Donor Registration */}
-                                <div className="metric-card border-orange-100 dark:border-orange-900/20">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="size-8 rounded-lg bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center text-orange-500">
-                                            <span className="material-symbols-outlined text-[18px]">person_check</span>
-                                        </div>
-                                        <span className="text-[9px] font-extrabold text-slate-400/80 uppercase tracking-widest">Người hiến thực hiện</span>
-                                    </div>
-                                    <div className="flex items-baseline gap-2 mb-2">
-                                        <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{completedAppointments.length}</span>
-                                        <span className="text-slate-400 font-extrabold text-[9px] uppercase tracking-wider">/ {totalRegistered} Đăng ký</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg group transition-all">
-                                        <div className="flex -space-x-2">
-                                            {completedAppointments.slice(0, 3).map((a, i) => (
-                                                <div key={a.id} className="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-black text-[8px] text-orange-500 shadow-sm">
-                                                    {a.code}
-                                                </div>
-                                            ))}
-                                            {completedAppointments.length > 3 && (
-                                                <div className="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-orange-500 flex items-center justify-center text-[8px] text-white font-black">+{completedAppointments.length - 3}</div>
-                                            )}
-                                        </div>
-                                        <span className="text-[9px] font-bold text-slate-400 tracking-tight">
-                                            {completedAppointments.length === totalRegistered ? "Tất cả đã hoàn thành! ✨" : "Đang thực hiện hiến máu"}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Actual Analysis */}
-                                <div className="metric-card">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="size-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-500">
-                                            <span className="material-symbols-outlined text-[18px]">insights</span>
-                                        </div>
-                                        <span className="text-[9px] font-extrabold text-slate-400/80 uppercase tracking-widest">Phân tích AI</span>
-                                    </div>
-                                    <div className="flex items-baseline gap-2 mb-2">
-                                        <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{totalCollected.toLocaleString()}</span>
-                                        <span className="text-slate-400 font-extrabold text-[9px] uppercase tracking-wider">ml thu được</span>
-                                    </div>
-                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-[9px] font-bold text-slate-400 uppercase">Trạng thái:</span>
-                                            <span className={`text-[9px] font-black uppercase flex items-center gap-1.5 ${analysisColor}`}>
-                                                <span className="material-symbols-outlined text-[14px]">{analysisIcon}</span> {analysisAssessment}
-                                            </span>
-                                        </div>
-                                        <div className="h-px bg-slate-100 dark:bg-slate-700 w-full"></div>
-                                        <div className="flex justify-between items-center text-[9px] font-bold">
-                                            <span className="text-slate-400 uppercase">Thiếu hụt chỉ tiêu:</span>
-                                            <span className="text-[#6324eb]">{deficit.toLocaleString()} ml</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            {/* Appointment Schedule Table */}
-                            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-xl shadow-slate-200/40 dark:shadow-none mb-20">
-                                <div className="p-10 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-8">
-                                    <div>
-                                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Lịch hẹn Hiến máu</h2>
-                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Quản lý check-in & Hồ sơ hiến máu</p>
-                                    </div>
-                                    <div className="flex gap-4 items-center">
-                                        <div className="relative group w-80 sm:w-96">
-                                            <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#6324eb] transition-colors text-[20px] pointer-events-none z-10">search</span>
-                                            <input
-                                                className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full pl-12 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] outline-none transition-all shadow-sm dark:text-white"
-                                                placeholder="Tìm tên người hiến..."
-                                                type="text"
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="relative" id="status-dropdown-container">
-                                            <button
-                                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                                className="h-11 flex items-center justify-between pl-5 pr-4 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold shadow-sm cursor-pointer hover:border-[#6324eb]/50 transition-all min-w-[160px]"
-                                            >
-                                                <div className="flex items-center gap-2.5">
-                                                    <span className="material-symbols-outlined text-[18px] text-[#6324eb]">
-                                                        {statusFilter === 'Tất cả' ? 'apps' :
-                                                            statusFilter === 'Đang chờ' ? 'schedule' :
-                                                                statusFilter === 'Đang tiến hành' ? 'sync' :
-                                                                    statusFilter === 'Hoàn thành' ? 'check_circle' : 'block'}
-                                                    </span>
-                                                    <span className="text-xs">{statusFilter}</span>
-                                                </div>
-                                                <span className={`material-symbols-outlined text-slate-400 text-[16px] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`}>expand_more</span>
-                                            </button>
-
-                                            {isDropdownOpen && (
-                                                <div className="absolute top-[calc(100%+8px)] right-0 w-52 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                                    <div className="p-1.5">
-                                                        {statusOptions.map(opt => (
-                                                            <button
-                                                                key={opt}
-                                                                onClick={() => {
-                                                                    setStatusFilter(opt);
-                                                                    setIsDropdownOpen(false);
-                                                                }}
-                                                                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all group ${statusFilter === opt ? 'bg-[#6D28D9] text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                                                            >
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className={`size-7 rounded-lg flex items-center justify-center transition-colors ${statusFilter === opt ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-white dark:group-hover:bg-slate-700'}`}>
-                                                                        <span className={`material-symbols-outlined text-[16px] ${statusFilter === opt ? 'text-white' : 'text-slate-400 group-hover:text-[#6D28D9]'}`}>
-                                                                            {opt === 'Tất cả' ? 'apps' :
-                                                                                opt === 'Đang chờ' ? 'schedule' :
-                                                                                    opt === 'Đang tiến hành' ? 'sync' :
-                                                                                        opt === 'Hoàn thành' ? 'check_circle' : 'block'}
-                                                                        </span>
-                                                                    </div>
-                                                                    <span>{opt}</span>
-                                                                </div>
-                                                                {statusFilter === opt && (
-                                                                    <span className="material-symbols-outlined text-sm">check</span>
-                                                                )}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-50 dark:border-slate-800">
-                                            <tr>
-                                                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Người hiến</th>
-                                                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Nhóm máu</th>
-                                                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Thời gian</th>
-                                                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Lượng hiến</th>
-                                                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trạng thái</th>
-                                                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Tác vụ</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                                            {paginatedAppointments.length > 0 ? paginatedAppointments.map(a => (
-                                                <tr key={a.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/20 transition-colors group">
-                                                    <td className="px-8 py-6">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="size-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center font-black text-[#6D28D9] text-xs shadow-sm">{a.code}</div>
-                                                            <div>
-                                                                <div className="text-sm font-extrabold text-slate-900 dark:text-white">{a.name}</div>
-                                                                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-tight">{a.type}</div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-8 py-6">
-                                                        <span className={`px-4 py-1.5 rounded-full text-[11px] font-black border ${a.bloodClass.includes('emerald') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-indigo-50 text-indigo-500 border-indigo-100'}`}>
-                                                            {a.blood}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-8 py-6">
-                                                        <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
-                                                            <span className="material-symbols-outlined text-[18px] text-slate-300">schedule</span>
-                                                            {a.time}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-8 py-6">
-                                                        <div className="flex items-center gap-1.5">
-                                                            {(a.status === "Đang chờ" || a.status === "Đang tiến hành") && !isEnded ? (
-                                                                <div className="flex gap-1.5">
-                                                                    {[250, 350, 450].map(v => (
-                                                                        <button
-                                                                            key={v}
-                                                                            onClick={() => handleDonatedChange(a.id, v)}
-                                                                            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all ${a.donated === v ? 'bg-[#6D28D9] text-white shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-700 hover:border-[#6D28D9]'}`}
-                                                                        >
-                                                                            {v}
-                                                                        </button>
-                                                                    ))}
-                                                                    <span className="text-[9px] font-bold text-slate-400 self-center ml-1">ml</span>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center gap-1">
-                                                                    <span className="text-sm font-black text-[#6D28D9]">{a.donated || 0}</span>
-                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase">ml</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-8 py-6">
-                                                        <span className={`px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-tight ${a.status === 'Hoàn thành' ? 'bg-emerald-50 text-emerald-600' :
-                                                            a.status === 'Hoãn hiến' ? 'bg-indigo-50 text-indigo-600' :
-                                                                a.status === 'Đang tiến hành' ? 'bg-amber-50 text-amber-600' :
-                                                                    'bg-indigo-50 text-indigo-600'
-                                                            }`}>
-                                                            {a.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-8 py-6">
-                                                        <div className="flex items-center justify-center gap-3">
-                                                            {!isEnded && a.status !== "Hoàn thành" && a.status !== "Hoãn hiến" ? (
-                                                                <div className="flex items-center gap-2">
-                                                                    <button
-                                                                        className="px-5 h-10 bg-[#6D28D9] text-white rounded-full text-[11px] font-black uppercase tracking-wider hover:bg-[#5B21B6] hover:shadow-lg hover:shadow-purple-500/20 transition-all"
-                                                                        onClick={() => handleConfirm(a.id)}
-                                                                    >
-                                                                        Xác nhận hiến
-                                                                    </button>
-                                                                    <div className="relative group/menu">
-                                                                        <button className="size-10 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-300 hover:text-slate-600 transition-colors flex items-center justify-center">
-                                                                            <span className="material-symbols-outlined text-[20px]">more_horiz</span>
-                                                                        </button>
-                                                                        <div className="absolute right-0 top-full mt-1 hidden group-hover/menu:block bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-xl p-2 z-10 w-32 border border-slate-200">
-                                                                            <button
-                                                                                onClick={() => handleDefer(a.id)}
-                                                                                className="w-full px-4 py-2 text-[10px] font-black uppercase text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg text-left transition-colors flex items-center gap-2"
-                                                                            >
-                                                                                <span className="material-symbols-outlined text-sm">block</span> Hoãn hiến
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-[11px] text-slate-300 font-bold uppercase italic">Kết thúc hồ sơ</span>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )) : (
-                                                <tr>
-                                                    <td colSpan={6} className="px-8 py-20 text-center">
-                                                        <div className="flex flex-col items-center gap-4 opacity-30">
-                                                            <span className="material-symbols-outlined text-[64px]">event_busy</span>
-                                                            <p className="font-extrabold uppercase tracking-widest text-sm">Không có lịch hẹn nào</p>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div className="px-10 py-8 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between border-t border-slate-50 dark:border-slate-800">
-                                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
-                                        Hiển thị {sortedAppointments.length === 0 ? 0 : ((currentPage - 1) * pageSize + 1)}-{Math.min(currentPage * pageSize, sortedAppointments.length)} / {sortedAppointments.length} bản ghi
+            <main className="flex-1 p-4 md:p-8 max-w-[1600px] w-full mx-auto">
+                {/* Campaign Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none">
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-4">
+                            <Link href={`/hospital-campaign?tab=${fromTab}`} className="size-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-[#6324eb] hover:bg-white hover:shadow-md transition-all">
+                                <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+                            </Link>
+                            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{campaignInfo.name}</h1>
+                            <div className="flex gap-2">
+                                {campaignInfo.isUrgent && (
+                                    <span className="px-4 py-1.5 bg-indigo-50 text-[#6324eb] text-[11px] font-extrabold rounded-full flex items-center gap-1.5 border border-indigo-100 animate-pulse">
+                                        <span className="size-1.5 bg-[#6324eb] rounded-full"></span> KHẨN CẤP
                                     </span>
-                                    <div className="flex gap-3">
-                                        <button
-                                            className="size-10 flex items-center justify-center rounded-full border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-[#6D28D9] disabled:opacity-30 disabled:hover:text-slate-400 transition-all"
-                                            onClick={handlePrevPage}
-                                            disabled={currentPage === 1}
-                                        >
-                                            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
-                                        </button>
-                                        <button
-                                            className="size-10 flex items-center justify-center rounded-full border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-[#6D28D9] disabled:opacity-30 disabled:hover:text-slate-400 transition-all"
-                                            onClick={handleNextPage}
-                                            disabled={currentPage === totalPages || totalPages === 0}
-                                        >
-                                            <span className="material-symbols-outlined text-[20px]">chevron_right</span>
-                                        </button>
-                                    </div>
-                                </div>
+                                )}
+                                <span className={`px-4 py-1.5 ${campaignInfo.operationalStatus === 'Đang hoạt động' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'} text-[11px] font-extrabold rounded-full flex items-center gap-1.5 border`}>
+                                    <span className={`size-1.5 ${campaignInfo.operationalStatus === 'Đang hoạt động' ? 'bg-emerald-500' : 'bg-amber-500'} rounded-full`}></span> {campaignInfo.operationalStatus || "Đang hoạt động"}
+                                </span>
                             </div>
-                        </main>
-
-                        <MiniFooter />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-6 text-sm font-semibold text-slate-400 ml-14">
+                            <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">calendar_month</span> {campaignInfo.startTime && campaignInfo.endTime ? `${campaignInfo.startTime} - ${campaignInfo.endTime} • ` : ''}{campaignInfo.date}</span>
+                            <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">location_on</span> {campaignInfo.location}</span>
+                            <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[18px]">group</span> {campaignInfo.staffCount} Nhân viên</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button
+                            className="size-12 rounded-full border-2 border-slate-50 dark:border-slate-800 text-slate-400 hover:text-[#6324eb] hover:border-[#6324eb] hover:shadow-lg hover:shadow-indigo-500/10 flex items-center justify-center transition-all bg-white dark:bg-slate-900"
+                            onClick={handleEditClick}
+                        >
+                            <span className="material-symbols-outlined text-[22px]">edit</span>
+                        </button>
+                        <button className="size-12 rounded-full border-2 border-slate-50 dark:border-slate-800 text-slate-400 hover:text-[#6324eb] flex items-center justify-center transition-all bg-white dark:bg-slate-900">
+                            <span className="material-symbols-outlined text-[22px]">share</span>
+                        </button>
+                        <button className="px-8 h-12 bg-[#6324eb] text-white rounded-full text-sm font-extrabold flex items-center gap-3 hover:bg-[#501ac2] hover:shadow-xl hover:shadow-indigo-500/20 transition-all">
+                            <span className="material-symbols-outlined text-[20px]">table_view</span>
+                            Xuất Dữ liệu
+                        </button>
                     </div>
                 </div>
-            </div >
+
+                {/* Metric Cards */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+                    {/* Goal Progress */}
+                    <div className={`metric-card transition-all duration-500 ${progressPercent >= 100 ? 'ring-4 ring-emerald-500/20 border-emerald-500/50 bg-emerald-50/10 dark:bg-emerald-500/5' : ''}`}>
+                        <div className="flex items-center justify-between mb-2">
+                            <div className={`size-8 rounded-lg flex items-center justify-center ${progressPercent >= 100 ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-50 dark:bg-indigo-900/30 text-[#6324eb]'}`}>
+                                <span className="material-symbols-outlined text-[18px]">{progressPercent >= 100 ? 'celebration' : 'analytics'}</span>
+                            </div>
+                            <span className="text-[9px] font-extrabold text-slate-400/80 uppercase tracking-widest">Tiến độ mục tiêu</span>
+                        </div>
+                        <div className="flex items-baseline gap-2 mb-2">
+                            <span className={`text-2xl font-black tracking-tight ${progressPercent >= 100 ? 'text-emerald-600' : 'text-slate-900 dark:text-white'}`}>{totalCollected.toFixed(0)}</span>
+                            <span className="text-slate-400 font-extrabold text-[9px] uppercase tracking-wider">/ {(targetVolume || 0).toLocaleString()} ml</span>
+                        </div>
+                        <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mb-2">
+                            <div className={`h-full rounded-full transition-all duration-1000 shadow-sm ${progressPercent >= 100 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : 'bg-gradient-to-r from-[#6324eb] to-indigo-400'}`} style={{ width: `${progressPercent}%` }}></div>
+                        </div>
+                        <div className={`flex justify-between items-center p-2 rounded-lg ${progressPercent >= 100 ? 'bg-emerald-500/10' : 'bg-slate-50 dark:bg-slate-800/50'}`}>
+                            <span className={`${progressPercent >= 100 ? 'text-emerald-600' : 'text-[#6324eb]'} text-[9px] font-bold uppercase tracking-wide`}>
+                                {progressPercent >= 100 ? 'Mục tiêu hoàn thành!' : `${progressPercent.toFixed(1)}% Hoàn thành`}
+                            </span>
+                            <span className={`${progressPercent >= 100 ? 'text-emerald-500' : 'text-slate-400'} text-[9px] font-bold`}>
+                                {progressPercent >= 100 ? 'Vượt chỉ tiêu' : `Còn ${(remaining / 1000).toFixed(1)} Lít nữa`}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Donor Registration */}
+                    <div className="metric-card border-orange-100 dark:border-orange-900/20">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="size-8 rounded-lg bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center text-orange-500">
+                                <span className="material-symbols-outlined text-[18px]">person_check</span>
+                            </div>
+                            <span className="text-[9px] font-extrabold text-slate-400/80 uppercase tracking-widest">Người hiến thực hiện</span>
+                        </div>
+                        <div className="flex items-baseline gap-2 mb-2">
+                            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{completedAppointments.length}</span>
+                            <span className="text-slate-400 font-extrabold text-[9px] uppercase tracking-wider">/ {totalRegistered} Đăng ký</span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg group transition-all">
+                            <div className="flex -space-x-2">
+                                {completedAppointments.slice(0, 3).map((a, i) => (
+                                    <div key={a.id} className="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-black text-[8px] text-orange-500 shadow-sm">
+                                        {a.code}
+                                    </div>
+                                ))}
+                                {completedAppointments.length > 3 && (
+                                    <div className="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-orange-500 flex items-center justify-center text-[8px] text-white font-black">+{completedAppointments.length - 3}</div>
+                                )}
+                            </div>
+                            <span className="text-[9px] font-bold text-slate-400 tracking-tight">
+                                {completedAppointments.length === totalRegistered ? "Tất cả đã hoàn thành! ✨" : "Đang thực hiện hiến máu"}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Actual Analysis */}
+                    <div className="metric-card">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="size-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-500">
+                                <span className="material-symbols-outlined text-[18px]">insights</span>
+                            </div>
+                            <span className="text-[9px] font-extrabold text-slate-400/80 uppercase tracking-widest">Phân tích AI</span>
+                        </div>
+                        <div className="flex items-baseline gap-2 mb-2">
+                            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{totalCollected.toLocaleString()}</span>
+                            <span className="text-slate-400 font-extrabold text-[9px] uppercase tracking-wider">ml thu được</span>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase">Trạng thái:</span>
+                                <span className={`text-[9px] font-black uppercase flex items-center gap-1.5 ${analysisColor}`}>
+                                    <span className="material-symbols-outlined text-[14px]">{analysisIcon}</span> {analysisAssessment}
+                                </span>
+                            </div>
+                            <div className="h-px bg-slate-100 dark:bg-slate-700 w-full"></div>
+                            <div className="flex justify-between items-center text-[9px] font-bold">
+                                <span className="text-slate-400 uppercase">Thiếu hụt chỉ tiêu:</span>
+                                <span className="text-[#6324eb]">{deficit.toLocaleString()} ml</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                {/* Appointment Schedule Table */}
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none mb-20">
+                    <div className="p-6 md:p-8 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6 rounded-t-[2rem]">
+                        <div>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Lịch hẹn Hiến máu</h2>
+                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Quản lý check-in & Hồ sơ hiến máu</p>
+                        </div>
+                        <div className="flex gap-4 items-center">
+                            <div className="relative group w-80 sm:w-96">
+                                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#6324eb] transition-colors text-[20px] pointer-events-none z-10">search</span>
+                                <input
+                                    className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full pl-12 pr-5 text-sm font-medium focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] outline-none transition-all shadow-sm dark:text-white"
+                                    placeholder="Tìm tên người hiến..."
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div className="relative" id="status-dropdown-container">
+                                <button
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="h-11 flex items-center justify-between pl-5 pr-4 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold shadow-sm cursor-pointer hover:border-[#6324eb]/50 transition-all min-w-[160px]"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="material-symbols-outlined text-[18px] text-[#6324eb]">
+                                            {statusFilter === 'Tất cả' ? 'apps' :
+                                                statusFilter === 'Đang chờ' ? 'schedule' :
+                                                    statusFilter === 'Đang tiến hành' ? 'sync' :
+                                                        statusFilter === 'Hoàn thành' ? 'check_circle' : 'block'}
+                                        </span>
+                                        <span className="text-xs">{statusFilter}</span>
+                                    </div>
+                                    <span className={`material-symbols-outlined text-slate-400 text-[16px] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                                </button>
+
+                                {isDropdownOpen && (
+                                    <div className="absolute top-[calc(100%+8px)] right-0 w-52 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="p-1.5">
+                                            {statusOptions.map(opt => (
+                                                <button
+                                                    key={opt}
+                                                    onClick={() => {
+                                                        setStatusFilter(opt);
+                                                        setIsDropdownOpen(false);
+                                                    }}
+                                                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all group ${statusFilter === opt ? 'bg-[#6D28D9] text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`size-7 rounded-lg flex items-center justify-center transition-colors ${statusFilter === opt ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-white dark:group-hover:bg-slate-700'}`}>
+                                                            <span className={`material-symbols-outlined text-[16px] ${statusFilter === opt ? 'text-white' : 'text-slate-400 group-hover:text-[#6D28D9]'}`}>
+                                                                {opt === 'Tất cả' ? 'apps' :
+                                                                    opt === 'Đang chờ' ? 'schedule' :
+                                                                        opt === 'Đang tiến hành' ? 'sync' :
+                                                                            opt === 'Hoàn thành' ? 'check_circle' : 'block'}
+                                                            </span>
+                                                        </div>
+                                                        <span>{opt}</span>
+                                                    </div>
+                                                    {statusFilter === opt && (
+                                                        <span className="material-symbols-outlined text-sm">check</span>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto min-h-[450px]">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-50 dark:border-slate-800">
+                                <tr>
+                                    <th className="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Người hiến</th>
+                                    <th className="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Nhóm máu</th>
+                                    <th className="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Thời gian</th>
+                                    <th className="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Lượng hiến</th>
+                                    <th className="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Trạng thái</th>
+                                    <th className="px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Tác vụ</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                                {paginatedAppointments.length > 0 ? paginatedAppointments.map(a => (
+                                    <tr key={a.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/20 transition-colors group">
+                                        <td className="px-5 py-5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="size-8 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center font-black text-[#6D28D9] text-[9px] shadow-sm shrink-0">{a.code}</div>
+                                                <div className="overflow-hidden">
+                                                    <div className="text-[13px] font-extrabold text-slate-900 dark:text-white truncate max-w-[120px]">{a.name}</div>
+                                                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight truncate max-w-[120px]">{a.type}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-5">
+                                            {isEnded || a.status === "Hoàn thành" ? (
+                                                <span className={`px-3.5 py-1 rounded-full text-[10px] font-bold border whitespace-nowrap ${a.bloodClass.includes('emerald') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-indigo-50 text-indigo-500 border-indigo-100'}`}>
+                                                    {a.blood}
+                                                </span>
+                                            ) : (
+                                                <div className="blood-dropdown-trigger">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <button
+                                                                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] font-extrabold border whitespace-nowrap transition-all hover:shadow-md active:scale-95 ${a.bloodClass.includes('emerald') ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:border-emerald-300' : 'bg-indigo-50 text-indigo-500 border-indigo-100 hover:border-indigo-300'}`}
+                                                            >
+                                                                {a.blood}
+                                                                <span className="material-symbols-outlined text-[16px]">expand_more</span>
+                                                            </button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent className="w-48 p-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200" align="start" sideOffset={8}>
+                                                            <div className="grid grid-cols-1 gap-1">
+                                                                {["O+ (O DƯƠNG)", "O- (O ÂM)", "A+ (A DƯƠNG)", "A- (A ÂM)", "B+ (B DƯƠNG)", "B- (B ÂM)", "AB+ (AB DƯƠNG)", "AB- (AB ÂM)"].map(bt => (
+                                                                    <DropdownMenuItem
+                                                                        key={bt}
+                                                                        onClick={() => {
+                                                                            handleBloodChange(a.id, bt);
+                                                                            pushNotification(`Đã cập nhật nhóm máu ${bt}`, "success");
+                                                                        }}
+                                                                        className={`w-full px-4 py-2 text-[10px] font-bold text-left rounded-xl transition-colors flex items-center justify-between group cursor-pointer ${a.blood === bt ? 'bg-[#6D28D9] text-white focus:bg-[#6D28D9] focus:text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 dark:focus:bg-slate-800'}`}
+                                                                    >
+                                                                        {bt}
+                                                                        {a.blood === bt && <span className="material-symbols-outlined text-[14px]">check</span>}
+                                                                    </DropdownMenuItem>
+                                                                ))}
+                                                            </div>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-5 py-5">
+                                            <div className="flex items-center gap-2 text-[13px] font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                                <span className="material-symbols-outlined text-[16px] text-slate-300">schedule</span>
+                                                {a.time}
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-5">
+                                            <div className="flex items-center justify-center gap-1.5">
+                                                {(a.status === "Đang chờ" || a.status === "Đang tiến hành") && !isEnded ? (
+                                                    <div className="flex gap-1.5">
+                                                        {[250, 350, 450].map(v => (
+                                                            <button
+                                                                key={v}
+                                                                onClick={() => handleDonatedChange(a.id, v)}
+                                                                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all ${a.donated === v ? 'bg-[#6D28D9] text-white shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-700 hover:border-[#6D28D9]'}`}
+                                                            >
+                                                                {v}
+                                                            </button>
+                                                        ))}
+                                                        <span className="text-[9px] font-bold text-slate-400 self-center ml-1">ml</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-sm font-black text-[#6D28D9]">{a.donated || 0}</span>
+                                                        <span className="text-[10px] font-bold text-slate-400 uppercase">ml</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-5 text-center">
+                                            <span className={`px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight whitespace-nowrap ${a.status === 'Hoàn thành' ? 'bg-emerald-50 text-emerald-600' :
+                                                a.status === 'Hoãn hiến' ? 'bg-indigo-50 text-indigo-600' :
+                                                    a.status === 'Đang tiến hành' ? 'bg-amber-50 text-amber-600' :
+                                                        'bg-indigo-50 text-indigo-600'
+                                                }`}>
+                                                {a.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-5">
+                                            <div className="flex items-center justify-center gap-3">
+                                                {isEnded ? (
+                                                    <span className="text-[10px] text-slate-300 font-bold uppercase italic tracking-wider">Kết thúc hồ sơ</span>
+                                                ) : a.status === "Hoàn thành" ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] text-emerald-600 font-black uppercase tracking-wider bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 flex items-center gap-1.5">
+                                                            <span className="material-symbols-outlined text-[14px]">beenhere</span> Đã lưu hồ sơ
+                                                        </span>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <button className="size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center">
+                                                                    <span className="material-symbols-outlined text-[20px]">more_horiz</span>
+                                                                </button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent className="w-40 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-150" align="end" sideOffset={8}>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleEditAppointment(a.id)}
+                                                                    className="w-full px-4 py-2.5 text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 dark:focus:bg-slate-800 rounded-xl text-left transition-colors flex items-center gap-2 cursor-pointer"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">edit_note</span> Chỉnh sửa
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleDefer(a.id)}
+                                                                    className="w-full px-4 py-2.5 text-[10px] font-bold uppercase text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 focus:bg-indigo-50 dark:focus:bg-indigo-900/20 rounded-xl text-left transition-colors flex items-center gap-2 cursor-pointer"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">block</span> Hoãn hiến
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                ) : a.status === "Hoãn hiến" ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase italic">Hồ sơ đã hoãn</span>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <button className="size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center">
+                                                                    <span className="material-symbols-outlined text-[20px]">more_horiz</span>
+                                                                </button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent className="w-40 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-150" align="end" sideOffset={8}>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleEditAppointment(a.id)}
+                                                                    className="w-full px-4 py-2.5 text-[10px] font-bold uppercase text-[#6324eb] hover:bg-indigo-50 dark:hover:bg-indigo-900/20 focus:bg-indigo-50 dark:focus:bg-indigo-900/20 rounded-xl text-left transition-colors flex items-center gap-2 cursor-pointer"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">edit_note</span> Chỉnh sửa
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleConfirm(a.id)}
+                                                                    className="w-full px-4 py-2.5 text-[10px] font-bold uppercase text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 focus:bg-emerald-50 dark:focus:bg-emerald-900/20 rounded-xl text-left transition-colors flex items-center gap-2 cursor-pointer"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">check_circle</span> Xác nhận hiến
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            className="px-4 h-9 bg-[#6D28D9] text-white rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-[#5B21B6] hover:shadow-lg hover:shadow-purple-500/20 transition-all"
+                                                            onClick={() => handleConfirm(a.id)}
+                                                        >
+                                                            Xác nhận hiến
+                                                        </button>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <button className="size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center">
+                                                                    <span className="material-symbols-outlined text-[20px]">more_horiz</span>
+                                                                </button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent className="w-40 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-150" align="end" sideOffset={8}>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => pushNotification("Vui lòng chọn lượng hiến trước khi chỉnh sửa chi tiết hồ sơ", "info")}
+                                                                    className="w-full px-4 py-2.5 text-[10px] font-bold uppercase text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 dark:focus:bg-slate-800 rounded-xl text-left transition-colors flex items-center gap-2 cursor-pointer"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">edit_note</span> Chỉnh sửa
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleDefer(a.id)}
+                                                                    className="w-full px-4 py-2.5 text-[10px] font-bold uppercase text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 focus:bg-indigo-50 dark:focus:bg-indigo-900/20 rounded-xl text-left transition-colors flex items-center gap-2 cursor-pointer"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">block</span> Hoãn hiến
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan={6} className="px-8 py-20 text-center">
+                                            <div className="flex flex-col items-center gap-4 opacity-30">
+                                                <span className="material-symbols-outlined text-[64px]">event_busy</span>
+                                                <p className="font-extrabold uppercase tracking-widest text-sm">Không có lịch hẹn nào</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="px-10 py-8 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 rounded-b-[2rem]">
+                        <span className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
+                            Hiển thị {sortedAppointments.length === 0 ? 0 : ((currentPage - 1) * pageSize + 1)}-{Math.min(currentPage * pageSize, sortedAppointments.length)} / {sortedAppointments.length} bản ghi
+                        </span>
+                        <div className="flex gap-3">
+                            <button
+                                className="size-10 flex items-center justify-center rounded-full border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-[#6D28D9] disabled:opacity-30 disabled:hover:text-slate-400 transition-all"
+                                onClick={handlePrevPage}
+                                disabled={currentPage === 1}
+                            >
+                                <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+                            </button>
+                            <button
+                                className="size-10 flex items-center justify-center rounded-full border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-[#6D28D9] disabled:opacity-30 disabled:hover:text-slate-400 transition-all"
+                                onClick={handleNextPage}
+                                disabled={currentPage === totalPages || totalPages === 0}
+                            >
+                                <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main >
         </>
     );
 }

@@ -50,7 +50,7 @@ export const INITIAL_CAMPAIGNS: Campaign[] = [
         location: "Cố định địa điểm",
         bloodType: "O+",
         bloodClass: "text-red-600 bg-red-50 dark:bg-red-900/20",
-        status: "Khẩn cấp",
+        status: "KHẨN CẤP",
         statusClass: "bg-red-600 text-white",
         operationalStatus: "Đang hoạt động",
         isUrgent: true,
@@ -74,8 +74,8 @@ export const INITIAL_CAMPAIGNS: Campaign[] = [
         location: "Cố định địa điểm",
         bloodType: "B-",
         bloodClass: "text-orange-600 bg-orange-50 dark:bg-orange-900/20",
-        status: "Sắp hết",
-        statusClass: "bg-orange-500 text-white",
+        status: "TIÊU CHUẨN",
+        statusClass: "bg-blue-500 text-white",
         operationalStatus: "Đang hoạt động",
         isUrgent: false,
         timeLeft: "12h nữa",
@@ -98,8 +98,8 @@ export const INITIAL_CAMPAIGNS: Campaign[] = [
         location: "Cố định địa điểm",
         bloodType: "A+",
         bloodClass: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20",
-        status: "Định kỳ",
-        statusClass: "bg-emerald-500 text-white",
+        status: "TIÊU CHUẨN",
+        statusClass: "bg-blue-500 text-white",
         operationalStatus: "Đang hoạt động",
         isUrgent: false,
         timeLeft: "2 ngày nữa",
@@ -122,8 +122,8 @@ export const INITIAL_CAMPAIGNS: Campaign[] = [
         location: "Cố định địa điểm",
         bloodType: "Tất cả",
         bloodClass: "text-slate-600 bg-slate-100 dark:bg-slate-800",
-        status: "Đang lên KH",
-        statusClass: "bg-slate-500 text-white",
+        status: "TIÊU CHUẨN",
+        statusClass: "bg-blue-500 text-white",
         operationalStatus: "Tạm dừng",
         isUrgent: false,
         timeLeft: "Tuần tới",
@@ -143,6 +143,20 @@ export const INITIAL_CAMPAIGNS: Campaign[] = [
 
 const STORAGE_KEY = 'redhope_campaigns';
 
+// Helper to normalize campaign status
+const normalizeStatus = (campaign: Campaign): Campaign => {
+    const oldStatuses = ['Định kỳ', 'Sắp hết', 'Đang lên KH', 'Khẩn cấp', 'active', 'draft'];
+
+    if (oldStatuses.includes(campaign.status) || !['KHẨN CẤP', 'TIÊU CHUẨN'].includes(campaign.status)) {
+        return {
+            ...campaign,
+            status: campaign.isUrgent ? 'KHẨN CẤP' : 'TIÊU CHUẨN',
+            statusClass: campaign.isUrgent ? 'bg-red-600 text-white' : 'bg-blue-500 text-white'
+        };
+    }
+    return campaign;
+};
+
 export const getCampaigns = (): Campaign[] => {
     if (typeof window === 'undefined') return INITIAL_CAMPAIGNS;
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -151,7 +165,12 @@ export const getCampaigns = (): Campaign[] => {
         return INITIAL_CAMPAIGNS;
     }
     try {
-        return JSON.parse(stored);
+        const campaigns = JSON.parse(stored) as Campaign[];
+        // Migrate old statuses to new format
+        const normalized = campaigns.map(normalizeStatus);
+        // Save normalized data back if any changes
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+        return normalized;
     } catch {
         return INITIAL_CAMPAIGNS;
     }
@@ -183,10 +202,14 @@ export const updateCampaign = (updatedCampaign: Campaign) => {
     const index = campaigns.findIndex(c => c.id === updatedCampaign.id);
     if (index !== -1) {
         campaigns[index] = updatedCampaign;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns));
-
-        // Dispatch a custom event to notify other components
-        window.dispatchEvent(new Event('campaign-storage-update'));
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns));
+            // Dispatch a custom event to notify other components
+            window.dispatchEvent(new Event('campaign-storage-update'));
+        } catch (e) {
+            console.error("Failed to save to localStorage:", e);
+            alert("Lỗi: Không thể lưu dữ liệu. Có thể do hình ảnh quá lớn hoặc bộ nhớ trình duyệt đã đầy. Vui lòng thử lại với ảnh nhỏ hơn.");
+        }
     }
 };
 
