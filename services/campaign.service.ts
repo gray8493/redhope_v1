@@ -5,7 +5,7 @@ export const campaignService = {
     async getAll(hospitalId?: string) {
         let query = supabase
             .from('campaigns')
-            .select('*, hospital:users(full_name, hospital_name)')
+            .select('*, hospital:users(full_name, hospital_name), appointments(*)')
             .order('start_time', { ascending: false });
 
         if (hospitalId) {
@@ -20,7 +20,7 @@ export const campaignService = {
     async getActive(hospitalId?: string) {
         let query = supabase
             .from('campaigns')
-            .select('*, hospital:users(full_name, hospital_name)')
+            .select('*, hospital:users(full_name, hospital_name), appointments(*)')
             .eq('status', 'active')
             .order('start_time', { ascending: true });
 

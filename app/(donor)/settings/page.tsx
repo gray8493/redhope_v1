@@ -257,13 +257,7 @@ export default function SettingsPage() {
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                {/* Left Column: Navigation/Tabs (Simplified as a list for now, or just stacked sections) */}
-                                {/* Actually, let's do a single column flow or a 2-col layout where Left is Menu, Right is Content.
-                                    For simplicity and mobile-first, I'll stack cards in the main area (col-span-3 or 2).
-                                    Let's try a split layout:
-                                    Left: Profile Summary & Quick Actions
-                                    Right: Detailed Forms
-                                */}
+
 
                                 <div className="lg:col-span-1 flex flex-col gap-6">
                                     {/* Profile Card */}

@@ -3,104 +3,93 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getCampaigns, subscribeToCampaignUpdates, Campaign } from "@/app/utils/campaignStorage";
 import { useAuth } from "@/context/AuthContext";
+import { campaignService } from "@/services";
 import { Skeleton } from "@/components/ui/skeleton";
 import MiniFooter from "@/components/shared/MiniFooter";
-import { Badge } from "@/components/ui/badge";
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
+import { toast } from "sonner";
 import {
-    Clock,
-    ArrowRight,
     TrendingUp,
-    CheckCircle2,
-    AlertCircle,
-    Timer,
-    Zap,
     Search,
-    Bell,
     UserPlus,
     Users,
     Droplet,
-    Hospital
+    Zap
 } from "lucide-react";
 
 export default function HospitalDashboard() {
     const { user } = useAuth();
     const router = useRouter();
-    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [campaigns, setCampaigns] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<"active" | "finished">("active");
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const loadLocalData = () => {
-            setLoading(true);
-            const localCampaigns = getCampaigns();
-            setCampaigns(localCampaigns);
-            setLoading(false);
+        if (!user?.id) return;
+
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                // Fetch campaigns của hospital này
+                const data = await campaignService.getAll(user.id);
+                setCampaigns(data || []);
+            } catch (error: any) {
+                console.error('Error fetching campaigns:', error);
+                toast.error('Không thể tải dữ liệu chiến dịch');
+            } finally {
+                setLoading(false);
+            }
         };
 
-        loadLocalData();
-        const unsubscribe = subscribeToCampaignUpdates(loadLocalData);
-        return () => unsubscribe();
-    }, []);
+        fetchData();
+    }, [user?.id]);
 
-    // List of active/today's campaigns for the "Operational" view
-    const activeCampaignsList = campaigns.filter(c =>
-        (c.operationalStatus === "Đang hoạt động" || c.operationalStatus === "Tạm dừng" || !c.operationalStatus) &&
-        c.status !== "Bản nháp"
-    );
+    // Filter active campaigns
+    const activeCampaignsList = campaigns.filter(c => c.status === 'active');
 
-    // Calculate core metrics (Based on Active/Today's campaigns for an Operational Dashboard)
-    const activeTotalRegistered = activeCampaignsList.reduce((sum, c) => sum + (c.registeredCount || 0), 0);
-    const activeTotalCompleted = activeCampaignsList.reduce((sum, c) => sum + (c.completedCount || 0), 0);
+    // Calculate metrics from appointments
+    const activeTotalRegistered = activeCampaignsList.reduce((sum, c) => {
+        // Count appointments for this campaign
+        return sum + (c.appointments?.length || 0);
+    }, 0);
+
+    const activeTotalCompleted = activeCampaignsList.reduce((sum, c) => {
+        // Count completed appointments
+        const completed = c.appointments?.filter((a: any) => a.status === 'Completed').length || 0;
+        return sum + completed;
+    }, 0);
+
     const attendanceRate = activeTotalRegistered > 0 ? (activeTotalCompleted / activeTotalRegistered) * 100 : 0;
 
-    // Filter campaigns based on tab and search query for the table
+    // Filter campaigns based on tab and search
     const filteredCampaigns = campaigns.filter(c => {
         const matchesTab = activeTab === "active"
-            ? (c.operationalStatus === "Đang hoạt động" || c.operationalStatus === "Tạm dừng" || !c.operationalStatus) && c.status !== "Bản nháp"
-            : c.operationalStatus === "Đã kết thúc";
+            ? c.status === 'active'
+            : c.status === 'completed' || c.status === 'cancelled';
 
-        const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (c.location?.toLowerCase().includes(searchQuery.toLowerCase()));
+        const matchesSearch = c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.location?.toLowerCase().includes(searchQuery.toLowerCase());
 
         return matchesTab && matchesSearch;
     });
 
-    // Blood distribution Stats (From active campaigns)
-    const bloodTypeCounts: Record<string, number> = {};
-    activeCampaignsList.forEach(c => {
-        if (c.appointments) {
-            c.appointments.forEach(a => {
-                if (a.status === "Hoàn thành" && a.donated) {
-                    const bloodType = a.blood.split(' ')[0];
-                    bloodTypeCounts[bloodType] = (bloodTypeCounts[bloodType] || 0) + 1;
-                }
-            });
-        }
-    });
-
-    // If no real appointments, use the completedCount as a proxy for O+ (the most common)
-    const totalActiveUnits = activeTotalCompleted > 0 ? activeTotalCompleted : activeCampaignsList.reduce((sum, c) => sum + (c.completedCount || 0), 0);
-
-    const bloodTypeChartData = Object.keys(bloodTypeCounts).length > 0
-        ? Object.keys(bloodTypeCounts).map(type => ({ name: `Nhóm ${type}`, value: bloodTypeCounts[type] }))
-        : (totalActiveUnits > 0 ? [
-            { name: "Nhóm O+", value: Math.round(totalActiveUnits * 0.45) },
-            { name: "Nhóm A+", value: Math.round(totalActiveUnits * 0.3) },
-            { name: "Nhóm B+", value: Math.round(totalActiveUnits * 0.15) },
-            { name: "Nhóm AB", value: Math.round(totalActiveUnits * 0.1) },
-        ] : [
-            { name: "Nhóm O+", value: 0 },
-            { name: "Nhóm A+", value: 0 },
-            { name: "Nhóm B+", value: 0 },
-            { name: "Nhóm AB", value: 0 },
-        ]);
+    // Blood distribution (mock data for now - can be enhanced later)
+    const totalActiveUnits = activeTotalCompleted;
+    const bloodTypeChartData = totalActiveUnits > 0 ? [
+        { name: "Nhóm O+", value: Math.round(totalActiveUnits * 0.45) },
+        { name: "Nhóm A+", value: Math.round(totalActiveUnits * 0.3) },
+        { name: "Nhóm B+", value: Math.round(totalActiveUnits * 0.15) },
+        { name: "Nhóm AB", value: Math.round(totalActiveUnits * 0.1) },
+    ] : [
+        { name: "Nhóm O+", value: 0 },
+        { name: "Nhóm A+", value: 0 },
+        { name: "Nhóm B+", value: 0 },
+        { name: "Nhóm AB", value: 0 },
+    ];
 
     const COLORS = ["#ef4444", "#6366f1", "#3b82f6", "#f59e0b"];
-
 
     return (
         <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#0f172a] p-4 md:p-8 text-left">
@@ -198,7 +187,7 @@ export default function HospitalDashboard() {
                                     <tr>
                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Chiến dịch</th>
                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Người tham gia</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Xử lý/ca</th>
+                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Trạng thái</th>
                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Tiến độ</th>
                                     </tr>
                                 </thead>
@@ -208,38 +197,45 @@ export default function HospitalDashboard() {
                                             <tr key={i}><td colSpan={4} className="px-6 py-4"><Skeleton className="h-10 w-full" /></td></tr>
                                         ))
                                     ) : filteredCampaigns.length > 0 ? (
-                                        filteredCampaigns.map((camp) => (
-                                            <tr
-                                                key={camp.id}
-                                                onClick={() => router.push(`/hospital-campaign/${camp.id}`)}
-                                                className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors cursor-pointer group"
-                                            >
-                                                <td className="px-6 py-5">
-                                                    <p className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-[#6366f1] transition-colors">{camp.name}</p>
-                                                    <p className="text-[11px] text-slate-500 font-medium">{camp.location}</p>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <span className="text-sm font-black text-slate-700 dark:text-slate-300">{camp.completedCount || 0} / {camp.registeredCount || 0}</span>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-black rounded-full border border-emerald-100 dark:border-emerald-800/50">
-                                                            8-10 phút
+                                        filteredCampaigns.map((camp) => {
+                                            const registered = camp.appointments?.length || 0;
+                                            const completed = camp.appointments?.filter((a: any) => a.status === 'Completed').length || 0;
+                                            const progress = camp.quantity_needed > 0 ? (completed / camp.quantity_needed) * 100 : 0;
+
+                                            return (
+                                                <tr
+                                                    key={camp.id}
+                                                    onClick={() => router.push(`/hospital-campaign/${camp.id}`)}
+                                                    className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors cursor-pointer group"
+                                                >
+                                                    <td className="px-6 py-5">
+                                                        <p className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-[#6366f1] transition-colors">{camp.name}</p>
+                                                        <p className="text-[11px] text-slate-500 font-medium">{camp.location}</p>
+                                                    </td>
+                                                    <td className="px-6 py-5 text-center">
+                                                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">{completed} / {registered}</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 text-center">
+                                                        <span className={`px-3 py-1 text-[11px] font-black rounded-full border ${camp.status === 'active'
+                                                                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50'
+                                                                : 'bg-slate-50 dark:bg-slate-900/20 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800/50'
+                                                            }`}>
+                                                            {camp.status === 'active' ? 'Đang hoạt động' : camp.status === 'completed' ? 'Đã kết thúc' : 'Đã hủy'}
                                                         </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 text-right">
-                                                    <div className="flex flex-col items-end gap-1.5">
-                                                        <span className="text-[12px] font-black text-slate-900 dark:text-white">
-                                                            {(camp.current || 0).toLocaleString()} / {(camp.target || 0).toLocaleString()} <span className="text-[10px] text-slate-400">Đv</span>
-                                                        </span>
-                                                        <div className="w-24 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
-                                                            <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" style={{ width: `${camp.progress}%` }}></div>
+                                                    </td>
+                                                    <td className="px-6 py-5 text-right">
+                                                        <div className="flex flex-col items-end gap-1.5">
+                                                            <span className="text-[12px] font-black text-slate-900 dark:text-white">
+                                                                {completed} / {camp.quantity_needed} <span className="text-[10px] text-slate-400">Đv</span>
+                                                            </span>
+                                                            <div className="w-24 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                                                                <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" style={{ width: `${Math.min(progress, 100)}%` }}></div>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
                                     ) : (
                                         <tr>
                                             <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic text-sm">Chưa có chiến dịch nào.</td>
@@ -249,7 +245,6 @@ export default function HospitalDashboard() {
                             </table>
                         </div>
                     </div>
-
                 </div>
 
                 <div className="col-span-12 lg:col-span-4 space-y-8">
@@ -320,10 +315,10 @@ export default function HospitalDashboard() {
                                 <div>
                                     <div className="flex justify-between items-baseline mb-2">
                                         <span className="text-xs font-bold text-white/80 uppercase tracking-wider">Tiến độ chỉ tiêu</span>
-                                        <span className="text-3xl font-black italic">26%</span>
+                                        <span className="text-3xl font-black italic">{Math.round(attendanceRate)}%</span>
                                     </div>
                                     <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
-                                        <div className="bg-white h-full w-[26%] shadow-[0_0_15px_rgba(255,255,255,0.5)]"></div>
+                                        <div className="bg-white h-full shadow-[0_0_15px_rgba(255,255,255,0.5)]" style={{ width: `${Math.min(attendanceRate, 100)}%` }}></div>
                                     </div>
                                 </div>
 
