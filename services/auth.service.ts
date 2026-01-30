@@ -17,7 +17,7 @@ export const authService = {
 
         return {
             ...user,
-            role: profile?.role || 'donor', // Mặc định là donor nếu chưa có role
+            role: profile?.role || user.user_metadata?.role || 'donor', // Ưu tiên DB, fallback metadata, cuối cùng là donor
             profile
         };
     },

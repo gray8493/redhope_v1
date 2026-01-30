@@ -20,7 +20,13 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar"
+} from "@/components/ui/avatar";
+import { notificationService } from "@/services";
+import { supabase } from "@/lib/supabase";
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
+import { Droplet, LayoutGrid } from "lucide-react";
+import { toast } from "sonner";
 
 export interface AdminHeaderProps {
   title?: string;
@@ -32,6 +38,8 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const userRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -49,6 +57,125 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
   const displayName = userProfile?.full_name || authUser?.user_metadata?.full_name || authUser?.email || "Người dùng";
   const userEmail = authUser?.email || "";
   const displayRole = userRole === 'admin' ? "Quản trị viên" : (userRole === 'hospital' ? "Bệnh viện" : "Đối tác");
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    if (!authUser?.id) return;
+    try {
+      setLoading(true);
+      const data = await notificationService.getNotifications(authUser.id);
+
+      const mapped = data.map((n: any) => {
+        let Icon = CheckCircle;
+        let color = "text-green-500";
+        let bg = "bg-green-100";
+
+        const isDonorRelated = ['view_registrations', 'view_appointment'].includes(n.action_type);
+        const isHospitalRelated = ['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(n.action_type);
+
+        let category = "Hệ thống";
+        if (isDonorRelated) {
+          Icon = Droplet;
+          color = "text-rose-500";
+          bg = "bg-rose-100";
+          category = "Người hiến";
+        } else if (isHospitalRelated) {
+          Icon = LayoutGrid;
+          color = "text-indigo-600";
+          bg = "bg-indigo-100";
+          category = "Bệnh viện";
+        } else if (n.title.includes('Cảnh báo') || n.title.includes('⚠️')) {
+          Icon = AlertTriangle;
+          color = "text-amber-500";
+          bg = "bg-amber-100";
+        }
+
+        return {
+          id: n.id,
+          title: n.title,
+          desc: n.content,
+          time: formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: vi }),
+          is_read: n.is_read,
+          icon: Icon,
+          color,
+          bg,
+          category,
+          action_url: n.action_url,
+          isDonorRelated,
+          isHospitalRelated
+        };
+      })
+        .filter((n: any) => {
+          if (userRole === 'hospital') return n.isDonorRelated;
+          return true; // Admin sees everything
+        });
+
+      setNotifications(mapped);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+
+    // Realtime subscription
+    if (!authUser?.id) return;
+    const channel = supabase
+      .channel(`admin-header-notifs-${authUser.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${authUser.id}`
+      }, (payload) => {
+        const n = payload.new;
+        let Icon = CheckCircle;
+        let color = "text-green-500";
+        let bg = "bg-green-100";
+
+        const isDonorRelated = ['view_registrations', 'view_appointment'].includes(n.action_type);
+        const isHospitalRelated = ['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(n.action_type);
+
+        let category = "Hệ thống";
+        if (isDonorRelated) {
+          Icon = Droplet;
+          color = "text-rose-500";
+          bg = "bg-rose-100";
+          category = "Người hiến";
+        } else if (isHospitalRelated) {
+          Icon = LayoutGrid;
+          color = "text-indigo-600";
+          bg = "bg-indigo-100";
+          category = "Bệnh viện";
+        }
+
+        // Role-based filtering for realtime
+        const shouldDisplay = (userRole === 'hospital' && isDonorRelated) || (userRole === 'admin');
+
+        if (shouldDisplay) {
+          const mapped = {
+            id: n.id,
+            title: n.title,
+            desc: n.content,
+            time: 'vừa xong',
+            is_read: false,
+            icon: Icon,
+            color,
+            bg,
+            category,
+            action_url: n.action_url
+          };
+          setNotifications(prev => [mapped, ...prev]);
+          toast.info(n.title, { description: n.content });
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [authUser?.id]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,30 +200,31 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
     }
   };
 
-  // State for mock notifications
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: 'info', title: 'Người hiến mới đăng ký', desc: 'Có 5 người dùng vừa đăng ký hiến máu tại khu vực TP.HCM.', time: 'vừa xong', read: false },
-    { id: 2, type: 'warning', title: 'Yêu cầu máu khẩn cấp', desc: 'Bệnh viện Chợ Rẫy cần gấp 50 đơn vị nhóm máu O- cho ca phẫu thuật.', time: '15 phút trước', read: false },
-    { id: 3, type: 'success', title: 'Chiến dịch hoàn thành', desc: 'Chiến dịch "Giọt máu hồng" đã đạt 100% chỉ tiêu. Vui lòng duyệt báo cáo.', time: '1 giờ trước', read: false },
-    { id: 4, type: 'info', title: 'Hệ thống bảo trì', desc: 'Hệ thống sẽ bảo trì định kỳ vào 02:00 AM ngày mai.', time: '3 giờ trước', read: true },
-  ]);
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const handleMarkAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
-  const handleMarkAsRead = (id: number) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
-
-  const getIconByType = (type: string) => {
-    switch (type) {
-      case 'success': return <div className="p-2 bg-emerald-100 text-emerald-500 rounded-full"><CheckCircle className="w-5 h-5" /></div>;
-      case 'warning': return <div className="p-2 bg-rose-100 text-rose-500 rounded-full"><AlertTriangle className="w-5 h-5" /></div>;
-      case 'info': default: return <div className="p-2 bg-blue-100 text-blue-500 rounded-full"><Info className="w-5 h-5" /></div>;
+  const handleMarkAllRead = async () => {
+    if (!authUser?.id) return;
+    try {
+      await notificationService.markAllAsRead(authUser.id);
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (err) {
+      toast.error("Không thể cập nhật trạng thái");
     }
+  };
+
+  const handleMarkAsRead = async (notif: any) => {
+    if (notif.is_read) return;
+    try {
+      await notificationService.markAsRead(notif.id);
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
+    } catch (err) {
+      console.error("Error marking read:", err);
+    }
+  };
+
+  const getIconByType = (notif: any) => {
+    const Icon = notif.icon || Info;
+    return <div className={`p-2 ${notif.bg} ${notif.color} rounded-full`}><Icon className="w-5 h-5" /></div>;
   };
 
   return (
@@ -134,15 +262,21 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
                   notifications.map((notif) => (
                     <div
                       key={notif.id}
-                      onClick={() => handleMarkAsRead(notif.id)}
-                      className={`p-4 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors cursor-pointer flex gap-4 ${!notif.read ? 'bg-slate-50/50 dark:bg-[#251e36]/30' : ''}`}
+                      onClick={() => handleMarkAsRead(notif)}
+                      className={`p-4 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors cursor-pointer flex gap-4 ${!notif.is_read ? 'bg-slate-50/50 dark:bg-[#251e36]/30' : ''}`}
                     >
                       <div className="shrink-0 mt-1">
-                        {getIconByType(notif.type)}
+                        {getIconByType(notif)}
                       </div>
                       <div className="flex-1">
-                        <div className="flex justify-between items-start mb-1">
-                          <p className={`text-sm font-bold ${!notif.read ? 'text-[#120e1b] dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>{notif.title}</p>
+                        <div className="flex flex-col gap-0.5 mb-1">
+                          <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded w-fit ${notif.category === 'Người hiến' ? 'bg-rose-50 text-rose-500' :
+                            notif.category === 'Bệnh viện' ? 'bg-indigo-50 text-indigo-600' :
+                              'bg-slate-50 text-slate-500'
+                            }`}>
+                            {notif.category}
+                          </span>
+                          <p className={`text-sm font-bold ${!notif.is_read ? 'text-[#120e1b] dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>{notif.title}</p>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-2">{notif.desc}</p>
                         <p className="text-[10px] text-slate-400 font-bold">{notif.time}</p>
@@ -150,7 +284,9 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
                     </div>
                   ))
                 ) : (
-                  <div className="p-8 text-center text-slate-400 text-xs">Không có thông báo nào</div>
+                  <div className="p-8 text-center text-slate-400 text-xs">
+                    {loading ? "Đang tải..." : "Không có thông báo nào"}
+                  </div>
                 )}
               </div>
               <div className="p-2 border-t border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-[#251e36]/50">

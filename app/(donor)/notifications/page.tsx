@@ -8,6 +8,9 @@ import { TopNav } from "@/components/shared/TopNav";
 import { useAuth } from "@/context/AuthContext";
 import { notificationService } from "@/services";
 
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
+
 export default function NotificationsPage() {
     const { user } = useAuth();
     const router = useRouter();
@@ -24,22 +27,22 @@ export default function NotificationsPage() {
             setIsLoading(true);
             const data = await notificationService.getNotifications(user.id);
 
-            // Map to include icons
+            // Map to include icons and styling
             const mapped = data.map((n: any) => {
-                let icon = CheckCircle;
+                let Icon = CheckCircle;
                 let color = "text-green-500";
                 let bg = "bg-green-50";
 
                 if (n.action_type === 'view_campaign' || n.title.includes('chiến dịch')) {
-                    icon = AlertCircle;
+                    Icon = AlertCircle;
                     color = "text-[#6324eb]";
                     bg = "bg-[#6324eb]/5";
                 } else if (n.action_type === 'view_registrations' || n.title.includes('đăng ký')) {
-                    icon = Users;
+                    Icon = Users;
                     color = "text-blue-500";
                     bg = "bg-blue-50";
                 } else if (n.title.includes('Cảnh báo')) {
-                    icon = AlertTriangle;
+                    Icon = AlertTriangle;
                     color = "text-amber-500";
                     bg = "bg-amber-50";
                 }
@@ -48,9 +51,9 @@ export default function NotificationsPage() {
                     id: n.id,
                     title: n.title,
                     desc: n.content,
-                    time: getTimeAgo(n.created_at),
+                    time: formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: vi }),
                     unread: !n.is_read,
-                    icon,
+                    icon: Icon,
                     color,
                     bg,
                     action_url: n.action_url,
@@ -65,17 +68,6 @@ export default function NotificationsPage() {
         }
     };
 
-    const getTimeAgo = (dateString: string) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-        if (seconds < 60) return 'Vừa xong';
-        if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
-        if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
-        if (seconds < 604800) return `${Math.floor(seconds / 86400)} ngày trước`;
-        return `${Math.floor(seconds / 604800)} tuần trước`;
-    };
 
     useEffect(() => {
         fetchNotifications();
@@ -99,12 +91,20 @@ export default function NotificationsPage() {
     };
 
     const filteredNotifications = notifications
-        .filter(n => filter === 'all' || (filter === 'unread' && n.unread))
-        .filter(n =>
-            searchQuery === '' ||
-            n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            n.desc.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        .filter(n => {
+            const matchesFilter = filter === 'all' || (filter === 'unread' && n.unread);
+            const matchesSearch = searchQuery === '' ||
+                n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                n.desc.toLowerCase().includes(searchQuery.toLowerCase());
+
+            // LỌC CHỈ XEM THÔNG BÁO TỪ BỆNH VIỆN (Chiến dịch, lời mời hiến máu)
+            // Dựa trên action_type hoặc logic Title liên quan đến Hospital
+            const fromHospital = n.action_url?.includes('/campaigns/') ||
+                n.title.includes('Chiến dịch') ||
+                n.title.includes('Bệnh viện');
+
+            return matchesFilter && matchesSearch && fromHospital;
+        });
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0f0a19]">

@@ -97,8 +97,8 @@ export function DashboardCarousel() {
                     // Keep defaults if no campaigns
                     setSlides(DEFAULT_SLIDES);
                 }
-            } catch (error) {
-                console.error("Failed to fetch campaigns for carousel", error);
+            } catch (error: any) {
+                console.error("Failed to fetch campaigns for carousel", error.message || error.details || error);
                 // Keep defaults on error
             } finally {
                 setLoading(false);

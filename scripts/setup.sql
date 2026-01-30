@@ -60,18 +60,21 @@ INSERT INTO public.system_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 -- 2. HELPER FUNCTIONS
 -- ============================================
 
--- Create safe is_admin function to avoid RLS recursion
+-- Create safe is_admin function to avoid RLS recursion using JWT metadata
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
-  -- Direct check bypassing RLS
-  RETURN EXISTS (
-    SELECT 1 
-    FROM public.users 
-    WHERE id = auth.uid() AND role = 'admin'
-  );
+  RETURN (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin';
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+
+-- Create safe is_hospital function
+CREATE OR REPLACE FUNCTION public.is_hospital()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN (auth.jwt() -> 'user_metadata' ->> 'role') = 'hospital';
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- 3. ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================
@@ -82,18 +85,26 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 -- Drop old/conflicting policies
 DROP POLICY IF EXISTS "Users can view own profile" ON public.users;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
-DROP POLICY IF EXISTS "Users can create own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.users;
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.users;
 DROP POLICY IF EXISTS "Admins can view all users" ON public.users;
 DROP POLICY IF EXISTS "Admins can update all users" ON public.users;
 DROP POLICY IF EXISTS "Admins can create users" ON public.users;
 DROP POLICY IF EXISTS "Admins can delete users" ON public.users;
+DROP POLICY IF EXISTS "Allows everyone to view hospital profiles" ON public.users;
 
 -- Admin Policies (Full Access)
 CREATE POLICY "Admins can view all users" ON public.users FOR SELECT USING (public.is_admin());
 CREATE POLICY "Admins can insert users" ON public.users FOR INSERT WITH CHECK (public.is_admin());
 CREATE POLICY "Admins can update all users" ON public.users FOR UPDATE USING (public.is_admin());
 CREATE POLICY "Admins can delete users" ON public.users FOR DELETE USING (public.is_admin());
+
+-- Hospital Visibility (Public)
+-- This allows donors to join with users table to get hospital names/addresses
+CREATE POLICY "Allows everyone to view hospital profiles" 
+ON public.users 
+FOR SELECT 
+USING (role = 'hospital' OR auth.uid() = id OR public.is_admin());
 
 -- User Policies (Self Access)
 CREATE POLICY "Users can view own profile" ON public.users 
@@ -102,10 +113,6 @@ CREATE POLICY "Users can view own profile" ON public.users
 CREATE POLICY "Users can update own profile" ON public.users 
     FOR UPDATE USING (auth.uid() = id);
 
--- Allow new users to sign up (Mock users created by Admin are covered by Admin policy)
--- Note: 'auth.uid() = id' check fails during initial Insert for some flows, 
--- but usually handled by Service Role or Admin. 
--- Adding a policy for self-registration if needed:
 CREATE POLICY "Users can insert own profile" ON public.users 
     FOR INSERT WITH CHECK (auth.uid() = id);
 

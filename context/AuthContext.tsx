@@ -11,6 +11,8 @@ interface AuthContextType {
     refreshUser: () => Promise<void>;
 }
 
+import Cookies from 'js-cookie';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -35,8 +37,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     const signOut = async () => {
-        await authService.signOut();
-        setUser(null);
+        try {
+            await authService.signOut();
+            // Clear legacy cookies
+            Cookies.remove('auth-token');
+            Cookies.remove('user-role');
+            setUser(null);
+        } catch (error) {
+            console.error("Sign out error:", error);
+        }
     };
 
     return (

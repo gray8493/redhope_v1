@@ -42,8 +42,8 @@ export const bloodService = {
 
             if (error) throw error;
             return data || [];
-        } catch (error) {
-            console.error('[BloodService] Error getting hospital stats:', error);
+        } catch (error: any) {
+            console.error('[BloodService] Error getting hospital stats:', error.message || error.details || error);
             throw error;
         }
     },
@@ -57,8 +57,8 @@ export const bloodService = {
 
             if (error) throw error;
             return data || [];
-        } catch (error) {
-            console.error('[BloodService] Error getting donor stats:', error);
+        } catch (error: any) {
+            console.error('[BloodService] Error getting donor stats:', error.message || error.details || error);
             throw error;
         }
     },
@@ -80,8 +80,8 @@ export const bloodService = {
 
             if (error) throw error;
             return data || [];
-        } catch (error) {
-            console.error('[BloodService] Error fetching donations:', error);
+        } catch (error: any) {
+            console.error('[BloodService] Error fetching donations:', error.message || error.details || error);
             throw error;
         }
     }

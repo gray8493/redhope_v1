@@ -38,12 +38,14 @@ import {
 } from "@/components/ui/pagination";
 import { campaignService } from "@/services/campaign.service";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export default function RequestsPage() {
     const router = useRouter();
     const { profile } = useAuth();
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
     const [activeFilter, setActiveFilter] = useState("Tất cả");
     const [currentPage, setCurrentPage] = useState(1);
@@ -56,8 +58,8 @@ export default function RequestsPage() {
             try {
                 const data = await campaignService.getRequests();
                 setRequests(data);
-            } catch (error) {
-                console.error("Error fetching requests:", error);
+            } catch (error: any) {
+                console.error("Error fetching requests:", error.message || error.details || error);
             } finally {
                 setLoading(false);
             }
@@ -89,6 +91,33 @@ export default function RequestsPage() {
     const handleFilterChange = (filter: string) => {
         setActiveFilter(filter);
         setCurrentPage(1);
+    };
+
+    const handleRegister = async (requestId: string) => {
+        if (!isVerified) {
+            router.push("/complete-profile");
+            return;
+        }
+
+        if (!profile?.id) {
+            toast.error("Vui lòng đăng nhập để thực hiện hành động này!");
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            await campaignService.registerToBloodRequest(profile.id, requestId);
+            toast.success("Đăng ký giúp đỡ thành công! Bệnh viện đã nhận được thông tin của bạn.", {
+                description: "Cảm ơn nghĩa cử cao đẹp của bạn.",
+                duration: 5000,
+            });
+            setSelectedRequest(null);
+        } catch (error: any) {
+            console.error("Registration error:", error);
+            toast.error("Đã có lỗi xảy ra khi đăng ký. Vui lòng thử lại sau.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -187,10 +216,11 @@ export default function RequestsPage() {
                                                     {/* Top Badges */}
                                                     <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
                                                         <span className={`px-2.5 py-1 ${getUrgencyClass(request.urgency_level)} text-white text-[10px] font-black uppercase tracking-wider rounded-md shadow-sm`}>
-                                                            {request.urgency_level === 'Emergency' ? 'Khẩn cấp' : request.urgency_level === 'High' ? 'Ưu tiên cao' : 'Tiêu chuẩn'}
+                                                            {request.urgency_level === 'Emergency' ? 'Cấp cứu' : request.urgency_level === 'Urgent' ? 'Khẩn cấp' : 'Tiêu chuẩn'}
                                                         </span>
-                                                        <span className="bg-white/90 text-slate-800 text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm">
-                                                            2.4 Km
+                                                        <span className="bg-white/90 text-[#6324eb] text-[10px] font-black px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+                                                            <MapPin className="w-3 h-3" />
+                                                            {isVerified ? (request.hospital?.district || "Gần bạn") : "Vị trí bảo mật"}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -199,10 +229,10 @@ export default function RequestsPage() {
                                                 <div className="flex flex-col flex-1 p-5">
                                                     <div className="flex justify-between items-start mb-3 gap-2">
                                                         <h3 className="text-[#120e1b] dark:text-white text-lg font-black tracking-tight leading-tight">
-                                                            {request.required_blood_group} ({request.required_blood_group})
+                                                            Cần máu {request.required_blood_group}
                                                         </h3>
                                                         <span className={`shrink-0 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${statusInfo.color}`}>
-                                                            {statusInfo.label}
+                                                            {request.required_units} đơn vị
                                                         </span>
                                                     </div>
 
@@ -216,12 +246,17 @@ export default function RequestsPage() {
                                                     {/* Footer Info */}
                                                     <div className="flex items-center justify-between mt-auto">
                                                         <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-                                                            <Clock className="w-3.5 h-3.5" />
-                                                            <span className="text-[11px] font-bold">Hết hạn sau 4h</span>
+                                                            <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+                                                            <span className="text-[11px] font-bold truncate max-w-[150px]">
+                                                                {isVerified ? (request.hospital?.hospital_name || "Bệnh viện ẩn") : "Bệnh viện đang khóa"}
+                                                            </span>
                                                         </div>
-                                                        <span className="text-[#6324eb] text-xs font-bold hover:underline">
-                                                            Xem chi tiết
-                                                        </span>
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="text-[#6324eb] text-xs font-black">
+                                                                Chi tiết
+                                                            </span>
+                                                            <ArrowRight className="w-3 h-3 text-[#6324eb]" />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </Card>
@@ -323,8 +358,12 @@ export default function RequestsPage() {
                                 </div>
                                 <div className="flex gap-4 mt-4">
                                     {isVerified ? (
-                                        <Button className="flex-1 h-12 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm">
-                                            Đăng ký giúp đỡ
+                                        <Button
+                                            onClick={() => handleRegister(selectedRequest.id)}
+                                            disabled={isSubmitting}
+                                            className="flex-1 h-12 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
+                                        >
+                                            {isSubmitting ? "Đang xử lý..." : "Đăng ký giúp đỡ"}
                                         </Button>
                                     ) : (
                                         <Button onClick={() => router.push("/complete-profile")} className="flex-1 h-12 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm">

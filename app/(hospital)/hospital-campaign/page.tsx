@@ -147,9 +147,9 @@ export default function CampaignManagementPage() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-slate-500">Tổng lượng máu</p>
-                        <p className="text-2xl font-black text-slate-900 dark:text-white">
+                        <div className="text-2xl font-black text-slate-900 dark:text-white">
                             {loading ? <Skeleton className="h-8 w-16" /> : totalBlood} <span className="text-sm font-normal text-slate-400">Đv</span>
-                        </p>
+                        </div>
                         <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Đang vận hành</p>
                     </div>
                 </div>
@@ -161,7 +161,7 @@ export default function CampaignManagementPage() {
                     <div>
                         <p className="text-sm font-medium text-slate-500">Tỉ lệ hiến máu</p>
                         <div className="flex items-baseline gap-2">
-                            <p className="text-2xl font-black text-slate-900 dark:text-white">
+                            <div className="text-2xl font-black text-slate-900 dark:text-white">
                                 {loading ? <Skeleton className="h-8 w-24" /> : (
                                     <>
                                         {totalCompleted}/{totalRegistered}
@@ -170,7 +170,7 @@ export default function CampaignManagementPage() {
                                         </span>
                                     </>
                                 )}
-                            </p>
+                            </div>
                         </div>
                         <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Đã hiến / Đăng ký tổng</p>
                     </div>
@@ -182,10 +182,10 @@ export default function CampaignManagementPage() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-slate-500">Hoãn hiến hệ thống</p>
-                        <p className="text-2xl font-black text-orange-600">
+                        <div className="text-2xl font-black text-orange-600">
                             {loading ? <Skeleton className="h-8 w-12" /> : totalDeferred}
                             <span className="text-sm font-normal text-slate-400 ml-2">Người</span>
-                        </p>
+                        </div>
                         <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần hỗ trợ theo dõi</p>
                     </div>
                 </div>
@@ -196,9 +196,9 @@ export default function CampaignManagementPage() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-slate-500">Thiếu hụt chỉ tiêu</p>
-                        <p className="text-2xl font-black text-[#6324eb]">
+                        <div className="text-2xl font-black text-[#6324eb]">
                             {loading ? <Skeleton className="h-8 w-12" /> : underTargetCount} <span className="text-sm font-normal text-slate-400">Đợt</span>
-                        </p>
+                        </div>
                         <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần đẩy mạnh truyền thông</p>
                     </div>
                 </div>
@@ -306,8 +306,8 @@ export default function CampaignManagementPage() {
                                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600"></div>
                                         <div className="absolute top-3 right-3">
                                             <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm ${campaign.status === 'active' ? 'bg-emerald-500 text-white' :
-                                                    campaign.status === 'completed' ? 'bg-slate-500 text-white' :
-                                                        'bg-amber-500 text-white'
+                                                campaign.status === 'completed' ? 'bg-slate-500 text-white' :
+                                                    'bg-amber-500 text-white'
                                                 }`}>
                                                 {campaign.status === 'active' ? 'Đang hoạt động' : campaign.status === 'completed' ? 'Đã kết thúc' : 'Bản nháp'}
                                             </span>
@@ -335,8 +335,8 @@ export default function CampaignManagementPage() {
                                             <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                                 <div
                                                     className={`h-full rounded-full transition-all ${progress >= 100 ? 'bg-emerald-500' :
-                                                            progress >= 80 ? 'bg-green-500' :
-                                                                progress < 30 ? 'bg-red-500' : 'bg-[#6324eb]'
+                                                        progress >= 80 ? 'bg-green-500' :
+                                                            progress < 30 ? 'bg-red-500' : 'bg-[#6324eb]'
                                                         }`}
                                                     style={{ width: `${Math.min(progress, 100)}%` }}
                                                 ></div>

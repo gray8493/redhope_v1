@@ -52,8 +52,8 @@ export default function DonationsPage() {
             try {
                 const data = await bloodService.getDonations(user.id);
                 setDonations(data);
-            } catch (error) {
-                console.error("Fetch donations error:", error);
+            } catch (error: any) {
+                console.error("Fetch donations error:", error.message || error.details || error);
             } finally {
                 setLoading(false);
             }

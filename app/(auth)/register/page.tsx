@@ -51,13 +51,22 @@ export default function RegisterPage() {
       if (signUpError) throw signUpError;
 
       if (authData.user) {
-        await userService.create({
-          id: authData.user.id,
-          full_name: fullName,
-          email: email,
-          role: selectedRole as any,
-          current_points: selectedRole === 'donor' ? 0 : null,
+        // Gọi API route để tạo hồ sơ (Bypass RLS)
+        const profileResponse = await fetch('/api/auth/register-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: authData.user.id,
+            email: email,
+            fullName: fullName,
+            role: selectedRole,
+          }),
         });
+
+        if (!profileResponse.ok) {
+          const profileError = await profileResponse.json();
+          throw new Error(profileError.error || "Không thể tạo hồ sơ người dùng.");
+        }
 
         setSuccess(true);
         setTimeout(() => {
@@ -176,10 +185,6 @@ export default function RegisterPage() {
 
         {/* Right Side: Register Form */}
         <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 lg:p-12 bg-gray-50/50 overflow-y-auto relative">
-<<<<<<< HEAD
-          {/* Back to Home Button */}
-=======
->>>>>>> 7525f15 (feat: chuẩn hóa trạng thái chiến dịch, cập nhật Dashboard bệnh viện và đồng bộ dữ liệu real-time)
 
 
           <div className="w-full max-w-md space-y-8 bg-white p-8 lg:p-10 rounded-[32px] shadow-2xl shadow-indigo-100/50 border border-gray-100 relative z-10">

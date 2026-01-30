@@ -1,49 +1,94 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     CheckCheck,
     Search,
     CheckCircle,
     AlertTriangle,
     Info,
-    Filter
+    Filter,
+    Loader2,
+    Users,
+    LayoutGrid,
+    Calendar
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { notificationService } from '@/services';
+import { toast } from 'sonner';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 export default function HospitalNotificationsPage() {
+    const { user } = useAuth();
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
 
-    // Expanded mock data for hospital context
-    const [notifications, setNotifications] = useState([
-        { id: 1, type: 'info', title: 'Người hiến mới đăng ký', desc: 'Có 5 người dùng vừa đăng ký hiến máu tại chiến dịch của đơn vị.', time: '5 phút trước', read: false },
-        { id: 2, type: 'warning', title: 'Điều phối máu khẩn cấp', desc: 'Hệ thống yêu cầu xác nhận khả năng tiếp nhận 20 đơn vị nhóm máu B+.', time: '15 phút trước', read: false },
-        { id: 3, type: 'success', title: 'Chiến dịch hoàn thành', desc: 'Chiến dịch "Chung tay vì cộng đồng" đã đạt 100% mục tiêu.', time: '1 giờ trước', read: false },
-        { id: 4, type: 'info', title: 'Hệ thống bảo trì', desc: 'Hệ thống quản lý bệnh viện sẽ bảo trì vào 02:00 AM ngày mai.', time: '3 giờ trước', read: true },
-        { id: 5, type: 'success', title: 'Báo cáo tháng đã sẵn sàng', desc: 'Báo cáo tổng hợp hiệu quả chiến dịch tháng trước đã được tạo.', time: '1 ngày trước', read: true },
-        { id: 6, type: 'warning', title: 'Cảnh báo vật tư thấp', desc: 'Số lượng túi lấy máu loại 350ml tại kho đang ở mức thấp.', time: '2 ngày trước', read: true },
-        { id: 7, type: 'info', title: 'Cập nhật giao diện', desc: 'Giao diện quản lý chiến dịch vừa được cập nhật tính năng lọc mới.', time: '3 ngày trước', read: true },
-    ]);
+    useEffect(() => {
+        if (!user?.id) return;
 
-    const unreadCount = notifications.filter(n => !n.read).length;
+        const fetchNotifications = async () => {
+            try {
+                setLoading(true);
+                const data = await notificationService.getNotifications(user.id);
+                setNotifications(data || []);
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+                toast.error('Không thể tải thông báo');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const handleMarkAllRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        fetchNotifications();
+    }, [user?.id]);
+
+    const unreadCount = notifications.filter(n => !n.is_read).length;
+
+    const handleMarkAllRead = async () => {
+        if (!user?.id) return;
+        try {
+            await notificationService.markAllAsRead(user.id);
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            toast.success('Đã đánh dấu tất cả là đã đọc');
+        } catch (error) {
+            toast.error('Lỗi khi cập nhật trạng thái');
+        }
     };
 
-    const handleMarkAsRead = (id: number) => {
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    const handleMarkAsRead = async (notif: any) => {
+        if (notif.is_read) return;
+        try {
+            await notificationService.markAsRead(notif.id);
+            setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
+        } catch (error) {
+            console.error('Error marking as read:', error);
+        }
     };
 
     const filteredNotifications = notifications.filter(n => {
-        if (filter === 'unread') return !n.read;
-        return true;
+        const matchesFilter = filter === 'all' || (filter === 'unread' && !n.is_read);
+        const matchesSearch = n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            n.content?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        // NGHIÊM NGẶT: Bệnh viện chỉ xem thông báo từ Người hiến (Đăng ký mới)
+        const fromDonor = n.action_type === 'view_registrations';
+
+        return matchesFilter && matchesSearch && fromDonor;
     });
 
-    const getIconByType = (type: string) => {
-        switch (type) {
-            case 'success': return <div className="p-3 bg-emerald-100 text-emerald-500 rounded-full"><CheckCircle className="w-6 h-6" /></div>;
-            case 'warning': return <div className="p-3 bg-rose-100 text-rose-500 rounded-full"><AlertTriangle className="w-6 h-6" /></div>;
-            case 'info': default: return <div className="p-3 bg-blue-100 text-blue-500 rounded-full"><Info className="w-6 h-6" /></div>;
+    const getIconByType = (actionType: string) => {
+        switch (actionType) {
+            case 'view_registrations':
+                return <div className="p-3 bg-indigo-100 text-[#6324eb] rounded-full"><Users className="w-6 h-6" /></div>;
+            case 'campaign_approved':
+                return <div className="p-3 bg-emerald-100 text-emerald-500 rounded-full"><CheckCircle className="w-6 h-6" /></div>;
+            case 'campaign_rejected':
+                return <div className="p-3 bg-rose-100 text-rose-500 rounded-full"><AlertTriangle className="w-6 h-6" /></div>;
+            default:
+                return <div className="p-3 bg-blue-100 text-blue-500 rounded-full"><Info className="w-6 h-6" /></div>;
         }
     };
 
@@ -89,6 +134,8 @@ export default function HospitalNotificationsPage() {
                         <input
                             type="text"
                             placeholder="Tìm kiếm thông báo..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-[#1c162e] border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
                         />
                     </div>
@@ -96,26 +143,33 @@ export default function HospitalNotificationsPage() {
 
                 {/* Notification List */}
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {filteredNotifications.length > 0 ? (
+                    {loading ? (
+                        <div className="py-24 flex flex-col items-center justify-center text-slate-500">
+                            <Loader2 className="w-10 h-10 animate-spin mb-4 text-[#6324eb]" />
+                            <p className="font-bold">Đang tải thông báo...</p>
+                        </div>
+                    ) : filteredNotifications.length > 0 ? (
                         filteredNotifications.map((notif) => (
                             <div
                                 key={notif.id}
-                                onClick={() => handleMarkAsRead(notif.id)}
-                                className={`group p-6 flex gap-6 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-[#251e36] ${!notif.read ? 'bg-[#6324eb]/5 dark:bg-[#6324eb]/5' : 'bg-white dark:bg-transparent'}`}
+                                onClick={() => handleMarkAsRead(notif)}
+                                className={`group p-6 flex gap-6 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-[#251e36] ${!notif.is_read ? 'bg-[#6324eb]/5 dark:bg-[#6324eb]/5' : 'bg-white dark:bg-transparent'}`}
                             >
                                 <div className="shrink-0">
-                                    {getIconByType(notif.type)}
+                                    {getIconByType(notif.action_type || '')}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start mb-1.5">
-                                        <h3 className={`text-base font-bold tracking-tight ${!notif.read ? 'text-[#120e1b] dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
+                                        <h3 className={`text-base font-bold tracking-tight ${!notif.is_read ? 'text-[#120e1b] dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
                                             {notif.title}
-                                            {!notif.read && <span className="ml-2 inline-block w-2 h-2 bg-[#6324eb] rounded-full align-middle animate-pulse"></span>}
+                                            {!notif.is_read && <span className="ml-2 inline-block w-2 h-2 bg-[#6324eb] rounded-full align-middle animate-pulse"></span>}
                                         </h3>
-                                        <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider whitespace-nowrap ml-4">{notif.time}</span>
+                                        <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider whitespace-nowrap ml-4">
+                                            {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true, locale: vi })}
+                                        </span>
                                     </div>
-                                    <p className={`text-sm leading-relaxed font-medium ${!notif.read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-500'}`}>
-                                        {notif.desc}
+                                    <p className={`text-sm leading-relaxed font-medium ${!notif.is_read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-500'}`}>
+                                        {notif.content}
                                     </p>
                                 </div>
                             </div>
@@ -136,7 +190,7 @@ export default function HospitalNotificationsPage() {
                 {/* Pagination / Footer */}
                 {filteredNotifications.length > 0 && (
                     <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-[#251e36]/30 text-center">
-                        <button className="text-xs font-black text-[#6324eb] uppercase tracking-widest hover:underline transition-all">
+                        <button className="text-sm font-bold text-slate-500 hover:text-[#6324eb] transition-colors">
                             Tải thêm thông báo cũ hơn
                         </button>
                     </div>

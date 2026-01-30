@@ -46,8 +46,8 @@ export default function DashboardPage() {
                 setCampaigns(campData.slice(0, 4));
                 setVouchers(vData.slice(0, 2));
                 setDonorStats(sData);
-            } catch (error) {
-                console.error("Dashboard fetch error:", error);
+            } catch (error: any) {
+                console.error("Dashboard fetch error:", error.message || error.details || error);
             } finally {
                 setLoading(false);
             }

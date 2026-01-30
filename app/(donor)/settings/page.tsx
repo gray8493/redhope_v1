@@ -83,8 +83,8 @@ export default function SettingsPage() {
                     setName(user.user_metadata?.full_name || "");
                     setEmail(user.email || "");
                 }
-            } catch (error) {
-                console.error("Error fetching profile:", error);
+            } catch (error: any) {
+                console.error("Error fetching profile:", error.message || error.details || error);
                 // Fallback to user data from auth context
                 if (user) {
                     setName(user.user_metadata?.full_name || user.profile?.full_name || "");

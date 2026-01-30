@@ -220,6 +220,7 @@ export default function CreateRequestPage() {
                 end_time: endDateTime.toISOString(),
                 target_units: pTargetAmount,
                 status: isDraft ? "draft" : "active",
+                target_blood_group: selectedBloodTypes.length === 1 ? selectedBloodTypes[0] : null // Mới: Gửi nhóm máu mục tiêu
             };
 
             // Sync with local storage for demo purposes
@@ -403,31 +404,57 @@ export default function CreateRequestPage() {
                                     </div>
                                 </div>
 
-                                {/* Smart Insight AI Block */}
-                                <div className="bg-gradient-to-r from-[#6D28D9]/5 to-[#A78BFA]/5 border border-[#6D28D9]/10 rounded-[1.5rem] p-5 flex flex-col md:flex-row items-center gap-6 shadow-inner">
-                                    <div className="flex items-center gap-3 shrink-0">
-                                        <div className="size-10 bg-[#6D28D9]/10 rounded-2xl flex items-center justify-center text-[#6D28D9]">
-                                            <MaterialIcon name="psychology" className="text-[22px] fill-1" />
+                                {/* Smart Insight AI Block - Re-designed to avoid overlap */}
+                                <div className="relative group overflow-hidden bg-gradient-to-br from-[#6D28D9] via-[#8B5CF6] to-[#7C3AED] rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-200/50">
+                                    {/* AI Pattern Overlay */}
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <MaterialIcon name="neurology" className="text-8xl" />
+                                    </div>
+
+                                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                                        <div className="flex items-center gap-4 shrink-0 bg-white/10 backdrop-blur-md p-4 rounded-3xl border border-white/20">
+                                            <div className="size-12 bg-white rounded-2xl flex items-center justify-center text-[#6D28D9] shadow-inner">
+                                                <MaterialIcon name="psychology" className="text-[28px] fill-1" />
+                                            </div>
+                                            <div className="text-left">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-white font-black text-sm tracking-tight">AI PREDICT</h3>
+                                                    <span className="flex size-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                                </div>
+                                                <p className="text-[10px] text-white/60 font-black uppercase tracking-widest">Active Scan Optimized</p>
+                                            </div>
                                         </div>
-                                        <div className="text-left">
-                                            <h3 className="text-[#6D28D9] font-black text-xs tracking-tight">Dự báo thông minh</h3>
-                                            <p className="text-[10px] text-[#6D28D9]/60 font-black uppercase tracking-widest">IA Insight v2.8</p>
+
+                                        <div className="hidden md:block h-12 w-px bg-white/20"></div>
+
+                                        <div className="flex flex-1 gap-8 justify-around w-full">
+                                            <div className="text-center md:text-left flex flex-col">
+                                                <p className="text-[10px] text-white/60 font-black uppercase tracking-widest mb-1.5">Nhu cầu thực tế</p>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-white text-3xl font-black">{targetCount || "63"}</span>
+                                                    <span className="text-[11px] font-bold text-white/50 uppercase">Donors</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-center md:text-left flex flex-col">
+                                                <p className="text-[10px] text-white/60 font-black uppercase tracking-widest mb-1.5">Hiệu suất kỳ vọng</p>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-white text-3xl font-black">92</span>
+                                                    <span className="text-[11px] font-bold text-white/50 uppercase">%</span>
+                                                </div>
+                                            </div>
+                                            <div className="hidden lg:flex text-center md:text-left flex flex-col">
+                                                <p className="text-[10px] text-white/60 font-black uppercase tracking-widest mb-1.5">Trạng thái kho</p>
+                                                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/10 mt-1">
+                                                    <div className="size-2 rounded-full bg-red-400 animate-pulse"></div>
+                                                    <span className="text-[11px] font-bold text-white">SẮP CẠN KIỆT</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="h-8 w-px bg-[#6D28D9]/10 hidden md:block"></div>
-                                    <div className="flex flex-1 gap-6 justify-around w-full">
-                                        <div className="text-center md:text-left">
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Cần thiết</p>
-                                            <p className="text-[#6D28D9] text-xl font-black">~{targetCount || "63"} <span className="text-[10px] font-medium text-slate-400 uppercase">người</span></p>
-                                        </div>
-                                        <div className="text-center md:text-left">
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Mục tiêu</p>
-                                            <p className="text-[#6D28D9] text-xl font-black">{targetAmount || "50"} <span className="text-[10px] font-medium text-slate-400 uppercase">đơn vị</span></p>
-                                        </div>
-                                        <div className="hidden sm:block text-center md:text-left">
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Tỉ lệ đạt</p>
-                                            <p className="text-emerald-500 text-xl font-black">80%</p>
-                                        </div>
+
+                                    {/* Animated Progress Bar at Bottom */}
+                                    <div className="absolute bottom-0 left-0 h-1 bg-white/30 w-full overflow-hidden">
+                                        <div className="h-full bg-emerald-400 w-2/3 animate-[shimmer_2s_infinite]"></div>
                                     </div>
                                 </div>
 
@@ -515,21 +542,35 @@ export default function CreateRequestPage() {
                                     )}
                                 </div>
 
-                                {/* Map Visualization */}
-                                <div className="w-full h-52 rounded-[2rem] overflow-hidden border border-slate-100 bg-slate-50 relative group shadow-lg">
-                                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuByvIDTN70XMAX1SWdkUy-gnDtoZseAgFgvqS2YmQ00PVPjTgrdh8o_nKOOAvhyoPfE-CXmPNBnSs4fAy-VQbWTfU9TiEQURHVwxaIkd6CQQYUhYb4S1WPSUAPKfSu_D0fHbxdwl-61mVf5RnxQlUActS5U8abYPvFs2WrQooHfygaMcJHzHH5CDgSeQhTw-pMWRStIMirJq2ESCD4SU0TDuX7fPqVTsKfCId2ke717J1Z_VMXJH8CRbr8vGGnD-a_jBhrVbrr-xbI')" }}></div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
+                                {/* Map Visualization - Fixed Layout to avoid overlap */}
+                                <div className="w-full h-64 rounded-[2.5rem] overflow-hidden border border-slate-100 bg-slate-50 relative group shadow-2xl">
+                                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] group-hover:scale-110" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=2000&auto=format&fit=crop')" }}></div>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent"></div>
+
+                                    {/* Scan Effect Overlay */}
+                                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(109,40,217,0.05)_100%)] pointer-events-none"></div>
+
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <MaterialIcon name="location_on" className="text-indigo-500 text-6xl drop-shadow-2xl fill-1 animate-bounce" />
+                                        <div className="relative">
+                                            <span className="absolute -inset-8 bg-indigo-500/20 rounded-full animate-ping"></span>
+                                            <MaterialIcon name="location_on" className="text-indigo-500 text-6xl drop-shadow-[0_0_15px_rgba(99,102,241,0.5)] fill-1 z-10" />
+                                        </div>
                                     </div>
-                                    <div className="absolute bottom-5 left-5 right-5 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white max-w-[320px]">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-[#F5F3FF] p-2.5 rounded-xl text-[#6D28D9] shrink-0">
-                                                <MaterialIcon name="local_hospital" className="text-[20px]" />
+
+                                    {/* Glass Info Card - Repositioned for visibility */}
+                                    <div className="absolute bottom-6 left-6 right-6 bg-white/80 backdrop-blur-xl p-5 rounded-3xl shadow-2xl border border-white/50 max-w-[360px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] p-3 rounded-2xl text-white shadow-lg shadow-indigo-200">
+                                                <MaterialIcon name="local_hospital" className="text-[22px] fill-1" />
                                             </div>
                                             <div className="overflow-hidden text-left">
-                                                <p className="text-slate-900 font-black text-[13px] truncate">Bệnh viện Chợ Rẫy</p>
-                                                <p className="text-slate-500 text-[10px] font-bold truncate">201B Nguyễn Chí Thanh, Q5, TP.HCM</p>
+                                                <p className="text-slate-900 font-extrabold text-[15px] truncate tracking-tight">{profile?.hospital_name || "Bệnh viện Đã Chọn"}</p>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <MaterialIcon name="pin_drop" className="text-[12px] text-indigo-500" />
+                                                    <p className="text-slate-500 text-[11px] font-bold truncate tracking-wide">
+                                                        {district ? `${district}, ${city}` : "Vị trí tiếp nhận đã xác minh"}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -729,6 +770,10 @@ export default function CreateRequestPage() {
                 input[type="time"]::-webkit-calendar-picker-indicator {
                     filter: invert(0.5);
                     cursor: pointer;
+                }
+                @keyframes shimmer {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
                 }
                 .material-symbols-outlined {
                     font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;

@@ -36,11 +36,14 @@ export default function LoginPage() {
           .eq('id', data.user.id)
           .single();
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error("Error fetching profile:", profileError);
-        }
+        // Ưu tiên lấy role từ metadata (vì nó có sẵn ngay sau khi signIn)
+        // Sau đó mới lấy từ DB (có thể bị chặn bởi RLS lúc mới login)
+        const role = profile?.role || data.user.user_metadata?.role || 'donor';
 
-        const role = profile?.role || 'donor';
+        if (profileError && profileError.code !== 'PGRST116') {
+          // Log nhẹ nhàng hơn vì đã có fallback
+          console.log("Note: Profile fetch from DB skipped or limited by RLS, using metadata fallback.");
+        }
 
         Cookies.set('auth-token', data.session?.access_token || '', { expires: 7 });
         Cookies.set('user-role', role, { expires: 7 });

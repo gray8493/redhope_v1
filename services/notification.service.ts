@@ -117,24 +117,57 @@ export async function deleteNotification(notificationId: string): Promise<void> 
  */
 export async function createNotification(data: CreateNotificationData): Promise<Notification> {
     try {
+        if (!data.user_id) {
+            throw new Error('Missing user_id for notification');
+        }
+
+        // Tạo object chèn, chỉ bao gồm các trường có giá trị
+        const insertData: any = {
+            user_id: data.user_id,
+            title: data.title,
+            content: data.content,
+            is_read: false,
+        };
+
+        if (data.action_type) insertData.action_type = data.action_type;
+        if (data.action_url) insertData.action_url = data.action_url;
+        if (data.metadata) insertData.metadata = data.metadata;
+
+        console.log('--- NOTIFICATION DEBUG: Input Data ---', insertData);
+
         const { data: notification, error } = await supabase
             .from('notifications')
-            .insert({
-                user_id: data.user_id,
-                title: data.title,
-                content: data.content,
-                action_type: data.action_type,
-                action_url: data.action_url,
-                metadata: data.metadata,
-                is_read: false,
-            })
+            .insert(insertData)
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('--- SUPABASE INSERT ERROR ---', error);
+            throw error;
+        }
         return notification;
-    } catch (error) {
-        console.error('Error creating notification:', error);
+    } catch (error: any) {
+        console.error('--- NOTIFICATION ERROR DEBUG ---');
+        console.log('Error type:', typeof error);
+        console.dir(error);
+
+        if (error && typeof error === 'object') {
+            console.error('Manual Property Check:');
+            console.error('- Message:', error?.message);
+            console.error('- Code:', error?.code);
+            console.error('- Details:', error?.details);
+            console.error('- Hint:', error?.hint);
+            console.error('- Keys:', Object.keys(error));
+            console.error('- All Prop Names:', Object.getOwnPropertyNames(error));
+        }
+
+        try {
+            console.error('Error JSON:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+        } catch (e) {
+            console.error('Could not stringify error');
+        }
+
+        console.error('---------------------------------');
         throw error;
     }
 }

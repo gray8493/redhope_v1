@@ -1,50 +1,103 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     CheckCheck,
     Search,
     CheckCircle,
     AlertTriangle,
     Info,
-    Filter
+    Filter,
+    Loader2,
+    LayoutGrid,
+    Droplet,
+    Users
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { notificationService } from '@/services';
+import { toast } from 'sonner';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 export default function NotificationsPage() {
+    const { user } = useAuth();
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
 
-    // Expanded mock data
-    const [notifications, setNotifications] = useState([
-        { id: 1, type: 'info', title: 'Người hiến mới đăng ký', desc: 'Có 5 người dùng vừa đăng ký hiến máu tại khu vực TP.HCM.', time: '5 phút trước', read: false },
-        { id: 2, type: 'warning', title: 'Yêu cầu máu khẩn cấp', desc: 'Bệnh viện Chợ Rẫy cần gấp 50 đơn vị nhóm máu O- cho ca phẫu thuật.', time: '15 phút trước', read: false },
-        { id: 3, type: 'success', title: 'Chiến dịch hoàn thành', desc: 'Chiến dịch "Giọt máu hồng" đã đạt 100% chỉ tiêu. Vui lòng duyệt báo cáo.', time: '1 giờ trước', read: false },
-        { id: 4, type: 'info', title: 'Hệ thống bảo trì', desc: 'Hệ thống sẽ bảo trì định kỳ vào 02:00 AM ngày mai.', time: '3 giờ trước', read: true },
-        { id: 5, type: 'success', title: 'Báo cáo tuần đã sẵn sàng', desc: 'Báo cáo tổng hợp hoạt động tuần qua đã được tạo tự động.', time: '1 ngày trước', read: true },
-        { id: 6, type: 'warning', title: 'Cảnh báo tồn kho thấp', desc: 'Nhóm máu AB+ tại kho trung tâm đang dưới mức an toàn.', time: '2 ngày trước', read: true },
-        { id: 7, type: 'info', title: 'Cập nhật chính sách', desc: 'Chính sách bảo mật người dùng đã được cập nhật phiên bản 2.1.', time: '3 ngày trước', read: true },
-    ]);
+    useEffect(() => {
+        if (!user?.id) return;
 
-    const unreadCount = notifications.filter(n => !n.read).length;
+        const fetchNotifications = async () => {
+            try {
+                setLoading(true);
+                const data = await notificationService.getNotifications(user.id);
+                setNotifications(data || []);
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+                toast.error('Không thể tải thông báo');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const handleMarkAllRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        fetchNotifications();
+    }, [user?.id]);
+
+    const unreadCount = notifications.filter(n => !n.is_read).length;
+
+    const handleMarkAllRead = async () => {
+        if (!user?.id) return;
+        try {
+            await notificationService.markAllAsRead(user.id);
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            toast.success('Đã đánh dấu tất cả là đã đọc');
+        } catch (error) {
+            toast.error('Lỗi khi cập nhật trạng thái');
+        }
     };
 
-    const handleMarkAsRead = (id: number) => {
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    const handleMarkAsRead = async (notif: any) => {
+        if (notif.is_read) return;
+        try {
+            await notificationService.markAsRead(notif.id);
+            setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
+        } catch (error) {
+            console.error('Error marking as read:', error);
+        }
     };
 
     const filteredNotifications = notifications.filter(n => {
-        if (filter === 'unread') return !n.read;
-        return true;
+        const matchesFilter = filter === 'unread' ? !n.is_read : true;
+        const matchesSearch = n.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            n.content?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesFilter && matchesSearch;
     });
 
-    const getIconByType = (type: string) => {
-        switch (type) {
-            case 'success': return <div className="p-3 bg-emerald-100 text-emerald-500 rounded-full"><CheckCircle className="w-6 h-6" /></div>;
-            case 'warning': return <div className="p-3 bg-rose-100 text-rose-500 rounded-full"><AlertTriangle className="w-6 h-6" /></div>;
-            case 'info': default: return <div className="p-3 bg-blue-100 text-blue-500 rounded-full"><Info className="w-6 h-6" /></div>;
+    const getIconByType = (actionType: string) => {
+        // Hoạt động của NGƯỜI HIẾN (Đăng ký, xác nhận lịch hẹn)
+        if (['view_registrations', 'view_appointment'].includes(actionType)) {
+            return <div className="p-3 bg-rose-100 text-rose-500 rounded-full"><Droplet className="w-6 h-6" /></div>;
         }
+        // Hoạt động của BỆNH VIỆN (Phát yêu cầu, tạo chiến dịch, duyệt/từ chối)
+        if (['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(actionType)) {
+            return <div className="p-3 bg-indigo-100 text-[#6324eb] rounded-full"><LayoutGrid className="w-6 h-6" /></div>;
+        }
+
+        // Mặc định cho hệ thống
+        return <div className="p-3 bg-blue-100 text-blue-500 rounded-full"><Info className="w-6 h-6" /></div>;
+    };
+
+    const getCategoryBadge = (actionType: string) => {
+        // Gắn nhãn dựa trên CHỦ THỂ gây ra hành động
+        if (['view_registrations', 'view_appointment'].includes(actionType)) {
+            return <span className="px-2 py-0.5 bg-rose-100 text-rose-500 text-[10px] font-bold rounded uppercase tracking-wider">Người hiến</span>;
+        }
+        if (['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(actionType)) {
+            return <span className="px-2 py-0.5 bg-indigo-100 text-[#6324eb] text-[10px] font-bold rounded uppercase tracking-wider">Bệnh viện</span>;
+        }
+        return <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase tracking-wider">Hệ thống</span>;
     };
 
     return (
@@ -89,6 +142,8 @@ export default function NotificationsPage() {
                         <input
                             type="text"
                             placeholder="Tìm kiếm thông báo..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#1c162e] border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent outline-none"
                         />
                     </div>
@@ -96,26 +151,36 @@ export default function NotificationsPage() {
 
                 {/* Notification List */}
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {filteredNotifications.length > 0 ? (
+                    {loading ? (
+                        <div className="py-20 flex flex-col items-center justify-center text-slate-500">
+                            <Loader2 className="w-10 h-10 animate-spin mb-4 text-[#6324eb]" />
+                            <p className="font-medium">Đang tải thông báo...</p>
+                        </div>
+                    ) : filteredNotifications.length > 0 ? (
                         filteredNotifications.map((notif) => (
                             <div
                                 key={notif.id}
-                                onClick={() => handleMarkAsRead(notif.id)}
-                                className={`group p-6 flex gap-5 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-[#251e36] ${!notif.read ? 'bg-purple-50/40 dark:bg-[#251e36]/40' : 'bg-white dark:bg-[#1c162e]'}`}
+                                onClick={() => handleMarkAsRead(notif)}
+                                className={`group p-6 flex gap-5 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-[#251e36] ${!notif.is_read ? 'bg-purple-50/40 dark:bg-[#251e36]/40' : 'bg-white dark:bg-[#1c162e]'}`}
                             >
                                 <div className="shrink-0 mt-1">
-                                    {getIconByType(notif.type)}
+                                    {getIconByType(notif.action_type || '')}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start mb-1">
-                                        <h3 className={`text-base font-bold truncate ${!notif.read ? 'text-[#1d1d1f] dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
-                                            {notif.title}
-                                            {!notif.read && <span className="ml-2 inline-block w-2 h-2 bg-[#6324eb] rounded-full align-middle"></span>}
-                                        </h3>
-                                        <span className="text-xs text-slate-400 font-medium whitespace-nowrap ml-4">{notif.time}</span>
+                                        <div className="flex flex-col gap-1">
+                                            {getCategoryBadge(notif.action_type || '')}
+                                            <h3 className={`text-base font-bold truncate ${!notif.is_read ? 'text-[#1d1d1f] dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
+                                                {notif.title}
+                                                {!notif.is_read && <span className="ml-2 inline-block w-2 h-2 bg-[#6324eb] rounded-full align-middle"></span>}
+                                            </h3>
+                                        </div>
+                                        <span className="text-xs text-slate-400 font-medium whitespace-nowrap ml-4">
+                                            {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true, locale: vi })}
+                                        </span>
                                     </div>
-                                    <p className={`text-sm leading-relaxed ${!notif.read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-500'}`}>
-                                        {notif.desc}
+                                    <p className={`text-sm leading-relaxed ${!notif.is_read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-500'}`}>
+                                        {notif.content}
                                     </p>
                                 </div>
                             </div>

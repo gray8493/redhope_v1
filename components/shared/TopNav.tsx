@@ -17,7 +17,9 @@ import {
     Users,
     CheckCircle2,
     MessageSquare,
-    TrendingUp
+    TrendingUp,
+    LayoutGrid,
+    Droplet,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -113,6 +115,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
         };
     }, [userRole]);
 
+
     const displayRole = userRole === 'admin'
         ? "Quản trị viên"
         : userRole === 'hospital'
@@ -135,71 +138,6 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
 
     const settingsPath = userRole === 'hospital' ? "/hospital/settings" : "/settings";
 
-    // ... Notifications setup (Need to make sure notifications state uses `userRole` correctly) ...
-    // Note: I will need to replace the notification initialization logic effectively.
-    // Since `profile` is gone, I need to replace usages of `profile` with `userRole` or `authUser`.
-
-    // !!! IMPORTANT: The previous notification logic was complex and depended on `profile`.
-    // I will try to minimally invade the notification logic by defining `profile` as a proxy object if needed,
-    // OR just update the notification logic. Updating seems better.
-
-    // Re-incorporating notification logic variables...
-    const initialNotifications = [
-        {
-            id: 1,
-            title: "Máu của bạn đã được sử dụng!",
-            desc: "Đơn vị máu hiến ngày 24/10 đã được chuyển đến BV Chợ Rẫy.",
-            time: "2 giờ trước",
-            unread: true,
-            icon: CheckCircle,
-            color: "text-green-500",
-            bg: "bg-green-50"
-        },
-        {
-            id: 2,
-            title: "Lời kêu gọi khẩn cấp nhóm O+",
-            desc: "Bệnh viện 115 đang thiếu hụt nhóm máu của bạn.",
-            time: "5 giờ trước",
-            unread: true,
-            icon: AlertCircle,
-            color: "text-[#6324eb]",
-            bg: "bg-indigo-50"
-        }
-    ];
-
-    const hospitalNotifs = [
-        {
-            id: Date.now() - 1000,
-            title: "⚠️ Cảnh báo Tỷ lệ đăng ký thấp",
-            desc: "Chiến dịch 'Hiến máu Mùa Xuân' diễn ra ngày mai nhưng chỉ đạt 15% lượt đăng ký.",
-            time: "1 giờ trước",
-            unread: true,
-            icon: AlertTriangle,
-            color: "text-amber-500",
-            bg: "bg-amber-50"
-        },
-        {
-            id: Date.now() - 2000,
-            title: "📉 Cảnh báo Lệch Nhóm máu",
-            desc: "Chiến dịch hiện tại đang thiếu hụt nhóm máu O (chỉ chiếm 5%). Hãy ưu tiên gọi người nhóm O.",
-            time: "3 giờ trước",
-            unread: true,
-            icon: TrendingDown,
-            color: "text-indigo-500",
-            bg: "bg-indigo-50"
-        },
-        {
-            id: Date.now() - 3000,
-            title: "🛠️ Hệ thống",
-            desc: "Admin Hệ thống đã duyệt yêu cầu tạo chiến dịch mới của bạn.",
-            time: "Vừa xong",
-            unread: false,
-            icon: ShieldCheck,
-            color: "text-[#6324eb]",
-            bg: "bg-[#6324eb]/5"
-        }
-    ];
-
     const [notifications, setNotifications] = useState<any[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -211,46 +149,54 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
             const data = await notificationService.getNotifications(authUser.id);
 
             // Map notifications to include icons
-            const mappedNotifications = data.map((n: any) => {
-                let icon = CheckCircle;
-                let color = "text-[#6324eb]";
-                let bg = "bg-[#6324eb]/5";
+            const mappedNotifications = data
+                .map((n: any) => {
+                    let Icon = CheckCircle;
+                    let color = "text-[#6324eb]";
+                    let bg = "bg-[#6324eb]/5";
 
-                // Determine icon based on action_type or title
-                if (n.action_type === 'view_campaign' || n.title.includes('chiến dịch')) {
-                    icon = AlertCircle;
-                    color = "text-[#6324eb]";
-                    bg = "bg-indigo-50";
-                } else if (n.action_type === 'view_appointment' || n.title.includes('Đăng ký')) {
-                    icon = CheckCircle;
-                    color = "text-green-500";
-                    bg = "bg-green-50";
-                } else if (n.action_type === 'view_registrations' || n.title.includes('đăng ký mới')) {
-                    icon = Users;
-                    color = "text-blue-500";
-                    bg = "bg-blue-50";
-                } else if (n.title.includes('Cảnh báo') || n.title.includes('⚠️')) {
-                    icon = AlertTriangle;
-                    color = "text-amber-500";
-                    bg = "bg-amber-50";
-                } else if (n.title.includes('từ chối') || n.title.includes('❌')) {
-                    icon = AlertCircle;
-                    color = "text-red-500";
-                    bg = "bg-red-50";
-                }
+                    const isDonorRelated = ['view_registrations', 'view_appointment'].includes(n.action_type);
+                    const isHospitalRelated = ['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(n.action_type);
 
-                return {
-                    id: n.id,
-                    title: n.title,
-                    desc: n.content,
-                    time: getTimeAgo(n.created_at),
-                    unread: !n.is_read,
-                    icon,
-                    color,
-                    bg,
-                    action_url: n.action_url,
-                };
-            });
+                    if (isDonorRelated) {
+                        Icon = Droplet;
+                        color = "text-rose-500";
+                        bg = "bg-rose-100/30";
+                    } else if (isHospitalRelated) {
+                        Icon = LayoutGrid;
+                        color = "text-indigo-600";
+                        bg = "bg-indigo-50";
+                    } else if (n.title.includes('Cảnh báo') || n.title.includes('⚠️')) {
+                        Icon = AlertTriangle;
+                        color = "text-amber-500";
+                        bg = "bg-amber-100";
+                    }
+
+                    return {
+                        id: n.id,
+                        title: n.title,
+                        desc: n.content,
+                        time: getTimeAgo(n.created_at),
+                        unread: !n.is_read,
+                        icon: Icon,
+                        color,
+                        bg,
+                        action_url: n.action_url,
+                        isDonorRelated,
+                        isHospitalRelated
+                    };
+                })
+                .filter((n: any) => {
+                    // NGHIÊM NGẶT: Bệnh viện chỉ xem thông báo từ Người hiến (Đăng ký mới, v.v.)
+                    if (userRole === 'hospital') {
+                        return n.isDonorRelated && n.action_type === 'view_registrations';
+                    }
+                    // NGHIÊM NGẶT: Người hiến chỉ xem thông báo từ Bệnh viện (Chiến dịch mới)
+                    if (userRole === 'donor') {
+                        return n.isHospitalRelated && (n.action_type === 'view_campaign' || n.action_type === 'view_appointment');
+                    }
+                    return true; // Admin xem tất cả
+                });
 
             setNotifications(mappedNotifications);
         } catch (error) {
@@ -297,52 +243,60 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                     const newNotification = payload.new;
 
                     // Determine icon and colors
-                    let icon = CheckCircle;
+                    let Icon = CheckCircle;
                     let color = "text-[#6324eb]";
                     let bg = "bg-[#6324eb]/5";
 
-                    if (newNotification.action_type === 'view_campaign' || newNotification.title.includes('chiến dịch')) {
-                        icon = AlertCircle;
-                        color = "text-[#6324eb]";
+                    const isDonorRelated = ['view_registrations', 'view_appointment'].includes(newNotification.action_type);
+                    const isHospitalRelated = ['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(newNotification.action_type);
+
+                    if (isDonorRelated) {
+                        Icon = Droplet;
+                        color = "text-rose-500";
+                        bg = "bg-rose-100/30";
+                    } else if (isHospitalRelated) {
+                        Icon = LayoutGrid;
+                        color = "text-indigo-600";
                         bg = "bg-indigo-50";
-                    } else if (newNotification.action_type === 'view_appointment' || newNotification.title.includes('Đăng ký')) {
-                        icon = CheckCircle;
-                        color = "text-green-500";
-                        bg = "bg-green-50";
-                    } else if (newNotification.action_type === 'view_registrations' || newNotification.title.includes('đăng ký mới')) {
-                        icon = Users;
-                        color = "text-blue-500";
-                        bg = "bg-blue-50";
                     } else if (newNotification.title.includes('Cảnh báo') || newNotification.title.includes('⚠️')) {
-                        icon = AlertTriangle;
+                        Icon = AlertTriangle;
                         color = "text-amber-500";
                         bg = "bg-amber-50";
                     }
 
-                    const mappedNotification = {
-                        id: newNotification.id,
-                        title: newNotification.title,
-                        desc: newNotification.content,
-                        time: 'Vừa xong',
-                        unread: true,
-                        icon,
-                        color,
-                        bg,
-                        action_url: newNotification.action_url,
-                    };
 
-                    // Add to notifications list
-                    setNotifications(prev => [mappedNotification, ...prev]);
 
-                    // Show toast notification
-                    toast.success(newNotification.title, {
-                        description: newNotification.content,
-                        duration: 5000,
-                        action: newNotification.action_url ? {
-                            label: 'Xem',
-                            onClick: () => router.push(newNotification.action_url),
-                        } : undefined,
-                    });
+                    const shouldDisplay =
+                        (userRole === 'hospital' && isDonorRelated && newNotification.action_type === 'view_registrations') ||
+                        (userRole === 'donor' && isHospitalRelated && (newNotification.action_type === 'view_campaign' || newNotification.action_type === 'view_appointment')) ||
+                        (userRole === 'admin');
+
+                    if (shouldDisplay) {
+                        const mappedNotification = {
+                            id: newNotification.id,
+                            title: newNotification.title,
+                            desc: newNotification.content,
+                            time: 'Vừa xong',
+                            unread: true,
+                            icon: Icon,
+                            color,
+                            bg,
+                            action_url: newNotification.action_url,
+                        };
+
+                        // Add to notifications list
+                        setNotifications(prev => [mappedNotification, ...prev]);
+
+                        // Show toast notification
+                        toast.success(newNotification.title, {
+                            description: newNotification.content,
+                            duration: 5000,
+                            action: newNotification.action_url ? {
+                                label: 'Xem',
+                                onClick: () => router.push(newNotification.action_url),
+                            } : undefined,
+                        });
+                    }
                 }
             )
             .subscribe();

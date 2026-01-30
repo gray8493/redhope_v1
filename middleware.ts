@@ -24,6 +24,7 @@ export function middleware(request: NextRequest) {
         '/hospital-reports',
         '/hospital-requests',
         '/hospital-settings',
+        '/hospital-notifications',
         '/support'
     ];
 
@@ -38,13 +39,21 @@ export function middleware(request: NextRequest) {
         '/settings'
     ];
 
+    // 1. Redirect to appropriate dashboard if already logged in and trying to access auth pages
+    if (['/login', '/register'].includes(pathname) && authToken && userRole) {
+        let redirectPath = '/requests';
+        if (userRole === 'admin') redirectPath = '/admin-dashboard';
+        else if (userRole === 'hospital') redirectPath = '/hospital-dashboard';
+        return NextResponse.redirect(new URL(redirectPath, request.url));
+    }
+
     // Check if current path matches any protected route
     const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
     const isHospitalRoute = hospitalRoutes.some(route => pathname.startsWith(route));
     const isDonorRoute = donorRoutes.some(route => pathname.startsWith(route));
     const isProtectedRoute = isAdminRoute || isHospitalRoute || isDonorRoute;
 
-    // Redirect to login if not authenticated
+    // 2. Redirect to login if not authenticated
     if (isProtectedRoute && !authToken) {
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
@@ -86,12 +95,13 @@ export const config = {
         '/global-ana/:path*',
         '/system-setting/:path*',
         // Hospital routes
-        '/hospital/dashboard/:path*',
-        '/hospital/campaign/:path*',
-        '/hospital/reports/:path*',
-        '/hospital/requests/:path*',
-        '/hospital/settings/:path*',
-        '/hospital/support/:path*',
+        '/hospital-dashboard/:path*',
+        '/hospital-campaign/:path*',
+        '/hospital-reports/:path*',
+        '/hospital-requests/:path*',
+        '/hospital-settings/:path*',
+        '/hospital-notifications/:path*',
+        '/support/:path*',
         // Donor routes
         '/dashboard/:path*',
         '/donate/:path*',
