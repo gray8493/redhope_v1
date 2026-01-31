@@ -27,6 +27,8 @@ import { useAuth } from "@/context/AuthContext";
 import { notificationService } from "@/services";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
 import {
     Avatar,
     AvatarFallback,
@@ -141,6 +143,42 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
+    // Helper function to format time ago
+    const getTimeAgo = (dateString: string) => {
+        try {
+            return formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: vi });
+        } catch (e) {
+            return 'Vừa xong';
+        }
+    };
+
+    // Helper to get Icon and Color
+    const getNotificationStyle = (n: any) => {
+        let Icon = Bell;
+        let color = "text-[#6324eb]";
+        let bg = "bg-[#6324eb]/5";
+
+        if (n.action_type === 'view_registrations' || n.title?.includes('đăng ký')) {
+            Icon = Users;
+            color = "text-blue-500";
+            bg = "bg-blue-50";
+        } else if (n.action_type === 'view_campaign' || n.title?.includes('chiến dịch')) {
+            Icon = LayoutGrid;
+            color = "text-indigo-600";
+            bg = "bg-indigo-50";
+        } else if (n.action_type === 'view_appointment' || n.title?.includes('hẹn')) {
+            Icon = Droplet;
+            color = "text-rose-500";
+            bg = "bg-rose-50";
+        } else if (n.title?.includes('Cảnh báo') || n.title?.includes('⚠️')) {
+            Icon = AlertTriangle;
+            color = "text-amber-500";
+            bg = "bg-amber-50";
+        }
+
+        return { Icon, color, bg };
+    };
+
     // Fetch notifications from database
     const fetchNotifications = async () => {
         if (!authUser?.id) return;
@@ -149,72 +187,25 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
             const data = await notificationService.getNotifications(authUser.id);
 
             // Map notifications to include icons
-            const mappedNotifications = data
-                .map((n: any) => {
-                    let Icon = CheckCircle;
-                    let color = "text-[#6324eb]";
-                    let bg = "bg-[#6324eb]/5";
-
-                    const isDonorRelated = ['view_registrations', 'view_appointment'].includes(n.action_type);
-                    const isHospitalRelated = ['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(n.action_type);
-
-                    if (isDonorRelated) {
-                        Icon = Droplet;
-                        color = "text-rose-500";
-                        bg = "bg-rose-100/30";
-                    } else if (isHospitalRelated) {
-                        Icon = LayoutGrid;
-                        color = "text-indigo-600";
-                        bg = "bg-indigo-50";
-                    } else if (n.title.includes('Cảnh báo') || n.title.includes('⚠️')) {
-                        Icon = AlertTriangle;
-                        color = "text-amber-500";
-                        bg = "bg-amber-100";
-                    }
-
-                    return {
-                        id: n.id,
-                        title: n.title,
-                        desc: n.content,
-                        time: getTimeAgo(n.created_at),
-                        unread: !n.is_read,
-                        icon: Icon,
-                        color,
-                        bg,
-                        action_url: n.action_url,
-                        isDonorRelated,
-                        isHospitalRelated
-                    };
-                })
-                .filter((n: any) => {
-                    // NGHIÊM NGẶT: Bệnh viện chỉ xem thông báo từ Người hiến (Đăng ký mới, v.v.)
-                    if (userRole === 'hospital') {
-                        return n.isDonorRelated && n.action_type === 'view_registrations';
-                    }
-                    // NGHIÊM NGẶT: Người hiến chỉ xem thông báo từ Bệnh viện (Chiến dịch mới)
-                    if (userRole === 'donor') {
-                        return n.isHospitalRelated && (n.action_type === 'view_campaign' || n.action_type === 'view_appointment');
-                    }
-                    return true; // Admin xem tất cả
-                });
+            const mappedNotifications = data.map((n: any) => {
+                const style = getNotificationStyle(n);
+                return {
+                    id: n.id,
+                    title: n.title,
+                    desc: n.content,
+                    time: getTimeAgo(n.created_at),
+                    unread: !n.is_read,
+                    icon: style.Icon,
+                    color: style.color,
+                    bg: style.bg,
+                    action_url: n.action_url,
+                };
+            }).slice(0, 10); // Lấy 10 thông báo mới nhất cho chuông
 
             setNotifications(mappedNotifications);
         } catch (error) {
             console.error('Error fetching notifications:', error);
         }
-    };
-
-    // Helper function to format time ago
-    const getTimeAgo = (dateString: string) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-        if (seconds < 60) return 'Vừa xong';
-        if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
-        if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
-        if (seconds < 604800) return `${Math.floor(seconds / 86400)} ngày trước`;
-        return `${Math.floor(seconds / 604800)} tuần trước`;
     };
 
     // Initial fetch
@@ -243,60 +234,32 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                     const newNotification = payload.new;
 
                     // Determine icon and colors
-                    let Icon = CheckCircle;
-                    let color = "text-[#6324eb]";
-                    let bg = "bg-[#6324eb]/5";
+                    const style = getNotificationStyle(newNotification);
 
-                    const isDonorRelated = ['view_registrations', 'view_appointment'].includes(newNotification.action_type);
-                    const isHospitalRelated = ['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(newNotification.action_type);
+                    const mappedNotification = {
+                        id: newNotification.id,
+                        title: newNotification.title,
+                        desc: newNotification.content,
+                        time: 'Vừa xong',
+                        unread: true,
+                        icon: style.Icon,
+                        color: style.color,
+                        bg: style.bg,
+                        action_url: newNotification.action_url,
+                    };
 
-                    if (isDonorRelated) {
-                        Icon = Droplet;
-                        color = "text-rose-500";
-                        bg = "bg-rose-100/30";
-                    } else if (isHospitalRelated) {
-                        Icon = LayoutGrid;
-                        color = "text-indigo-600";
-                        bg = "bg-indigo-50";
-                    } else if (newNotification.title.includes('Cảnh báo') || newNotification.title.includes('⚠️')) {
-                        Icon = AlertTriangle;
-                        color = "text-amber-500";
-                        bg = "bg-amber-50";
-                    }
+                    // Add to notifications list
+                    setNotifications(prev => [mappedNotification, ...prev]);
 
-
-
-                    const shouldDisplay =
-                        (userRole === 'hospital' && isDonorRelated && newNotification.action_type === 'view_registrations') ||
-                        (userRole === 'donor' && isHospitalRelated && (newNotification.action_type === 'view_campaign' || newNotification.action_type === 'view_appointment')) ||
-                        (userRole === 'admin');
-
-                    if (shouldDisplay) {
-                        const mappedNotification = {
-                            id: newNotification.id,
-                            title: newNotification.title,
-                            desc: newNotification.content,
-                            time: 'Vừa xong',
-                            unread: true,
-                            icon: Icon,
-                            color,
-                            bg,
-                            action_url: newNotification.action_url,
-                        };
-
-                        // Add to notifications list
-                        setNotifications(prev => [mappedNotification, ...prev]);
-
-                        // Show toast notification
-                        toast.success(newNotification.title, {
-                            description: newNotification.content,
-                            duration: 5000,
-                            action: newNotification.action_url ? {
-                                label: 'Xem',
-                                onClick: () => router.push(newNotification.action_url),
-                            } : undefined,
-                        });
-                    }
+                    // Show toast notification
+                    toast.success(newNotification.title, {
+                        description: newNotification.content,
+                        duration: 5000,
+                        action: newNotification.action_url ? {
+                            label: 'Xem',
+                            onClick: () => router.push(newNotification.action_url),
+                        } : undefined,
+                    });
                 }
             )
             .subscribe();
@@ -447,7 +410,12 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                                 )}
                             </div>
                             <div className="p-3 text-center border-t border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36]">
-                                <Link href="/notifications" className={`text-sm font-bold ${userRole === 'hospital' ? 'text-[#6324eb]' : 'text-[#6324eb]'} hover:underline block w-full`}>Xem tất cả</Link>
+                                <Link
+                                    href={userRole === 'hospital' ? "/hospital-notifications" : userRole === 'admin' ? "/admin-notifications" : "/notifications"}
+                                    className="text-sm font-bold text-[#6324eb] hover:underline block w-full"
+                                >
+                                    Xem tất cả
+                                </Link>
                             </div>
                         </div>
                     )}

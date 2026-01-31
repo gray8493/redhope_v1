@@ -14,6 +14,7 @@ import { TopNav } from "@/components/shared/TopNav";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardCarousel } from "@/components/shared/DashboardCarousel";
 import { BloodDropChatbot } from "@/components/shared/BloodDropChatbot";
+import { RecentNotifications } from "@/components/shared/RecentNotifications";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ export default function DashboardPage() {
     const [campaigns, setCampaigns] = useState<any[]>([]);
     const [vouchers, setVouchers] = useState<any[]>([]);
     const [donorStats, setDonorStats] = useState<any[]>([]);
+    const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const firstName = user?.user_metadata?.full_name?.split(' ').pop() || user?.email?.split('@')[0] || "người bạn";
@@ -38,14 +40,19 @@ export default function DashboardPage() {
         const fetchData = async () => {
             if (!user?.id) return;
             try {
-                const [campData, vData, sData] = await Promise.all([
+                const [campData, vData, sData, apptData] = await Promise.all([
                     campaignService.getActive(),
                     voucherService.getAll(),
-                    bloodService.getDonorStats(user.id)
+                    bloodService.getDonorStats(user.id),
+                    campaignService.getUserAppointments(user.id)
                 ]);
                 setCampaigns(campData.slice(0, 4));
                 setVouchers(vData.slice(0, 2));
                 setDonorStats(sData);
+                setUpcomingAppointments(apptData.filter((a: any) =>
+                    (a.status === 'Booked' || a.status === 'Confirmed') &&
+                    new Date(a.scheduled_time) > new Date()
+                ));
             } catch (error: any) {
                 console.error("Dashboard fetch error:", error.message || error.details || error);
             } finally {
@@ -139,7 +146,110 @@ export default function DashboardPage() {
                         <div className="lg:col-span-2">
                             <DashboardCarousel />
                         </div>
-                        <Card className="h-auto lg:h-[300px] flex flex-col bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d]">
+                        <div className="lg:h-[300px]">
+                            {/* Upcoming Appointments Section */}
+                            <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] h-full flex flex-col">
+                                <CardContent className="p-5 flex flex-col h-full">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-base font-bold text-slate-900 dark:text-white">Lịch hẹn sắp tới</h3>
+                                        <Link href="/requests" className="text-xs font-bold text-[#6324eb hover:underline">Đặt lịch mới</Link>
+                                    </div>
+                                    <div className="flex flex-col gap-3 flex-1 overflow-auto max-h-[220px] custom-scrollbar">
+                                        {loading ? (
+                                            [1, 2].map(i => <Skeleton key={i} className="h-16 w-full rounded-xl" />)
+                                        ) : upcomingAppointments.length > 0 ? (
+                                            upcomingAppointments.map((appt) => {
+                                                const title = appt.campaign?.name || `Hiến máu khẩn cấp ${appt.blood_request?.required_blood_group}`;
+                                                // const location = appt.campaign?.location || appt.blood_request?.hospital?.address;
+                                                const time = new Date(appt.scheduled_time).toLocaleDateString('vi-VN');
+
+                                                return (
+                                                    <div key={appt.id} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                                                        <div className="flex flex-col items-center justify-center p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-700 min-w-[50px]">
+                                                            <span className="text-xs font-bold text-slate-400 uppercase">{new Date(appt.scheduled_time).toLocaleDateString('vi-VN', { month: 'short' })}</span>
+                                                            <span className="text-xl font-black text-[#6324eb]">{new Date(appt.scheduled_time).getDate()}</span>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{title}</p>
+                                                            <div className="flex items-center gap-1.5 mt-1">
+                                                                <div className="size-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                                                <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Đã xác nhận</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center py-8 text-center h-full">
+                                                <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-3 text-slate-300">
+                                                    <Hospital className="w-6 h-6" />
+                                                </div>
+                                                <p className="text-xs text-slate-400 font-medium">Bạn chưa có lịch hẹn nào</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
+                        <div className="lg:col-span-2">
+                            <div className="flex flex-col gap-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Chiến dịch hiến máu đang diễn ra</h3>
+                                    <Link href="/requests" className="text-[#6324eb] text-sm font-bold hover:underline">Xem tất cả</Link>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {loading ? (
+                                        [1, 2].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+                                    ) : campaigns.length > 0 ? (
+                                        campaigns.map(camp => (
+                                            <Link href={`/campaigns/${camp.id}`} key={camp.id}>
+                                                <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] hover:border-[#6324eb]/50 transition-all cursor-pointer group h-full">
+                                                    <CardContent className="p-4 flex flex-col h-full gap-3">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="size-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center text-[#6324eb] group-hover:bg-[#6324eb] group-hover:text-white transition-all">
+                                                                    <Award className="w-5 h-5" />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-group-hover:text-[#6324eb] transition-colors">{camp.name}</p>
+                                                                    <p className="text-xs text-slate-500 line-clamp-1">{camp.hospital?.hospital_name || "Bệnh viện tổ chức"}</p>
+                                                                </div>
+                                                            </div>
+                                                            <Badge variant="outline" className="border-indigo-100 text-indigo-600 dark:border-indigo-900 dark:text-indigo-400 text-[10px] uppercase font-bold px-2">
+                                                                Active
+                                                            </Badge>
+                                                        </div>
+
+                                                        <div className="mt-auto space-y-2">
+                                                            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                                                                <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                                                <span className="line-clamp-1">{camp.location_name || camp.hospital?.hospital_address} ({camp.hospital?.city})</span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                                                        {new Date(camp.start_time).toLocaleDateString('vi-VN')}
+                                                                    </p>
+                                                                </div>
+                                                                <p className="text-xs font-medium text-slate-500">Mục tiêu: {camp.target_units} đv</p>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            </Link>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-slate-400 py-4 col-span-full text-center">Không có chiến dịch nào đang diễn ra.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <Card className="h-fit flex flex-col bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d]">
                             <CardContent className="p-5 flex flex-col h-full">
                                 <h3 className="text-base font-bold text-slate-900 dark:text-white mb-3">Quà tặng sắp tới</h3>
                                 <div className="flex flex-col gap-2 flex-1 overflow-auto">
@@ -169,59 +279,6 @@ export default function DashboardPage() {
                                 </Link>
                             </CardContent>
                         </Card>
-                    </div>
-
-                    <div className="flex flex-col gap-4 text-left">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Chiến dịch hiến máu đang diễn ra</h3>
-                            <Link href="/campaigns" className="text-[#6324eb] text-sm font-bold hover:underline">Xem tất cả</Link>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {loading ? (
-                                [1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
-                            ) : campaigns.length > 0 ? (
-                                campaigns.map(camp => (
-                                    <Link href={`/campaigns/${camp.id}`} key={camp.id}>
-                                        <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] hover:border-[#6324eb]/50 transition-all cursor-pointer group h-full">
-                                            <CardContent className="p-4 flex flex-col h-full gap-3">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center text-[#6324eb] group-hover:bg-[#6324eb] group-hover:text-white transition-all">
-                                                            <Award className="w-5 h-5" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-group-hover:text-[#6324eb] transition-colors">{camp.name}</p>
-                                                            <p className="text-xs text-slate-500 line-clamp-1">{camp.hospital?.hospital_name || "Bệnh viện tổ chức"}</p>
-                                                        </div>
-                                                    </div>
-                                                    <Badge variant="outline" className="border-indigo-100 text-indigo-600 dark:border-indigo-900 dark:text-indigo-400 text-[10px] uppercase font-bold px-2">
-                                                        Active
-                                                    </Badge>
-                                                </div>
-
-                                                <div className="mt-auto space-y-2">
-                                                    <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-                                                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                                                        <span className="line-clamp-1">{camp.location_name || camp.hospital?.hospital_address} ({camp.hospital?.city})</span>
-                                                    </div>
-                                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                                                                {new Date(camp.start_time).toLocaleDateString('vi-VN')}
-                                                            </p>
-                                                        </div>
-                                                        <p className="text-xs font-medium text-slate-500">Mục tiêu: {camp.target_units} đv</p>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </Link>
-                                ))
-                            ) : (
-                                <p className="text-sm text-slate-400 py-4 col-span-full text-center">Không có chiến dịch nào đang diễn ra.</p>
-                            )}
-                        </div>
                     </div>
                 </div>
             </main>

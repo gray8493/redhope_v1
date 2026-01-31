@@ -49,29 +49,66 @@ export default function RequestsPage() {
     const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
     const [activeFilter, setActiveFilter] = useState("Tất cả");
     const [currentPage, setCurrentPage] = useState(1);
+    const [userAppointments, setUserAppointments] = useState<any[]>([]);
 
     const isVerified = profile?.is_verified === true;
     const itemsPerPage = 6;
 
     useEffect(() => {
-        const fetchRequests = async () => {
+        const fetchData = async () => {
             try {
-                const data = await campaignService.getRequests();
-                setRequests(data);
+                const [requestsData, campaignsData] = await Promise.all([
+                    campaignService.getRequests(),
+                    campaignService.getActive()
+                ]);
+
+                // Normalize requests
+                const normalizedRequests = requestsData.map((r: any) => ({
+                    ...r,
+                    type: 'request',
+                    title: `Cần máu ${r.required_blood_group}`,
+                    displayUnits: r.required_units
+                }));
+
+                // Normalize campaigns
+                const normalizedCampaigns = campaignsData.map((c: any) => ({
+                    ...c,
+                    type: 'campaign',
+                    required_blood_group: 'Tất cả', // Campaigns usually accept all groups
+                    urgency_level: 'Standard',
+                    title: c.name,
+                    displayUnits: c.target_units
+                }));
+
+                const combined = [...normalizedRequests, ...normalizedCampaigns].sort((a, b) => {
+                    // Requests usually take precedence if they are urgent
+                    if (a.urgency_level === 'Emergency' && b.urgency_level !== 'Emergency') return -1;
+                    if (b.urgency_level === 'Emergency' && a.urgency_level !== 'Emergency') return 1;
+                    return new Date(b.created_at || b.start_time).getTime() - new Date(a.created_at || a.start_time).getTime();
+                });
+
+                setRequests(combined);
+
+                // Fetch user appointments if logged in
+                if (profile?.id) {
+                    const appointments = await campaignService.getUserAppointments(profile.id);
+                    setUserAppointments(appointments || []);
+                }
             } catch (error: any) {
                 console.error("Error fetching requests:", error.message || error.details || error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchRequests();
-    }, []);
+        fetchData();
+    }, [profile?.id]);
 
     // Filter logic
     const filteredData = requests.filter(item => {
         if (activeFilter === "Tất cả") return true;
-        if (activeFilter === "Nhóm của tôi") return item.required_blood_group === profile?.blood_group;
-        if (activeFilter === "Khẩn cấp") return item.urgency_level === "Emergency";
+        if (activeFilter === "Nhóm của tôi") return item.required_blood_group === profile?.blood_group || item.required_blood_group === 'Tất cả';
+        if (activeFilter === "Khẩn cấp") return item.urgency_level === "Emergency" || item.urgency_level === "High" || item.urgency_level === "Urgent";
+        if (activeFilter === "Gần tôi") return item.hospital?.city === profile?.city;
         return true;
     });
 
@@ -93,7 +130,7 @@ export default function RequestsPage() {
         setCurrentPage(1);
     };
 
-    const handleRegister = async (requestId: string) => {
+    const handleRegister = async (item: any) => {
         if (!isVerified) {
             router.push("/complete-profile");
             return;
@@ -106,18 +143,36 @@ export default function RequestsPage() {
 
         setIsSubmitting(true);
         try {
-            await campaignService.registerToBloodRequest(profile.id, requestId);
-            toast.success("Đăng ký giúp đỡ thành công! Bệnh viện đã nhận được thông tin của bạn.", {
-                description: "Cảm ơn nghĩa cử cao đẹp của bạn.",
-                duration: 5000,
-            });
+            if (item.type === 'campaign') {
+                await campaignService.registerToCampaign(profile.id, item.id);
+                toast.success(`Đăng ký chiến dịch "${item.title}" thành công!`, {
+                    description: "Bệnh viện đã nhận được thông tin tham gia của bạn.",
+                });
+            } else {
+                await campaignService.registerToBloodRequest(profile.id, item.id);
+                toast.success("Đăng ký giúp đỡ khẩn cấp thành công!", {
+                    description: "Cảm ơn bạn đã sẵn sàng hỗ trợ cộng đồng.",
+                });
+            }
+
+            // Refresh user appointments
+            const appointments = await campaignService.getUserAppointments(profile.id);
+            setUserAppointments(appointments || []);
             setSelectedRequest(null);
         } catch (error: any) {
             console.error("Registration error:", error);
-            toast.error("Đã có lỗi xảy ra khi đăng ký. Vui lòng thử lại sau.");
+            toast.error(error.message || "Đã có lỗi xảy ra khi đăng ký. Vui lòng thử lại sau.");
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const isAlreadyRegistered = (item: any) => {
+        if (!item) return false;
+        return userAppointments.some(appt =>
+            (item.type === 'campaign' && appt.campaign_id === item.id) ||
+            (item.type === 'request' && appt.blood_request_id === item.id)
+        );
     };
 
     return (
@@ -154,7 +209,7 @@ export default function RequestsPage() {
 
                             {/* Filter Chips */}
                             <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-2 no-scrollbar">
-                                {["Tất cả", "Nhóm của tôi", "Khẩn cấp"].map(f => (
+                                {["Tất cả", "Nhóm của tôi", "Gần tôi", "Khẩn cấp"].map(f => (
                                     <Button
                                         key={f}
                                         onClick={() => handleFilterChange(f)}
@@ -229,16 +284,23 @@ export default function RequestsPage() {
                                                 <div className="flex flex-col flex-1 p-5">
                                                     <div className="flex justify-between items-start mb-3 gap-2">
                                                         <h3 className="text-[#120e1b] dark:text-white text-lg font-black tracking-tight leading-tight">
-                                                            Cần máu {request.required_blood_group}
+                                                            {request.title}
                                                         </h3>
                                                         <span className={`shrink-0 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${statusInfo.color}`}>
-                                                            {request.required_units} đơn vị
+                                                            {request.displayUnits} đơn vị
                                                         </span>
                                                     </div>
 
                                                     <p className="text-slate-500 dark:text-slate-400 text-xs font-medium line-clamp-3 leading-relaxed mb-4 flex-1">
-                                                        {request.description}
+                                                        {request.description || "Hỗ trợ cộng đồng bằng cách hiến máu tại sự kiện này."}
                                                     </p>
+
+                                                    {request.type === 'campaign' && (
+                                                        <div className="mb-4 flex items-center gap-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-1 rounded-md w-fit uppercase">
+                                                            <Clock className="w-3 h-3" />
+                                                            {new Date(request.start_time).toLocaleDateString('vi-VN')}
+                                                        </div>
+                                                    )}
 
                                                     {/* Divider */}
                                                     <div className="h-px w-full bg-slate-100 dark:bg-slate-800 mb-4"></div>
@@ -359,11 +421,11 @@ export default function RequestsPage() {
                                 <div className="flex gap-4 mt-4">
                                     {isVerified ? (
                                         <Button
-                                            onClick={() => handleRegister(selectedRequest.id)}
-                                            disabled={isSubmitting}
+                                            onClick={() => handleRegister(selectedRequest)}
+                                            disabled={isSubmitting || isAlreadyRegistered(selectedRequest)}
                                             className="flex-1 h-12 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
                                         >
-                                            {isSubmitting ? "Đang xử lý..." : "Đăng ký giúp đỡ"}
+                                            {isSubmitting ? "Đang xử lý..." : isAlreadyRegistered(selectedRequest) ? "Đã đăng ký tham gia" : "Đăng ký tham gia"}
                                         </Button>
                                     ) : (
                                         <Button onClick={() => router.push("/complete-profile")} className="flex-1 h-12 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm">

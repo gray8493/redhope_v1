@@ -20,7 +20,7 @@ export const campaignService = {
     async getActive(hospitalId?: string) {
         let query = supabase
             .from('campaigns')
-            .select('*, hospital:users(full_name, hospital_name), appointments(*)')
+            .select('*, hospital:users(full_name, hospital_name, city, district), appointments(*)')
             .eq('status', 'active')
             .order('start_time', { ascending: true });
 
@@ -116,7 +116,17 @@ export const campaignService = {
     },
 
     async registerToBloodRequest(userId: string, requestId: string) {
-        // 1. Tạo bản ghi đăng ký trong appointments
+        // 1. Check if already registered
+        const { data: existing } = await supabase
+            .from('appointments')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('blood_request_id', requestId)
+            .maybeSingle();
+
+        if (existing) throw new Error("Bạn đã đăng ký hỗ trợ yêu cầu này rồi.");
+
+        // 2. Tạo bản ghi đăng ký trong appointments
         const { data, error } = await supabase
             .from('appointments')
             .insert({
@@ -130,7 +140,7 @@ export const campaignService = {
 
         if (error) throw error;
 
-        // 2. Lấy thông tin yêu cầu để gửi thông báo cho bệnh viện
+        // 3. Lấy thông tin yêu cầu để gửi thông báo cho bệnh viện
         const { data: request } = await supabase
             .from('blood_requests')
             .select('hospital_id, required_blood_group')
@@ -138,15 +148,12 @@ export const campaignService = {
             .single();
 
         if (request) {
-            // Lấy tên donor
             const { data: donor } = await supabase
                 .from('users')
                 .select('full_name')
                 .eq('id', userId)
                 .single();
 
-            // Gửi thông báo cho bệnh viện
-            console.log('Attempting to notify hospital:', request.hospital_id, 'for donor:', donor?.full_name);
             try {
                 await notificationService.createNotification({
                     user_id: request.hospital_id,
@@ -156,8 +163,62 @@ export const campaignService = {
                     action_url: `/hospital-requests`
                 });
             } catch (notifError: any) {
-                console.error('Failed to send notification to hospital but appointment was created:', notifError);
-                // Không throw lại lỗi để tránh làm hỏng luồng đăng ký chính
+                console.error('Failed to send notification to hospital:', notifError);
+            }
+        }
+
+        return data;
+    },
+
+    async registerToCampaign(userId: string, campaignId: string) {
+        // 1. Check if already registered
+        const { data: existing } = await supabase
+            .from('appointments')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('campaign_id', campaignId)
+            .maybeSingle();
+
+        if (existing) throw new Error("Bạn đã đăng ký tham gia chiến dịch này rồi.");
+
+        // 2. Tạo bản ghi đăng ký
+        const { data, error } = await supabase
+            .from('appointments')
+            .insert({
+                user_id: userId,
+                campaign_id: campaignId,
+                status: 'Booked',
+                scheduled_time: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // 3. Thông báo cho bệnh viện
+        const { data: campaign } = await supabase
+            .from('campaigns')
+            .select('hospital_id, name')
+            .eq('id', campaignId)
+            .single();
+
+        if (campaign) {
+            const { data: donor } = await supabase
+                .from('users')
+                .select('full_name')
+                .eq('id', userId)
+                .single();
+
+            try {
+                await notificationService.createNotification({
+                    user_id: campaign.hospital_id,
+                    title: '📅 Đăng ký chiến dịch mới',
+                    content: `Người hiến máu ${donor?.full_name || 'ẩn danh'} đã đăng ký tham gia chiến dịch "${campaign.name}".`,
+                    action_type: 'view_registrations',
+                    action_url: `/hospital-campaign/${campaignId}`
+                });
+            } catch (notifError: any) {
+                console.error('Failed to send notification to hospital:', notifError);
             }
         }
 
@@ -193,6 +254,33 @@ export const campaignService = {
             .select('*, appointments(*)')
             .eq('hospital_id', hospitalId)
             .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+    },
+
+    async getUserAppointments(userId: string) {
+        const { data, error } = await supabase
+            .from('appointments')
+            .select(`
+                *,
+                campaign:campaigns(
+                    id,
+                    name,
+                    start_time,
+                    end_time,
+                    location,
+                    hospital:users(hospital_name, address)
+                ),
+                blood_request:blood_requests(
+                    id,
+                    created_at,
+                    required_blood_group,
+                    hospital:users(hospital_name, address, district, city)
+                )
+            `)
+            .eq('user_id', userId)
+            .order('scheduled_time', { ascending: false });
 
         if (error) throw error;
         return data || [];

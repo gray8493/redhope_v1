@@ -135,14 +135,21 @@ export async function createNotification(data: CreateNotificationData): Promise<
 
         console.log('--- NOTIFICATION DEBUG: Input Data ---', insertData);
 
+        // Sử dụng RPC (Stored Procedure) để bypass RLS
         const { data: notification, error } = await supabase
-            .from('notifications')
-            .insert(insertData)
-            .select()
-            .single();
+            .rpc('create_notification_secure', {
+                p_user_id: insertData.user_id,
+                p_title: insertData.title,
+                p_content: insertData.content,
+                p_action_type: insertData.action_type || null,
+                p_action_url: insertData.action_url || null,
+                p_metadata: insertData.metadata || null
+            });
 
         if (error) {
-            console.error('--- SUPABASE INSERT ERROR ---', error);
+            console.error('--- SUPABASE NOTIFICATION RPC FAILED ---');
+            console.error('Error Code:', error.code);
+            console.error('Error Message:', error.message);
             throw error;
         }
         return notification;

@@ -9,14 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import MiniFooter from "@/components/shared/MiniFooter";
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
 import { toast } from "sonner";
-import {
-    TrendingUp,
-    Search,
-    UserPlus,
-    Users,
-    Droplet,
-    Zap
-} from "lucide-react";
+import { TrendingUp, Search, UserPlus, Users, Droplet, Zap, Bell } from "lucide-react";
+import { RecentNotifications } from "@/components/shared/RecentNotifications";
 
 export default function HospitalDashboard() {
     const { user } = useAuth();
@@ -217,8 +211,8 @@ export default function HospitalDashboard() {
                                                     </td>
                                                     <td className="px-6 py-5 text-center">
                                                         <span className={`px-3 py-1 text-[11px] font-black rounded-full border ${camp.status === 'active'
-                                                                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50'
-                                                                : 'bg-slate-50 dark:bg-slate-900/20 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800/50'
+                                                            ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50'
+                                                            : 'bg-slate-50 dark:bg-slate-900/20 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800/50'
                                                             }`}>
                                                             {camp.status === 'active' ? 'Đang hoạt động' : camp.status === 'completed' ? 'Đã kết thúc' : 'Đã hủy'}
                                                         </span>
@@ -335,6 +329,11 @@ export default function HospitalDashboard() {
                         {/* Animated background shapes */}
                         <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
                         <div className="absolute -top-10 -left-10 w-40 h-40 bg-indigo-400/20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+                    </div>
+
+                    {/* Recent Notifications for Hospital */}
+                    <div className="h-[400px]">
+                        <RecentNotifications userId={user?.id || ''} role="hospital" limit={5} />
                     </div>
                 </div>
             </div>
