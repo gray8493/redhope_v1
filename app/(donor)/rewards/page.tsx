@@ -274,7 +274,7 @@ export default function RewardsPage() {
                                             <TabsTrigger
                                                 key={tab.key}
                                                 value={tab.key}
-                                                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-[#6324eb] data-[state=active]:text-[#120e1b] dark:data-[state=active]:text-white rounded-none border-b-[3px] border-transparent pb-[13px] pt-4 px-2 text-[#654d99] dark:text-[#a594c9] text-sm font-bold leading-normal tracking-[0.015em] transition-all"
+                                                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-[#6324eb] data-[state=active]:text-[#120e1b] dark:data-[state=active]:text-white rounded-none border-b-[3px] border-transparent pb-[13px] pt-4 px-2 text-[#654d99] dark:text-[#a594c9] text-sm font-bold leading-normal tracking-[0.015em] transition-all appearance-none select-none"
                                             >
                                                 {tab.label}
                                             </TabsTrigger>

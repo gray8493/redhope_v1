@@ -14,6 +14,18 @@ export const userService = {
         return (data || []) as User[];
     },
 
+    // Get only donors
+    async getDonors(): Promise<User[]> {
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('role', 'donor')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return (data || []) as User[];
+    },
+
     // Get donor count
     async getCount(): Promise<number> {
         const { count, error } = await supabase
@@ -165,15 +177,29 @@ export const userService = {
     // Search users
     async search(query: string): Promise<User[]> {
         if (!query) return [];
-        // Sanitize query to prevent injection and filter breakage
-        // Remove: % ( ) . * , \
         const sanitizedQuery = query.replace(/[%\(\)\.\,\*\\\\]/g, '').trim();
-
         if (!sanitizedQuery) return [];
 
         const { data, error } = await supabase
             .from('users')
             .select('*')
+            .or(`full_name.ilike.%${sanitizedQuery}%,email.ilike.%${sanitizedQuery}%`)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+    },
+
+    // Search only donors
+    async searchDonors(query: string): Promise<User[]> {
+        if (!query) return [];
+        const sanitizedQuery = query.replace(/[%\(\)\.\,\*\\\\]/g, '').trim();
+        if (!sanitizedQuery) return [];
+
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('role', 'donor')
             .or(`full_name.ilike.%${sanitizedQuery}%,email.ilike.%${sanitizedQuery}%`)
             .order('created_at', { ascending: false });
 

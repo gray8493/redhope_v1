@@ -42,11 +42,11 @@ export default function DonorManagementPage() {
         setLoading(true);
         setErrorMsg(null);
         try {
-            const data = await userService.getAll();
-            setDonors(data.filter(u => u.role === 'donor'));
+            const data = await userService.getDonors();
+            setDonors(data);
         } catch (error: any) {
             console.error('Failed to load donors:', error);
-            setErrorMsg('Không thể tải danh sách người dùng. ' + (error.message || ''));
+            setErrorMsg('Không thể tải danh sách người hiến. ' + (error.message || ''));
         } finally {
             setLoading(false);
         }
@@ -59,9 +59,9 @@ export default function DonorManagementPage() {
         setErrorMsg(null);
         try {
             const data = searchTerm.trim()
-                ? await userService.search(searchTerm)
-                : await userService.getAll();
-            setDonors(data.filter(u => u.role === 'donor'));
+                ? await userService.searchDonors(searchTerm)
+                : await userService.getDonors();
+            setDonors(data);
         } catch (error: any) {
             console.error('Search failed:', error);
             setErrorMsg('Tìm kiếm thất bại. ' + (error.message || ''));
@@ -211,7 +211,7 @@ export default function DonorManagementPage() {
                         <span className="material-symbols-outlined">group</span>
                     </div>
                     <div>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Tổng số đăng ký</p>
+                        <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Tổng số người hiến</p>
                         <p className="text-xl font-bold text-[#120e1b]">{totalDonors}</p>
                     </div>
                 </div>

@@ -34,7 +34,7 @@ export default function LoginPage() {
           .from('users')
           .select('role')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
 
         // Ưu tiên lấy role từ metadata (vì nó có sẵn ngay sau khi signIn)
         // Sau đó mới lấy từ DB (có thể bị chặn bởi RLS lúc mới login)

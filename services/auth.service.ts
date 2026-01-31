@@ -13,7 +13,7 @@ export const authService = {
             .from('users') // Changed from profiles to users
             .select('*')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
 
         return {
             ...user,
