@@ -305,5 +305,29 @@ export const campaignService = {
 
         if (error) throw error;
         return data || [];
+    },
+
+    async sendAnnouncement(campaignId: string, message: string) {
+        try {
+            const response = await fetch('/api/campaign/send-announcement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ campaignId, message }),
+            });
+
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Failed to send announcement');
+                return result;
+            } else {
+                const text = await response.text();
+                console.error('[CampaignService] Non-JSON response:', text);
+                throw new Error(`Server error: Received HTML instead of JSON. Status: ${response.status}`);
+            }
+        } catch (error: any) {
+            console.error('[CampaignService] sendAnnouncement error:', error);
+            throw error;
+        }
     }
 };
