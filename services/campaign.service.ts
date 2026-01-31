@@ -3,18 +3,39 @@ import { notificationService } from './notification.service';
 
 export const campaignService = {
     async getAll(hospitalId?: string) {
-        let query = supabase
-            .from('campaigns')
-            .select('*, hospital:users(full_name, hospital_name), appointments(*)')
-            .order('start_time', { ascending: false });
+        try {
+            let query = supabase
+                .from('campaigns')
+                .select('*, hospital:users(full_name, hospital_name), appointments(*)')
+                .order('start_time', { ascending: false });
 
-        if (hospitalId) {
-            query = query.eq('hospital_id', hospitalId);
+            if (hospitalId) {
+                query = query.eq('hospital_id', hospitalId);
+            }
+
+            const { data, error } = await query;
+            if (error) throw error;
+            return data || [];
+        } catch (error: any) {
+            console.error('[CampaignService] Error in getAll:', error.message || error.details || error);
+            throw error;
         }
+    },
 
-        const { data, error } = await query;
-        if (error) throw error;
-        return data || [];
+    async getById(id: string) {
+        try {
+            const { data, error } = await supabase
+                .from('campaigns')
+                .select('*, hospital:users(full_name, hospital_name, city, district), appointments(*)')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error: any) {
+            console.error('[CampaignService] Error in getById:', error.message || error.details || error);
+            throw error;
+        }
     },
 
     async getActive(hospitalId?: string) {
@@ -269,7 +290,7 @@ export const campaignService = {
                     name,
                     start_time,
                     end_time,
-                    location,
+                    location_name,
                     hospital:users(hospital_name, address)
                 ),
                 blood_request:blood_requests(

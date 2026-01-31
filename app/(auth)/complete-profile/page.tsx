@@ -26,7 +26,7 @@ export default function DonorProfileStep1() {
 
 function DonorProfileContent() {
     const router = useRouter();
-    const { user, refreshUser } = useAuth();
+    const { user, loading, refreshUser } = useAuth();
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
 
@@ -42,6 +42,12 @@ function DonorProfileContent() {
     });
 
     useEffect(() => {
+        if (!loading && !user) {
+            router.push("/login?redirect=/complete-profile");
+        }
+    }, [user, loading, router]);
+
+    useEffect(() => {
         if (user) {
             setFormData(prev => ({
                 ...prev,
@@ -50,6 +56,19 @@ function DonorProfileContent() {
             }));
         }
     }, [user]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#f6f6f8] dark:bg-[#101622]">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-10 h-10 text-[#2b6cee] animate-spin" />
+                    <p className="text-sm font-medium text-gray-500">Đang tải thông tin...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -93,9 +112,11 @@ function DonorProfileContent() {
                 city: formData.city || null,
                 district: formData.district || null,
                 address: formData.address || null,
-                email: user?.email,
+                email: user?.email || user?.user_metadata?.email || "",
                 role: role as any
             };
+
+            console.log("Submitting profile data:", cleanData);
 
             if (!user?.id) {
                 console.error("No userId found for submission.");
@@ -114,10 +135,16 @@ function DonorProfileContent() {
             router.push("/complete-profile/verification");
         } catch (err: any) {
             // Log full error internally for diagnostics
-            console.error("Update failed detailed:", err);
+            console.error("Update failed detailed:", {
+                message: err.message,
+                details: err.details,
+                hint: err.hint,
+                code: err.code,
+                error: err
+            });
 
             // Return a user-safe message
-            setError("Lỗi: Có lỗi xảy ra. Vui lòng thử lại sau.");
+            setError(err.message || "Lỗi: Có lỗi xảy ra. Vui lòng thử lại sau.");
         } finally {
             setSubmitting(false);
         }

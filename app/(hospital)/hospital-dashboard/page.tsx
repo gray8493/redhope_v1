@@ -61,10 +61,10 @@ export default function HospitalDashboard() {
     const filteredCampaigns = campaigns.filter(c => {
         const matchesTab = activeTab === "active"
             ? c.status === 'active'
-            : c.status === 'completed' || c.status === 'cancelled';
+            : c.status === 'completed' || c.status === 'ended' || c.status === 'cancelled';
 
         const matchesSearch = c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.location?.toLowerCase().includes(searchQuery.toLowerCase());
+            c.location_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
         return matchesTab && matchesSearch;
     });
@@ -194,7 +194,7 @@ export default function HospitalDashboard() {
                                         filteredCampaigns.map((camp) => {
                                             const registered = camp.appointments?.length || 0;
                                             const completed = camp.appointments?.filter((a: any) => a.status === 'Completed').length || 0;
-                                            const progress = camp.quantity_needed > 0 ? (completed / camp.quantity_needed) * 100 : 0;
+                                            const progress = camp.target_units > 0 ? (completed / camp.target_units) * 100 : 0;
 
                                             return (
                                                 <tr
@@ -204,7 +204,7 @@ export default function HospitalDashboard() {
                                                 >
                                                     <td className="px-6 py-5">
                                                         <p className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-[#6366f1] transition-colors">{camp.name}</p>
-                                                        <p className="text-[11px] text-slate-500 font-medium">{camp.location}</p>
+                                                        <p className="text-[11px] text-slate-500 font-medium">{camp.location_name}</p>
                                                     </td>
                                                     <td className="px-6 py-5 text-center">
                                                         <span className="text-sm font-black text-slate-700 dark:text-slate-300">{completed} / {registered}</span>
@@ -214,13 +214,13 @@ export default function HospitalDashboard() {
                                                             ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50'
                                                             : 'bg-slate-50 dark:bg-slate-900/20 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800/50'
                                                             }`}>
-                                                            {camp.status === 'active' ? 'Đang hoạt động' : camp.status === 'completed' ? 'Đã kết thúc' : 'Đã hủy'}
+                                                            {camp.status === 'active' ? 'Đang hoạt động' : (camp.status === 'completed' || camp.status === 'ended') ? 'Đã kết thúc' : 'Đã hủy'}
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-5 text-right">
                                                         <div className="flex flex-col items-end gap-1.5">
                                                             <span className="text-[12px] font-black text-slate-900 dark:text-white">
-                                                                {completed} / {camp.quantity_needed} <span className="text-[10px] text-slate-400">Đv</span>
+                                                                {completed} / {camp.target_units} <span className="text-[10px] text-slate-400">Đv</span>
                                                             </span>
                                                             <div className="w-24 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
                                                                 <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" style={{ width: `${Math.min(progress, 100)}%` }}></div>

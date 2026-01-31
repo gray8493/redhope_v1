@@ -42,20 +42,29 @@ import { toast } from "sonner";
 
 export default function RequestsPage() {
     const router = useRouter();
-    const { profile } = useAuth();
+    const { user, profile, loading } = useAuth();
     const [requests, setRequests] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [requestsLoading, setRequestsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
     const [activeFilter, setActiveFilter] = useState("Tất cả");
     const [currentPage, setCurrentPage] = useState(1);
     const [userAppointments, setUserAppointments] = useState<any[]>([]);
 
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push("/login?redirect=/requests");
+        }
+    }, [user, loading, router]);
+
     const isVerified = profile?.is_verified === true;
     const itemsPerPage = 6;
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!user?.id && !loading) return;
+            if (loading) return;
+
             try {
                 const [requestsData, campaignsData] = await Promise.all([
                     campaignService.getRequests(),
@@ -97,11 +106,24 @@ export default function RequestsPage() {
             } catch (error: any) {
                 console.error("Error fetching requests:", error.message || error.details || error);
             } finally {
-                setLoading(false);
+                setRequestsLoading(false);
             }
         };
         fetchData();
-    }, [profile?.id]);
+    }, [profile?.id, user?.id, loading]);
+
+    if (loading) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-[#f6f6f8] dark:bg-[#161121]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="size-12 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin"></div>
+                    <p className="text-sm font-bold text-slate-500">Đang chuẩn bị dữ liệu...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) return null;
 
     // Filter logic
     const filteredData = requests.filter(item => {
@@ -227,7 +249,7 @@ export default function RequestsPage() {
 
                             {/* Grid of Requests */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {loading ? (
+                                {requestsLoading ? (
                                     [1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-80 rounded-2xl" />)
                                 ) : paginatedData.length > 0 ? (
                                     paginatedData.map((request) => {

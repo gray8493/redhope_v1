@@ -57,8 +57,14 @@ export default function CampaignManagementPage() {
                 const data = await campaignService.getAll(user.id);
                 setCampaigns(data || []);
             } catch (error: any) {
-                console.error('Error fetching campaigns:', error);
-                toast.error('Không thể tải chiến dịch');
+                console.error('Error fetching campaigns detailed:', {
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code,
+                    error: error
+                });
+                toast.error('Không thể tải chiến dịch: ' + (error.message || 'Lỗi không xác định'));
             } finally {
                 setLoading(false);
             }
@@ -77,7 +83,7 @@ export default function CampaignManagementPage() {
 
     // Filter campaigns
     const activeCampaigns = campaigns.filter(c => c.status === 'active');
-    const historyCampaigns = campaigns.filter(c => c.status === 'completed' || c.status === 'cancelled');
+    const historyCampaigns = campaigns.filter(c => c.status === 'completed' || c.status === 'ended' || c.status === 'cancelled');
     const draftCampaigns = campaigns.filter(c => c.status === 'draft');
 
     const getCurrentList = () => {
@@ -91,7 +97,7 @@ export default function CampaignManagementPage() {
 
     const filteredCampaigns = getCurrentList().filter(c =>
         c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.location?.toLowerCase().includes(searchQuery.toLowerCase())
+        c.location_name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Pagination
@@ -126,7 +132,7 @@ export default function CampaignManagementPage() {
 
     const underTargetCount = activeCampaigns.filter(c => {
         const completed = c.appointments?.filter((a: any) => a.status === 'Completed').length || 0;
-        return completed < (c.quantity_needed || 0);
+        return completed < (c.target_units || 0);
     }).length;
 
     return (
@@ -294,7 +300,7 @@ export default function CampaignManagementPage() {
                         {paginatedCampaigns.map(campaign => {
                             const registered = campaign.appointments?.length || 0;
                             const completed = campaign.appointments?.filter((a: any) => a.status === 'Completed').length || 0;
-                            const progress = campaign.quantity_needed > 0 ? (completed / campaign.quantity_needed) * 100 : 0;
+                            const progress = campaign.target_units > 0 ? (completed / campaign.target_units) * 100 : 0;
 
                             return (
                                 <Link
@@ -306,10 +312,10 @@ export default function CampaignManagementPage() {
                                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600"></div>
                                         <div className="absolute top-3 right-3">
                                             <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm ${campaign.status === 'active' ? 'bg-emerald-500 text-white' :
-                                                campaign.status === 'completed' ? 'bg-slate-500 text-white' :
+                                                (campaign.status === 'completed' || campaign.status === 'ended') ? 'bg-slate-500 text-white' :
                                                     'bg-amber-500 text-white'
                                                 }`}>
-                                                {campaign.status === 'active' ? 'Đang hoạt động' : campaign.status === 'completed' ? 'Đã kết thúc' : 'Bản nháp'}
+                                                {campaign.status === 'active' ? 'Đang hoạt động' : (campaign.status === 'completed' || campaign.status === 'ended') ? 'Đã kết thúc' : 'Bản nháp'}
                                             </span>
                                         </div>
                                     </div>
@@ -324,13 +330,13 @@ export default function CampaignManagementPage() {
 
                                         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
                                             <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                                            {campaign.location}
+                                            {campaign.location_name}
                                         </div>
 
                                         <div className="mb-3">
                                             <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
                                                 <span>Đã thu: {Math.round(progress)}%</span>
-                                                <span>Mục tiêu: {campaign.quantity_needed}</span>
+                                                <span>Mục tiêu: {campaign.target_units}</span>
                                             </div>
                                             <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                                 <div

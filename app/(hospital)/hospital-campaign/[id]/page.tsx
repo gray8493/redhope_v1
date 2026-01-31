@@ -40,12 +40,13 @@ export default function CampaignDetailsPage() {
         if (!campaignId) return;
 
         const fetchData = async () => {
+            if (!user?.id) return;
+
             try {
                 setLoading(true);
 
                 // Fetch campaign details
-                const campaignData = await campaignService.getAll(user?.id);
-                const foundCampaign = campaignData?.find((c: any) => c.id === campaignId);
+                const foundCampaign = await campaignService.getById(campaignId);
 
                 if (!foundCampaign) {
                     toast.error('Không tìm thấy chiến dịch');
@@ -60,8 +61,14 @@ export default function CampaignDetailsPage() {
                 setRegistrations(regs || []);
 
             } catch (error: any) {
-                console.error('Error fetching campaign:', error);
-                toast.error('Không thể tải thông tin chiến dịch');
+                console.error('Error fetching campaign detailed:', {
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code,
+                    error: error
+                });
+                toast.error('Không thể tải thông tin chiến dịch: ' + (error.message || 'Lỗi không xác định'));
             } finally {
                 setLoading(false);
             }
@@ -90,14 +97,18 @@ export default function CampaignDetailsPage() {
     const totalRegistered = registrations.length;
     const totalCompleted = registrations.filter(r => r.status === 'Completed').length;
     const totalCancelled = registrations.filter(r => r.status === 'Cancelled').length;
-    const progress = campaign.quantity_needed > 0
-        ? (totalCompleted / campaign.quantity_needed) * 100
+    const progress = campaign.target_units > 0
+        ? (totalCompleted / campaign.target_units) * 100
         : 0;
 
     // Filter registrations
     const filteredRegistrations = registrations.filter(r => {
-        const matchesSearch = r.user?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            r.user?.email?.toLowerCase().includes(searchQuery.toLowerCase());
+        const fullName = r.user?.full_name || "";
+        const email = r.user?.email || "";
+        const query = searchQuery.toLowerCase();
+
+        const matchesSearch = fullName.toLowerCase().includes(query) ||
+            email.toLowerCase().includes(query);
         const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
@@ -143,7 +154,7 @@ export default function CampaignDetailsPage() {
                         <div className="flex items-center gap-4 mt-2">
                             <span className="flex items-center gap-1.5 text-sm text-slate-500">
                                 <MapPin className="w-4 h-4" />
-                                {campaign.location}
+                                {campaign.location_name}
                             </span>
                             <span className="flex items-center gap-1.5 text-sm text-slate-500">
                                 <Calendar className="w-4 h-4" />
@@ -153,8 +164,8 @@ export default function CampaignDetailsPage() {
                     </div>
                 </div>
                 <span className={`px-4 py-2 rounded-full text-sm font-bold ${campaign.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                        campaign.status === 'completed' ? 'bg-slate-100 text-slate-700' :
-                            'bg-amber-100 text-amber-700'
+                    campaign.status === 'completed' ? 'bg-slate-100 text-slate-700' :
+                        'bg-amber-100 text-amber-700'
                     }`}>
                     {campaign.status === 'active' ? 'Đang hoạt động' :
                         campaign.status === 'completed' ? 'Đã kết thúc' : 'Đã hủy'}
@@ -252,7 +263,7 @@ export default function CampaignDetailsPage() {
                             <div>
                                 <label className="text-sm font-medium text-slate-500">Số lượng cần</label>
                                 <p className="text-slate-900 dark:text-white mt-1 font-bold">
-                                    {campaign.quantity_needed} đơn vị
+                                    {campaign.target_units} đơn vị
                                 </p>
                             </div>
                         </div>
@@ -325,8 +336,8 @@ export default function CampaignDetailsPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2 py-1 text-xs font-bold rounded ${reg.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
-                                                        reg.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                                                            'bg-amber-100 text-amber-700'
+                                                    reg.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                                                        'bg-amber-100 text-amber-700'
                                                     }`}>
                                                     {reg.status === 'Completed' ? 'Hoàn thành' :
                                                         reg.status === 'Cancelled' ? 'Đã hủy' : 'Đã đặt'}
