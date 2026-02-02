@@ -26,7 +26,8 @@ import {
     X,
     Clock,
     Check,
-    CalendarDays
+    CalendarDays,
+    Loader2
 } from "lucide-react";
 import { format } from 'date-fns';
 import { vi } from "date-fns/locale";
@@ -657,6 +658,13 @@ export default function CampaignDetailsPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         <button
+                            onClick={() => setIsDialogOpen(true)}
+                            className="flex items-center gap-2.5 px-5 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-black rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all active:scale-95 uppercase tracking-wider"
+                        >
+                            <Megaphone className="w-4 h-4" />
+                            Gửi Email Thông Báo
+                        </button>
+                        <button
                             onClick={openEditModal}
                             className="p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
                         >
@@ -1265,6 +1273,79 @@ export default function CampaignDetailsPage() {
                     </div>
                 </div>
             )}
+
+            {/* Send Announcement Dialog */}
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="sm:max-w-[500px] rounded-3xl border-slate-200 dark:border-slate-800 p-0 overflow-hidden bg-white dark:bg-slate-900">
+                    <DialogHeader className="p-8 pb-0 space-y-4">
+                        <div className="size-14 bg-indigo-50 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                            <Megaphone className="w-7 h-7" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Gửi Thông Báo Chiến Dịch</DialogTitle>
+                            <DialogDescription className="text-sm font-medium text-slate-500 mt-1">
+                                Nội dung này sẽ được gửi qua Email đến tất cả {registrations.length} người hiến máu trong danh sách.
+                            </DialogDescription>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="p-8 py-6">
+                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 mb-6 border border-slate-100 dark:border-slate-700/50">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Tới người hiến máu</p>
+                            <div className="flex -space-x-2">
+                                {registrations.slice(0, 5).map((reg, i) => (
+                                    <div key={i} className={`size-8 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-[10px] font-bold ${getAvatarColor(reg.user?.full_name)}`}>
+                                        {reg.user?.full_name?.charAt(0) || 'U'}
+                                    </div>
+                                ))}
+                                {registrations.length > 5 && (
+                                    <div className="size-8 rounded-full border-2 border-white dark:border-slate-800 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                        +{registrations.length - 5}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Nội dung thông điệp</label>
+                            <textarea
+                                value={announcementMsg}
+                                onChange={(e) => setAnnouncementMsg(e.target.value)}
+                                placeholder="Ví dụ: Cảm ơn các bạn đã đăng ký! Chiến dịch sẽ diễn ra vào lúc 8:00 sáng mai tại sảnh chính bệnh viện..."
+                                className="w-full h-40 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/5 text-sm font-medium transition-all outline-none text-slate-900 dark:text-white resize-none"
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter className="p-8 pt-0 flex-row gap-3">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setIsDialogOpen(false)}
+                            className="flex-1 h-12 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                        >
+                            HỦY BỎ
+                        </Button>
+                        <Button
+                            onClick={handleSendAnnouncement}
+                            disabled={isSending || !announcementMsg.trim()}
+                            className="flex-[2] h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 disabled:opacity-50"
+                        >
+                            {isSending ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ĐANG GỬI...
+                                </>
+                            ) : (
+                                <>
+                                    <Megaphone className="w-4 h-4 mr-2" />
+                                    GỬI MAIL NGAY
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </main>
     );
 }
