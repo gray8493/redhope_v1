@@ -7,17 +7,27 @@ import { format, parse } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { addCampaign, getCampaignById, updateCampaign, Campaign } from "@/app/utils/campaignStorage"; // Keep for types if needed, or remove later
 import { campaignService } from "@/services/campaign.service";
 import { useAuth } from "@/context/AuthContext";
 import { LocationSelector } from "@/components/shared/LocationSelector";
+import { cn } from "@/lib/utils";
 
 import {
     Sparkles,
     Zap,
     AlertTriangle,
     CheckCircle,
-    Info
+    Info,
+    Clock,
+    CalendarDays
 } from "lucide-react";
 
 // Tải ReactQuill phía client
@@ -26,6 +36,63 @@ const ReactQuill = dynamic(() => import("react-quill-new"), {
     loading: () => <div className="h-32 bg-slate-100 animate-pulse rounded-3xl" />
 });
 import "react-quill-new/dist/quill.snow.css";
+
+// Manual Time Input Component (Compact)
+const TimeInput = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => {
+    const parts = (value || "08:00").split(':');
+    const [h, setH] = useState(parts[0] || "08");
+    const [m, setM] = useState(parts[1] || "00");
+
+    useEffect(() => {
+        const p = (value || "08:00").split(':');
+        setH(p[0] || "08");
+        setM(p[1] || "00");
+    }, [value]);
+
+    const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+        if (val !== "" && parseInt(val) > 23) return;
+        setH(val);
+        if (val.length === 2) onChange(`${val}:${m || '00'}`);
+    };
+
+    const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+        if (val !== "" && parseInt(val) > 59) return;
+        setM(val);
+        if (val.length === 2) onChange(`${h || '00'}:${val}`);
+    };
+
+    const handleBlur = () => {
+        const finalH = h.padStart(2, '0');
+        const finalM = m.padStart(2, '0');
+        setH(finalH);
+        setM(finalM);
+        onChange(`${finalH}:${finalM}`);
+    };
+
+    return (
+        <div className="flex items-center justify-center gap-1.5 h-10 w-24 rounded-2xl border border-slate-300 bg-white focus-within:border-[#6D28D9] focus-within:ring-2 focus-within:ring-[#6D28D9]/5 transition-all outline-none">
+            <input
+                type="text"
+                maxLength={2}
+                value={h}
+                onChange={handleHourChange}
+                onBlur={handleBlur}
+                className="w-7 bg-transparent text-sm font-bold text-center outline-none text-slate-900"
+            />
+            <span className="text-slate-300 font-bold text-xs opacity-50">:</span>
+            <input
+                type="text"
+                maxLength={2}
+                value={m}
+                onChange={handleMinuteChange}
+                onBlur={handleBlur}
+                className="w-7 bg-transparent text-sm font-bold text-center outline-none text-slate-900"
+            />
+        </div>
+    );
+};
 
 // --- Dữ liệu Mẫu (Templates) ---
 const TEMPLATES = [
@@ -220,7 +287,7 @@ export default function CreateRequestPage() {
                 end_time: endDateTime.toISOString(),
                 target_units: pTargetAmount,
                 status: isDraft ? "draft" : "active",
-                target_blood_group: selectedBloodTypes.length === 1 ? selectedBloodTypes[0] : null // Mới: Gửi nhóm máu mục tiêu
+                target_blood_group: selectedBloodTypes // Gửi toàn bộ mảng nhóm máu đã chọn
             };
 
             // Sync with local storage for demo purposes
@@ -603,19 +670,15 @@ export default function CreateRequestPage() {
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-slate-700 text-[13px] font-bold ml-4">Thời gian tổ chức</label>
-                                        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                                            <input
-                                                type="time"
+                                        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-2xl w-fit border border-slate-100 ml-4">
+                                            <TimeInput
                                                 value={startTime}
-                                                onChange={(e) => setStartTime(e.target.value)}
-                                                className="rounded-full h-12 text-sm border border-slate-300/80 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-5 outline-none text-center shadow-sm"
+                                                onChange={setStartTime}
                                             />
-                                            <span className="text-slate-300 text-[11px] font-black italic px-1 uppercase">đến</span>
-                                            <input
-                                                type="time"
+                                            <span className="text-slate-300 font-bold opacity-30 select-none px-1">~</span>
+                                            <TimeInput
                                                 value={endTime}
-                                                onChange={(e) => setEndTime(e.target.value)}
-                                                className="rounded-full h-12 text-sm border border-slate-300/80 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-5 outline-none text-center shadow-sm"
+                                                onChange={setEndTime}
                                             />
                                         </div>
                                     </div>

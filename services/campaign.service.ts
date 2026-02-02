@@ -329,5 +329,41 @@ export const campaignService = {
             console.error('[CampaignService] sendAnnouncement error:', error);
             throw error;
         }
+    },
+
+    // Update registration status (Booked -> Completed, Deferred, Cancelled)
+    async updateRegistrationStatus(registrationId: string, status: string) {
+        try {
+            const { data, error } = await supabase
+                .from('appointments')
+                .update({ status })
+                .eq('id', registrationId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error: any) {
+            console.error('[CampaignService] Error in updateRegistrationStatus:', error.message || error);
+            throw error;
+        }
+    },
+
+    // Update registration details (blood_type, blood_volume, etc.)
+    async updateRegistration(registrationId: string, updateData: { blood_type?: string; blood_volume?: number }) {
+        try {
+            const { data, error } = await supabase
+                .from('appointments')
+                .update(updateData)
+                .eq('id', registrationId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error: any) {
+            console.error('[CampaignService] Error in updateRegistration:', error.message || error);
+            throw error;
+        }
     }
 };

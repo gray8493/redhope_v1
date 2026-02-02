@@ -9,8 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import MiniFooter from "@/components/shared/MiniFooter";
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
 import { toast } from "sonner";
-import { TrendingUp, Search, UserPlus, Users, Droplet, Zap, Bell } from "lucide-react";
-import { RecentNotifications } from "@/components/shared/RecentNotifications";
+import { TrendingUp, Search, UserPlus, Users, Droplet, Zap } from "lucide-react";
 
 export default function HospitalDashboard() {
     const { user } = useAuth();
@@ -331,10 +330,7 @@ export default function HospitalDashboard() {
                         <div className="absolute -top-10 -left-10 w-40 h-40 bg-indigo-400/20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
                     </div>
 
-                    {/* Recent Notifications for Hospital */}
-                    <div className="h-[400px]">
-                        <RecentNotifications userId={user?.id || ''} role="hospital" limit={5} />
-                    </div>
+
                 </div>
             </div>
 

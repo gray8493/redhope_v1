@@ -40,6 +40,44 @@ import { campaignService } from "@/services/campaign.service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
+// Helper to parse blood groups from various formats (Array, CSV string, JSON string)
+const parseBloodGroups = (data: any): string[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (typeof data === 'string') {
+        const trimmed = data.trim();
+        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) return parsed;
+            } catch (e) {
+                // fall back to CSV if parse fails
+            }
+        }
+        return trimmed.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    return [];
+};
+
+// Utility function to strip HTML tags and decode HTML entities
+const stripHtml = (html: string): string => {
+    if (!html) return '';
+    // Remove HTML tags
+    let text = html.replace(/<[^>]*>/g, '');
+    // Decode HTML entities
+    text = text
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'");
+    // Clean up extra spaces
+    text = text.replace(/\s+/g, ' ').trim();
+    return text;
+};
+
 export default function RequestsPage() {
     const router = useRouter();
     const { user, profile, loading } = useAuth();
@@ -76,18 +114,28 @@ export default function RequestsPage() {
                     ...r,
                     type: 'request',
                     title: `Cần máu ${r.required_blood_group}`,
-                    displayUnits: r.required_units
+                    displayUnits: r.required_units,
+                    description: stripHtml(r.description || "")
                 }));
 
                 // Normalize campaigns
-                const normalizedCampaigns = campaignsData.map((c: any) => ({
-                    ...c,
-                    type: 'campaign',
-                    required_blood_group: 'Tất cả', // Campaigns usually accept all groups
-                    urgency_level: 'Standard',
-                    title: c.name,
-                    displayUnits: c.target_units
-                }));
+                const normalizedCampaigns = campaignsData.map((c: any) => {
+                    const groups = parseBloodGroups(c.target_blood_group);
+                    let displayBloodGroup = 'Tất cả';
+                    if (groups.length > 0 && groups.length < 8) {
+                        displayBloodGroup = groups.length >= 5 ? `Hỗn hợp (${groups.length})` : groups.join(", ");
+                    }
+
+                    return {
+                        ...c,
+                        type: 'campaign',
+                        required_blood_group: displayBloodGroup,
+                        urgency_level: c.is_urgent ? 'Urgent' : 'Standard',
+                        title: c.name,
+                        displayUnits: c.target_units,
+                        description: stripHtml(c.description)
+                    };
+                });
 
                 const combined = [...normalizedRequests, ...normalizedCampaigns].sort((a, b) => {
                     // Requests usually take precedence if they are urgent

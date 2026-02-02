@@ -24,7 +24,7 @@ export function middleware(request: NextRequest) {
         '/hospital-reports',
         '/hospital-requests',
         '/hospital-settings',
-        '/hospital-notifications',
+
         '/support'
     ];
 
@@ -96,11 +96,11 @@ export const config = {
         '/system-setting/:path*',
         // Hospital routes
         '/hospital-dashboard/:path*',
-        '/hospital-campaign/:path*',
+        // '/hospital-campaign/:path*', // TEMPORARILY DISABLED FOR DEMO MODE
         '/hospital-reports/:path*',
         '/hospital-requests/:path*',
         '/hospital-settings/:path*',
-        '/hospital-notifications/:path*',
+
         '/support/:path*',
         // Donor routes
         '/dashboard/:path*',

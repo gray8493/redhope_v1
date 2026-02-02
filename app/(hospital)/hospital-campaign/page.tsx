@@ -15,8 +15,15 @@ import {
     Users,
     MapPin,
     Search,
-    Calendar
+    Calendar,
+    ArrowRight,
+    Edit2,
+    ChevronDown,
+    Check,
+    X,
+    CalendarDays
 } from "lucide-react";
+import { format } from 'date-fns';
 import {
     Pagination,
     PaginationContent,
@@ -26,8 +33,114 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
+import { vi } from "date-fns/locale";
+import { Calendar as ShCalendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+
+// Utility function to strip HTML tags and decode HTML entities
+const stripHtml = (html: string): string => {
+    if (!html) return '';
+    // Remove HTML tags
+    let text = html.replace(/<[^>]*>/g, '');
+    // Decode HTML entities
+    text = text
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'");
+    // Clean up extra spaces
+    text = text.replace(/\s+/g, ' ').trim();
+    return text;
+};
+
+// Manual Time Input Component (Compact)
+const TimeInput = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => {
+    const parts = (value || "08:00").split(':');
+    const [h, setH] = useState(parts[0] || "08");
+    const [m, setM] = useState(parts[1] || "00");
+
+    useEffect(() => {
+        const p = (value || "08:00").split(':');
+        setH(p[0] || "08");
+        setM(p[1] || "00");
+    }, [value]);
+
+    const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+        if (val !== "" && parseInt(val) > 23) return;
+        setH(val);
+        if (val.length === 2) onChange(`${val}:${m || '00'}`);
+    };
+
+    const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+        if (val !== "" && parseInt(val) > 59) return;
+        setM(val);
+        if (val.length === 2) onChange(`${h || '00'}:${val}`);
+    };
+
+    const handleBlur = () => {
+        const finalH = h.padStart(2, '0');
+        const finalM = m.padStart(2, '0');
+        setH(finalH);
+        setM(finalM);
+        onChange(`${finalH}:${finalM}`);
+    };
+
+    return (
+        <div className="flex items-center justify-center gap-1.5 h-10 w-24 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/20 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/5 transition-all outline-none">
+            <input
+                type="text"
+                maxLength={2}
+                value={h}
+                onChange={handleHourChange}
+                onBlur={handleBlur}
+                className="w-7 bg-transparent text-sm font-bold text-center outline-none text-slate-900 dark:text-white"
+            />
+            <span className="text-slate-300 font-bold text-xs opacity-50">:</span>
+            <input
+                type="text"
+                maxLength={2}
+                value={m}
+                onChange={handleMinuteChange}
+                onBlur={handleBlur}
+                className="w-7 bg-transparent text-sm font-bold text-center outline-none text-slate-900 dark:text-white"
+            />
+        </div>
+    );
+};
 
 const ITEMS_PER_PAGE = 8;
+
+// Helper to parse blood groups from various formats (Array, CSV string, JSON string)
+const parseBloodGroups = (data: any): string[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (typeof data === 'string') {
+        const trimmed = data.trim();
+        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) return parsed;
+            } catch (e) {
+                // fall back to CSV if parse fails
+            }
+        }
+        return trimmed.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    return [];
+};
 
 export default function CampaignManagementPage() {
     const { user } = useAuth();
@@ -41,11 +154,37 @@ export default function CampaignManagementPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [page, setPage] = useState(1);
 
+    // Edit Campaign states
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
+    const [editFormData, setEditFormData] = useState({
+        name: '',
+        location_name: '',
+        date: '',
+        start_time: '',
+        end_time: '',
+        target_units: 0,
+        status: 'active',
+        description: '',
+        target_blood_group: [] as string[]
+    });
+
+    const BLOOD_TYPES = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
+
     // Sync tab with URL
     useEffect(() => {
         const tab = searchParams.get('tab') as 'active' | 'history' | 'drafts';
         if (tab) setActiveTab(tab);
     }, [searchParams]);
+
+    const getTargetBloodDisplay = (targetGroup: any) => {
+        const groups = parseBloodGroups(targetGroup);
+        if (groups.length === 0 || groups.length === 8) return "Tất cả";
+        if (groups.length >= 5) return "Hỗn hợp (" + groups.length + ")";
+        return groups.join(", ");
+    };
 
     // Fetch campaigns
     useEffect(() => {
@@ -57,14 +196,8 @@ export default function CampaignManagementPage() {
                 const data = await campaignService.getAll(user.id);
                 setCampaigns(data || []);
             } catch (error: any) {
-                console.error('Error fetching campaigns detailed:', {
-                    message: error.message,
-                    details: error.details,
-                    hint: error.hint,
-                    code: error.code,
-                    error: error
-                });
-                toast.error('Không thể tải chiến dịch: ' + (error.message || 'Lỗi không xác định'));
+                console.error('Error fetching campaigns detailed:', error);
+                toast.error('Không thể tải chiến dịch');
             } finally {
                 setLoading(false);
             }
@@ -111,6 +244,72 @@ export default function CampaignManagementPage() {
     useEffect(() => {
         setPage(1);
     }, [searchQuery, activeTab]);
+
+    // Handle Edit Campaign
+    const openEditModal = (e: React.MouseEvent, campaign: any) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedCampaign(campaign);
+        const initialBloodGroups = parseBloodGroups(campaign.target_blood_group);
+
+        setEditFormData({
+            name: campaign.name || '',
+            location_name: campaign.location_name || '',
+            date: campaign.start_time ? format(new Date(campaign.start_time), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+            start_time: campaign.start_time ? format(new Date(campaign.start_time), 'HH:mm') : '08:00',
+            end_time: campaign.end_time ? format(new Date(campaign.end_time), 'HH:mm') : '17:00',
+            target_units: campaign.target_units || 0,
+            status: campaign.status || 'active',
+            description: campaign.description || '',
+            target_blood_group: initialBloodGroups
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateCampaign = async () => {
+        if (!selectedCampaign) return;
+        try {
+            setIsSubmitting(true);
+            const startStr = `${editFormData.date}T${editFormData.start_time}:00`;
+            const endStr = `${editFormData.date}T${editFormData.end_time}:00`;
+
+            const updateData = {
+                name: editFormData.name,
+                location_name: editFormData.location_name,
+                start_time: startStr,
+                end_time: endStr,
+                target_units: editFormData.target_units,
+                status: editFormData.status,
+                description: editFormData.description,
+                target_blood_group: editFormData.target_blood_group
+            };
+
+            await campaignService.updateCampaign(selectedCampaign.id, updateData);
+
+            // Refetch campaigns to update UI
+            const data = await campaignService.getAll(user!.id);
+            setCampaigns(data || []);
+
+            toast.success('Cập nhật chiến dịch thành công');
+            setIsEditModalOpen(false);
+        } catch (error: any) {
+            toast.error('Lỗi khi cập nhật: ' + error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const toggleBloodGroup = (group: string) => {
+        setEditFormData(prev => {
+            const isExist = prev.target_blood_group.includes(group);
+            return {
+                ...prev,
+                target_blood_group: isExist
+                    ? prev.target_blood_group.filter(g => g !== group)
+                    : [...prev.target_blood_group, group]
+            };
+        });
+    };
 
     // Calculate stats
     const totalBlood = activeCampaigns.reduce((sum, c) => {
@@ -296,11 +495,88 @@ export default function CampaignManagementPage() {
                 </div>
             ) : (
                 <>
-                    <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1'} gap-6 mb-12`}>
+                    <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12" : "flex flex-col gap-3 mb-12"}>
                         {paginatedCampaigns.map(campaign => {
                             const registered = campaign.appointments?.length || 0;
                             const completed = campaign.appointments?.filter((a: any) => a.status === 'Completed').length || 0;
                             const progress = campaign.target_units > 0 ? (completed / campaign.target_units) * 100 : 0;
+                            const statusLabel = campaign.status === 'active' ? 'Đang hoạt động' : (campaign.status === 'completed' || campaign.status === 'ended') ? 'Đã kết thúc' : 'Bản nháp';
+                            const statusColor = campaign.status === 'active' ? 'bg-emerald-500' : (campaign.status === 'completed' || campaign.status === 'ended') ? 'bg-slate-500' : 'bg-amber-500';
+
+                            // Back to brand purple
+                            const gradientClass = 'from-indigo-500 to-purple-600';
+                            const brandColor = 'text-[#6324eb]';
+                            const brandBg = 'bg-[#6324eb]';
+
+                            if (viewMode === 'list') {
+                                return (
+                                    <Link
+                                        key={campaign.id}
+                                        href={`/hospital-campaign/${campaign.id}?fromTab=${activeTab}`}
+                                        className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group flex h-28"
+                                    >
+                                        {/* Left: Mini Image/Gradient */}
+                                        <div className="w-2 relative flex-shrink-0">
+                                            <div className={`absolute inset-0 bg-gradient-to-b ${gradientClass}`}></div>
+                                        </div>
+
+                                        {/* Main Content */}
+                                        <div className="flex-1 p-4 flex items-center justify-between min-w-0">
+                                            <div className="flex flex-col justify-center min-w-0 flex-1 pr-8">
+                                                <div className="flex items-center gap-3 mb-1">
+                                                    <h3 className={`text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:${brandColor} transition-colors`}>
+                                                        {campaign.name}
+                                                    </h3>
+                                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase text-white ${statusColor}`}>
+                                                        {statusLabel}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2 line-clamp-1 max-w-2xl">
+                                                    {stripHtml(campaign.description)}
+                                                </p>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400">
+                                                        <MapPin className="w-3 h-3" />
+                                                        {campaign.location_name}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400">
+                                                        <Users className="w-3 h-3" />
+                                                        {completed}/{registered} người tham gia
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-900/20 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-800">
+                                                        <Droplet className="w-2.5 h-2.5" />
+                                                        {getTargetBloodDisplay(campaign.target_blood_group)}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Progress Section */}
+                                            <div className="w-64 flex flex-col justify-center gap-2">
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                    <span>Tiến độ: {Math.round(progress)}%</span>
+                                                    <span>Mục tiêu: {campaign.target_units} Đv</span>
+                                                </div>
+                                                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all ${progress >= 100 ? 'bg-emerald-500' :
+                                                            progress >= 80 ? 'bg-green-500' :
+                                                                progress < 30 ? 'bg-red-500' : brandBg
+                                                            }`}
+                                                        style={{ width: `${Math.min(progress, 100)}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="ml-8 pr-4">
+                                                <div className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-indigo-100 dark:border-slate-800 bg-indigo-50/50 dark:bg-slate-800/50 ${brandColor} text-[9px] font-black uppercase tracking-wider opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500`}>
+                                                    Chi tiết
+                                                    <ArrowRight className="w-3 h-3" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                );
+                            }
 
                             return (
                                 <Link
@@ -309,23 +585,26 @@ export default function CampaignManagementPage() {
                                     className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all group"
                                 >
                                     <div className="relative h-40 bg-slate-200 dark:bg-slate-800">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+                                        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`}></div>
                                         <div className="absolute top-3 right-3">
-                                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm ${campaign.status === 'active' ? 'bg-emerald-500 text-white' :
-                                                (campaign.status === 'completed' || campaign.status === 'ended') ? 'bg-slate-500 text-white' :
-                                                    'bg-amber-500 text-white'
-                                                }`}>
-                                                {campaign.status === 'active' ? 'Đang hoạt động' : (campaign.status === 'completed' || campaign.status === 'ended') ? 'Đã kết thúc' : 'Bản nháp'}
+                                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm ${statusColor} text-white`}>
+                                                {statusLabel}
+                                            </span>
+                                        </div>
+                                        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2 py-1 bg-white/20 backdrop-blur-md rounded-md border border-white/30">
+                                            <Droplet className="w-3 h-3 text-white" />
+                                            <span className="text-[9px] font-black text-white uppercase tracking-wider">
+                                                Nhóm: {getTargetBloodDisplay(campaign.target_blood_group)}
                                             </span>
                                         </div>
                                     </div>
 
                                     <div className="p-4">
-                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2 line-clamp-1 group-hover:text-[#6324eb] transition-colors">
+                                        <h3 className={`text-sm font-bold text-slate-900 dark:text-white mb-2 line-clamp-1 group-hover:${brandColor} transition-colors`}>
                                             {campaign.name}
                                         </h3>
                                         <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">
-                                            {campaign.description}
+                                            {stripHtml(campaign.description)}
                                         </p>
 
                                         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
@@ -342,7 +621,7 @@ export default function CampaignManagementPage() {
                                                 <div
                                                     className={`h-full rounded-full transition-all ${progress >= 100 ? 'bg-emerald-500' :
                                                         progress >= 80 ? 'bg-green-500' :
-                                                            progress < 30 ? 'bg-red-500' : 'bg-[#6324eb]'
+                                                            progress < 30 ? 'bg-red-500' : brandBg
                                                         }`}
                                                     style={{ width: `${Math.min(progress, 100)}%` }}
                                                 ></div>
@@ -353,9 +632,10 @@ export default function CampaignManagementPage() {
                                             <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
                                                 <Users className="w-3 h-3" /> {completed}/{registered}
                                             </span>
-                                            <span className="text-[11px] font-bold text-[#6324eb] group-hover:underline">
-                                                Chi tiết →
-                                            </span>
+                                            <div className={`flex items-center gap-1 text-[11px] font-black ${brandColor} group-hover:gap-2.5 transition-all duration-300 uppercase tracking-tight`}>
+                                                Chi tiết
+                                                <ArrowRight className="w-3.5 h-3.5" />
+                                            </div>
                                         </div>
                                     </div>
                                 </Link>
@@ -394,6 +674,185 @@ export default function CampaignManagementPage() {
                         </Pagination>
                     )}
                 </>
+            )}
+            {/* Edit Modal */}
+            {isEditModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div
+                        className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                            <div>
+                                <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Cập nhật chiến dịch</h2>
+                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Chỉnh sửa thông tin chiến dịch của bạn</p>
+                            </div>
+                            <button
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 transition-all hover:rotate-90"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                            <div className="space-y-4">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Tên chiến dịch</label>
+                                    <input
+                                        type="text"
+                                        value={editFormData.name}
+                                        onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                                        className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                        placeholder="Nhập tên chiến dịch..."
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Ngày diễn ra</label>
+                                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                                            <PopoverTrigger asChild>
+                                                <button className={cn(
+                                                    "flex w-full items-center justify-between rounded-full h-11 px-5 text-sm border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 hover:border-indigo-400 transition-all outline-none shadow-sm",
+                                                    !editFormData.date && "text-slate-400"
+                                                )}>
+                                                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                                                        {editFormData.date ? format(new Date(editFormData.date), "dd/MM/yyyy", { locale: vi }) : "Chọn ngày..."}
+                                                    </span>
+                                                    <CalendarDays className="text-slate-400 w-4 h-4" />
+                                                </button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0 rounded-3xl overflow-hidden shadow-2xl border-slate-200 dark:border-slate-800 z-[110]" align="start">
+                                                <ShCalendar
+                                                    mode="single"
+                                                    selected={editFormData.date ? new Date(editFormData.date + 'T00:00:00') : undefined}
+                                                    onSelect={(date: Date | undefined) => {
+                                                        if (date) {
+                                                            setEditFormData({ ...editFormData, date: format(date, 'yyyy-MM-dd') });
+                                                            setIsCalendarOpen(false);
+                                                        }
+                                                    }}
+                                                    initialFocus
+                                                    locale={vi}
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Thời gian tổ chức</label>
+                                        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900/40 p-1 rounded-2xl w-fit border border-slate-100 dark:border-white/5">
+                                            <TimeInput
+                                                value={editFormData.start_time}
+                                                onChange={(val: string) => setEditFormData({ ...editFormData, start_time: val })}
+                                            />
+                                            <span className="text-slate-300 font-bold opacity-30 select-none px-1">~</span>
+                                            <TimeInput
+                                                value={editFormData.end_time}
+                                                onChange={(val: string) => setEditFormData({ ...editFormData, end_time: val })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Địa điểm</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={editFormData.location_name}
+                                            onChange={(e) => setEditFormData({ ...editFormData, location_name: e.target.value })}
+                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                            placeholder="Địa chỉ tổ chức..."
+                                        />
+                                        <MapPin className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Mô tả chiến dịch</label>
+                                    <textarea
+                                        value={editFormData.description}
+                                        onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                                        className="w-full h-24 px-5 py-3 rounded-2xl border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white resize-none"
+                                        placeholder="Nhập nội dung giới thiệu chiến dịch..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Nhóm máu yêu cầu</label>
+                                    <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                                        {BLOOD_TYPES.map(group => (
+                                            <button
+                                                key={group}
+                                                onClick={() => toggleBloodGroup(group)}
+                                                className={`h-9 flex items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300 border ${editFormData.target_blood_group.includes(group)
+                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-200 scale-105'
+                                                    : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:bg-slate-100'
+                                                    }`}
+                                            >
+                                                {group}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Mục tiêu (Đơn vị)</label>
+                                        <input
+                                            type="number"
+                                            value={editFormData.target_units}
+                                            onChange={(e) => setEditFormData({ ...editFormData, target_units: parseInt(e.target.value) || 0 })}
+                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Trạng thái HĐ</label>
+                                        <div className="relative">
+                                            <select
+                                                value={editFormData.status}
+                                                onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                                                className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm appearance-none focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                            >
+                                                <option value="active">Đang hoạt động</option>
+                                                <option value="paused">Tạm dừng</option>
+                                                <option value="completed">Đã kết thúc</option>
+                                            </select>
+                                            <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-8 py-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50/50 dark:bg-slate-800/30">
+                            <button
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="px-5 h-10 text-slate-400 text-xs font-bold hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                            >
+                                Hủy bỏ
+                            </button>
+                            <button
+                                onClick={handleUpdateCampaign}
+                                disabled={isSubmitting}
+                                className="px-6 h-10 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-full text-xs font-extrabold shadow-lg shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {isSubmitting ? (
+                                    <Clock className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                    <Check className="w-3.5 h-3.5" />
+                                )}
+                                LƯU THAY ĐỔI
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </main>
     );

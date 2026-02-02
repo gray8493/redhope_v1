@@ -56,10 +56,7 @@ export function HospitalSidebar() {
                             <BarChart className="w-5 h-5" />
                             <p className="text-[13px]">Báo cáo</p>
                         </Link>
-                        <Link href="/hospital-notifications" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
-                            <Bell className="w-5 h-5" />
-                            <p className="text-[13px]">Thông báo</p>
-                        </Link>
+
                         <Link href="/hospital-settings" className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#6324eb] dark:hover:text-[#6324eb] rounded-xl transition-all font-medium">
                             <Settings className="w-5 h-5" />
                             <p className="text-[13px]">Cài đặt</p>
