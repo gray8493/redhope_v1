@@ -28,7 +28,7 @@ import {
 import { HospitalSidebar } from "@/components/shared/HospitalSidebar";
 import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
-import { getSupportRequests, updateSupportRequest, subscribeToSupportUpdates, SupportRequest } from "@/app/utils/supportStorage";
+import { getSupportRequests, updateSupportRequest, subscribeToSupportUpdates, SupportRequest } from "@/lib/supportStorage";
 
 export default function SupportManagementPage() {
     const router = useRouter();
