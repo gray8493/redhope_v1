@@ -9,16 +9,17 @@
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-outfit);
 
-  /* Custom Design System Colors */
-  --color-primary: #0065FF;
-  --color-primary-dark: #0052cc;
-  --color-accent-red: #FF4D4F;
-  --color-bg-light: #F8FAFC;
-  --color-bg-white: #FFFFFF;
+  /* Medical Design System Pro Max */
+  --color-med-primary: #0D9488;
+  --color-med-primary-soft: #F0FDFA;
+  --color-med-blue: #0369A1;
+  --color-med-surface: #F8FAFC;
+  --color-med-card: rgba(255, 255, 255, 0.8);
+  --color-med-border: rgba(13, 148, 136, 0.1);
 
-  /* Shadows */
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --shadow-card-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  /* Premium Shadows */
+  --shadow-med: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
+  --shadow-med-hover: 0 20px 50px -12px rgba(13, 148, 136, 0.1);
 }
 
 body {
@@ -181,5 +182,23 @@ body {
 
   input[type=number] {
     -moz-appearance: textfield;
+  }
+
+  .glass-medical {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-med;
+  }
+
+  .dark .glass-medical {
+    @apply bg-slate-900/70 border-white/5;
+  }
+
+  .medical-gradient {
+    background: radial-gradient(circle at top left, var(--color-med-primary-soft), transparent 40%),
+      radial-gradient(circle at bottom right, rgba(3, 105, 161, 0.05), transparent 40%);
+  }
+
+  .font-medical-header {
+    font-family: var(--font-outfit);
+    @apply tracking-tight font-bold;
   }
 }

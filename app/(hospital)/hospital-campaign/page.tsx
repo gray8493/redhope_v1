@@ -26,6 +26,7 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
+import MiniFooter from "@/components/shared/MiniFooter";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -136,167 +137,119 @@ export default function CampaignManagementPage() {
     }).length;
 
     return (
-        <main className="p-8 max-w-[1400px] w-full mx-auto">
+        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#0f172a] p-6 md:p-10 text-left medical-gradient">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Chiến dịch Bệnh viện</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-base">Theo dõi các đợt hiến máu đang diễn ra và dữ liệu lịch sử.</p>
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="px-3 py-1 bg-med-primary/10 text-med-primary text-[10px] font-black rounded-full uppercase tracking-widest border border-med-primary/20">Quản lý Hoạt động</span>
+                        <span className="size-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-medical-header text-slate-900 dark:text-white tracking-tight">Chiến dịch Bệnh viện</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium max-w-2xl italic opacity-80">Theo dõi, kiểm soát và tối ưu hóa các đợt hiến máu lưu động trong thời gian thực.</p>
                 </div>
+                <Link href="/hospital-requests/create">
+                    <button className="flex items-center gap-3 px-6 py-3.5 bg-med-primary text-white rounded-[22px] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-med-primary/30 hover:shadow-med-primary/40 hover:-translate-y-0.5 transition-all border-b-4 border-teal-800 active:translate-y-0.5 active:border-b-0">
+                        Phát động Chiến dịch
+                    </button>
+                </Link>
+            </header>
+
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <CampaignStatCard
+                    title="Tổng đơn vị máu"
+                    value={totalBlood}
+                    unit="Đv"
+                    icon={Droplet}
+                    color="rose"
+                    desc="Đang thu nhận thực tế"
+                />
+                <CampaignStatCard
+                    title="Hiệu suất đăng ký"
+                    value={`${donationRate}%`}
+                    unit={`${totalCompleted}/${totalRegistered}`}
+                    icon={Users}
+                    color="teal"
+                    desc="Tỉ lệ hoàn thành ca hiến"
+                />
+                <CampaignStatCard
+                    title="Hoãn hiến lâm sàng"
+                    value={totalDeferred}
+                    unit="Ca"
+                    icon={Clock}
+                    color="amber"
+                    desc="Cần theo dõi sức khỏe"
+                />
+                <CampaignStatCard
+                    title="Đợt thiếu hụt"
+                    value={underTargetCount}
+                    unit="Đợt"
+                    icon={AlertCircle}
+                    color="indigo"
+                    desc="Chưa đạt 100% chỉ tiêu"
+                />
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="size-12 rounded-full bg-red-50 flex items-center justify-center text-[#6324eb]">
-                        <Droplet className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">Tổng lượng máu</p>
-                        <div className="text-2xl font-black text-slate-900 dark:text-white">
-                            {loading ? <Skeleton className="h-8 w-16" /> : totalBlood} <span className="text-sm font-normal text-slate-400">Đv</span>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Đang vận hành</p>
-                    </div>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="size-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                        <Users className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">Tỉ lệ hiến máu</p>
-                        <div className="flex items-baseline gap-2">
-                            <div className="text-2xl font-black text-slate-900 dark:text-white">
-                                {loading ? <Skeleton className="h-8 w-24" /> : (
-                                    <>
-                                        {totalCompleted}/{totalRegistered}
-                                        <span className={`ml-1 text-[10px] px-1 py-0.5 rounded font-bold ${donationRate >= 80 ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
-                                            {donationRate}%
-                                        </span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Đã hiến / Đăng ký tổng</p>
-                    </div>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="size-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-                        <Clock className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">Hoãn hiến hệ thống</p>
-                        <div className="text-2xl font-black text-orange-600">
-                            {loading ? <Skeleton className="h-8 w-12" /> : totalDeferred}
-                            <span className="text-sm font-normal text-slate-400 ml-2">Người</span>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần hỗ trợ theo dõi</p>
-                    </div>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-indigo-50 dark:border-indigo-900/30 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="size-12 rounded-full bg-indigo-100 flex items-center justify-center text-[#6324eb]">
-                        <AlertCircle className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">Thiếu hụt chỉ tiêu</p>
-                        <div className="text-2xl font-black text-[#6324eb]">
-                            {loading ? <Skeleton className="h-8 w-12" /> : underTargetCount} <span className="text-sm font-normal text-slate-400">Đợt</span>
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần đẩy mạnh truyền thông</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Search & Filters */}
-            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 flex flex-col lg:flex-row items-center gap-3">
-                <div className="relative w-full lg:flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+            {/* Controls Row */}
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-10">
+                <div className="relative w-full lg:max-w-md group">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-med-primary transition-colors" />
                     <input
-                        className="w-full h-11 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-full pl-12 pr-4 text-sm focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] text-slate-900 dark:text-white placeholder-slate-500 outline-none transition-all shadow-sm"
-                        placeholder="Tìm kiếm tên chiến dịch hoặc địa điểm..."
-                        type="text"
+                        className="w-full h-14 bg-white/70 backdrop-blur-md border border-slate-200/50 rounded-3xl pl-14 pr-6 text-sm focus:ring-2 focus:ring-med-primary/20 focus:border-med-primary placeholder-slate-400 font-medium outline-none transition-all shadow-med group-focus-within:shadow-xl"
+                        placeholder="Mã chiến dịch, địa bàn hoặc tên đơn vị..."
+                        type="search"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-            </div>
 
-            {/* Tabs */}
-            <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800 mb-6">
-                <button
-                    onClick={() => handleTabChange('active')}
-                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'active' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Đang hoạt động
-                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-xs">{activeCampaigns.length}</span>
-                    {activeTab === 'active' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-t-full"></span>}
-                </button>
-                <button
-                    onClick={() => handleTabChange('history')}
-                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'history' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Lịch sử
-                    {activeTab === 'history' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-t-full"></span>}
-                </button>
-                <button
-                    onClick={() => handleTabChange('drafts')}
-                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'drafts' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Bản nháp
-                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-xs">{draftCampaigns.length}</span>
-                    {activeTab === 'drafts' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-t-full"></span>}
-                </button>
-            </div>
-
-            {/* View Mode Toggle */}
-            {activeTab === 'active' && (
-                <div className="mb-6 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span className="size-2 bg-green-500 rounded-full animate-pulse"></span> Chiến dịch Đang hoạt động
-                    </h2>
-                    <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
+                <div className="flex bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/50 backdrop-blur-xl">
+                    {[
+                        { id: 'active', label: 'Hiện tại', count: activeCampaigns.length },
+                        { id: 'history', label: 'Lịch sử', count: historyCampaigns.length },
+                        { id: 'drafts', label: 'Bản nháp', count: draftCampaigns.length }
+                    ].map((tab) => (
                         <button
-                            onClick={() => setViewMode('grid')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-800 text-[#6324eb]' : 'text-slate-400 hover:text-slate-600'}`}
+                            key={tab.id}
+                            onClick={() => handleTabChange(tab.id as any)}
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 flex items-center gap-2 ${activeTab === tab.id
+                                ? 'bg-white text-med-primary shadow-xl shadow-slate-300/10 scale-105'
+                                : 'text-slate-400 hover:text-slate-600'
+                                }`}
                         >
-                            <LayoutGrid className="w-5 h-5" />
+                            {tab.label}
+                            <span className={`px-1.5 py-0.5 rounded-lg text-[9px] ${activeTab === tab.id ? 'bg-med-primary/10 text-med-primary' : 'bg-slate-200/50 text-slate-400'}`}>
+                                {tab.count}
+                            </span>
                         </button>
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-800 text-[#6324eb]' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            <List className="w-5 h-5" />
-                        </button>
-                    </div>
+                    ))}
                 </div>
-            )}
+            </div>
 
-            {/* Campaign List */}
+            {/* Content Section */}
             {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
-                            <Skeleton className="h-40 w-full mb-4" />
-                            <Skeleton className="h-6 w-3/4 mb-2" />
+                        <div key={i} className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-med">
+                            <Skeleton className="h-44 w-full rounded-2xl mb-6" />
+                            <Skeleton className="h-6 w-3/4 mb-3" />
                             <Skeleton className="h-4 w-full mb-2" />
                             <Skeleton className="h-4 w-2/3" />
                         </div>
                     ))}
                 </div>
             ) : filteredCampaigns.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-4 mb-8 bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center">
-                    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-full mb-3">
-                        <Calendar className="w-12 h-12 text-slate-400" />
+                <div className="bg-white/50 backdrop-blur-md py-24 rounded-[40px] border-2 border-dashed border-slate-200 text-center">
+                    <div className="size-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Calendar className="size-10 text-slate-300" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Chưa có chiến dịch nào</h3>
-                    <p className="text-slate-500 text-sm">Tạo chiến dịch mới để bắt đầu</p>
+                    <h3 className="text-xl font-medical-header text-slate-900 mb-2">Đăng ký Chiến dịch mới</h3>
+                    <p className="text-slate-400 text-sm italic">Hệ thống chưa ghi nhận chiến dịch nào thuộc danh mục này.</p>
                 </div>
             ) : (
-                <>
-                    <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1'} gap-6 mb-12`}>
+                <div className="space-y-12">
+                    <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1'} gap-8`}>
                         {paginatedCampaigns.map(campaign => {
                             const registered = campaign.appointments?.length || 0;
                             const completed = campaign.appointments?.filter((a: any) => a.status === 'Completed').length || 0;
@@ -306,56 +259,58 @@ export default function CampaignManagementPage() {
                                 <Link
                                     key={campaign.id}
                                     href={`/hospital-campaign/${campaign.id}?fromTab=${activeTab}`}
-                                    className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all group"
+                                    className="bg-white/80 backdrop-blur-xl rounded-[40px] overflow-hidden border border-slate-100 shadow-med hover:shadow-med-hover hover:-translate-y-1.5 transition-all group relative border-b-4 border-slate-100/50 active:translate-y-0"
                                 >
-                                    <div className="relative h-40 bg-slate-200 dark:bg-slate-800">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600"></div>
-                                        <div className="absolute top-3 right-3">
-                                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm ${campaign.status === 'active' ? 'bg-emerald-500 text-white' :
-                                                (campaign.status === 'completed' || campaign.status === 'ended') ? 'bg-slate-500 text-white' :
-                                                    'bg-amber-500 text-white'
+                                    <div className="relative h-44 bg-slate-100">
+                                        <div className="absolute inset-0 bg-med-primary/10 group-hover:bg-med-primary/20 transition-colors"></div>
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-40 group-hover:opacity-60 transition-opacity">
+                                            <Droplet className="size-20 text-med-primary" />
+                                        </div>
+                                        <div className="absolute top-5 right-5 z-10">
+                                            <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl backdrop-blur-md border ${campaign.status === 'active'
+                                                ? 'bg-emerald-500/90 text-white border-emerald-400/50'
+                                                : 'bg-slate-700/90 text-white border-slate-600/50'
                                                 }`}>
-                                                {campaign.status === 'active' ? 'Đang hoạt động' : (campaign.status === 'completed' || campaign.status === 'ended') ? 'Đã kết thúc' : 'Bản nháp'}
+                                                {campaign.status === 'active' ? '● Live' : 'Sử liệu'}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="p-4">
-                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2 line-clamp-1 group-hover:text-[#6324eb] transition-colors">
+                                    <div className="p-8">
+                                        <h3 className="text-lg font-medical-header text-slate-900 mb-1 group-hover:text-med-primary transition-colors line-clamp-1">
                                             {campaign.name}
                                         </h3>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">
-                                            {campaign.description}
+                                        <p className="text-[11px] text-slate-400 font-medium mb-6 flex items-center gap-2">
+                                            <MapPin className="size-3" /> {campaign.location_name}
                                         </p>
 
-                                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
-                                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                                            {campaign.location_name}
-                                        </div>
-
-                                        <div className="mb-3">
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
-                                                <span>Đã thu: {Math.round(progress)}%</span>
-                                                <span>Mục tiêu: {campaign.target_units}</span>
+                                        <div className="space-y-4 mb-8">
+                                            <div className="flex justify-between items-end">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black text-slate-300 uppercase leading-none mb-1">Đã tiếp nhận</span>
+                                                    <span className="text-xl font-medical-header text-slate-800">{completed} <span className="text-[10px] text-slate-300 font-bold uppercase italic">đv</span></span>
+                                                </div>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-[10px] font-black text-slate-300 uppercase leading-none mb-1">Mục tiêu</span>
+                                                    <span className="text-sm font-bold text-slate-600">{campaign.target_units} đv</span>
+                                                </div>
                                             </div>
-                                            <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <div className="h-3 w-full bg-slate-50 rounded-full border border-slate-100 p-0.5 shadow-inner">
                                                 <div
-                                                    className={`h-full rounded-full transition-all ${progress >= 100 ? 'bg-emerald-500' :
-                                                        progress >= 80 ? 'bg-green-500' :
-                                                            progress < 30 ? 'bg-red-500' : 'bg-[#6324eb]'
-                                                        }`}
+                                                    className="h-full bg-med-primary rounded-full shadow-[0_0_12px_rgba(13,148,136,0.5)] transition-all duration-1000"
                                                     style={{ width: `${Math.min(progress, 100)}%` }}
                                                 ></div>
                                             </div>
                                         </div>
 
-                                        <div className="pt-3 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                                            <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
-                                                <Users className="w-3 h-3" /> {completed}/{registered}
-                                            </span>
-                                            <span className="text-[11px] font-bold text-[#6324eb] group-hover:underline">
-                                                Chi tiết →
-                                            </span>
+                                        <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="size-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+                                                    <Users className="size-4" />
+                                                </div>
+                                                <span className="text-[10px] font-black text-slate-500">{completed}/{registered} <span className="text-[9px] opacity-70">Sàng lọc</span></span>
+                                            </div>
+                                            <button className="text-[10px] font-black uppercase text-med-primary tracking-widest group-hover:underline">Chi tiết →</button>
                                         </div>
                                     </div>
                                 </Link>
@@ -365,36 +320,66 @@ export default function CampaignManagementPage() {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <Pagination>
-                            <PaginationContent>
-                                <PaginationItem>
-                                    <PaginationPrevious
-                                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                                        className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                                    />
-                                </PaginationItem>
-                                {Array.from({ length: totalPages }).map((_, i) => (
-                                    <PaginationItem key={i}>
-                                        <PaginationLink
-                                            isActive={page === i + 1}
-                                            onClick={() => setPage(i + 1)}
-                                            className="cursor-pointer"
-                                        >
-                                            {i + 1}
-                                        </PaginationLink>
+                        <div className="pt-10 border-t border-slate-100">
+                            <Pagination>
+                                <PaginationContent className="gap-2">
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            className={`rounded-2xl border-slate-100 h-12 px-6 font-black text-[10px] uppercase tracking-widest transition-all ${page === 1 ? "pointer-events-none opacity-30" : "hover:bg-white hover:text-med-primary hover:shadow-xl cursor-pointer"}`}
+                                        />
                                     </PaginationItem>
-                                ))}
-                                <PaginationItem>
-                                    <PaginationNext
-                                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                        className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                                    />
-                                </PaginationItem>
-                            </PaginationContent>
-                        </Pagination>
+                                    {Array.from({ length: totalPages }).map((_, i) => (
+                                        <PaginationItem key={i}>
+                                            <PaginationLink
+                                                isActive={page === i + 1}
+                                                onClick={() => setPage(i + 1)}
+                                                className={`rounded-2xl size-12 font-black text-xs transition-all cursor-pointer ${page === i + 1 ? "bg-med-primary text-white shadow-xl shadow-med-primary/30 border-none scale-110" : "bg-white text-slate-400 border-slate-100 hover:text-med-primary hover:shadow-xl"}`}
+                                            >
+                                                {i + 1}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    ))}
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                            className={`rounded-2xl border-slate-100 h-12 px-6 font-black text-[10px] uppercase tracking-widest transition-all ${page === totalPages ? "pointer-events-none opacity-30" : "hover:bg-white hover:text-med-primary hover:shadow-xl cursor-pointer"}`}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
                     )}
-                </>
+                </div>
             )}
+            <MiniFooter />
         </main>
+    );
+}
+
+function CampaignStatCard({ title, value, unit, icon: Icon, color, desc }: any) {
+    const colorMap: any = {
+        rose: 'text-rose-600 bg-rose-50 border-rose-100',
+        teal: 'text-med-primary bg-med-primary/10 border-med-primary/20',
+        amber: 'text-amber-600 bg-amber-50 border-amber-100',
+        indigo: 'text-indigo-600 bg-indigo-50 border-indigo-100'
+    };
+
+    return (
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-[32px] border border-slate-100 shadow-med hover:shadow-med-hover hover:-translate-y-1 transition-all group relative overflow-hidden">
+            <div className="absolute -right-4 -bottom-4 size-24 bg-slate-50 rounded-full group-hover:scale-110 transition-transform"></div>
+            <div className="flex items-center gap-4 relative z-10">
+                <div className={`size-14 rounded-[20px] flex items-center justify-center border shadow-inner ${colorMap[color]}`}>
+                    <Icon className="size-6" />
+                </div>
+                <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{title}</p>
+                    <p className="text-2xl font-medical-header text-slate-900 leading-none">
+                        {value} <span className="text-[10px] text-slate-300 font-bold uppercase italic ml-1">{unit}</span>
+                    </p>
+                    <p className="text-[10px] font-medium text-slate-400 mt-1 italic opacity-70 leading-tight">{desc}</p>
+                </div>
+            </div>
+        </div>
     );
 }
