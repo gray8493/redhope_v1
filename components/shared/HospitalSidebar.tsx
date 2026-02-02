@@ -63,19 +63,7 @@ export function HospitalSidebar() {
                         </Link>
                     </nav>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="size-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center text-emerald-600">
-                            <Activity className="w-5 h-5" />
-                        </div>
-                        <div className="flex flex-col">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Trạng thái Kho</p>
-                            <p className="text-sm font-black text-slate-900 dark:text-white">Ổn định</p>
-                        </div>
-                    </div>
-                    <Progress value={85} className="h-1.5 mb-2 bg-slate-200 dark:bg-slate-700 [&>div]:bg-emerald-500" />
-                    <p className="text-[10px] font-semibold text-slate-500">Đủ đáp ứng 85% nhu cầu tuần tới</p>
-                </div>
+
             </aside>
             {/* Spacer for Fixed Sidebar */}
             <div className="w-64 hidden md:block shrink-0" />

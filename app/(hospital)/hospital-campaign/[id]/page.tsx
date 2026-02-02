@@ -252,6 +252,7 @@ export default function CampaignDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [bloodTypeFilter, setBloodTypeFilter] = useState('all');
     const [isSending, setIsSending] = useState(false);
     const [announcementMsg, setAnnouncementMsg] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -363,7 +364,8 @@ export default function CampaignDetailsPage() {
             email.toLowerCase().includes(query) ||
             phone.includes(query);
         const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        const matchesBloodType = bloodTypeFilter === 'all' || (r.blood_type || r.user?.blood_group) === bloodTypeFilter;
+        return matchesSearch && matchesStatus && matchesBloodType;
     });
 
     // Export to CSV
@@ -445,7 +447,7 @@ export default function CampaignDetailsPage() {
             setRegistrations(prev => prev.map(r =>
                 r.id === regId ? { ...r, status: 'Deferred' } : r
             ));
-            toast.success('Đã hoãn hiến máu');
+            toast.success('Đã hủy hồ sơ hiến máu');
         } catch (error: any) {
             toast.error('Lỗi: ' + error.message);
         }
@@ -602,7 +604,7 @@ export default function CampaignDetailsPage() {
                 };
             case 'Deferred':
                 return {
-                    label: 'Hoãn hiến',
+                    label: 'Hủy hồ sơ',
                     className: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'
                 };
             default:
@@ -771,6 +773,16 @@ export default function CampaignDetailsPage() {
                                 <option value="Completed">Hoàn thành</option>
                                 <option value="Deferred">Hoãn hiến</option>
                                 <option value="Cancelled">Đã hủy</option>
+                            </select>
+                            <select
+                                value={bloodTypeFilter}
+                                onChange={(e) => setBloodTypeFilter(e.target.value)}
+                                className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 focus:ring-2 focus:ring-indigo-500/20 min-w-[150px] outline-none"
+                            >
+                                <option value="all">Tất cả nhóm máu</option>
+                                {BLOOD_TYPES.map(type => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
                             </select>
                             <button
                                 onClick={handleExport}
@@ -992,7 +1004,7 @@ export default function CampaignDetailsPage() {
                                                                                 className="w-full px-3 py-1.5 text-left text-[13px] font-bold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2"
                                                                             >
                                                                                 <Clock className="w-3.5 h-3.5" />
-                                                                                Hoãn hiến
+                                                                                Hủy hồ sơ
                                                                             </button>
                                                                         </div>
                                                                     )}
@@ -1034,7 +1046,7 @@ export default function CampaignDetailsPage() {
                                                                                 className="w-full px-3 py-1.5 text-left text-[13px] font-bold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2 border-t border-slate-50 dark:border-slate-800 mt-1 pt-1"
                                                                             >
                                                                                 <Clock className="w-3.5 h-3.5" />
-                                                                                Hoãn hiến
+                                                                                Hủy hồ sơ
                                                                             </button>
                                                                         )}
                                                                         {isDeferred && (

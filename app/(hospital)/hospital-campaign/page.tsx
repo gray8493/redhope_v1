@@ -582,7 +582,7 @@ export default function CampaignManagementPage() {
                                 <Link
                                     key={campaign.id}
                                     href={`/hospital-campaign/${campaign.id}?fromTab=${activeTab}`}
-                                    className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all group"
+                                    className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all group flex flex-col h-full"
                                 >
                                     <div className="relative h-40 bg-slate-200 dark:bg-slate-800">
                                         <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`}></div>
@@ -599,7 +599,7 @@ export default function CampaignManagementPage() {
                                         </div>
                                     </div>
 
-                                    <div className="p-4">
+                                    <div className="p-3 flex flex-col flex-1">
                                         <h3 className={`text-sm font-bold text-slate-900 dark:text-white mb-2 line-clamp-1 group-hover:${brandColor} transition-colors`}>
                                             {campaign.name}
                                         </h3>
@@ -628,7 +628,7 @@ export default function CampaignManagementPage() {
                                             </div>
                                         </div>
 
-                                        <div className="pt-3 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                                        <div className="pt-3 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between mt-auto">
                                             <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
                                                 <Users className="w-3 h-3" /> {completed}/{registered}
                                             </span>

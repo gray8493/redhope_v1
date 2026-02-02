@@ -4,10 +4,6 @@ import {
     User,
     Bell,
     Lock,
-    Moon,
-    Sun,
-    LogOut,
-    Trash2,
     Shield,
     Mail,
     Smartphone,
@@ -16,7 +12,14 @@ import {
     Droplet,
     Calendar,
     Activity,
-    Info
+    Info,
+    Save,
+    CheckCircle2,
+    AlertTriangle,
+    LogOut,
+    Trash2,
+    Eye,
+    EyeOff
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
@@ -24,7 +27,7 @@ import MiniFooter from "@/components/shared/MiniFooter";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { userService } from "@/services/user.service";
 import { authService } from "@/services/auth.service";
 import { BLOOD_GROUPS } from "@/lib/database.types";
@@ -32,11 +35,22 @@ import { LocationSelector } from "@/components/shared/LocationSelector";
 
 export default function SettingsPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { user, refreshUser } = useAuth();
 
-    const [activeTab, setActiveTab] = useState("profile");
+    // UI State
+    const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security'>('profile');
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
+
+    // Initial tab from URL
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab === 'notifications' || tab === 'security' || tab === 'profile') {
+            setActiveTab(tab as any);
+        }
+    }, [searchParams]);
 
     // Profile State
     const [name, setName] = useState("");
@@ -48,11 +62,14 @@ export default function SettingsPage() {
     const [bloodGroup, setBloodGroup] = useState("");
     const [citizenId, setCitizenId] = useState("");
     const [dob, setDob] = useState("");
-    const [gender, setGender] = useState("");
-    // Các field UI nhưng chưa có trong DB schema
+    const [gender, setGender] = useState("Nam");
     const [weight, setWeight] = useState("");
     const [lastDonationDate, setLastDonationDate] = useState("");
     const [healthHistory, setHealthHistory] = useState("");
+
+    // Images
+    const [avatar, setAvatar] = useState<string | null>(null);
+    const [cover, setCover] = useState<string | null>("https://images.unsplash.com/photo-1615461168078-83e35f76d540?q=80&w=2669&auto=format&fit=crop");
 
     // Fetch real data from database on mount
     useEffect(() => {
@@ -78,14 +95,15 @@ export default function SettingsPage() {
                     setCitizenId(profile.citizen_id || "");
                     setDob(profile.dob || "");
                     setGender(profile.gender || "Nam");
+                    // Mock data for demo if not in DB
+                    setAvatar(user.user_metadata?.avatar_url || null);
                 } else {
-                    // Fallback to auth user data if no profile yet
+                    // Fallback to auth user data details
                     setName(user.user_metadata?.full_name || "");
                     setEmail(user.email || "");
                 }
             } catch (error: any) {
-                console.error("Error fetching profile:", error.message || error.details || error);
-                // Fallback to user data from auth context
+                console.error("Error fetching profile:", error);
                 if (user) {
                     setName(user.user_metadata?.full_name || user.profile?.full_name || "");
                     setPhone(user.profile?.phone || "");
@@ -104,11 +122,13 @@ export default function SettingsPage() {
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
+    // Handlers
     const handleSave = async () => {
         if (!user) return;
         setIsSaving(true);
+        const loadingToast = toast.loading("Đang lưu thông tin...");
 
-        // Validate Age (Client-side)
+        // Validate Age
         if (dob) {
             const birthDate = new Date(dob);
             const today = new Date();
@@ -119,16 +139,13 @@ export default function SettingsPage() {
             }
 
             if (age < 18) {
-                toast.error("Không đủ điều kiện tuổi!", {
-                    description: "Bạn cần phải đủ 18 tuổi trở lên để cập nhật thông tin hiến máu.",
-                });
+                toast.error("Không đủ điều kiện tuổi!", { id: loadingToast, description: "Bạn cần phải đủ 18 tuổi trở lên." });
                 setIsSaving(false);
                 return;
             }
         }
 
         try {
-            // Chỉ gửi các field có trong database schema
             const updateData: Record<string, any> = {
                 full_name: name,
                 phone: phone || null,
@@ -142,32 +159,25 @@ export default function SettingsPage() {
                 gender: gender || null,
             };
 
-            // Loại bỏ các field undefined/null nếu không muốn ghi đè
+            // Clean undefined
             Object.keys(updateData).forEach(key => {
-                if (updateData[key] === undefined) {
-                    delete updateData[key];
-                }
+                if (updateData[key] === undefined) delete updateData[key];
             });
 
             await userService.update(user.id, updateData);
+            if (refreshUser) await refreshUser();
 
-            if (refreshUser) {
-                await refreshUser();
-            }
+            // Simulate delay for smooth UX
+            await new Promise(resolve => setTimeout(resolve, 800));
 
-            toast.success("Đã lưu thông tin thành công!", {
-                description: "Thông tin cá nhân của bạn đã được cập nhật trên hệ thống.",
-                duration: 3000,
+            toast.success("Đã lưu thành công!", {
+                id: loadingToast,
+                description: "Hồ sơ cá nhân của bạn đã được cập nhật."
             });
         } catch (error: any) {
-            console.error("Update error:", error);
-            // Extract better error message
-            const errorMessage = error?.message || error?.details ||
-                (typeof error === 'object' && Object.keys(error).length === 0
-                    ? "Không có quyền cập nhật. Vui lòng đăng nhập lại."
-                    : "Không thể lưu thông tin. Vui lòng thử lại.");
             toast.error("Lỗi cập nhật", {
-                description: errorMessage,
+                id: loadingToast,
+                description: error.message || "Không thể lưu thông tin."
             });
         } finally {
             setIsSaving(false);
@@ -175,57 +185,49 @@ export default function SettingsPage() {
     };
 
     const handleChangePassword = async () => {
-        // Validation
         if (!newPassword || !confirmPassword) {
-            toast.error("Vui lòng nhập đầy đủ thông tin!", {
-                description: "Bạn cần nhập mật khẩu mới và xác nhận mật khẩu.",
-            });
+            toast.error("Thiếu thông tin", { description: "Vui lòng nhập mật khẩu mới và xác nhận." });
             return;
         }
-
         if (newPassword !== confirmPassword) {
-            toast.error("Mật khẩu mới không khớp!", {
-                description: "Vui lòng kiểm tra lại mật khẩu xác nhận.",
-            });
+            toast.error("Mật khẩu không khớp", { description: "Vui lòng kiểm tra lại xác nhận mật khẩu." });
             return;
         }
-
         if (newPassword.length < 6) {
-            toast.error("Mật khẩu quá ngắn!", {
-                description: "Mật khẩu mới phải có ít nhất 6 ký tự.",
-            });
+            toast.error("Mật khẩu yếu", { description: "Mật khẩu phải có ít nhất 6 ký tự." });
             return;
         }
 
+        const loadingToast = toast.loading("Đang cập nhật mật khẩu...");
         try {
             const { error } = await authService.updatePassword(newPassword);
-
             if (error) throw error;
 
-            toast.success("Đổi mật khẩu thành công!", {
-                description: "Mật khẩu của bạn đã được cập nhật.",
-                duration: 3000,
-            });
-
-            // Clear password fields
+            toast.success("Thành công!", { id: loadingToast, description: "Đổi mật khẩu thành công." });
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
         } catch (error: any) {
-            toast.error("Lỗi đổi mật khẩu", {
-                description: error.message || "Vui lòng thử lại sau.",
-            });
+            toast.error("Lỗi", { id: loadingToast, description: error.message });
         }
     };
 
-    // Create refs for sections
-    const profileRef = useRef<HTMLDivElement>(null);
-    const notificationsRef = useRef<HTMLDivElement>(null);
-    const securityRef = useRef<HTMLDivElement>(null);
+    const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setAvatar(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
 
-    const scrollToSection = (section: string, ref: React.RefObject<HTMLDivElement | null>) => {
-        setActiveTab(section);
-        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setCover(reader.result as string);
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleLogout = async () => {
@@ -238,352 +240,425 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
-            <div className="flex h-full grow flex-row">
-                {/* Sidebar Navigation */}
-                <Sidebar />
+        <div className="relative flex h-screen w-full flex-row overflow-hidden bg-[#f6f6f8] dark:bg-[#120e1b] font-sans text-slate-900 dark:text-white">
+            <Sidebar />
 
-                {/* Main Content & Footer Wrapper */}
-                <div className="flex-1 flex flex-col min-w-0">
-                    <TopNav title="" />
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
+                <TopNav title="" />
 
-                    <main className="flex flex-1 justify-center py-8">
-                        <div className="flex flex-col max-w-[1024px] flex-1 px-4 md:px-10 gap-8">
+                <main className="flex-1 overflow-y-auto">
+                    <div className="max-w-5xl mx-auto px-6 py-8 w-full">
 
-                            {/* Page Header */}
-                            <div>
-                                <h1 className="text-4xl font-black tracking-tight text-[#120e1b] dark:text-white mb-2">Cài đặt</h1>
-                                <p className="text-[#654d99] dark:text-[#a594c9]">Quản lý thông tin cá nhân và tùy chọn ứng dụng của bạn.</p>
-                            </div>
+                        {/* Tab Navigation */}
+                        <div className="flex items-center space-x-8 mb-8 border-b border-slate-300 dark:border-slate-800">
+                            <button
+                                onClick={() => setActiveTab('profile')}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'profile' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-[#501ac2]'}`}
+                            >
+                                Hồ sơ Cá nhân
+                                {activeTab === 'profile' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-full" />}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('notifications')}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'notifications' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-[#501ac2]'}`}
+                            >
+                                Thông báo
+                                {activeTab === 'notifications' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-full" />}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('security')}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'security' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-[#501ac2]'}`}
+                            >
+                                Bảo mật
+                                {activeTab === 'security' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-full" />}
+                            </button>
+                        </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-
-                                <div className="lg:col-span-1 flex flex-col gap-6">
-                                    {/* Profile Card */}
-                                    <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm text-center">
-                                        <div className="relative mx-auto w-24 h-24 mb-4">
-                                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-[#2d263d] shadow-lg bg-[#6324eb] flex items-center justify-center">
-                                                {user?.user_metadata?.avatar_url ? (
-                                                    <img
-                                                        src={user.user_metadata.avatar_url}
-                                                        alt="Avatar"
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <span className="text-white text-2xl font-bold">
-                                                        {name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'U'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <button className="absolute bottom-0 right-0 p-2 bg-[#6324eb] text-white rounded-full hover:bg-[#501ac2] transition-colors border-2 border-white dark:border-[#1c162e]">
-                                                <Camera className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                        <h2 className="text-xl font-bold text-[#120e1b] dark:text-white">{name}</h2>
-                                        <p className="text-sm text-[#654d99] dark:text-[#a594c9] mb-4">
-                                            {user?.role === 'admin' ? "Quản trị viên" : user?.role === 'hospital' ? "Bệnh viện" : user?.profile?.blood_group ? `Nhóm máu ${user.profile.blood_group}` : "Thành viên"}
-                                        </p>
-
-                                        <div className="flex flex-col gap-2">
-                                            <button
-                                                onClick={() => scrollToSection("profile", profileRef)}
-                                                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${activeTab === "profile"
-                                                    ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
-                                                    : "bg-[#f6f6f8] dark:bg-[#251e36] text-[#120e1b] dark:text-white hover:bg-[#ebe7f3] dark:hover:bg-[#3d335a]"
-                                                    }`}
-                                            >
-                                                <User className={`w-5 h-5 ${activeTab === "profile" ? "text-white" : "text-[#6324eb]"}`} /> Hồ sơ cá nhân
-                                            </button>
-                                            <button
-                                                onClick={() => scrollToSection("notifications", notificationsRef)}
-                                                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${activeTab === "notifications"
-                                                    ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
-                                                    : "text-[#654d99] dark:text-[#a594c9] hover:bg-[#f6f6f8] dark:hover:bg-[#251e36]"
-                                                    }`}
-                                            >
-                                                <Bell className={`w-5 h-5 ${activeTab === "notifications" ? "text-white" : ""}`} /> Thông báo
-                                            </button>
-                                            <button
-                                                onClick={() => scrollToSection("security", securityRef)}
-                                                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors text-left ${activeTab === "security"
-                                                    ? "bg-[#6324eb] text-white shadow-md shadow-[#6324eb]/20"
-                                                    : "text-[#654d99] dark:text-[#a594c9] hover:bg-[#f6f6f8] dark:hover:bg-[#251e36]"
-                                                    }`}
-                                            >
-                                                <Lock className={`w-5 h-5 ${activeTab === "security" ? "text-white" : ""}`} /> Bảo mật
-                                            </button>
-                                        </div>
+                        {/* Content Area */}
+                        {activeTab === 'profile' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+                                {/* Header Title */}
+                                <div className="flex items-center mb-8">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-[#6324eb] to-indigo-600 rounded-xl flex items-center justify-center text-white mr-4 shadow-lg shadow-[#6324eb]/20">
+                                        <User className="size-5" />
                                     </div>
-
-                                    {/* Danger Zone Mini */}
-                                    <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm">
-                                        <button
-                                            onClick={handleLogout}
-                                            className="flex items-center gap-3 text-red-500 font-bold w-full hover:bg-red-50 dark:hover:bg-red-900/10 p-2 rounded-lg transition-colors"
-                                        >
-                                            <LogOut className="w-5 h-5" /> Đăng xuất
-                                        </button>
-                                    </div>
+                                    <h1 className="text-2xl font-bold tracking-tight">Hồ sơ & Thông tin</h1>
                                 </div>
 
-                                {/* Right Column: Content Forms */}
-                                <div className="lg:col-span-2 flex flex-col gap-8">
-
-                                    {/* Personal Info */}
-                                    <div ref={profileRef} className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm scroll-mt-24">
-                                        <h3 className="text-lg font-bold mb-6 pb-2 border-b border-[#ebe7f3] dark:border-[#2d263d] flex items-center gap-2">
-                                            <User className="w-5 h-5 text-[#6324eb]" /> Thông tin cá nhân
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Họ và tên</label>
-                                                <input
-                                                    type="text"
-                                                    value={name}
-                                                    onChange={(e) => setName(e.target.value)}
-                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
-                                                />
+                                {/* Banner & Avatar */}
+                                <section className="relative mb-20">
+                                    <div className="h-64 md:h-80 w-full rounded-[2rem] overflow-hidden bg-slate-200 dark:bg-slate-800 relative group border border-slate-200 dark:border-slate-800 shadow-sm">
+                                        {cover ? (
+                                            <img src={cover} alt="Cover" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                                        ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                                <Camera className="size-12 opacity-20 mb-2" />
+                                                <p className="text-sm font-bold">Chưa có ảnh bìa</p>
                                             </div>
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Số điện thoại</label>
-                                                <div className="relative">
-                                                    <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                                    <input
-                                                        type="text"
-                                                        value={phone}
-                                                        onChange={(e) => setPhone(e.target.value)}
-                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
-                                                    />
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                                        <div className="absolute bottom-6 right-6">
+                                            <label className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all border border-white/30 cursor-pointer active:scale-95 shadow-lg">
+                                                <Camera className="size-4" />
+                                                <span>Thay đổi ảnh bìa</span>
+                                                <input type="file" className="hidden" accept="image/*" onChange={handleCoverUpload} />
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Avatar Floating */}
+                                    <div className="absolute -bottom-14 left-10">
+                                        <div className="relative group">
+                                            <div className="w-32 h-32 md:w-40 md:h-40 bg-white dark:bg-[#120e1b] rounded-full p-1.5 shadow-2xl border-4 border-white dark:border-[#120e1b] overflow-hidden">
+                                                <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative">
+                                                    {avatar ? (
+                                                        <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-4xl font-black text-[#6324eb] opacity-50">
+                                                            {name ? name.charAt(0).toUpperCase() : 'U'}
+                                                        </span>
+                                                    )}
+                                                    <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-pointer">
+                                                        <Camera className="text-white size-8" />
+                                                        <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+                                                    </label>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Email</label>
+                                            <div className="absolute bottom-2 right-2 flex size-8 rounded-full bg-emerald-500 border-4 border-white dark:border-[#120e1b] items-center justify-center">
+                                                <CheckCircle2 className="text-white size-4" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="absolute bottom-4 left-56 hidden md:block">
+                                        <h2 className="text-3xl font-black text-white mb-1 drop-shadow-md shadow-black">{name || "Người dùng"}</h2>
+                                        <p className="text-white/80 text-sm max-w-lg font-medium drop-shadow-sm shadow-black flex items-center gap-2">
+                                            <span className="bg-white/20 px-2 py-0.5 rounded text-xs backdrop-blur-sm border border-white/20">
+                                                {user?.role === 'admin' ? "Quản trị viên" : "Người hiến máu"}
+                                            </span>
+                                            {bloodGroup && (
+                                                <span className="bg-rose-500/80 px-2 py-0.5 rounded text-xs backdrop-blur-sm border border-rose-400/30">
+                                                    Nhóm máu: {bloodGroup}
+                                                </span>
+                                            )}
+                                        </p>
+                                    </div>
+                                </section>
+
+                                {/* Forms */}
+                                <div className="space-y-6">
+                                    {/* Personal Info */}
+                                    <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                                        <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
+                                            <User className="text-[#6324eb] mr-2 size-5" />
+                                            Thông tin cá nhân
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Họ và tên</label>
+                                                <input
+                                                    value={name}
+                                                    onChange={(e) => setName(e.target.value)}
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                    placeholder="Nhập họ tên đầy đủ"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Giới tính</label>
                                                 <div className="relative">
-                                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                    <select
+                                                        value={gender}
+                                                        onChange={(e) => setGender(e.target.value)}
+                                                        className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm appearance-none"
+                                                    >
+                                                        <option value="Nam">Nam</option>
+                                                        <option value="Nữ">Nữ</option>
+                                                        <option value="Khác">Khác</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Ngày sinh</label>
+                                                <input
+                                                    type="date"
+                                                    value={dob}
+                                                    onChange={(e) => setDob(e.target.value)}
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">CCCD / CMND</label>
+                                                <input
+                                                    value={citizenId}
+                                                    onChange={(e) => setCitizenId(e.target.value)}
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                    placeholder="Số định danh cá nhân"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Contact Info */}
+                                    <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                                        <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
+                                            <Smartphone className="text-[#6324eb] mr-2 size-5" />
+                                            Liên hệ & Sức khỏe
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Email</label>
+                                                <div className="relative">
+                                                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
                                                     <input
                                                         type="email"
                                                         value={email}
                                                         onChange={(e) => setEmail(e.target.value)}
-                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                        placeholder="email@example.com"
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Số CCCD / Passport</label>
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Điện thoại</label>
                                                 <div className="relative">
-                                                    <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                    <Smartphone className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
                                                     <input
-                                                        type="text"
-                                                        value={citizenId}
-                                                        onChange={(e) => setCitizenId(e.target.value)}
-                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                        type="tel"
+                                                        value={phone}
+                                                        onChange={(e) => setPhone(e.target.value)}
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                        placeholder="0912..."
                                                     />
                                                 </div>
                                             </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ngày sinh</label>
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Nhóm máu</label>
                                                 <div className="relative">
-                                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                                    <input
-                                                        type="date"
-                                                        value={dob}
-                                                        onChange={(e) => setDob(e.target.value)}
-                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Giới tính</label>
-                                                <select
-                                                    value={gender}
-                                                    onChange={(e) => setGender(e.target.value)}
-                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none appearance-none"
-                                                >
-                                                    <option value="Nam">Nam</option>
-                                                    <option value="Nữ">Nữ</option>
-                                                    <option value="Khác">Khác</option>
-                                                </select>
-                                            </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Nhóm máu</label>
-                                                <div className="relative">
-                                                    <Droplet className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />
+                                                    <Droplet className="absolute left-5 top-1/2 -translate-y-1/2 text-rose-500 size-4" />
                                                     <select
                                                         value={bloodGroup}
                                                         onChange={(e) => setBloodGroup(e.target.value)}
-                                                        className="w-full pl-12 pr-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none appearance-none"
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm appearance-none"
                                                     >
-                                                        <option value="">Chưa xác định</option>
-                                                        {BLOOD_GROUPS.map(bg => (
-                                                            <option key={bg} value={bg}>{bg}</option>
-                                                        ))}
+                                                        <option value="">Chưa có thông tin</option>
+                                                        {BLOOD_GROUPS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
                                                     </select>
                                                 </div>
                                             </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Cân nặng (kg)</label>
-                                                <input
-                                                    type="number"
-                                                    value={weight}
-                                                    onChange={(e) => setWeight(e.target.value)}
-                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
-                                                />
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Cân nặng (kg)</label>
+                                                <div className="relative">
+                                                    <Activity className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+                                                    <input
+                                                        type="number"
+                                                        value={weight}
+                                                        onChange={(e) => setWeight(e.target.value)}
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                        placeholder="KG"
+                                                    />
+                                                </div>
                                             </div>
-
-                                            <div className="md:col-span-2">
-                                                <LocationSelector
-                                                    defaultCity={city}
-                                                    defaultDistrict={district}
-                                                    onCityChange={(val) => setCity(val)}
-                                                    onDistrictChange={(val) => setDistrict(val)}
-                                                />
-                                            </div>
-
-                                            <div className="flex flex-col gap-2 md:col-span-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Địa chỉ chi tiết</label>
+                                            <div className="md:col-span-2 space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Tiền sử bệnh lý</label>
                                                 <textarea
-                                                    rows={2}
-                                                    value={address}
-                                                    onChange={(e) => setAddress(e.target.value)}
-                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none resize-none"
-                                                ></textarea>
-                                            </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ngày hiến máu gần nhất</label>
-                                                <input
-                                                    type="date"
-                                                    value={lastDonationDate}
-                                                    onChange={(e) => setLastDonationDate(e.target.value)}
-                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
-                                                />
-                                            </div>
-
-                                            <div className="flex flex-col gap-2 md:col-span-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Tiền sử bệnh lý</label>
-                                                <textarea
-                                                    rows={3}
                                                     value={healthHistory}
                                                     onChange={(e) => setHealthHistory(e.target.value)}
-                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none resize-none"
-                                                    placeholder="VD: Không có hoặc ghi tên các bệnh lý nền..."
-                                                ></textarea>
-                                            </div>
-                                        </div>
-                                        <div className="mt-6 flex justify-end">
-                                            <button
-                                                onClick={handleSave}
-                                                className="px-6 py-2 bg-[#6324eb] text-white font-bold rounded-lg hover:bg-[#501ac2] transition-colors shadow-lg shadow-[#6324eb]/20"
-                                            >
-                                                Lưu thay đổi
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Notifications */}
-                                    <div ref={notificationsRef} className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm scroll-mt-24">
-                                        <h3 className="text-lg font-bold mb-6 pb-2 border-b border-[#ebe7f3] dark:border-[#2d263d] flex items-center gap-2">
-                                            <Bell className="w-5 h-5 text-[#6324eb]" /> Cài đặt thông báo
-                                        </h3>
-                                        <div className="flex flex-col gap-4">
-                                            <div className="flex items-center justify-between p-4 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36]">
-                                                <div>
-                                                    <p className="font-bold text-[#120e1b] dark:text-white">Email nhắc nhở</p>
-                                                    <p className="text-sm text-[#654d99] dark:text-[#a594c9]">Nhận email về lịch hiến máu sắp tới</p>
-                                                </div>
-                                                <label className="relative inline-flex items-center cursor-pointer">
-                                                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#6324eb]"></div>
-                                                </label>
-                                            </div>
-                                            <div className="flex items-center justify-between p-4 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36]">
-                                                <div>
-                                                    <p className="font-bold text-[#120e1b] dark:text-white">Thông báo khẩn cấp</p>
-                                                    <p className="text-sm text-[#654d99] dark:text-[#a594c9]">Khi có ca cấp cứu cần nhóm máu O+</p>
-                                                </div>
-                                                <label className="relative inline-flex items-center cursor-pointer">
-                                                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#6324eb]"></div>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Security */}
-                                    <div ref={securityRef} className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-6 shadow-sm scroll-mt-24">
-                                        <h3 className="text-lg font-bold mb-6 pb-2 border-b border-[#ebe7f3] dark:border-[#2d263d] flex items-center gap-2">
-                                            <Shield className="w-5 h-5 text-[#6324eb]" /> Bảo mật
-                                        </h3>
-                                        <div className="flex flex-col gap-4">
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Mật khẩu hiện tại</label>
-                                                <input
-                                                    type="password"
-                                                    value={currentPassword}
-                                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                                    placeholder="••••••••"
-                                                    className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
+                                                    className="w-full px-6 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm resize-none"
+                                                    rows={3}
+                                                    placeholder="Ghi chú về tiền sử bệnh lý của bạn (nếu có)..."
                                                 />
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="flex flex-col gap-2">
-                                                    <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Mật khẩu mới</label>
-                                                    <input
-                                                        type="password"
-                                                        value={newPassword}
-                                                        onChange={(e) => setNewPassword(e.target.value)}
-                                                        placeholder="••••••••"
-                                                        className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
-                                                    />
+                                        </div>
+                                    </div>
+
+                                    {/* Address */}
+                                    <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                                        <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
+                                            <MapPin className="text-[#6324eb] mr-2 size-5" />
+                                            Địa chỉ liên lạc
+                                        </h3>
+                                        <div className="space-y-6">
+                                            <LocationSelector
+                                                defaultCity={city}
+                                                defaultDistrict={district}
+                                                onCityChange={setCity}
+                                                onDistrictChange={setDistrict}
+                                            // @ts-ignore: Custom styling if needed via props or class overriding
+                                            />
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Địa chỉ chi tiết</label>
+                                                <input
+                                                    value={address}
+                                                    onChange={(e) => setAddress(e.target.value)}
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                    placeholder="Số nhà, tên đường..."
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Save Button */}
+                                    <div className="flex justify-end pt-6">
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className={`bg-gradient-to-r from-[#6324eb] to-indigo-600 text-white px-12 py-4 rounded-full font-black text-base flex items-center space-x-3 transition-all shadow-2xl shadow-indigo-500/30 active:scale-95 ${isSaving ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
+                                        >
+                                            <Save className={`size-5 ${isSaving ? 'animate-spin' : ''}`} />
+                                            <span>{isSaving ? "Đang lưu..." : "Lưu thay đổi hồ sơ"}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Notifications Content */}
+                        {activeTab === 'notifications' && (
+                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-[#6324eb] mr-4">
+                                        <Bell className="size-5" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold tracking-tight">Cấu hình Thông báo</h2>
+                                </div>
+
+                                <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm space-y-6">
+                                    <div className="p-8 bg-slate-50 dark:bg-slate-800/20 rounded-3xl border border-slate-300 dark:border-slate-800">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-start gap-5">
+                                                <div className="size-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[#6324eb] shrink-0">
+                                                    <Mail className="size-6" />
                                                 </div>
-                                                <div className="flex flex-col gap-2">
-                                                    <label className="text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Xác nhận mật khẩu</label>
-                                                    <input
-                                                        type="password"
-                                                        value={confirmPassword}
-                                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                                        placeholder="••••••••"
-                                                        className="px-4 py-3 rounded-lg bg-[#f6f6f8] dark:bg-[#251e36] border-none text-[#120e1b] dark:text-white focus:ring-2 focus:ring-[#6324eb] outline-none"
-                                                    />
+                                                <div>
+                                                    <p className="font-black text-lg mb-1">Email nhắc nhở</p>
+                                                    <p className="text-sm text-slate-500 max-w-[450px] font-medium">Nhận email nhắc nhở khi đến lịch hiến máu hoặc đủ điều kiện hiến lại.</p>
                                                 </div>
                                             </div>
-                                            <div className="mt-4">
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" className="sr-only peer" defaultChecked />
+                                                <div className="w-14 h-8 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-[#6324eb]"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-8 bg-slate-50 dark:bg-slate-800/20 rounded-3xl border border-slate-300 dark:border-slate-800 group hover:border-amber-200 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-start gap-5">
+                                                <div className="size-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 shrink-0">
+                                                    <AlertTriangle className="size-6" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-lg mb-1">Cảnh báo khẩn cấp</p>
+                                                    <p className="text-sm text-slate-500 max-w-[450px] font-medium">Nhận thông báo ngay lập tức khi có bệnh viện cần nhóm máu của bạn gấp.</p>
+                                                </div>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" className="sr-only peer" defaultChecked />
+                                                <div className="w-14 h-8 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-[#6324eb]"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end pt-4">
+                                        <button className="bg-[#6324eb] text-white px-10 py-4 rounded-full font-black text-base shadow-2xl shadow-[#6324eb]/20 active:scale-95 transition-all hover:-translate-y-1">
+                                            Lưu cấu hình
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Security Content */}
+                        {activeTab === 'security' && (
+                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center text-emerald-600 mr-4">
+                                        <Shield className="size-5" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold tracking-tight">Bảo mật tài khoản</h2>
+                                </div>
+
+                                <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm space-y-8">
+                                    <div className="grid grid-cols-1 gap-8 max-w-md">
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Mật khẩu Hiện tại</label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    value={currentPassword}
+                                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                    placeholder="••••••••"
+                                                />
                                                 <button
-                                                    onClick={handleChangePassword}
-                                                    className="px-6 py-2 border border-[#ebe7f3] dark:border-[#3d335a] bg-transparent text-[#120e1b] dark:text-white font-bold rounded-lg hover:bg-[#f6f6f8] dark:hover:bg-[#251e36] transition-colors"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#6324eb]"
                                                 >
-                                                    Đổi mật khẩu
+                                                    {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                                                 </button>
                                             </div>
                                         </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Mật khẩu mới</label>
+                                            <input
+                                                type="password"
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                                className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                placeholder="Ít nhất 6 ký tự"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Xác nhận mật khẩu</label>
+                                            <input
+                                                type="password"
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                placeholder="Gõ lại mật khẩu mới"
+                                            />
+                                        </div>
                                     </div>
 
-                                    {/* Delete Account */}
-                                    <div className="bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/20 p-6">
-                                        <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2 flex items-center gap-2">
-                                            <Trash2 className="w-5 h-5" /> Xóa tài khoản
-                                        </h3>
-                                        <p className="text-sm text-red-500/80 mb-4">
-                                            Hành động này không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.
-                                        </p>
-                                        <button className="px-6 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors">
+                                    <div className="flex justify-end pt-6 border-t border-slate-100 dark:border-slate-800">
+                                        <button
+                                            onClick={handleChangePassword}
+                                            className="bg-emerald-600 text-white px-10 py-4 rounded-full font-black text-base shadow-xl shadow-emerald-500/20 active:scale-95 transition-all hover:bg-emerald-700"
+                                        >
+                                            Cập nhật bảo mật
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Danger Zone */}
+                                <div className="bg-rose-50 dark:bg-rose-900/10 p-8 rounded-[2rem] border border-rose-100 dark:border-rose-900/20">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <AlertTriangle className="text-rose-600 size-6" />
+                                        <h3 className="text-lg font-black text-rose-700 dark:text-rose-400">Vùng nguy hiểm</h3>
+                                    </div>
+                                    <p className="text-sm text-rose-600/80 mb-6 font-medium">
+                                        Nếu bạn xóa tài khoản, toàn bộ dữ liệu hiến máu và lịch sử hoạt động sẽ bị xóa vĩnh viễn và không thể khôi phục.
+                                    </p>
+                                    <div className="flex gap-4">
+                                        <button
+                                            onClick={handleLogout}
+                                            className="px-6 py-3 bg-white border border-rose-200 text-rose-600 font-bold rounded-full hover:bg-rose-50 transition-colors shadow-sm"
+                                        >
+                                            Đăng xuất
+                                        </button>
+                                        <button className="px-6 py-3 bg-rose-600 text-white font-bold rounded-full hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/20">
                                             Xóa tài khoản
                                         </button>
                                     </div>
-
                                 </div>
                             </div>
-                        </div>
-                    </main>
-
-                    <MiniFooter />
-                </div>
+                        )}
+                    </div>
+                </main>
             </div>
         </div>
     );
 }
+

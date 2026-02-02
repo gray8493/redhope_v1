@@ -1,121 +1,215 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import MiniFooter from "@/components/shared/MiniFooter";
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis, Pie, PieChart, Cell } from "recharts";
-import {
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-    ChartLegend,
-    ChartLegendContent
-} from "@/components/ui/chart";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { startOfMonth, startOfQuarter, startOfYear, isAfter, isBefore } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export default function ReportsPage() {
+    const { user } = useAuth();
     const [timeFilter, setTimeFilter] = useState<'month' | 'quarter' | 'year'>('month');
+    const [loading, setLoading] = useState(true);
+    const [rawData, setRawData] = useState<{
+        campaigns: any[];
+        appointments: any[];
+    }>({ campaigns: [], appointments: [] });
 
-    // Dữ liệu mẫu (Data Model)
-    const metricsData = {
-        month: {
-            retentionRate: 45, retentionGrowth: "4.2%", isPositive: true,
-            deferralRate: 12, deferralGrowth: "1.5%", isdeferralGood: true,
-            noShowRate: 8, noShowGrowth: "+0.5%", isNoShowGood: false,
-            funnel: { registered: 150, arrived: 135, screeningPass: 110, collected: 105 },
-            demographics: [
-                { label: "Sinh viên", pct: 55, color: "bg-[#6366f1]" },
-                { label: "Văn phòng", pct: 25, color: "bg-emerald-400" },
-                { label: "Lao động tự do", pct: 15, color: "bg-orange-400" },
-                { label: "Khác", pct: 5, color: "bg-slate-300" }
-            ],
-            source: [
-                { label: "Facebook", count: 85, pct: 45 },
-                { label: "Trường học", count: 45, pct: 25 },
-                { label: "Bạn bè", count: 35, pct: 20 },
-                { label: "Zalo/SMS", count: 20, pct: 10 }
-            ]
-        },
-        quarter: {
-            retentionRate: 48, retentionGrowth: "6.0%", isPositive: true,
-            deferralRate: 11, deferralGrowth: "2.0%", isdeferralGood: true,
-            noShowRate: 7.5, noShowGrowth: "-0.8%", isNoShowGood: true,
-            funnel: { registered: 450, arrived: 410, screeningPass: 340, collected: 325 },
-            demographics: [
-                { label: "Sinh viên", pct: 50, color: "bg-[#6366f1]" },
-                { label: "Văn phòng", pct: 30, color: "bg-emerald-400" },
-                { label: "Lao động tự do", pct: 15, color: "bg-orange-400" },
-                { label: "Khác", pct: 5, color: "bg-slate-300" }
-            ],
-            source: [
-                { label: "Facebook", count: 200, pct: 40 },
-                { label: "Trường học", count: 150, pct: 30 },
-                { label: "Bạn bè", count: 100, pct: 20 },
-                { label: "Zalo/SMS", count: 50, pct: 10 }
-            ]
-        },
-        year: {
-            retentionRate: 52, retentionGrowth: "8.5%", isPositive: true,
-            deferralRate: 10, deferralGrowth: "3.0%", isdeferralGood: true,
-            noShowRate: 6, noShowGrowth: "-2.0%", isNoShowGood: true,
-            funnel: { registered: 1800, arrived: 1650, screeningPass: 1400, collected: 1350 },
-            demographics: [
-                { label: "Sinh viên", pct: 45, color: "bg-[#6366f1]" },
-                { label: "Văn phòng", pct: 35, color: "bg-emerald-400" },
-                { label: "Lao động tự do", pct: 15, color: "bg-orange-400" },
-                { label: "Khác", pct: 5, color: "bg-slate-300" }
-            ],
-            source: [
-                { label: "Facebook", count: 700, pct: 38 },
-                { label: "Trường học", count: 600, pct: 32 },
-                { label: "Bạn bè", count: 400, pct: 22 },
-                { label: "Zalo/SMS", count: 150, pct: 8 }
-            ]
-        }
-    };
-
-    // Explicit colors for charts
+    // Constants for Chart Colors
     const chartColors = {
-        student: "#6366f1",
-        office: "#34d399",
-        freelance: "#fb923c",
-        other: "#cbd5e1",
+        student: "#6366f1", // Indigo
+        office: "#10b981",  // Emerald
+        freelance: "#f59e0b", // Amber
+        other: "#cbd5e1",   // Slate
         fb: "#4267B2",
         school: "#EF4444",
         friends: "#F59E0B",
         zalo: "#0068FF"
     };
 
-    // Prepare chart configs
-    const demoChartConfig = {
-        count: { label: "Học sinh/Sinh viên", color: chartColors.student },
-        office: { label: "Văn phòng", color: chartColors.office },
-        freelance: { label: "Lao động tự do", color: chartColors.freelance },
-        other: { label: "Khác", color: chartColors.other },
-    };
-
-    const sourceChartConfig = {
-        count: { label: "Số lượng" },
-        fb: { label: "Facebook", color: chartColors.fb },
-        school: { label: "Trường học", color: chartColors.school },
-        friends: { label: "Bạn bè", color: chartColors.friends },
-        zalo: { label: "Zalo/SMS", color: chartColors.zalo },
-    };
-
-    const currentData = metricsData[timeFilter];
-
-    // Remap source data for Pie Chart
-    const sourceData = currentData.source.map((s, idx) => ({
-        browser: s.label,
-        visitors: s.count,
-        fill: Object.values(chartColors)[idx + 4] // Hacky, but works for demo 
-    }));
-
     const getFunnelWidth = (val: number, max: number) => {
+        if (max === 0) return "5%";
         return `${Math.max((val / max) * 100, 5)}%`;
     };
 
-    const MaterialIcon = ({ name, className = "" }: { name: string; className?: string }) => (
-        <span className={`material-symbols-outlined ${className}`}>{name}</span>
-    );
+    // --- 1. Fetch Data ---
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // Fetch Campaigns
+                const { data: campaigns, error: campError } = await supabase
+                    .from('campaigns')
+                    .select('id, name, start_time, end_time, target_units')
+                    .eq('hospital_id', user.id);
+
+                if (campError) throw campError;
+
+                // Fetch Appointments (Deep fetch for demographics)
+                // Note: We need user dob/gender.
+                // We'll fetch all appointments for these campaigns.
+                const campaignIds = campaigns?.map(c => c.id) || [];
+
+                if (campaignIds.length === 0) {
+                    setRawData({ campaigns: [], appointments: [] });
+                    return;
+                }
+
+                const { data: appointments, error: appError } = await supabase
+                    .from('appointments')
+                    .select(`
+                        id,
+                        status,
+                        created_at,
+                        campaign_id,
+                        user:users (
+                            id,
+                            dob,
+                            gender,
+                            address,
+                            last_donation_date
+                        )
+                    `)
+                    .in('campaign_id', campaignIds);
+
+                if (appError) throw appError;
+
+                setRawData({ campaigns: campaigns || [], appointments: appointments || [] });
+
+            } catch (err: any) {
+                console.error("Error fetching report data:", err);
+                toast.error("Không thể tải dữ liệu báo cáo");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [user?.id]);
+
+    // --- 2. Process Data based on Filter ---
+    const metricsData = useMemo(() => {
+        // Define Start Date based on filter
+        const now = new Date();
+        let startDate = startOfMonth(now);
+
+        if (timeFilter === 'quarter') startDate = startOfQuarter(now);
+        if (timeFilter === 'year') startDate = startOfYear(now);
+
+        // Filter appointments in range
+        const filteredApps = rawData.appointments.filter(app => {
+            const date = new Date(app.created_at);
+            return isAfter(date, startDate) && isBefore(date, now);
+        });
+
+        // 1. Funnel Metrics
+        const totalRegistered = filteredApps.length;
+        const totalCompleted = filteredApps.filter(a => a.status === 'Completed').length;
+        const totalDeferred = filteredApps.filter(a => a.status === 'Deferred').length;
+        // Assuming Arrived = Completed + Deferred (people who showed up)
+        const totalArrived = totalCompleted + totalDeferred;
+
+        // No Show = Registered - Arrived
+        // Note: Sometimes appointments are just 'Booked' if date passed. We treat them as No Show if date passed.
+        // For simplicity here: No Show = Registered - Arrived.
+        const totalNoShow = Math.max(0, totalRegistered - totalArrived);
+
+        // Rates
+        const retentionRateVal = totalRegistered > 0 ? 0 : 0; // Placeholder for now, hard to calc accurately without full history
+        // Let's try a heuristic for Retention: Users who have last_donation_date
+        const returningDonors = filteredApps.filter(a => a.user?.last_donation_date).length;
+        const retentionRate = totalArrived > 0 ? Math.round((returningDonors / totalArrived) * 100) : 0;
+
+        const deferralRate = totalArrived > 0 ? Math.round((totalDeferred / totalArrived) * 100) : 0;
+        const noShowRate = totalRegistered > 0 ? Math.round((totalNoShow / totalRegistered) * 100) : 0;
+
+        // Growth (Mocked for now as we don't fetch Previous Period to compare yet)
+        // In real app, we would fetch data for [startDate - period, startDate] to compare.
+        const retentionGrowth = "+2.5%";
+        const deferralGrowth = "-1.0%";
+        const noShowGrowth = "-0.5%";
+
+        // 2. Demographics (Age Groups)
+        // < 22: Gen Z / Student
+        // 22 - 35: Young Professional
+        // 35 - 50: Mature
+        // > 50: Senior
+        const ageGroups = {
+            student: 0,
+            office: 0,
+            freelance: 0, // Mapping "Mature" here
+            other: 0      // Mapping "Senior" here
+        };
+
+        filteredApps.forEach(app => {
+            if (!app.user?.dob) {
+                ageGroups.other++;
+                return;
+            }
+            const dob = new Date(app.user.dob);
+            const age = now.getFullYear() - dob.getFullYear();
+
+            if (age < 23) ageGroups.student++;
+            else if (age < 35) ageGroups.office++;
+            else if (age < 50) ageGroups.freelance++;
+            else ageGroups.other++;
+        });
+
+        // Convert to Percentages for UI
+        const totalDemo = totalRegistered || 1;
+        const demographics = [
+            { label: "Sinh viên (<23t)", pct: Math.round((ageGroups.student / totalDemo) * 100), color: "bg-[#6366f1]" },
+            { label: "Văn phòng (23-35t)", pct: Math.round((ageGroups.office / totalDemo) * 100), color: "bg-emerald-400" },
+            { label: "Trung niên (35-50t)", pct: Math.round((ageGroups.freelance / totalDemo) * 100), color: "bg-orange-400" },
+            { label: "Khác (>50t)", pct: Math.round((ageGroups.other / totalDemo) * 100), color: "bg-slate-300" }
+        ];
+
+        // 3. Source (Mocked - Random deterministic based on ID)
+        // We don't track source yet.
+        const source = [
+            { label: "Facebook", count: Math.round(totalRegistered * 0.4), pct: 40 },
+            { label: "Trường học", count: Math.round(totalRegistered * 0.3), pct: 30 },
+            { label: "Bạn bè", count: Math.round(totalRegistered * 0.2), pct: 20 },
+            { label: "Zalo/SMS", count: Math.round(totalRegistered * 0.1), pct: 10 }
+        ];
+
+        return {
+            retentionRate, retentionGrowth, isPositive: true,
+            deferralRate, deferralGrowth, isdeferralGood: true,
+            noShowRate, noShowGrowth, isNoShowGood: true,
+            funnel: {
+                registered: totalRegistered,
+                arrived: totalArrived,
+                screeningPass: totalCompleted, // Screening pass usually = collected
+                collected: totalCompleted
+            },
+            demographics,
+            source
+        };
+
+    }, [rawData, timeFilter]);
+
+
+    if (loading) {
+        return (
+            <main className="flex-1 p-10 space-y-8 bg-slate-50 dark:bg-slate-900 w-full overflow-y-auto">
+                <div className="flex justify-between items-end">
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-48" />
+                        <Skeleton className="h-4 w-96" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-3 gap-8">
+                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 rounded-2xl" />)}
+                </div>
+                <Skeleton className="h-96 rounded-2xl" />
+            </main>
+        );
+    }
 
     return (
         <main className="flex-1 flex flex-col overflow-y-auto bg-slate-50 dark:bg-slate-900 w-full font-sans">
@@ -125,8 +219,6 @@ export default function ReportsPage() {
                 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
                 .shadow-soft { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
             `}</style>
-
-
 
             <div className="p-10 space-y-8 max-w-[1600px] mx-auto w-full">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -166,10 +258,10 @@ export default function ReportsPage() {
                             <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Tỷ lệ Quay lại</span>
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{currentData.retentionRate}%</p>
+                            <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{metricsData.retentionRate}%</p>
                             <span className="text-green-500 text-sm font-bold flex items-center">
                                 <span className="material-symbols-outlined text-sm">trending_up</span>
-                                {currentData.retentionGrowth}
+                                {metricsData.retentionGrowth}
                             </span>
                         </div>
                         <p className="text-xs text-slate-400 mt-2">Người hiến quay lại từ đợt trước</p>
@@ -183,10 +275,10 @@ export default function ReportsPage() {
                             <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Tỷ lệ Hoãn hiến</span>
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{currentData.deferralRate}%</p>
-                            <span className={`text-sm font-bold flex items-center ${currentData.isdeferralGood ? 'text-green-500' : 'text-rose-500'}`}>
-                                <span className="material-symbols-outlined text-sm">{currentData.isdeferralGood ? 'trending_down' : 'trending_up'}</span>
-                                {currentData.deferralGrowth}
+                            <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{metricsData.deferralRate}%</p>
+                            <span className={`text-sm font-bold flex items-center ${metricsData.isdeferralGood ? 'text-green-500' : 'text-rose-500'}`}>
+                                <span className="material-symbols-outlined text-sm">{metricsData.isdeferralGood ? 'trending_down' : 'trending_up'}</span>
+                                {metricsData.deferralGrowth}
                             </span>
                         </div>
                         <p className="text-xs text-slate-400 mt-2">Hoãn do kiểm tra sức khỏe tại chỗ</p>
@@ -200,8 +292,8 @@ export default function ReportsPage() {
                             <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Tỷ lệ Vắng mặt</span>
                         </div>
                         <div className="flex items-baseline gap-2">
-                            <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{currentData.noShowRate}%</p>
-                            <span className={`text-sm font-bold ${currentData.isNoShowGood ? 'text-green-500' : 'text-indigo-500'}`}>{currentData.noShowGrowth}</span>
+                            <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{metricsData.noShowRate}%</p>
+                            <span className={`text-sm font-bold ${metricsData.isNoShowGood ? 'text-green-500' : 'text-indigo-500'}`}>{metricsData.noShowGrowth}</span>
                         </div>
                         <p className="text-xs text-slate-400 mt-2">Đăng ký nhưng không check-in</p>
                     </div>
@@ -215,16 +307,16 @@ export default function ReportsPage() {
                                 <p className="text-sm text-slate-500">Hành trình từ đăng ký đến thành công</p>
                             </div>
                             <div className="text-right">
-                                <span className="text-2xl font-black text-[#6366f1]">{Math.round((currentData.funnel.collected / currentData.funnel.registered) * 100)}%</span>
+                                <span className="text-2xl font-black text-[#6366f1]">{metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.collected / metricsData.funnel.registered) * 100) : 0}%</span>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase">Tỷ lệ chuyển đổi</p>
                             </div>
                         </div>
                         <div className="space-y-8">
                             {[
-                                { label: "1. Đăng ký Trực tuyến", val: currentData.funnel.registered, pct: "100%", sub: "Tổng lượng", color: "bg-indigo-100 dark:bg-indigo-900/40", textColor: "text-indigo-700 dark:text-indigo-300" },
-                                { label: "2. Check-in (Có mặt)", val: currentData.funnel.arrived, pct: getFunnelWidth(currentData.funnel.arrived, currentData.funnel.registered), sub: `${Math.round((currentData.funnel.arrived / currentData.funnel.registered) * 100)}% Giữ chân`, color: "bg-indigo-300 dark:bg-indigo-700", textColor: "text-indigo-900 dark:text-indigo-100" },
-                                { label: "3. Khám Sàng lọc", val: currentData.funnel.screeningPass, pct: getFunnelWidth(currentData.funnel.screeningPass, currentData.funnel.registered), sub: `${Math.round((currentData.funnel.screeningPass / currentData.funnel.registered) * 100)}% Đạt chuẩn`, color: "bg-[#6366f1]", textColor: "text-white" },
-                                { label: "4. Hiến máu Thành công", val: currentData.funnel.collected, pct: getFunnelWidth(currentData.funnel.collected, currentData.funnel.registered), sub: `${Math.round((currentData.funnel.collected / currentData.funnel.registered) * 100)}% Thành công`, color: "bg-emerald-500", textColor: "text-white" }
+                                { label: "1. Đăng ký Trực tuyến", val: metricsData.funnel.registered, pct: "100%", sub: "Tổng lượng", color: "bg-indigo-100 dark:bg-indigo-900/40", textColor: "text-indigo-700 dark:text-indigo-300" },
+                                { label: "2. Check-in (Có mặt)", val: metricsData.funnel.arrived, pct: getFunnelWidth(metricsData.funnel.arrived, metricsData.funnel.registered), sub: `${metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.arrived / metricsData.funnel.registered) * 100) : 0}% Giữ chân`, color: "bg-indigo-300 dark:bg-indigo-700", textColor: "text-indigo-900 dark:text-indigo-100" },
+                                { label: "3. Khám Sàng lọc", val: metricsData.funnel.screeningPass, pct: getFunnelWidth(metricsData.funnel.screeningPass, metricsData.funnel.registered), sub: `${metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.screeningPass / metricsData.funnel.registered) * 100) : 0}% Đạt chuẩn`, color: "bg-[#6366f1]", textColor: "text-white" },
+                                { label: "4. Hiến máu Thành công", val: metricsData.funnel.collected, pct: getFunnelWidth(metricsData.funnel.collected, metricsData.funnel.registered), sub: `${metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.collected / metricsData.funnel.registered) * 100) : 0}% Thành công`, color: "bg-emerald-500", textColor: "text-white" }
                             ].map((step, idx) => (
                                 <div key={idx} className="space-y-2">
                                     <div className="flex justify-between text-sm font-bold">
@@ -252,10 +344,10 @@ export default function ReportsPage() {
                                 <div className="size-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-600">
                                     <span className="material-symbols-outlined">groups</span>
                                 </div>
-                                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Nhân khẩu học (Nghề nghiệp)</h4>
+                                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Nhân khẩu học (Độ tuổi)</h4>
                             </div>
                             <div className="space-y-6">
-                                {currentData.demographics.map((demo, idx) => (
+                                {metricsData.demographics.map((demo, idx) => (
                                     <div key={idx}>
                                         <div className="flex justify-between mb-2">
                                             <span className="text-sm font-bold text-slate-600 dark:text-slate-400">{demo.label}</span>
@@ -275,10 +367,10 @@ export default function ReportsPage() {
                                 <div className="size-10 rounded-xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600">
                                     <span className="material-symbols-outlined">share</span>
                                 </div>
-                                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Nguồn giới thiệu</h4>
+                                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Nguồn giới thiệu (Mô phỏng)</h4>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                {currentData.source.map((src, idx) => (
+                                {metricsData.source.map((src, idx) => (
                                     <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{src.label}</p>
                                         <p className="text-xl font-extrabold text-slate-900 dark:text-white">{src.pct}%</p>
@@ -296,4 +388,3 @@ export default function ReportsPage() {
         </main>
     );
 }
-
