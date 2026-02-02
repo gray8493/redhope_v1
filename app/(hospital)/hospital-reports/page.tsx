@@ -10,67 +10,36 @@ import {
     ChartLegend,
     ChartLegendContent
 } from "@/components/ui/chart";
+import { useEffect, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { reportService, HospitalReportData } from "@/services/report.service";
+import { Loader2 } from "lucide-react";
 
 export default function ReportsPage() {
     const [timeFilter, setTimeFilter] = useState<'month' | 'quarter' | 'year'>('month');
 
-    // Dữ liệu mẫu (Data Model)
-    const metricsData = {
-        month: {
-            retentionRate: 45, retentionGrowth: "4.2%", isPositive: true,
-            deferralRate: 12, deferralGrowth: "1.5%", isdeferralGood: true,
-            noShowRate: 8, noShowGrowth: "+0.5%", isNoShowGood: false,
-            funnel: { registered: 150, arrived: 135, screeningPass: 110, collected: 105 },
-            demographics: [
-                { label: "Sinh viên", pct: 55, color: "bg-[#6366f1]" },
-                { label: "Văn phòng", pct: 25, color: "bg-emerald-400" },
-                { label: "Lao động tự do", pct: 15, color: "bg-orange-400" },
-                { label: "Khác", pct: 5, color: "bg-slate-300" }
-            ],
-            source: [
-                { label: "Facebook", count: 85, pct: 45 },
-                { label: "Trường học", count: 45, pct: 25 },
-                { label: "Bạn bè", count: 35, pct: 20 },
-                { label: "Zalo/SMS", count: 20, pct: 10 }
-            ]
-        },
-        quarter: {
-            retentionRate: 48, retentionGrowth: "6.0%", isPositive: true,
-            deferralRate: 11, deferralGrowth: "2.0%", isdeferralGood: true,
-            noShowRate: 7.5, noShowGrowth: "-0.8%", isNoShowGood: true,
-            funnel: { registered: 450, arrived: 410, screeningPass: 340, collected: 325 },
-            demographics: [
-                { label: "Sinh viên", pct: 50, color: "bg-[#6366f1]" },
-                { label: "Văn phòng", pct: 30, color: "bg-emerald-400" },
-                { label: "Lao động tự do", pct: 15, color: "bg-orange-400" },
-                { label: "Khác", pct: 5, color: "bg-slate-300" }
-            ],
-            source: [
-                { label: "Facebook", count: 200, pct: 40 },
-                { label: "Trường học", count: 150, pct: 30 },
-                { label: "Bạn bè", count: 100, pct: 20 },
-                { label: "Zalo/SMS", count: 50, pct: 10 }
-            ]
-        },
-        year: {
-            retentionRate: 52, retentionGrowth: "8.5%", isPositive: true,
-            deferralRate: 10, deferralGrowth: "3.0%", isdeferralGood: true,
-            noShowRate: 6, noShowGrowth: "-2.0%", isNoShowGood: true,
-            funnel: { registered: 1800, arrived: 1650, screeningPass: 1400, collected: 1350 },
-            demographics: [
-                { label: "Sinh viên", pct: 45, color: "bg-[#6366f1]" },
-                { label: "Văn phòng", pct: 35, color: "bg-emerald-400" },
-                { label: "Lao động tự do", pct: 15, color: "bg-orange-400" },
-                { label: "Khác", pct: 5, color: "bg-slate-300" }
-            ],
-            source: [
-                { label: "Facebook", count: 700, pct: 38 },
-                { label: "Trường học", count: 600, pct: 32 },
-                { label: "Bạn bè", count: 400, pct: 22 },
-                { label: "Zalo/SMS", count: 150, pct: 8 }
-            ]
+    const { user } = useAuth();
+    const [reportData, setReportData] = useState<HospitalReportData | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    const fetchData = useCallback(async () => {
+        if (!user?.id) return;
+        setLoading(true);
+        try {
+            const data = await reportService.getHospitalReport(user.id, timeFilter);
+            setReportData(data);
+        } catch (error) {
+            console.error("Failed to fetch report data:", error);
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [user?.id, timeFilter]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const currentData = reportData;
 
     // Explicit colors for charts
     const chartColors = {
@@ -84,23 +53,24 @@ export default function ReportsPage() {
         zalo: "#0068FF"
     };
 
-    // Prepare chart configs
-    const demoChartConfig = {
-        count: { label: "Học sinh/Sinh viên", color: chartColors.student },
-        office: { label: "Văn phòng", color: chartColors.office },
-        freelance: { label: "Lao động tự do", color: chartColors.freelance },
-        other: { label: "Khác", color: chartColors.other },
-    };
+    if (loading) {
+        return (
+            <main className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 w-full p-20">
+                <Loader2 className="size-12 animate-spin text-indigo-500" />
+            </main>
+        );
+    }
 
-    const sourceChartConfig = {
-        count: { label: "Số lượng" },
-        fb: { label: "Facebook", color: chartColors.fb },
-        school: { label: "Trường học", color: chartColors.school },
-        friends: { label: "Bạn bè", color: chartColors.friends },
-        zalo: { label: "Zalo/SMS", color: chartColors.zalo },
-    };
-
-    const currentData = metricsData[timeFilter];
+    if (!currentData) {
+        return (
+            <main className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 w-full p-20">
+                <div className="text-center space-y-4">
+                    <span className="material-symbols-outlined text-6xl text-slate-200">analytics</span>
+                    <p className="text-slate-500 font-medium">Chưa có dữ liệu báo cáo cho giai đoạn này.</p>
+                </div>
+            </main>
+        );
+    }
 
     // Remap source data for Pie Chart
     const sourceData = currentData.source.map((s, idx) => ({
@@ -157,6 +127,7 @@ export default function ReportsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
                     <div className="bg-white dark:bg-[#1c162e] p-6 rounded-2xl shadow-soft border border-slate-50 dark:border-slate-800 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
                         <div className="absolute right-0 top-0 size-24 bg-[#6366f1]/5 rounded-bl-full -mr-4 -mt-4 group-hover:bg-[#6366f1]/10 transition-colors"></div>
                         <div className="flex items-center gap-4 mb-4">
@@ -215,16 +186,16 @@ export default function ReportsPage() {
                                 <p className="text-sm text-slate-500">Hành trình từ đăng ký đến thành công</p>
                             </div>
                             <div className="text-right">
-                                <span className="text-2xl font-black text-[#6366f1]">{Math.round((currentData.funnel.collected / currentData.funnel.registered) * 100)}%</span>
+                                <span className="text-2xl font-black text-[#6366f1]">{currentData.funnel.registered > 0 ? Math.round((currentData.funnel.collected / currentData.funnel.registered) * 100) : 0}%</span>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase">Tỷ lệ chuyển đổi</p>
                             </div>
                         </div>
                         <div className="space-y-8">
                             {[
                                 { label: "1. Đăng ký Trực tuyến", val: currentData.funnel.registered, pct: "100%", sub: "Tổng lượng", color: "bg-indigo-100 dark:bg-indigo-900/40", textColor: "text-indigo-700 dark:text-indigo-300" },
-                                { label: "2. Check-in (Có mặt)", val: currentData.funnel.arrived, pct: getFunnelWidth(currentData.funnel.arrived, currentData.funnel.registered), sub: `${Math.round((currentData.funnel.arrived / currentData.funnel.registered) * 100)}% Giữ chân`, color: "bg-indigo-300 dark:bg-indigo-700", textColor: "text-indigo-900 dark:text-indigo-100" },
-                                { label: "3. Khám Sàng lọc", val: currentData.funnel.screeningPass, pct: getFunnelWidth(currentData.funnel.screeningPass, currentData.funnel.registered), sub: `${Math.round((currentData.funnel.screeningPass / currentData.funnel.registered) * 100)}% Đạt chuẩn`, color: "bg-[#6366f1]", textColor: "text-white" },
-                                { label: "4. Hiến máu Thành công", val: currentData.funnel.collected, pct: getFunnelWidth(currentData.funnel.collected, currentData.funnel.registered), sub: `${Math.round((currentData.funnel.collected / currentData.funnel.registered) * 100)}% Thành công`, color: "bg-emerald-500", textColor: "text-white" }
+                                { label: "2. Check-in (Có mặt)", val: currentData.funnel.arrived, pct: getFunnelWidth(currentData.funnel.arrived, currentData.funnel.registered), sub: `${currentData.funnel.registered > 0 ? Math.round((currentData.funnel.arrived / currentData.funnel.registered) * 100) : 0}% Giữ chân`, color: "bg-indigo-300 dark:bg-indigo-700", textColor: "text-indigo-900 dark:text-indigo-100" },
+                                { label: "3. Khám Sàng lọc", val: currentData.funnel.screeningPass, pct: getFunnelWidth(currentData.funnel.screeningPass, currentData.funnel.registered), sub: `${currentData.funnel.registered > 0 ? Math.round((currentData.funnel.screeningPass / currentData.funnel.registered) * 100) : 0}% Đạt chuẩn`, color: "bg-[#6366f1]", textColor: "text-white" },
+                                { label: "4. Hiến máu Thành công", val: currentData.funnel.collected, pct: getFunnelWidth(currentData.funnel.collected, currentData.funnel.registered), sub: `${currentData.funnel.registered > 0 ? Math.round((currentData.funnel.collected / currentData.funnel.registered) * 100) : 0}% Thành công`, color: "bg-emerald-500", textColor: "text-white" }
                             ].map((step, idx) => (
                                 <div key={idx} className="space-y-2">
                                     <div className="flex justify-between text-sm font-bold">
@@ -296,4 +267,3 @@ export default function ReportsPage() {
         </main>
     );
 }
-
