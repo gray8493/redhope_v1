@@ -7,9 +7,11 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Cookies from "js-cookie";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -47,6 +49,9 @@ export default function LoginPage() {
 
         Cookies.set('auth-token', data.session?.access_token || '', { expires: 7 });
         Cookies.set('user-role', role, { expires: 7 });
+
+        // Cập nhật trạng thái auth global trước khi chuyển trang
+        await refreshUser();
 
         // Logic redirection based on actual DB role
         switch (role) {
