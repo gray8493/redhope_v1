@@ -70,7 +70,7 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
         let color = "text-green-500";
         let bg = "bg-green-100";
 
-        const isDonorRelated = ['view_registrations', 'view_appointment'].includes(n.action_type);
+        const isDonorRelated = ['view_registrations', 'view_appointment', 'view_request'].includes(n.action_type);
         const isHospitalRelated = ['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(n.action_type);
 
         let category = "Hệ thống";
@@ -136,7 +136,7 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
         let color = "text-green-500";
         let bg = "bg-green-100";
 
-        const isDonorRelated = ['view_registrations', 'view_appointment'].includes(n.action_type);
+        const isDonorRelated = ['view_registrations', 'view_appointment', 'view_request'].includes(n.action_type);
         const isHospitalRelated = ['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(n.action_type);
 
         let category = "Hệ thống";
@@ -153,7 +153,7 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
         }
 
         // Role-based filtering for realtime
-        const shouldDisplay = (userRole === 'hospital' && isDonorRelated) || (userRole === 'admin');
+        const shouldDisplay = (userRole === 'hospital' && (isDonorRelated || isHospitalRelated)) || (userRole === 'admin');
 
         if (shouldDisplay) {
           const mapped = {

@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
+import * as React from 'react';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import CampaignAnnouncementEmail from '@/components/emails/CampaignAnnouncementEmail';
+import RegistrationSuccessEmail from '@/components/emails/RegistrationSuccessEmail';
+import AppointmentReminderEmail from '@/components/emails/AppointmentReminderEmail';
 
 export async function POST(req: Request) {
     const resendApiKey = process.env.RESEND_API_KEY;
@@ -16,7 +19,7 @@ export async function POST(req: Request) {
     const resend = new Resend(resendApiKey);
 
     try {
-        let { campaignId, message } = await req.json();
+        let { campaignId, message, notificationType = 'announcement' } = await req.json();
         campaignId = campaignId?.trim();
 
         if (!campaignId) {
@@ -30,18 +33,15 @@ export async function POST(req: Request) {
             .eq('id', campaignId)
             .single();
 
-        console.log('[API] Campaign metadata:', campaign ? 'Found' : 'Not Found', campaignId);
-
         if (campaignError || !campaign) {
             console.error('Error fetching campaign:', campaignError);
             return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
         }
 
         // 2. Fetch all donor registrations for this campaign
-        console.log('[API] Fetching all appointments for campaign:', campaignId);
         const { data: allAppointments, error: appointmentsError } = await supabaseAdmin
             .from('appointments')
-            .select('id, user_id, status')
+            .select('id, user_id, status, scheduled_time')
             .eq('campaign_id', campaignId);
 
         if (appointmentsError) {
@@ -49,18 +49,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Failed to fetch registrations' }, { status: 500 });
         }
 
-        console.log('[API] Total appointments found (all statuses):', allAppointments?.length || 0);
-
-        const rawAppointments = allAppointments?.filter(a =>
-            a.status?.toString().toLowerCase() === 'booked'
-        ) || [];
-
-        console.log('[API] Final "Booked" appointments for processing:', rawAppointments.length);
+        const rawAppointments = allAppointments?.filter(a => {
+            const status = a.status?.toString().toLowerCase();
+            // Thông báo chung gửi cho tất cả người đã đăng ký (trừ người đã hủy)
+            if (notificationType === 'announcement') {
+                return status !== 'cancelled';
+            }
+            // Các loại thông báo khác (xác nhận, nhắc nhở) chỉ gửi cho người còn lịch hẹn (Booked)
+            return status === 'booked' || !status;
+        }) || [];
 
         if (rawAppointments.length === 0) {
-            console.log('[API] No matching appointments to notify');
             return NextResponse.json({
-                message: 'No registered donors to notify',
+                message: 'Không tìm thấy người hiến máu phù hợp để gửi thông báo',
                 summary: { total: 0, success: 0, failed: 0 }
             }, { status: 200 });
         }
@@ -78,6 +79,7 @@ export async function POST(req: Request) {
         }
 
         const userMap = new Map(users?.map(u => [u.id, u]) || []);
+        const hospitalName = campaign.hospital?.hospital_name || campaign.hospital?.full_name || 'Bệnh viện';
 
         // 4. Send emails
         const sendResults = await Promise.all(
@@ -87,51 +89,91 @@ export async function POST(req: Request) {
                     return { success: false, email: 'N/A', error: 'No email' };
                 }
 
-                console.log(`[API] Attempting to send email to: ${donor.email}`);
                 try {
-                    const emailHtml = await render(
-                        CampaignAnnouncementEmail({
-                            donorName: donor.full_name || 'Người hiến máu',
-                            campaignName: campaign.name,
-                            hospitalName: campaign.hospital?.hospital_name || campaign.hospital?.full_name || 'Bệnh viện',
-                            startTime: campaign.start_time,
-                            endTime: campaign.end_time,
-                            locationName: campaign.location_name,
-                            message: message,
-                        })
-                    );
+                    let emailHtml;
+                    let subject = `📣 Thông báo từ: ${campaign.name}`;
+
+                    switch (notificationType) {
+                        case 'registration_success':
+                            subject = `✅ Đăng ký thành công: ${campaign.name}`;
+                            emailHtml = await render(
+                                React.createElement(RegistrationSuccessEmail, {
+                                    donorName: donor.full_name || 'Người hiến máu',
+                                    campaignName: campaign.name,
+                                    hospitalName: hospitalName,
+                                    locationName: campaign.location_name,
+                                    startTime: app.scheduled_time || campaign.start_time,
+                                    appointmentId: app.id,
+                                    message: message,
+                                })
+                            );
+                            break;
+                        case 'reminder_8h':
+                            subject = `⏰ Nhắc nhở (8h): Lịch hiến máu ${campaign.name}`;
+                            emailHtml = await render(
+                                React.createElement(AppointmentReminderEmail, {
+                                    donorName: donor.full_name || 'Người hiến máu',
+                                    campaignName: campaign.name,
+                                    hospitalName: hospitalName,
+                                    locationName: campaign.location_name,
+                                    startTime: app.scheduled_time || campaign.start_time,
+                                    hoursLeft: 8,
+                                    message: message,
+                                })
+                            );
+                            break;
+                        case 'reminder_4h':
+                            subject = `🔋 Nhắc nhở (4h): Sắp đến giờ hiến máu tại ${hospitalName}`;
+                            emailHtml = await render(
+                                React.createElement(AppointmentReminderEmail, {
+                                    donorName: donor.full_name || 'Người hiến máu',
+                                    campaignName: campaign.name,
+                                    hospitalName: hospitalName,
+                                    locationName: campaign.location_name,
+                                    startTime: app.scheduled_time || campaign.start_time,
+                                    hoursLeft: 4,
+                                    message: message,
+                                })
+                            );
+                            break;
+                        default: // announcement
+                            emailHtml = await render(
+                                React.createElement(CampaignAnnouncementEmail, {
+                                    donorName: donor.full_name || 'Người hiến máu',
+                                    campaignName: campaign.name,
+                                    hospitalName: hospitalName,
+                                    startTime: campaign.start_time,
+                                    endTime: campaign.end_time,
+                                    locationName: campaign.location_name,
+                                    message: message,
+                                })
+                            );
+                    }
 
                     const { data, error } = await resend.emails.send({
                         from: 'RedHope <onboarding@resend.dev>',
                         to: [donor.email],
-                        subject: `📣 Thông báo từ: ${campaign.name}`,
+                        subject: subject,
                         html: emailHtml,
                     });
 
-                    if (error) {
-                        console.error(`[API] Resend error for ${donor.email}:`, error);
-                        return { success: false, email: donor.email, error };
-                    }
-                    console.log(`[API] Successfully sent to ${donor.email}. ID: ${data?.id}`);
+                    if (error) return { success: false, email: donor.email, error };
                     return { success: true, email: donor.email, id: data?.id };
                 } catch (err: any) {
-                    console.error(`[API] Unexpected error sending to ${donor.email}:`, err);
                     return { success: false, email: donor.email, error: err.message };
                 }
             })
         );
 
         const successCount = sendResults.filter(r => r.success).length;
-        const failCount = sendResults.length - successCount;
 
         return NextResponse.json({
             message: `Processed ${sendResults.length} emails`,
             summary: {
                 total: sendResults.length,
                 success: successCount,
-                failed: failCount,
-            },
-            details: sendResults,
+                failed: sendResults.length - successCount,
+            }
         });
 
     } catch (error: any) {

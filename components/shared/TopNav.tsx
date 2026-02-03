@@ -409,16 +409,14 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                                     </div>
                                 )}
                             </div>
-                            {userRole !== 'hospital' && (
-                                <div className="p-3 text-center border-t border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36]">
-                                    <Link
-                                        href={userRole === 'admin' ? "/admin-notifications" : "/notifications"}
-                                        className="text-sm font-bold text-[#6324eb] hover:underline block w-full"
-                                    >
-                                        Xem tất cả
-                                    </Link>
-                                </div>
-                            )}
+                            <div className="p-3 text-center border-t border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36]">
+                                <Link
+                                    href={userRole === 'admin' ? "/admin-notifications" : userRole === 'hospital' ? "/hospital-notifications" : "/notifications"}
+                                    className="text-sm font-bold text-[#6324eb] hover:underline block w-full"
+                                >
+                                    Xem tất cả
+                                </Link>
+                            </div>
                         </div>
                     )}
                 </div>
