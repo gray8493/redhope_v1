@@ -14,7 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { addCampaign, getCampaignById, updateCampaign, Campaign } from "@/app/utils/campaignStorage"; // Keep for types if needed, or remove later
+import { addCampaign, getCampaignById, updateCampaign, Campaign } from "@/lib/campaignStorage"; // Keep for types if needed, or remove later
 import { campaignService } from "@/services/campaign.service";
 import { useAuth } from "@/context/AuthContext";
 import { LocationSelector } from "@/components/shared/LocationSelector";
