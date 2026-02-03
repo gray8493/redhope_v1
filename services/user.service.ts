@@ -205,5 +205,28 @@ export const userService = {
 
         if (error) throw error;
         return data || [];
+    },
+
+    // Upload image (avatar or cover)
+    async uploadImage(file: File, folder: string = 'avatars'): Promise<string> {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from(folder)
+            .upload(filePath, file);
+
+        if (uploadError) {
+            throw uploadError;
+        }
+
+        const { data } = supabase.storage.from(folder).getPublicUrl(filePath);
+        return data.publicUrl;
+    },
+
+    // Legacy support or specific avatar wrapper
+    async uploadAvatar(file: File): Promise<string> {
+        return this.uploadImage(file, 'avatars');
     }
 };

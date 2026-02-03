@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { campaignService } from '@/services';
+import { campaignService, userService } from '@/services';
 import { toast } from 'sonner';
 import {
     LayoutGrid,
@@ -168,7 +168,8 @@ export default function CampaignManagementPage() {
         target_units: 0,
         status: 'active',
         description: '',
-        target_blood_group: [] as string[]
+        target_blood_group: [] as string[],
+        image: ''
     });
 
     const BLOOD_TYPES = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
@@ -215,9 +216,10 @@ export default function CampaignManagementPage() {
     };
 
     // Filter campaigns
+    // 'active' in DB covers both Active and Paused (via metadata)
     const activeCampaigns = campaigns.filter(c => c.status === 'active');
-    const historyCampaigns = campaigns.filter(c => c.status === 'completed' || c.status === 'ended' || c.status === 'cancelled');
-    const draftCampaigns = campaigns.filter(c => c.status === 'draft');
+    const historyCampaigns = campaigns.filter(c => ['completed', 'ended', 'closed', 'cancelled'].includes(c.status));
+    const draftCampaigns = campaigns.filter(c => c.status === 'draft'); // Proper drafts
 
     const getCurrentList = () => {
         switch (activeTab) {
@@ -252,6 +254,16 @@ export default function CampaignManagementPage() {
         setSelectedCampaign(campaign);
         const initialBloodGroups = parseBloodGroups(campaign.target_blood_group);
 
+        // Extract image from description if embedded
+        let desc = campaign.description || '';
+        let img = campaign.image || campaign.image_url || '';
+
+        const imgMatch = desc.match(/<div data-cover="([^"]+)"[^>]*><\/div>/);
+        if (imgMatch) {
+            img = imgMatch[1];
+            desc = desc.replace(imgMatch[0], '');
+        }
+
         setEditFormData({
             name: campaign.name || '',
             location_name: campaign.location_name || '',
@@ -260,8 +272,9 @@ export default function CampaignManagementPage() {
             end_time: campaign.end_time ? format(new Date(campaign.end_time), 'HH:mm') : '17:00',
             target_units: campaign.target_units || 0,
             status: campaign.status || 'active',
-            description: campaign.description || '',
-            target_blood_group: initialBloodGroups
+            description: desc,
+            target_blood_group: initialBloodGroups,
+            image: img
         });
         setIsEditModalOpen(true);
     };
@@ -273,6 +286,11 @@ export default function CampaignManagementPage() {
             const startStr = `${editFormData.date}T${editFormData.start_time}:00`;
             const endStr = `${editFormData.date}T${editFormData.end_time}:00`;
 
+            // Embed image logic
+            const finalDesc = editFormData.image
+                ? `<div data-cover="${editFormData.image}" style="display:none"></div>${editFormData.description}`
+                : editFormData.description;
+
             const updateData = {
                 name: editFormData.name,
                 location_name: editFormData.location_name,
@@ -280,8 +298,9 @@ export default function CampaignManagementPage() {
                 end_time: endStr,
                 target_units: editFormData.target_units,
                 status: editFormData.status,
-                description: editFormData.description,
+                description: finalDesc,
                 target_blood_group: editFormData.target_blood_group
+                // removed 'image' field to prevent schema error
             };
 
             await campaignService.updateCampaign(selectedCampaign.id, updateData);
@@ -296,6 +315,26 @@ export default function CampaignManagementPage() {
             toast.error('Lỗi khi cập nhật: ' + error.message);
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Kích thước ảnh quá lớn (tối đa 5MB)");
+            return;
+        }
+
+        const loadingToast = toast.loading("Đang tải ảnh lên...");
+        try {
+            const url = await userService.uploadImage(file, 'avatars');
+            setEditFormData(prev => ({ ...prev, image: url }));
+            toast.success("Tải ảnh thành công", { id: loadingToast });
+        } catch (error: any) {
+            console.error("Upload failed:", error);
+            toast.error("Lỗi tải ảnh: " + (error.message || "Lỗi"), { id: loadingToast });
         }
     };
 
@@ -500,8 +539,23 @@ export default function CampaignManagementPage() {
                             const registered = campaign.appointments?.length || 0;
                             const completed = campaign.appointments?.filter((a: any) => a.status === 'Completed').length || 0;
                             const progress = campaign.target_units > 0 ? (completed / campaign.target_units) * 100 : 0;
-                            const statusLabel = campaign.status === 'active' ? 'Đang hoạt động' : (campaign.status === 'completed' || campaign.status === 'ended') ? 'Đã kết thúc' : 'Bản nháp';
-                            const statusColor = campaign.status === 'active' ? 'bg-emerald-500' : (campaign.status === 'completed' || campaign.status === 'ended') ? 'bg-slate-500' : 'bg-amber-500';
+
+                            let statusLabel = 'Đang hoạt động';
+                            let statusColor = 'bg-emerald-500';
+
+                            // Check for Paused metadata in description
+                            const isPaused = campaign.description?.includes('data-status="paused"');
+
+                            if (campaign.status === 'active' && isPaused) {
+                                statusLabel = 'Tạm dừng';
+                                statusColor = 'bg-amber-500';
+                            } else if (['completed', 'ended', 'closed', 'cancelled'].includes(campaign.status)) {
+                                statusLabel = 'Đã kết thúc';
+                                statusColor = 'bg-slate-500';
+                            } else if (campaign.status === 'draft') {
+                                statusLabel = 'Bản nháp';
+                                statusColor = 'bg-slate-400';
+                            }
 
                             // Back to brand purple
                             const gradientClass = 'from-indigo-500 to-purple-600';
@@ -585,7 +639,13 @@ export default function CampaignManagementPage() {
                                     className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all group flex flex-col h-full"
                                 >
                                     <div className="relative h-40 bg-slate-200 dark:bg-slate-800">
-                                        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`}></div>
+                                        {(campaign.image || campaign.image_url || (campaign.description?.match(/<div data-cover="([^"]+)"/) || [])[1]) ? (
+                                            <div className="absolute inset-0 bg-cover bg-center transition-transform hover:scale-105 duration-700" style={{ backgroundImage: `url('${campaign.image || campaign.image_url || (campaign.description?.match(/<div data-cover="([^"]+)"/) || [])[1]}')` }}>
+                                                <div className="absolute inset-0 bg-black/20"></div>
+                                            </div>
+                                        ) : (
+                                            <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`}></div>
+                                        )}
                                         <div className="absolute top-3 right-3">
                                             <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm ${statusColor} text-white`}>
                                                 {statusLabel}
@@ -699,6 +759,38 @@ export default function CampaignManagementPage() {
                         {/* Body */}
                         <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                             <div className="space-y-4">
+                                {/* Image Upload */}
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Ảnh bìa chiến dịch</label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative size-20 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 flex-shrink-0">
+                                            {editFormData.image ? (
+                                                <img src={editFormData.image} alt="Campaign Cover" className="h-full w-full object-cover" />
+                                            ) : (
+                                                <div className="flex items-center justify-center h-full text-slate-400">
+                                                    <LayoutGrid className="w-8 h-8 opacity-50" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                id="edit-campaign-image"
+                                                className="hidden"
+                                                onChange={handleImageUpload}
+                                            />
+                                            <label
+                                                htmlFor="edit-campaign-image"
+                                                className="inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-all"
+                                            >
+                                                <Edit2 className="w-3 h-3 mr-2" />
+                                                Thay đổi ảnh
+                                            </label>
+                                            <p className="text-[10px] text-slate-400 mt-1 max-w-xs">Hỗ trợ PNG, JPG (Max 5MB).</p>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Tên chiến dịch</label>
                                     <input
@@ -821,7 +913,6 @@ export default function CampaignManagementPage() {
                                             >
                                                 <option value="active">Đang hoạt động</option>
                                                 <option value="paused">Tạm dừng</option>
-                                                <option value="completed">Đã kết thúc</option>
                                             </select>
                                             <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
                                         </div>

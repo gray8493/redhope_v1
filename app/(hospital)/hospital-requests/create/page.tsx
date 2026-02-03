@@ -19,6 +19,8 @@ import { campaignService } from "@/services/campaign.service";
 import { useAuth } from "@/context/AuthContext";
 import { LocationSelector } from "@/components/shared/LocationSelector";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { userService } from "@/services/user.service";
 
 import {
     Sparkles,
@@ -217,21 +219,37 @@ export default function CreateRequestPage() {
         }
     };
 
-    const processFile = (file: File) => {
+    const processFile = async (file: File) => {
         const MAX_SIZE = 5 * 1024 * 1024; // 5MB
         if (file.size > MAX_SIZE) {
             setImageError("Kích thước ảnh quá lớn (tối đa 5MB)");
             return;
         }
         setImageError("");
+
+        // 1. Preview immediately
         const reader = new FileReader();
         reader.onloadend = () => {
             if (reader.readyState === FileReader.DONE && reader.result) {
                 setImage(reader.result as string);
             }
         };
-        reader.onerror = () => setImageError("Lỗi khi đọc file ảnh");
         reader.readAsDataURL(file);
+
+        // 2. Upload to Supabase Storage
+        const loadingToast = toast.loading("Đang tải ảnh lên...");
+        try {
+            // Using 'avatars' bucket for now as we know it works and is public
+            // In a real app, we should create a separate 'campaigns' bucket
+            const url = await userService.uploadImage(file, 'avatars');
+            setImage(url); // Replace preview base64 with real URL
+            toast.success("Tải ảnh thành công", { id: loadingToast });
+        } catch (error: any) {
+            console.error("Upload failed:", error);
+            toast.error("Lỗi tải ảnh: " + (error.message || "Không xác định"), { id: loadingToast });
+            // Keep the base64 preview so the user doesn't lose context, 
+            // but know that it might fail to save if too large.
+        }
     };
 
     const applyTemplate = (templateData: any) => {
@@ -279,7 +297,6 @@ export default function CreateRequestPage() {
             const payload = {
                 hospital_id: user.id,
                 name: campaignName || (isUrgent ? `Yêu cầu Khẩn cấp ${mrn}` : `Yêu cầu mới`),
-                description: desc,
                 location_name: location,
                 city: city || profile?.city || "Hồ Chí Minh",
                 district: district || profile?.district || "Quận 1",
@@ -287,7 +304,9 @@ export default function CreateRequestPage() {
                 end_time: endDateTime.toISOString(),
                 target_units: pTargetAmount,
                 status: isDraft ? "draft" : "active",
-                target_blood_group: selectedBloodTypes // Gửi toàn bộ mảng nhóm máu đã chọn
+                target_blood_group: selectedBloodTypes, // Gửi toàn bộ mảng nhóm máu đã chọn
+                // Embed image in description since 'image' column is missing in DB
+                description: image ? `<div data-cover="${image}" style="display:none"></div>${desc}` : desc
             };
 
             // Sync with local storage for demo purposes
@@ -319,18 +338,31 @@ export default function CreateRequestPage() {
 
             if (editId) {
                 await campaignService.updateCampaign(editId, payload);
-                updateCampaign(localStorageCampaign);
+                try {
+                    updateCampaign(localStorageCampaign);
+                } catch (e) {
+                    // Ignore quota exceeded error
+                }
                 alert("Cập nhật chiến dịch thành công!");
             } else {
                 await campaignService.createCampaign(payload);
-                addCampaign(localStorageCampaign);
+                try {
+                    addCampaign(localStorageCampaign);
+                } catch (e) {
+                    // Ignore quota exceeded error
+                }
                 alert("Tạo chiến dịch mới thành công!");
             }
 
             router.push("/hospital-campaign"); // Redirect to campaign list
         } catch (error: any) {
             console.error("Failed to create campaign:", error);
-            alert(`Lỗi khi tạo chiến dịch: ${error.message || "Vui lòng thử lại"}`);
+            if (error.code === '23503' || error.message?.includes('foreign key constraint')) {
+                alert("Lỗi: Hồ sơ bệnh viện chưa tồn tại hoặc chưa đầy đủ. Vui lòng vào phần Cài đặt -> Hồ sơ và nhấn 'Lưu thay đổi' để cập nhật thông tin hệ thống.");
+                router.push("/hospital/settings");
+            } else {
+                alert(`Lỗi khi tạo chiến dịch: ${error.message || "Vui lòng thử lại"}`);
+            }
         }
     };
 

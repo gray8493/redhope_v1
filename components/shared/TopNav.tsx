@@ -136,7 +136,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
 
     const avatarUrl = userRole === 'hospital' && hospitalInfo?.logo
         ? hospitalInfo.logo
-        : (authUser?.user_metadata?.avatar_url || ""); // Fallback handled by AvatarFallback
+        : (userProfile?.avatar_url || authUser?.user_metadata?.avatar_url || ""); // Use profile avatar first
 
     const settingsPath = userRole === 'hospital' ? "/hospital/settings" : "/settings";
 

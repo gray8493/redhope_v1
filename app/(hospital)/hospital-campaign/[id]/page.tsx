@@ -4,11 +4,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { campaignService } from '@/services';
+import { campaignService, userService } from '@/services';
 import { toast } from 'sonner';
 import {
     ArrowLeft,
     Users,
+    LayoutGrid,
     Droplet,
     MapPin,
     Calendar,
@@ -270,7 +271,8 @@ export default function CampaignDetailsPage() {
         target_units: 0,
         status: 'active',
         description: '',
-        target_blood_group: [] as string[]
+        target_blood_group: [] as string[],
+        image: ''
     });
 
     // Dropdown states
@@ -344,11 +346,11 @@ export default function CampaignDetailsPage() {
 
     // Calculate stats
     const totalRegistered = registrations.length;
-    const totalCompleted = registrations.filter(r => r.status === 'Completed').length;
-    const totalCancelled = registrations.filter(r => r.status === 'Cancelled').length;
-    const totalDeferred = registrations.filter(r => r.status === 'Deferred').length;
+    const totalCompleted = registrations.filter(r => r.status?.toLowerCase() === 'completed').length;
+    const totalCancelled = registrations.filter(r => r.status?.toLowerCase() === 'cancelled').length;
+    const totalDeferred = registrations.filter(r => r.status?.toLowerCase() === 'deferred').length;
     const totalBloodMl = registrations
-        .filter(r => r.status === 'Completed')
+        .filter(r => r.status?.toLowerCase() === 'completed')
         .reduce((sum, r) => sum + (r.blood_volume || 350), 0);
     const targetMl = (campaign.target_units || 10) * 350; // Assuming 350ml per unit
     const progress = targetMl > 0 ? (totalBloodMl / targetMl) * 100 : 0;
@@ -363,7 +365,7 @@ export default function CampaignDetailsPage() {
         const matchesSearch = fullName.toLowerCase().includes(query) ||
             email.toLowerCase().includes(query) ||
             phone.includes(query);
-        const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
+        const matchesStatus = statusFilter === 'all' || r.status?.toLowerCase() === statusFilter.toLowerCase();
         const matchesBloodType = bloodTypeFilter === 'all' || (r.blood_type || r.user?.blood_group) === bloodTypeFilter;
         return matchesSearch && matchesStatus && matchesBloodType;
     });
@@ -498,11 +500,56 @@ export default function CampaignDetailsPage() {
         }
     };
 
+    // Handle image upload logic
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Kích thước ảnh quá lớn (tối đa 5MB)");
+            return;
+        }
+
+        const loadingToast = toast.loading("Đang tải ảnh lên...");
+        try {
+            const url = await userService.uploadImage(file, 'avatars');
+            setEditFormData(prev => ({ ...prev, image: url }));
+            toast.success("Tải ảnh thành công", { id: loadingToast });
+        } catch (error: any) {
+            console.error("Upload failed:", error);
+            toast.error("Lỗi tải ảnh: " + (error.message || "Lỗi"), { id: loadingToast });
+        }
+    };
+
     // --- EDIT CAMPAIGN HANDLERS ---
     const openEditModal = () => {
         if (!campaign) return;
 
         const initialBloodGroups = parseBloodGroups(campaign.target_blood_group);
+
+        // Extract image from description if embedded
+        let desc = campaign.description || '';
+        let img = campaign.image || campaign.image_url || '';
+
+        const imgMatch = desc.match(/<div data-cover="([^"]+)"[^>]*><\/div>/);
+        if (imgMatch) {
+            img = imgMatch[1];
+            desc = desc.replace(imgMatch[0], '');
+        }
+
+        // Check for Paused metadata in description
+        let status = campaign.status || 'active';
+        if (status === 'active' && desc.includes('data-status="paused"')) {
+            status = 'paused';
+            const pauseMatch = desc.match(/<div data-status="paused"[^>]*><\/div>/);
+            if (pauseMatch) {
+                desc = desc.replace(pauseMatch[0], '');
+            }
+        }
+
+        // Strip HTML from desc for text area but keep line breaks if possible?
+        // Assuming desc is mostly plain text or stripped.
+        desc = stripHtml(desc);
 
         setEditFormData({
             name: campaign.name || '',
@@ -511,9 +558,10 @@ export default function CampaignDetailsPage() {
             start_time: campaign.start_time ? format(new Date(campaign.start_time), 'HH:mm') : '08:00',
             end_time: campaign.end_time ? format(new Date(campaign.end_time), 'HH:mm') : '17:00',
             target_units: campaign.target_units || 0,
-            status: campaign.status || 'active',
-            description: stripHtml(campaign.description || ''),
-            target_blood_group: initialBloodGroups
+            status: status, // Use calculated status
+            description: desc,
+            target_blood_group: initialBloodGroups,
+            image: img
         });
         setIsEditModalOpen(true);
     };
@@ -524,14 +572,33 @@ export default function CampaignDetailsPage() {
             const startStr = `${editFormData.date}T${editFormData.start_time}:00`;
             const endStr = `${editFormData.date}T${editFormData.end_time}:00`;
 
+            if (new Date(startStr) >= new Date(endStr)) {
+                toast.error('Thời gian kết thúc phải sau thời gian bắt đầu');
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Embed image logic and Status logic
+            let finalDesc = editFormData.description;
+            // 1. Add Paused Marker if status is paused
+            if (editFormData.status === 'paused') {
+                finalDesc = `<div data-status="paused" style="display:none"></div>` + finalDesc;
+            }
+            // 2. Add Image Marker if image exists
+            if (editFormData.image) {
+                finalDesc = `<div data-cover="${editFormData.image}" style="display:none"></div>` + finalDesc;
+            }
+
+            const dbStatus = (editFormData.status === 'paused') ? 'active' : editFormData.status;
+
             const updateData = {
                 name: editFormData.name,
                 location_name: editFormData.location_name,
                 start_time: startStr,
                 end_time: endStr,
                 target_units: editFormData.target_units,
-                status: editFormData.status,
-                description: editFormData.description,
+                status: dbStatus, // Send active instead of paused to satisfy constraint
+                description: finalDesc,
                 target_blood_group: editFormData.target_blood_group
             };
 
@@ -548,14 +615,37 @@ export default function CampaignDetailsPage() {
     };
 
     const handleEndCampaign = async () => {
-        if (!confirm('Bạn có chắc chắn muốn kết thúc chiến dịch này sớm?')) return;
+        if (!confirm('Bạn có chắc chắn muốn kết thúc chiến dịch này sớm? Tất cả các lịch hẹn "Đã đặt lịch" sẽ bị hủy.')) return;
         try {
             setIsSubmitting(true);
-            await campaignService.updateCampaign(campaignId, { status: 'completed' });
+
+            // 1. Update campaign status. Use 'cancelled' as it is a standard valid status likely allowed by constraint.
+            // 'completed', 'closed', 'paused' seem to be invalid based on user reports.
+            await campaignService.updateCampaign(campaignId, { status: 'cancelled' });
+
+            // 2. Fetch latest registrations to be sure
+            const currentRegs = await campaignService.getCampaignRegistrations(campaignId);
+
+            // 3. Filter Booked ones
+            const bookedRegs = currentRegs.filter((r: any) => r.status === 'Booked');
+
+            // 4. Cancel each one
+            await Promise.all(bookedRegs.map((r: any) =>
+                campaignService.updateRegistrationStatus(r.id, 'Cancelled')
+            ));
+
             const updated = await campaignService.getById(campaignId as string);
             setCampaign(updated);
-            toast.success('Đã kết thúc chiến dịch');
+
+            // Refresh local registrations state
+            const newRegs = await campaignService.getCampaignRegistrations(campaignId);
+            setRegistrations(newRegs || []);
+
+            toast.success('Đã kết thúc chiến dịch và hủy các lịch hẹn chưa hoàn thành');
             setIsEditModalOpen(false);
+
+            // Redirect to history tab optionally
+            // router.push('/hospital-campaign?tab=history');
         } catch (error: any) {
             toast.error('Lỗi khi kết thúc chiến dịch: ' + error.message);
         } finally {
@@ -591,18 +681,18 @@ export default function CampaignDetailsPage() {
 
     // Get status display
     const getStatusDisplay = (status: string) => {
-        switch (status) {
-            case 'Completed':
+        switch (status?.toLowerCase()) {
+            case 'completed':
                 return {
                     label: 'Hoàn thành',
                     className: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
                 };
-            case 'Cancelled':
+            case 'cancelled':
                 return {
                     label: 'Đã hủy',
                     className: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-800'
                 };
-            case 'Deferred':
+            case 'deferred':
                 return {
                     label: 'Hủy hồ sơ',
                     className: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'
@@ -615,7 +705,7 @@ export default function CampaignDetailsPage() {
         }
     };
 
-    const isCampaignEnded = campaign.status === 'completed' || campaign.status === 'cancelled';
+    const isCampaignEnded = campaign.status?.toLowerCase() === 'completed' || campaign.status?.toLowerCase() === 'cancelled';
 
     return (
         <main className="flex-1 overflow-y-auto">
@@ -685,12 +775,18 @@ export default function CampaignDetailsPage() {
                             </span>
                             <span className={`px-3 py-1.5 text-xs font-bold rounded-lg border ${campaign.status === 'active'
                                 ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
-                                : campaign.status === 'completed'
+                                : (['completed', 'cancelled', 'ended', 'closed'].includes(campaign.status))
                                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                                    : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'
+                                    : (campaign.status === 'active' && campaign.description?.includes('data-status="paused"')) // Check metadata
+                                        ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'
+                                        : campaign.status === 'draft' // Check for real draft
+                                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200'
+                                            : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
                                 }`}>
-                                {campaign.status === 'active' ? 'Đang hoạt động' :
-                                    campaign.status === 'completed' ? 'Đã kết thúc' : 'Đã hủy'}
+                                {campaign.status === 'active'
+                                    ? (campaign.description?.includes('data-status="paused"') ? 'Tạm dừng' : 'Đang hoạt động')
+                                    : (campaign.status === 'cancelled' || campaign.status === 'completed' || campaign.status === 'ended') ? 'Đã kết thúc' :
+                                        campaign.status === 'draft' ? 'Bản nháp' : 'Đã kết thúc'}
                             </span>
                         </div>
                     </div>
@@ -749,7 +845,7 @@ export default function CampaignDetailsPage() {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     {/* Filters */}
                     <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center">
                         <div className="relative w-full sm:w-96">
@@ -795,7 +891,7 @@ export default function CampaignDetailsPage() {
                     </div>
 
                     {/* Table */}
-                    <div className="overflow-x-auto">
+                    <div className="overflow-visible min-h-[400px]">
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="bg-slate-50/50 dark:bg-slate-800/50">
@@ -817,13 +913,15 @@ export default function CampaignDetailsPage() {
                                     </tr>
                                 ) : (
                                     filteredRegistrations.map((reg, index) => {
+                                        const statusLower = reg.status?.toLowerCase();
                                         const statusInfo = getStatusDisplay(reg.status);
-                                        const isBooked = reg.status === 'Booked' || !reg.status;
-                                        const isCompleted = reg.status === 'Completed';
-                                        const isDeferred = reg.status === 'Deferred';
+                                        const isBooked = statusLower === 'booked' || !reg.status;
+                                        const isCompleted = statusLower === 'completed';
+                                        const isDeferred = statusLower === 'deferred';
                                         const bloodType = reg.blood_type || reg.user?.blood_group || 'N/A';
                                         const bloodVolume = reg.blood_volume || 350;
                                         const initial = reg.user?.full_name?.charAt(0)?.toUpperCase() || 'U';
+                                        const isDropdownOpen = openBloodTypeDropdown === reg.id || openVolumeDropdown === reg.id || openActionMenu === reg.id;
 
                                         // Status colors for individual columns
                                         const bloodTypeStyle = isBooked
@@ -835,7 +933,7 @@ export default function CampaignDetailsPage() {
                                             : 'bg-indigo-50/50 dark:bg-indigo-900/5 border-indigo-100/50 dark:border-indigo-900/20 text-indigo-400';
 
                                         return (
-                                            <tr key={reg.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                                            <tr key={reg.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group ${isDropdownOpen ? 'relative z-[50]' : ''}`}>
                                                 <td className="px-6 py-3.5 text-xs font-bold text-slate-400">
                                                     {String(index + 1).padStart(2, '0')}
                                                 </td>
@@ -867,7 +965,7 @@ export default function CampaignDetailsPage() {
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     {/* Blood Type Dropdown */}
-                                                    <div className="relative" data-dropdown-trigger>
+                                                    <div className={`relative ${openBloodTypeDropdown === reg.id ? 'z-[60]' : ''}`} data-dropdown-trigger>
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -913,7 +1011,7 @@ export default function CampaignDetailsPage() {
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     {/* Blood Volume Dropdown */}
-                                                    <div className="relative" data-dropdown-trigger>
+                                                    <div className={`relative ${openVolumeDropdown === reg.id ? 'z-[60]' : ''}`} data-dropdown-trigger>
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -981,7 +1079,7 @@ export default function CampaignDetailsPage() {
                                                                     XÁC NHẬN
                                                                 </button>
                                                                 {/* Action Menu */}
-                                                                <div className="relative" data-dropdown-trigger>
+                                                                <div className={`relative ${openActionMenu === reg.id ? 'z-[60]' : ''}`} data-dropdown-trigger>
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
@@ -1012,7 +1110,7 @@ export default function CampaignDetailsPage() {
                                                             </>
                                                         ) : (
                                                             /* Just the action menu for Completed/Deferred */
-                                                            <div className="relative" data-dropdown-trigger>
+                                                            <div className={`relative ${openActionMenu === reg.id ? 'z-[60]' : ''}`} data-dropdown-trigger>
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
@@ -1121,6 +1219,38 @@ export default function CampaignDetailsPage() {
                         {/* Form Body */}
                         <div className="px-10 py-6 space-y-6 max-h-[70vh] overflow-y-auto">
                             <div className="space-y-4">
+                                {/* Image Upload */}
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Ảnh bìa chiến dịch</label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative size-20 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 flex-shrink-0">
+                                            {editFormData.image ? (
+                                                <img src={editFormData.image} alt="Campaign Cover" className="h-full w-full object-cover" />
+                                            ) : (
+                                                <div className="flex items-center justify-center h-full text-slate-400">
+                                                    <LayoutGrid className="w-8 h-8 opacity-50" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                id="edit-campaign-image-detail"
+                                                className="hidden"
+                                                onChange={handleImageUpload}
+                                            />
+                                            <label
+                                                htmlFor="edit-campaign-image-detail"
+                                                className="inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-all"
+                                            >
+                                                <Edit2 className="w-3 h-3 mr-2" />
+                                                Thay đổi ảnh
+                                            </label>
+                                            <p className="text-[10px] text-slate-400 mt-1 max-w-xs">Hỗ trợ PNG, JPG (Max 5MB).</p>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-slate-700 dark:text-slate-300 text-[12px] font-bold ml-1">Tên chiến dịch</label>
                                     <input
@@ -1243,7 +1373,6 @@ export default function CampaignDetailsPage() {
                                             >
                                                 <option value="active">Đang hoạt động</option>
                                                 <option value="paused">Tạm dừng</option>
-                                                <option value="completed">Đã kết thúc</option>
                                             </select>
                                             <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
                                         </div>

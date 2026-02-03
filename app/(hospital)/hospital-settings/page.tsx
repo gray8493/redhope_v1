@@ -34,69 +34,96 @@ function SettingsContent() {
     const [logo, setLogo] = useState<string | null>(null);
     const [cover, setCover] = useState<string | null>("https://lh3.googleusercontent.com/aida-public/AB6AXuB-pYSYh0nrFR9EHffBQeBIH5xosCZYGDX5BCz4F8coCgtRu4kG6rneHOzMavlAEAhCLLhsIPW4Zr8d-mdT7zRz_7_dZGzo7RaaOIAlwIsRmwLyIhmuf5Gr9OTUNGMtpvXLtejG42cMiJASTDeWyxZ6RdUzdu0e3CY05W1RGUjdSrabS7GoI882qtaXJ6lK-Jbn-GMBpayfdILyfA7_guOESZWU91gqgzwwV-DMnVMLbupel25a7M96j3ZIjVpp7eoO77BkS2pK5A");
 
-    // Load data from LocalStorage on mount
+    // Load data from Profile (DB Source of Truth)
     useEffect(() => {
-        const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (savedData) {
-            const data = JSON.parse(savedData);
-            setHospitalName(data.name || "");
-            setHospitalDesc(data.desc || "");
-            setPhone(data.phone || "");
-            setAddress(data.address || "");
-            setLicense(data.license || "");
-            setEmail(data.email || "");
-            setLogo(data.logo || null);
-            setCover(data.cover || null);
-
-            // Notification settings
-            if (data.notifications) {
-                setEmailAlert(data.notifications.emailAlert ?? true);
-                setNewDonorAlert(data.notifications.newDonorAlert ?? false);
-                setShortfallThreshold(data.notifications.shortfallThreshold ?? 20);
-            }
-        } else if (profile) {
-            // Fallback to auth profile if no local data
-            setHospitalName(profile.hospital_name || "");
+        if (profile) {
+            setHospitalName(profile.hospital_name || profile.full_name || "");
+            setHospitalDesc(profile.health_history || "Hệ thống y tế tuyến đầu chuyên sâu về cấp cứu, phẫu thuật và chăm sóc sức khỏe cộng đồng.");
             setPhone(profile.phone || "");
-            setAddress(profile.hospital_address || "");
+            setAddress(profile.hospital_address || profile.address || "");
             setLicense(profile.license_number || "");
             setEmail(profile.email || "");
+            setLogo(profile.avatar_url || null);
+            setCover(profile.cover_image || null);
+        } else {
+            // Fallback to local storage if profile is not yet loaded (rare case or disconnected)
+            const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    setHospitalName(data.name || "");
+                    setHospitalDesc(data.desc || "");
+                    setPhone(data.phone || "");
+                    setAddress(data.address || "");
+                    setLicense(data.license || "");
+                    setEmail(data.email || "");
+                    setLogo(data.logo || null);
+                    setCover(data.cover || null);
+                } catch (e) {
+                    // Ignore corrupted local data
+                }
+            }
         }
     }, [profile]);
 
     const handleSave = async () => {
+        if (!user) return;
         setIsSaving(true);
-        const loadingToast = toast.loading("Đang lưu vào trình duyệt...");
+        const loadingToast = toast.loading("Đang lưu hồ sơ...");
 
         try {
-            // Save to LocalStorage (FE Only)
+            // 1. Save to Database (Supabase)
             const profileData = {
-                name: hospitalName,
-                desc: hospitalDesc,
+                hospital_name: hospitalName,
+                full_name: hospitalName, // Required field
+                health_history: hospitalDesc, // Storing description in health_history for now
                 phone: phone,
-                address: address,
-                license: license,
+                hospital_address: address,
+                address: address, // Sync both
+                license_number: license,
                 email: email,
-                logo: logo,
-                cover: cover
+                avatar_url: logo,
+                cover_image: cover,
+                role: 'hospital' as const
             };
 
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(profileData));
+            await userService.upsert(user.id, profileData);
 
-            // Notify other components (like TopNav) that the profile has changed
+            // 2. Save to LocalStorage (Legacy/State preservation)
+            try {
+                // Ensure we don't crash if LocalStorage is full
+                // Also: Do NOT save huge base64 strings if they are not URLs
+                const isUrl = (str: string | null) => str && (str.startsWith('http') || str.startsWith('/'));
+
+                const localData = {
+                    name: hospitalName,
+                    desc: hospitalDesc,
+                    phone,
+                    address,
+                    license,
+                    email,
+                    logo: isUrl(logo) ? logo : null, // Only save if it's a URL
+                    cover: isUrl(cover) ? cover : null // Only save if it's a URL
+                };
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
+            } catch (storageError) {
+                console.warn("LocalStorage quota exceeded or error:", storageError);
+                // Swallow error here, as DB save is what matters
+            }
+
+            // Notify other components
             window.dispatchEvent(new Event("hospitalProfileUpdated"));
-
-            // Simulate a short delay for feel
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await refreshUser(); // Refresh global auth context
 
             toast.success("Thành công", {
                 id: loadingToast,
-                description: "Hồ sơ đã được lưu tạm thời trên trình duyệt này.",
+                description: "Hồ sơ bệnh viện đã được cập nhật vào hệ thống.",
             });
         } catch (error: any) {
+            console.error(error);
             toast.error("Lỗi", {
                 id: loadingToast,
-                description: "Không thể lưu hồ sơ.",
+                description: "Không thể lưu hồ sơ: " + (error.message || "Lỗi hệ thống"),
             });
         } finally {
             setIsSaving(false);
@@ -140,21 +167,43 @@ function SettingsContent() {
         }
     };
 
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Preview immediately
             const reader = new FileReader();
             reader.onloadend = () => setLogo(reader.result as string);
             reader.readAsDataURL(file);
+
+            // Upload
+            const toastId = toast.loading("Đang tải logo...");
+            try {
+                const url = await userService.uploadImage(file, 'avatars');
+                setLogo(url);
+                toast.success("Tải logo thành công", { id: toastId });
+            } catch (error) {
+                toast.error("Lỗi tải logo", { id: toastId });
+            }
         }
     };
 
-    const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Preview
             const reader = new FileReader();
             reader.onloadend = () => setCover(reader.result as string);
             reader.readAsDataURL(file);
+
+            // Upload
+            const toastId = toast.loading("Đang tải ảnh bìa...");
+            try {
+                const url = await userService.uploadImage(file, 'avatars'); // Reuse or change folder
+                setCover(url);
+                toast.success("Tải ảnh bìa thành công", { id: toastId });
+            } catch (error) {
+                toast.error("Lỗi tải ảnh bìa", { id: toastId });
+            }
         }
     };
 

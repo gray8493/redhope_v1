@@ -41,6 +41,7 @@ export default function SettingsPage() {
     // UI State
     const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security'>('profile');
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -95,8 +96,10 @@ export default function SettingsPage() {
                     setCitizenId(profile.citizen_id || "");
                     setDob(profile.dob || "");
                     setGender(profile.gender || "Nam");
-                    // Mock data for demo if not in DB
-                    setAvatar(user.user_metadata?.avatar_url || null);
+                    setWeight(profile.weight ? profile.weight.toString() : "");
+                    setHealthHistory(profile.health_history || "");
+                    setAvatar(profile.avatar_url || user.user_metadata?.avatar_url || null);
+                    setCover(profile.cover_image || null);
                 } else {
                     // Fallback to auth user data details
                     setName(user.user_metadata?.full_name || "");
@@ -157,6 +160,10 @@ export default function SettingsPage() {
                 citizen_id: citizenId || null,
                 dob: dob || null,
                 gender: gender || null,
+                weight: weight ? parseFloat(weight) : null,
+                health_history: healthHistory || null,
+                avatar_url: avatar || null,
+                cover_image: cover || null,
             };
 
             // Clean undefined
@@ -164,11 +171,8 @@ export default function SettingsPage() {
                 if (updateData[key] === undefined) delete updateData[key];
             });
 
-            await userService.update(user.id, updateData);
+            await userService.upsert(user.id, updateData as any);
             if (refreshUser) await refreshUser();
-
-            // Simulate delay for smooth UX
-            await new Promise(resolve => setTimeout(resolve, 800));
 
             toast.success("Đã lưu thành công!", {
                 id: loadingToast,
@@ -212,21 +216,49 @@ export default function SettingsPage() {
         }
     };
 
-    const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Show preview immediately
             const reader = new FileReader();
             reader.onloadend = () => setAvatar(reader.result as string);
             reader.readAsDataURL(file);
+
+            // Upload in background
+            setIsUploading(true);
+            const loadingToast = toast.loading("Đang tải ảnh lên...");
+            try {
+                const url = await userService.uploadAvatar(file);
+                setAvatar(url); // Update with real URL
+                toast.success("Tải ảnh thành công", { id: loadingToast });
+            } catch (error: any) {
+                toast.error("Lỗi tải ảnh: " + error.message, { id: loadingToast });
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
-    const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Preview
             const reader = new FileReader();
             reader.onloadend = () => setCover(reader.result as string);
             reader.readAsDataURL(file);
+
+            // Upload in background
+            setIsUploading(true);
+            const loadingToast = toast.loading("Đang tải ảnh bìa...");
+            try {
+                const url = await userService.uploadImage(file, 'avatars'); // Reuse avatars bucket or create new one
+                setCover(url);
+                toast.success("Tải ảnh bìa thành công", { id: loadingToast });
+            } catch (error: any) {
+                toast.error("Lỗi tải ảnh: " + error.message, { id: loadingToast });
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
@@ -501,11 +533,11 @@ export default function SettingsPage() {
                                     <div className="flex justify-end pt-6">
                                         <button
                                             onClick={handleSave}
-                                            disabled={isSaving}
-                                            className={`bg-gradient-to-r from-[#6324eb] to-indigo-600 text-white px-12 py-4 rounded-full font-black text-base flex items-center space-x-3 transition-all shadow-2xl shadow-indigo-500/30 active:scale-95 ${isSaving ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
+                                            disabled={isSaving || isUploading}
+                                            className={`bg-gradient-to-r from-[#6324eb] to-indigo-600 text-white px-12 py-4 rounded-full font-black text-base flex items-center space-x-3 transition-all shadow-2xl shadow-indigo-500/30 active:scale-95 ${isSaving || isUploading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
                                         >
-                                            <Save className={`size-5 ${isSaving ? 'animate-spin' : ''}`} />
-                                            <span>{isSaving ? "Đang lưu..." : "Lưu thay đổi hồ sơ"}</span>
+                                            <Save className={`size-5 ${isSaving || isUploading ? 'animate-spin' : ''}`} />
+                                            <span>{isUploading ? "Đang tải ảnh..." : (isSaving ? "Đang lưu..." : "Lưu thay đổi hồ sơ")}</span>
                                         </button>
                                     </div>
                                 </div>

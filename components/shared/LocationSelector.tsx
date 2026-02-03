@@ -43,6 +43,11 @@ export function LocationSelector({
     const [cityCode, setCityCode] = useState<string>("");
     const [districtCode, setDistrictCode] = useState<string>("");
     const [wardCode, setWardCode] = useState<string>("");
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Initialize from Defaults (Names -> Codes)
     useEffect(() => {
@@ -113,6 +118,8 @@ export function LocationSelector({
         const w = WARDS.find(x => x.code === val);
         if (onWardChange && w) onWardChange(w.name);
     };
+
+    if (!isMounted) return null;
 
     return (
         <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${className}`}>

@@ -45,6 +45,7 @@ export interface User {
     last_donation_date: string | null;
     health_history: string | null;
     avatar_url?: string | null;
+    cover_image?: string | null;
 
     created_at: string;            // timestamp
 }
@@ -75,6 +76,8 @@ export interface InsertUser {
     weight?: number | null;
     last_donation_date?: string | null;
     health_history?: string | null;
+    avatar_url?: string | null;
+    cover_image?: string | null;
 }
 
 // Type for updating user
@@ -102,6 +105,8 @@ export interface UpdateUser {
     weight?: number | null;
     last_donation_date?: string | null;
     health_history?: string | null;
+    avatar_url?: string | null;
+    cover_image?: string | null;
 }
 
 // Blood group options

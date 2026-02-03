@@ -126,6 +126,13 @@ export default function RequestsPage() {
                         displayBloodGroup = groups.length >= 5 ? `Hỗn hợp (${groups.length})` : groups.join(", ");
                     }
 
+                    // Extract image
+                    let img = c.image || c.image_url || '';
+                    if (!img && c.description) {
+                        const match = c.description.match(/<div data-cover="([^"]+)"/);
+                        if (match) img = match[1];
+                    }
+
                     return {
                         ...c,
                         type: 'campaign',
@@ -133,7 +140,8 @@ export default function RequestsPage() {
                         urgency_level: c.is_urgent ? 'Urgent' : 'Standard',
                         title: c.name,
                         displayUnits: c.target_units,
-                        description: stripHtml(c.description)
+                        description: stripHtml(c.description),
+                        imageUrl: img
                     };
                 });
 
@@ -201,10 +209,7 @@ export default function RequestsPage() {
     };
 
     const handleRegister = async (item: any) => {
-        if (!isVerified) {
-            router.push("/complete-profile");
-            return;
-        }
+
 
         if (!profile?.id) {
             toast.error("Vui lòng đăng nhập để thực hiện hành động này!");
@@ -258,7 +263,7 @@ export default function RequestsPage() {
                                 <div className="flex min-w-72 flex-col gap-2">
                                     <h1 className="text-[#120e1b] dark:text-white text-4xl font-black tracking-tight">Yêu cầu hiến máu</h1>
                                     <p className="text-[#654d99] dark:text-[#a594c9] text-base font-normal leading-normal max-w-2xl">
-                                        Nhu cầu khẩn cấp từ các cơ sở y tế trong khu vực của bạn. {isVerified ? 'Cảm ơn bạn đã hoàn thành sàng lọc sức khỏe.' : 'Cần sàng lọc an toàn để xem chi tiết vị trí bệnh viện.'}
+                                        Nhu cầu khẩn cấp từ các cơ sở y tế trong khu vực của bạn.
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -323,20 +328,13 @@ export default function RequestsPage() {
                                                 {/* Header Image Section */}
                                                 <div
                                                     className="h-48 bg-center bg-no-repeat bg-cover relative bg-slate-200"
-                                                    style={{ backgroundImage: `url("https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600")` }}
+                                                    style={{ backgroundImage: `url("${request.imageUrl || request.image || "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600"}")` }}
                                                 >
                                                     {/* Gradient Overlay */}
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
 
                                                     {/* Blur Overlay if Locked */}
-                                                    {!isVerified && (
-                                                        <div className="absolute inset-0 backdrop-blur-sm bg-white/10 flex items-center justify-center">
-                                                            <div className="bg-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transform group-hover:scale-105 transition-transform duration-300">
-                                                                <Lock className="w-4 h-4 text-[#6324eb]" />
-                                                                <span className="text-[#6324eb] text-xs font-black uppercase tracking-wider">Vị trí bị khóa</span>
-                                                            </div>
-                                                        </div>
-                                                    )}
+
 
                                                     {/* Top Badges */}
                                                     <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
@@ -345,7 +343,7 @@ export default function RequestsPage() {
                                                         </span>
                                                         <span className="bg-white/90 text-[#6324eb] text-[10px] font-black px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
                                                             <MapPin className="w-3 h-3" />
-                                                            {isVerified ? (request.hospital?.district || "Gần bạn") : "Vị trí bảo mật"}
+                                                            {request.hospital?.district || "Gần bạn"}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -380,7 +378,7 @@ export default function RequestsPage() {
                                                         <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                                             <Building2 className="w-3.5 h-3.5 text-indigo-500" />
                                                             <span className="text-[11px] font-bold truncate max-w-[150px]">
-                                                                {isVerified ? (request.hospital?.hospital_name || "Bệnh viện ẩn") : "Bệnh viện đang khóa"}
+                                                                {request.hospital?.hospital_name || "Bệnh viện ẩn"}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-1">
@@ -447,7 +445,7 @@ export default function RequestsPage() {
                         <>
                             <div
                                 className="h-56 bg-cover bg-center relative bg-slate-200"
-                                style={{ backgroundImage: `url("https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600")` }}
+                                style={{ backgroundImage: `url("${selectedRequest.imageUrl || selectedRequest.image || "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600"}")` }}
                             >
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
                                 <div className="absolute top-4 right-4 z-50">
@@ -459,7 +457,7 @@ export default function RequestsPage() {
                                 </div>
                                 <div className="absolute bottom-6 left-6 text-white text-left">
                                     <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400 mb-1 flex items-center gap-2">
-                                        <Building2 className="w-4 h-4" /> {isVerified ? selectedRequest.hospital?.hospital_name : 'Vị trí đang khóa'}
+                                        <Building2 className="w-4 h-4" /> {selectedRequest.hospital?.hospital_name}
                                     </p>
                                     <h2 className="text-4xl font-black tracking-tight">Nhóm {selectedRequest.required_blood_group}</h2>
                                 </div>
@@ -479,7 +477,7 @@ export default function RequestsPage() {
                                         <MapPin className="w-5 h-5 text-[#6324eb] mb-2" />
                                         <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Khu vực</p>
                                         <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                            {isVerified ? `${selectedRequest.hospital?.district}, ${selectedRequest.hospital?.city}` : '--'}
+                                            {selectedRequest.hospital?.district}, {selectedRequest.hospital?.city}
                                         </p>
                                     </div>
                                     <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-left">
@@ -489,19 +487,13 @@ export default function RequestsPage() {
                                     </div>
                                 </div>
                                 <div className="flex gap-4 mt-4">
-                                    {isVerified ? (
-                                        <Button
-                                            onClick={() => handleRegister(selectedRequest)}
-                                            disabled={isSubmitting || isAlreadyRegistered(selectedRequest)}
-                                            className="flex-1 h-12 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
-                                        >
-                                            {isSubmitting ? "Đang xử lý..." : isAlreadyRegistered(selectedRequest) ? "Đã đăng ký tham gia" : "Đăng ký tham gia"}
-                                        </Button>
-                                    ) : (
-                                        <Button onClick={() => router.push("/complete-profile")} className="flex-1 h-12 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm">
-                                            Xác minh để hỗ trợ
-                                        </Button>
-                                    )}
+                                    <Button
+                                        onClick={() => handleRegister(selectedRequest)}
+                                        disabled={isSubmitting || isAlreadyRegistered(selectedRequest)}
+                                        className="flex-1 h-12 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
+                                    >
+                                        {isSubmitting ? "Đang xử lý..." : isAlreadyRegistered(selectedRequest) ? "Đã đăng ký tham gia" : "Đăng ký tham gia"}
+                                    </Button>
                                     <Button variant="outline" className="h-12 w-12 p-0 rounded-xl border-slate-200 dark:border-slate-800">
                                         <Phone className="w-5 h-5" />
                                     </Button>

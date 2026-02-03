@@ -95,7 +95,7 @@ export default function HospitalDashboard() {
                     <div className="relative hidden lg:block">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
-                            className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-[#6366f1] w-[400px] shadow-sm transition-all focus:shadow-md outline-none"
+                            className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-[#6366f1] w-[400px] shadow-sm transition-all focus:shadow-md outline-none"
                             placeholder="Tìm kiếm theo tên chiến dịch hoặc địa điểm..."
                             type="text"
                             value={searchQuery}
@@ -107,7 +107,7 @@ export default function HospitalDashboard() {
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white dark:bg-slate-800/50 p-6 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md group">
+                <div className="bg-white dark:bg-slate-800/50 p-6 rounded-[24px] shadow-sm border border-slate-300 dark:border-slate-700 transition-all hover:shadow-md group">
                     <div className="flex justify-between items-start mb-4">
                         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Người đăng ký (Hẹn)</span>
                         <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-[#6366f1]">
@@ -120,7 +120,7 @@ export default function HospitalDashboard() {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800/50 p-6 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md group">
+                <div className="bg-white dark:bg-slate-800/50 p-6 rounded-[24px] shadow-sm border border-slate-300 dark:border-slate-700 transition-all hover:shadow-md group">
                     <div className="flex justify-between items-start mb-4">
                         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Người đến (Thực tế)</span>
                         <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-500">
@@ -135,7 +135,7 @@ export default function HospitalDashboard() {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800/50 p-6 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:shadow-md group">
+                <div className="bg-white dark:bg-slate-800/50 p-6 rounded-[24px] shadow-sm border border-slate-300 dark:border-slate-700 transition-all hover:shadow-md group">
                     <div className="flex justify-between items-start mb-4">
                         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Máu đã thu (ĐV)</span>
                         <div className="p-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-500">
@@ -154,8 +154,8 @@ export default function HospitalDashboard() {
             <div className="grid grid-cols-12 gap-8">
                 <div className="col-span-12 lg:col-span-8 space-y-8">
                     {/* Campaign Overview Table */}
-                    <div className="bg-white dark:bg-slate-800/50 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-                        <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                    <div className="bg-white dark:bg-slate-800/50 rounded-[24px] shadow-sm border border-slate-300 dark:border-slate-700 overflow-hidden">
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
                             <div className="flex gap-8">
                                 <button
                                     onClick={() => setActiveTab("active")}
@@ -242,7 +242,7 @@ export default function HospitalDashboard() {
 
                 <div className="col-span-12 lg:col-span-4 space-y-8">
                     {/* Blood Distribution Donut */}
-                    <div className="bg-white dark:bg-slate-800/50 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-800 p-8">
+                    <div className="bg-white dark:bg-slate-800/50 rounded-[32px] shadow-sm border border-slate-300 dark:border-slate-700 p-8">
                         <h3 className="font-black text-lg text-slate-900 dark:text-white mb-8 tracking-tight">Cơ cấu Nhóm máu thu nhận</h3>
                         <div className="h-[220px] w-full relative">
                             <ResponsiveContainer width="100%" height="100%">
@@ -283,7 +283,7 @@ export default function HospitalDashboard() {
 
                         <div className="grid grid-cols-2 gap-4 mt-8">
                             {bloodTypeChartData.map((data, idx) => (
-                                <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-2xl flex items-center gap-3 border border-slate-100 dark:border-slate-800/50">
+                                <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-2xl flex items-center gap-3 border border-slate-200 dark:border-slate-700/50">
                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{data.name}</p>
