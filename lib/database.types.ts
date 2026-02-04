@@ -119,31 +119,46 @@ export const BLOOD_GROUPS = [
 
 export type BloodGroup = typeof BLOOD_GROUPS[number];
 
+// Voucher status options (must match database constraint)
+export const VOUCHER_STATUSES = ['Active', 'Inactive'] as const;
+export type VoucherStatus = typeof VOUCHER_STATUSES[number];
+
 export interface Voucher {
     id: string;
+    title: string; // NOT NULL in database
+    description?: string | null;
     code: string | null;
     partner_name: string | null;
+    image_url?: string | null;
     point_cost: number | null;
-    imported_by: string | null;
-    status: string | null;
-    expiry_date?: string | null;
+    stock_quantity?: number | null;
+    status: VoucherStatus | null;
+    expires_at?: string | null;
     created_at?: string;
 }
 
 export interface InsertVoucher {
+    title: string; // Required
+    description?: string;
     code?: string;
     partner_name?: string;
+    image_url?: string;
     point_cost?: number;
-    imported_by?: string;
-    status?: string;
+    stock_quantity?: number;
+    status?: VoucherStatus;
+    expires_at?: string;
 }
 
 export interface UpdateVoucher {
+    title?: string;
+    description?: string;
     code?: string;
     partner_name?: string;
+    image_url?: string;
     point_cost?: number;
-    imported_by?: string;
-    status?: string;
+    stock_quantity?: number;
+    status?: VoucherStatus;
+    expires_at?: string;
 }
 
 // Notification types

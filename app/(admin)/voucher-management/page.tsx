@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { voucherService } from '@/services/voucher.service';
-import { Voucher } from '@/lib/database.types';
+import { Voucher, VoucherStatus } from '@/lib/database.types';
 import { Loader2 } from 'lucide-react';
 
 // Extend the DB type for UI purposes (mocking missing fields)
@@ -28,7 +28,7 @@ export default function VoucherManagementPage() {
         points: number;
         stock: number;
         category: string;
-        status: string;
+        status: VoucherStatus;
         expiryDate: string;
     }>({
         name: '',
@@ -49,11 +49,10 @@ export default function VoucherManagementPage() {
             const data = await voucherService.getAll();
             // Map DB fields to UI fields
             const uiVouchers = data.map(v => {
-                // Logic to compute expiry: if v has an expiry field (check as any), use it,
-                // otherwise default to created_at + 90 days, or now + 90 days.
+                // Logic to compute expiry: use expires_at if available
                 let expiry = '';
-                if (v.expiry_date) {
-                    expiry = new Date(v.expiry_date).toISOString().split('T')[0];
+                if (v.expires_at) {
+                    expiry = new Date(v.expires_at).toISOString().split('T')[0];
                 } else if (v.created_at) {
                     const created = new Date(v.created_at);
                     created.setDate(created.getDate() + 90);
@@ -66,18 +65,17 @@ export default function VoucherManagementPage() {
 
                 return {
                     ...v,
-                    name: v.partner_name || 'Unnamed Voucher',
+                    name: v.title || v.partner_name || 'Unnamed Voucher',
                     points: v.point_cost || 0,
-                    stock: 100, // Mock
+                    stock: v.stock_quantity || 100,
                     category: 'All', // Mock
                     expiryDate: expiry,
-                    image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=200' // Mock
+                    image: v.image_url || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=200'
                 };
             });
             setVouchers(uiVouchers);
         } catch (error: any) {
             console.error('Failed to load vouchers:', error);
-            // Simple alert for now as per previous patterns in this admin section
             alert('Không thể tải danh sách mã ưu đãi: ' + error.message);
         } finally {
             setLoading(false);
@@ -123,7 +121,7 @@ export default function VoucherManagementPage() {
             points: 1000,
             stock: 100,
             category: 'Chung',
-            status: 'Draft',
+            status: 'Inactive',
             expiryDate: '',
         });
         setIsModalOpen(true);
@@ -131,60 +129,115 @@ export default function VoucherManagementPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate form data
+        if (!formData.name || formData.name.trim() === '') {
+            alert('Vui lòng nhập tên voucher');
+            return;
+        }
+
+        if (!formData.points || formData.points < 0) {
+            alert('Vui lòng nhập chi phí điểm hợp lệ');
+            return;
+        }
+
         try {
             if (editingVoucher) {
                 // Update
+                console.log('Updating voucher:', editingVoucher.id);
                 const updated = await voucherService.update(editingVoucher.id, {
-                    partner_name: formData.name || undefined,
-                    point_cost: formData.points ?? undefined,
-                    status: formData.status || undefined,
-                    // Note: stock, category, date are NOT saved to DB as they don't exist in schema
+                    title: formData.name,
+                    partner_name: formData.name,
+                    point_cost: formData.points,
+                    stock_quantity: formData.stock,
+                    status: formData.status,
+                    expires_at: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : undefined,
                 });
 
                 // Update local state
                 setVouchers(prev => prev.map(v => v.id === updated.id ? {
-                    ...v, ...formData,
+                    ...v,
+                    ...formData,
+                    title: updated.title,
                     partner_name: updated.partner_name,
                     point_cost: updated.point_cost,
-                    status: updated.status
+                    stock_quantity: updated.stock_quantity,
+                    status: updated.status,
+                    expires_at: updated.expires_at,
                 } : v));
+
+                alert('Cập nhật voucher thành công!');
             } else {
                 // Create with retry logic for unique code
+                console.log('Creating new voucher...');
                 let created;
-                let retries = 3;
+                let retries = 5;
+                let lastError;
+
                 while (retries > 0) {
                     try {
+                        // Generate a more unique code: timestamp + random string
+                        const timestamp = Date.now().toString(36);
+                        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+                        const uniqueCode = `VC-${timestamp}-${randomStr}`;
+
+                        console.log('Attempting to create voucher with code:', uniqueCode);
+
                         created = await voucherService.create({
-                            partner_name: formData.name || undefined,
-                            point_cost: formData.points ?? undefined,
-                            status: formData.status || undefined,
-                            code: crypto.randomUUID() // Full UUID for better uniqueness
+                            title: formData.name, // Required field
+                            partner_name: formData.name,
+                            point_cost: formData.points,
+                            stock_quantity: formData.stock,
+                            status: formData.status || 'Inactive',
+                            code: uniqueCode,
+                            expires_at: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : undefined,
                         });
+
+                        console.log('Voucher created successfully:', created);
                         break;
                     } catch (err: any) {
-                        if (retries > 1 && (err.message?.includes('violates unique constraint') || err.code === '23505')) {
-                            // Assuming Postgres error code 23505 for unique violation
+                        lastError = err;
+                        console.warn(`Create attempt failed (${6 - retries}/5):`, err.message);
+
+                        // Check if it's a unique constraint violation
+                        if (retries > 1 && (
+                            err.message?.toLowerCase().includes('unique') ||
+                            err.message?.toLowerCase().includes('duplicate') ||
+                            err.code === '23505'
+                        )) {
                             retries--;
+                            // Wait a bit before retrying
+                            await new Promise(resolve => setTimeout(resolve, 100));
                             continue;
                         }
+
+                        // If it's not a unique constraint error, or we're out of retries, throw
                         throw err;
                     }
                 }
 
-                if (created) {
-                    // Add to local state (mixin with ui fields)
-                    setVouchers(prev => [{
-                        ...created, ...formData,
-                        name: created.partner_name || formData.name,
-                        points: created.point_cost || formData.points,
-                        image: 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&q=80&w=200'
-                    } as SentinelVoucher, ...prev]);
+                if (!created) {
+                    throw lastError || new Error('Không thể tạo voucher sau nhiều lần thử');
                 }
+
+                // Add to local state (mixin with ui fields)
+                setVouchers(prev => [{
+                    ...created,
+                    name: created.title || created.partner_name || formData.name,
+                    points: created.point_cost || formData.points,
+                    stock: created.stock_quantity || formData.stock,
+                    category: formData.category,
+                    expiryDate: created.expires_at ? new Date(created.expires_at).toISOString().split('T')[0] : formData.expiryDate,
+                    image: created.image_url || 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&q=80&w=200'
+                } as SentinelVoucher, ...prev]);
+
+                alert('Tạo voucher mới thành công!');
             }
             setIsModalOpen(false);
         } catch (error: any) {
             console.error('Save failed:', error);
-            alert('Có lỗi xảy ra: ' + error.message);
+            const errorMessage = error.message || 'Có lỗi xảy ra khi lưu voucher';
+            alert(`Lỗi: ${errorMessage}\n\nVui lòng kiểm tra:\n- Quyền truy cập của bạn\n- Kết nối mạng\n- Console để xem chi tiết`);
         }
     };
 
@@ -283,11 +336,11 @@ export default function VoucherManagementPage() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${voucher.status === 'Active' ? 'bg-green-50 text-green-700 border-green-100' :
-                                        voucher.status === 'Inactive' ? 'bg-gray-50 text-gray-600 border-gray-200' :
-                                            'bg-yellow-50 text-yellow-700 border-yellow-100'
+                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${voucher.status === 'Active'
+                                        ? 'bg-green-50 text-green-700 border-green-100'
+                                        : 'bg-gray-50 text-gray-600 border-gray-200'
                                         }`}>
-                                        {voucher.status === 'Active' ? 'Hoạt động' : voucher.status === 'Inactive' ? 'Không hoạt động' : 'Nháp'}
+                                        {voucher.status === 'Active' ? 'Hoạt động' : 'Không hoạt động'}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600 font-medium">
@@ -396,12 +449,11 @@ export default function VoucherManagementPage() {
                                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Trạng thái</label>
                                     <select
                                         value={formData.status}
-                                        onChange={e => setFormData({ ...formData, status: e.target.value })}
+                                        onChange={e => setFormData({ ...formData, status: e.target.value as VoucherStatus })}
                                         className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
                                     >
                                         <option value="Active">Hoạt động</option>
                                         <option value="Inactive">Không hoạt động</option>
-                                        <option value="Draft">Nháp</option>
                                     </select>
                                 </div>
                             </div>

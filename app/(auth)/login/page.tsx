@@ -5,9 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import Cookies from "js-cookie";
 import { useAuth } from "@/context/AuthContext";
+
+// Shadcn UI Components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +26,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,8 +57,9 @@ export default function LoginPage() {
           console.log("Note: Profile fetch from DB skipped or limited by RLS, using metadata fallback.");
         }
 
-        Cookies.set('auth-token', data.session?.access_token || '', { expires: 7 });
-        Cookies.set('user-role', role, { expires: 7 });
+        const cookieOptions = rememberMe ? { expires: 30 } : { expires: 7 };
+        Cookies.set('auth-token', data.session?.access_token || '', cookieOptions);
+        Cookies.set('user-role', role, cookieOptions);
 
         // Cập nhật trạng thái auth global trước khi chuyển trang
         await refreshUser();
@@ -67,7 +78,9 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(err.message === 'Invalid login credentials' ? 'Email hoặc mật khẩu không đúng.' : 'Đăng nhập thất bại. Vui lòng kiểm tra lại.');
+      const msg = err.message === 'Invalid login credentials' ? 'Email hoặc mật khẩu không đúng.' : 'Đăng nhập thất bại. Vui lòng kiểm tra lại.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -159,23 +172,27 @@ export default function LoginPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="p-4 bg-red-50 text-red-600 text-sm rounded-2xl border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                <div className="w-1.5 h-6 bg-red-500 rounded-full"></div>
-                <p className="font-medium">{error}</p>
-              </div>
+              <Alert variant="destructive" className="rounded-2xl border-red-100 bg-red-50 text-red-600 animate-in fade-in slide-in-from-top-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle className="font-bold">Lỗi đăng nhập</AlertTitle>
+                <AlertDescription className="font-medium">
+                  {error}
+                </AlertDescription>
+              </Alert>
             )}
 
             {/* Form */}
             <form onSubmit={handleLogin} className="space-y-6">
               {/* Email Field */}
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700 ml-1">Địa chỉ Email</label>
+                <Label htmlFor="email" className="text-sm font-bold text-gray-700 ml-1">Địa chỉ Email</Label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
                     <Mail className="h-5 w-5" />
                   </div>
-                  <input
-                    className="block w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-2xl bg-gray-50/50 text-gray-900 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] transition-all outline-none font-medium"
+                  <Input
+                    id="email"
+                    className="pl-12 h-12 rounded-2xl bg-gray-50/50 border-gray-200 focus-visible:ring-4 focus-visible:ring-[#6324eb]/10 focus-visible:border-[#6324eb] transition-all font-medium"
                     placeholder="hero@redhope.vn"
                     required
                     type="email"
@@ -187,18 +204,19 @@ export default function LoginPage() {
 
               {/* Password Field */}
               <div className="space-y-2">
-                <div className="flex justify-between ml-1">
-                  <label className="block text-sm font-bold text-gray-700">Mật khẩu</label>
+                <div className="flex justify-between items-center ml-1">
+                  <Label htmlFor="password" className="text-sm font-bold text-gray-700">Mật khẩu</Label>
                   <Link href="/forgot-password" title="Quên mật khẩu?" className="text-xs font-bold text-[#6324eb] hover:underline">
                     Quên mật khẩu?
                   </Link>
                 </div>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
                     <Lock className="h-5 w-5" />
                   </div>
-                  <input
-                    className="block w-full pl-12 pr-12 py-3.5 border border-gray-200 rounded-2xl bg-gray-50/50 text-gray-900 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] transition-all outline-none font-medium"
+                  <Input
+                    id="password"
+                    className="pl-12 pr-12 h-12 rounded-2xl bg-gray-50/50 border-gray-200 focus-visible:ring-4 focus-visible:ring-[#6324eb]/10 focus-visible:border-[#6324eb] transition-all font-medium"
                     placeholder="••••••••"
                     required
                     type={showPassword ? "text" : "password"}
@@ -208,21 +226,37 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#6324eb] transition-colors"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#6324eb] transition-colors z-10"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
 
+              {/* Remember Me Checkbox */}
+              <div className="flex items-center space-x-2 ml-1">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  className="rounded-md border-gray-300 data-[state=checked]:bg-[#6324eb] data-[state=checked]:border-[#6324eb]"
+                />
+                <label
+                  htmlFor="remember"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-600 cursor-pointer"
+                >
+                  Ghi nhớ đăng nhập
+                </label>
+              </div>
+
               {/* Submit Button */}
-              <button
-                className="w-full flex items-center justify-center px-4 py-4 border border-transparent text-base font-extrabold rounded-2xl text-white bg-[#6324eb] hover:bg-[#501ac2] focus:outline-none focus:ring-4 focus:ring-indigo-100 shadow-xl shadow-indigo-100 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              <Button
+                className="w-full h-14 text-base font-extrabold rounded-2xl bg-[#6324eb] hover:bg-[#501ac2] shadow-xl shadow-indigo-100 transition-all transform active:scale-[0.98] disabled:opacity-50"
                 type="submit"
                 disabled={loading}
               >
                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Đăng nhập ngay"}
-              </button>
+              </Button>
             </form>
 
             {/* Divider */}
@@ -236,9 +270,10 @@ export default function LoginPage() {
             </div>
 
             {/* Social Auth */}
-            <button
+            <Button
+              variant="outline"
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center px-4 py-3.5 border border-gray-200 rounded-2xl bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-all hover:border-gray-300 gap-3 shadow-sm"
+              className="w-full h-12 rounded-2xl border-gray-200 bg-white text-gray-700 font-bold hover:bg-gray-50 transition-all gap-3 shadow-sm"
               disabled={loading}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -260,7 +295,7 @@ export default function LoginPage() {
                 />
               </svg>
               Tài khoản Google
-            </button>
+            </Button>
 
             {/* Footer */}
             <p className="text-center text-sm font-medium text-gray-500">

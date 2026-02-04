@@ -9,13 +9,16 @@ export const voucherService = {
             .order("created_at", { ascending: false });
 
         if (error) {
-            throw error;
+            console.error('Voucher getAll error:', error);
+            throw new Error(error.message || 'Không thể tải danh sách voucher');
         }
 
         return data as Voucher[];
     },
 
     async create(voucher: Partial<Voucher>) {
+        console.log('Creating voucher with data:', voucher);
+
         const { data, error } = await supabase
             .from("vouchers")
             .insert(voucher)
@@ -23,13 +26,25 @@ export const voucherService = {
             .single();
 
         if (error) {
-            throw error;
+            console.error('Voucher create error:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
+            throw new Error(error.message || error.hint || 'Không thể tạo voucher. Vui lòng kiểm tra quyền truy cập.');
+        }
+
+        if (!data) {
+            throw new Error('Không nhận được dữ liệu sau khi tạo voucher');
         }
 
         return data as Voucher;
     },
 
     async update(id: string, updates: Partial<Voucher>) {
+        console.log('Updating voucher:', id, 'with data:', updates);
+
         const { data, error } = await supabase
             .from("vouchers")
             .update(updates)
@@ -38,7 +53,17 @@ export const voucherService = {
             .single();
 
         if (error) {
-            throw error;
+            console.error('Voucher update error:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
+            throw new Error(error.message || error.hint || 'Không thể cập nhật voucher. Vui lòng kiểm tra quyền truy cập.');
+        }
+
+        if (!data) {
+            throw new Error('Không nhận được dữ liệu sau khi cập nhật voucher');
         }
 
         return data as Voucher;
@@ -48,7 +73,8 @@ export const voucherService = {
         const { error } = await supabase.from("vouchers").delete().eq("id", id);
 
         if (error) {
-            throw error;
+            console.error('Voucher delete error:', error);
+            throw new Error(error.message || 'Không thể xóa voucher');
         }
     },
 };
