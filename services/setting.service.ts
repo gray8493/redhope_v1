@@ -13,6 +13,7 @@ export interface SystemSettings {
     referral_bonus: number;
     exchange_rate: number;
     points_expiry: boolean;
+    donation_interval_months: number;
     two_factor_auth: string;
 }
 
@@ -39,6 +40,7 @@ export const settingService = {
                 referral_bonus: 250,
                 exchange_rate: 500,
                 points_expiry: true,
+                donation_interval_months: 3,
                 two_factor_auth: 'Bắt buộc cho tất cả Quản trị viên'
             };
         }

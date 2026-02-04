@@ -57,6 +57,7 @@ const SystemSettingsPage = () => {
 
     // Platform Security
     const [twoFactorAuth, setTwoFactorAuth] = useState("Bắt buộc cho tất cả Quản trị viên");
+    const [donationIntervalMonths, setDonationIntervalMonths] = useState(3);
     const [apiKey, setApiKey] = useState("Loading...");
 
     // Load settings from DB on mount
@@ -90,6 +91,7 @@ const SystemSettingsPage = () => {
             setPointsExpiry(data.points_expiry);
 
             setTwoFactorAuth(data.two_factor_auth);
+            setDonationIntervalMonths(data.donation_interval_months || 3);
 
         } catch (error) {
             console.error("Failed to load settings", error);
@@ -118,7 +120,8 @@ const SystemSettingsPage = () => {
                 exchange_rate: exchangeRate,
                 points_expiry: pointsExpiry,
 
-                two_factor_auth: twoFactorAuth
+                two_factor_auth: twoFactorAuth,
+                donation_interval_months: donationIntervalMonths
             };
 
             await settingService.updateSettings(settingsToSave);
@@ -149,6 +152,7 @@ const SystemSettingsPage = () => {
                 referral_bonus: 250,
                 exchange_rate: 500,
                 points_expiry: true,
+                donation_interval_months: 3,
                 two_factor_auth: "Bắt buộc cho tất cả Quản trị viên"
             };
 
@@ -264,6 +268,20 @@ const SystemSettingsPage = () => {
                                 <option>V4.1 - Cũ</option>
                                 <option>V5.0-Beta - Sàng lọc Mở rộng</option>
                             </select>
+                        </div>
+                        <div className="border-t border-gray-50 pt-6">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Khoảng cách giữa các lần hiến máu (Tháng)</label>
+                            <div className="flex items-center gap-4">
+                                <input
+                                    className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all"
+                                    type="number"
+                                    min="1"
+                                    max="24"
+                                    value={donationIntervalMonths}
+                                    onChange={(e) => setDonationIntervalMonths(Number(e.target.value))}
+                                />
+                                <p className="text-xs text-gray-400 italic">Mặc định là 3 tháng theo quy định y tế.</p>
+                            </div>
                         </div>
                     </div>
                 </div>

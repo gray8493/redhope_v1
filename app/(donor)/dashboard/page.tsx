@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import {
     Droplet,
     Award,
-    Users,
+    Calendar,
+    Clock,
     Hospital,
     MapPin
 } from "lucide-react";
@@ -21,13 +22,17 @@ import { toast } from "sonner";
 import { campaignService } from "@/services/campaign.service";
 import { voucherService } from "@/services/voucher.service";
 import { bloodService } from "@/services/blood.service";
+import { settingService } from "@/services/setting.service";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format, addMonths, isAfter } from "date-fns";
+import { vi } from "date-fns/locale";
 
 export default function DashboardPage() {
     const { user, profile } = useAuth();
     const [campaigns, setCampaigns] = useState<any[]>([]);
     const [vouchers, setVouchers] = useState<any[]>([]);
     const [donorStats, setDonorStats] = useState<any[]>([]);
+    const [nextDonationDate, setNextDonationDate] = useState<Date | null>(null);
     const [loading, setLoading] = useState(true);
 
     const firstName = user?.user_metadata?.full_name?.split(' ').pop() || user?.email?.split('@')[0] || "người bạn";
@@ -38,14 +43,26 @@ export default function DashboardPage() {
         const fetchData = async () => {
             if (!user?.id) return;
             try {
-                const [campData, vData, sData] = await Promise.all([
+                const [campData, vData, sData, settings] = await Promise.all([
                     campaignService.getActive(),
                     voucherService.getAll(),
-                    bloodService.getDonorStats(user.id)
+                    bloodService.getDonorStats(user.id),
+                    settingService.getSettings()
                 ]);
                 setCampaigns(campData.slice(0, 4));
                 setVouchers(vData.slice(0, 2));
                 setDonorStats(sData);
+
+                // Calculate next donation date
+                if (sData && sData.length > 0) {
+                    // Assuming sData is sorted by date desc OR we find the latest
+                    const latestDonation = sData.reduce((prev: any, current: any) =>
+                        (new Date(current.verified_at) > new Date(prev.verified_at)) ? current : prev
+                    );
+                    const lastDate = new Date(latestDonation.verified_at);
+                    const nextDate = addMonths(lastDate, settings.donation_interval_months || 3);
+                    setNextDonationDate(nextDate);
+                }
             } catch (error) {
                 console.error("Dashboard fetch error:", error);
             } finally {
@@ -123,14 +140,25 @@ export default function DashboardPage() {
                         <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d]">
                             <CardContent className="p-6 flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-slate-500 text-sm font-semibold uppercase tracking-wider">Số người đã cứu</p>
-                                    <Users className="text-blue-500 w-6 h-6" />
+                                    <p className="text-slate-500 text-sm font-semibold uppercase tracking-wider">Ngày hiến tiếp theo</p>
+                                    <Clock className="text-blue-500 w-6 h-6" />
                                 </div>
                                 <div className="flex items-baseline gap-3">
-                                    {loading ? <Skeleton className="h-9 w-12" /> : <p className="text-slate-900 dark:text-white text-3xl font-black">{livesSaved}</p>}
-                                    <p className="text-slate-500 text-sm font-bold">Người</p>
+                                    {loading ? (
+                                        <Skeleton className="h-9 w-32" />
+                                    ) : nextDonationDate ? (
+                                        isAfter(new Date(), nextDonationDate) ? (
+                                            <p className="text-emerald-600 dark:text-emerald-400 text-xl font-black">Có thể hiến ngay</p>
+                                        ) : (
+                                            <p className="text-slate-900 dark:text-white text-2xl font-black">
+                                                {format(nextDonationDate, 'dd/MM/yyyy', { locale: vi })}
+                                            </p>
+                                        )
+                                    ) : (
+                                        <p className="text-emerald-600 dark:text-emerald-400 text-xl font-black">Sẵn sàng hiến</p>
+                                    )}
                                 </div>
-                                <p className="text-slate-400 text-xs mt-2">Dựa trên số lần hiến máu thành công</p>
+                                <p className="text-slate-400 text-xs mt-2">Dựa trên khoảng cách 3 tháng an toàn</p>
                             </CardContent>
                         </Card>
                     </div>

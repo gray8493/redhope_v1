@@ -52,7 +52,7 @@ export const bloodService = {
         try {
             const { data, error } = await supabase
                 .from('donation_records')
-                .select('volume_ml')
+                .select('volume_ml, verified_at')
                 .eq('donor_id', donorId);
 
             if (error) throw error;

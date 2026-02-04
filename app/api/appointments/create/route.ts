@@ -55,7 +55,43 @@ export async function POST(req: Request) {
             );
         }
 
-        // 3. Tạo QR code (simple format)
+        // 3. Kiểm tra khoảng cách giữa các lần hiến máu
+        // 3a. Lấy cấu hình hệ thống
+        const { data: settings } = await supabase
+            .from('system_settings')
+            .select('donation_interval_months')
+            .eq('id', 1)
+            .single();
+
+        const intervalMonths = settings?.donation_interval_months || 3;
+
+        // 3b. Tìm lần hiến máu thành công gần nhất
+        const { data: lastAppointment } = await supabase
+            .from('appointments')
+            .select('scheduled_time, created_at')
+            .eq('user_id', userId)
+            .eq('status', 'Completed')
+            .order('scheduled_time', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (lastAppointment) {
+            const lastDate = new Date(lastAppointment.scheduled_time || lastAppointment.created_at);
+            const nextElligibleDate = new Date(lastDate);
+            nextElligibleDate.setMonth(nextElligibleDate.getMonth() + intervalMonths);
+
+            if (new Date() < nextElligibleDate) {
+                const formattedDate = nextElligibleDate.toLocaleDateString('vi-VN');
+                return NextResponse.json(
+                    {
+                        error: `Bạn chưa đủ điều kiện hiến máu tiếp. Theo quy định, khoảng cách giữa 2 lần hiến máu phải là ${intervalMonths} tháng. Ngày sớm nhất bạn có thể đăng ký là ${formattedDate}.`
+                    },
+                    { status: 403 }
+                );
+            }
+        }
+
+        // 4. Tạo QR code (simple format)
         const qrCode = `QR-${Date.now()}-${userId.substring(0, 8)}`;
 
         // 4. Tạo appointment - Dùng supabaseAdmin để bypass RLS
