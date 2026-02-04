@@ -232,15 +232,7 @@ export default function ReportsPage() {
                         <p className="text-slate-500 font-medium">Theo dõi dòng chảy người hiến và chỉ số nhân khẩu học theo thời gian thực.</p>
                     </div>
                     <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chia sẻ:</span>
-                            <div className="flex -space-x-2">
-                                {[1, 2, 3].map(i => (
-                                    <img key={i} alt="User" className="size-8 rounded-full border-2 border-white dark:border-slate-800 object-cover" src={`https://i.pravatar.cc/150?u=${i}`} />
-                                ))}
-                                <div className="size-8 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500">+4</div>
-                            </div>
-                        </div>
+
                         <button className="flex items-center gap-2 px-5 py-2.5 bg-[#6366f1] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#6366f1]/20 hover:bg-[#4f46e5] transition-all">
                             <span className="material-symbols-outlined text-lg">download</span>
                             Xuất Báo Cáo

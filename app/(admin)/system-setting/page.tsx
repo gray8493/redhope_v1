@@ -176,7 +176,7 @@ const SystemSettingsPage = () => {
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm sticky top-4 z-10 backdrop-blur-sm bg-white/90">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm backdrop-blur-sm bg-white/90">
                 <div className="flex flex-col gap-1">
                     <h2 className="text-2xl font-bold text-[#1f1f1f]">Cài đặt Hệ thống</h2>
                     <p className="text-gray-500 text-sm">Cấu hình các tham số toàn cầu và nền tảng.</p>
