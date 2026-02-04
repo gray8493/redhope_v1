@@ -256,7 +256,6 @@ export default function CampaignDetailsPage() {
     const [bloodTypeFilter, setBloodTypeFilter] = useState('all');
     const [isSending, setIsSending] = useState(false);
     const [announcementMsg, setAnnouncementMsg] = useState('');
-    const [notificationType, setNotificationType] = useState('announcement');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Edit Campaign states
@@ -403,7 +402,7 @@ export default function CampaignDetailsPage() {
 
         setIsSending(true);
         try {
-            const result = await campaignService.sendAnnouncement(campaignId, announcementMsg, notificationType);
+            const result = await campaignService.sendAnnouncement(campaignId, announcementMsg);
 
             if (result.summary?.failed > 0) {
                 const firstError = result.details?.find((d: any) => !d.success)?.error;
@@ -1448,92 +1447,15 @@ export default function CampaignDetailsPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-4 mb-6">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Loại thông báo</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    onClick={() => setNotificationType('announcement')}
-                                    className={`p-3 rounded-xl border-2 text-[11px] font-bold transition-all text-left flex flex-col gap-1 ${notificationType === 'announcement'
-                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                        : 'border-slate-100 dark:border-slate-800 text-slate-500 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <Megaphone className="w-3.5 h-3.5" />
-                                        THÔNG BÁO CHUNG
-                                    </span>
-                                    <span className="text-[9px] font-medium opacity-60 italic">Gửi nội dung tùy chỉnh bên dưới</span>
-                                </button>
-                                <button
-                                    onClick={() => setNotificationType('registration_success')}
-                                    className={`p-3 rounded-xl border-2 text-[11px] font-bold transition-all text-left flex flex-col gap-1 ${notificationType === 'registration_success'
-                                        ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
-                                        : 'border-slate-100 dark:border-slate-800 text-slate-500 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <CheckCircle2 className="w-3.5 h-3.5" />
-                                        XÁC NHẬN ĐĂNG KÝ
-                                    </span>
-                                    <span className="text-[9px] font-medium opacity-60 italic">Gửi thông tin lịch hẹn cụ thể</span>
-                                </button>
-                                <button
-                                    onClick={() => setNotificationType('reminder_8h')}
-                                    className={`p-3 rounded-xl border-2 text-[11px] font-bold transition-all text-left flex flex-col gap-1 ${notificationType === 'reminder_8h'
-                                        ? 'border-amber-600 bg-amber-50 text-amber-700'
-                                        : 'border-slate-100 dark:border-slate-800 text-slate-500 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <Clock className="w-3.5 h-3.5" />
-                                        NHẮC NHỞ (8H)
-                                    </span>
-                                    <span className="text-[9px] font-medium opacity-60 italic">Khuyên ăn nhẹ trước khi hiến</span>
-                                </button>
-                                <button
-                                    onClick={() => setNotificationType('reminder_4h')}
-                                    className={`p-3 rounded-xl border-2 text-[11px] font-bold transition-all text-left flex flex-col gap-1 ${notificationType === 'reminder_4h'
-                                        ? 'border-rose-600 bg-rose-50 text-rose-700'
-                                        : 'border-slate-100 dark:border-slate-800 text-slate-500 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <Clock className="w-3.5 h-3.5" />
-                                        NHẮC NHỞ (4H)
-                                    </span>
-                                    <span className="text-[9px] font-medium opacity-60 italic">Cảnh báo sắp đến giờ hiến</span>
-                                </button>
-                            </div>
-                        </div>
-
                         <div className="space-y-4">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                                {notificationType === 'announcement' ? 'Nội dung thông báo' : 'Lời nhắn bổ sung (Tùy chọn)'}
-                            </label>
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Nội dung thông điệp</label>
                             <textarea
                                 value={announcementMsg}
                                 onChange={(e) => setAnnouncementMsg(e.target.value)}
-                                placeholder={notificationType === 'announcement'
-                                    ? "Ví dụ: Cảm ơn các bạn đã đăng ký! Chiến dịch sẽ diễn ra vào lúc 8:00 sáng mai..."
-                                    : "Nhập lời nhắn riêng từ bệnh viện gửi kèm theo mẫu email này..."
-                                }
+                                placeholder="Ví dụ: Cảm ơn các bạn đã đăng ký! Chiến dịch sẽ diễn ra vào lúc 8:00 sáng mai tại sảnh chính bệnh viện..."
                                 className="w-full h-40 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/5 text-sm font-medium transition-all outline-none text-slate-900 dark:text-white resize-none"
                             />
                         </div>
-
-                        {notificationType !== 'announcement' && (
-                            <div className="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/10 border-2 border-indigo-100 dark:border-indigo-900/30 text-[13px] font-medium text-indigo-700 dark:text-indigo-300 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <p className="mb-2 flex items-center gap-2">
-                                    <FileText className="w-4 h-4" />
-                                    Nội dung mẫu sẽ được gửi:
-                                </p>
-                                <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl text-[12px] opacity-80 border border-indigo-50 dark:border-indigo-900/20">
-                                    {notificationType === 'registration_success' && "Chào bạn, đây là xác nhận đăng ký hiến máu thành công tại [Tên Chiến Dịch]. Chi tiết lịch hẹn: [Thời gian], [Địa điểm], Mã số: [ID]."}
-                                    {notificationType === 'reminder_8h' && "Chào bạn, chỉ còn 8 giờ nữa đến lịch hiến máu của bạn. Hãy nhớ ngủ đủ giấc và ăn nhẹ trước khi đến nhé!"}
-                                    {notificationType === 'reminder_4h' && "Sắp đến giờ hiến máu! Vui lòng có mặt tại [Địa điểm] đúng giờ. Cảm ơn nghĩa cử cao đẹp của bạn."}
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     <DialogFooter className="p-8 pt-0 flex-row gap-3">
@@ -1547,12 +1469,8 @@ export default function CampaignDetailsPage() {
                         </Button>
                         <Button
                             onClick={handleSendAnnouncement}
-                            disabled={isSending || (notificationType === 'announcement' && !announcementMsg.trim())}
-                            className={`flex-[2] h-12 rounded-xl text-white font-black shadow-lg transition-all active:scale-95 disabled:opacity-50 ${notificationType === 'announcement' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' :
-                                notificationType === 'registration_success' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' :
-                                    notificationType === 'reminder_8h' ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-200' :
-                                        'bg-rose-600 hover:bg-rose-700 shadow-rose-200'
-                                } dark:shadow-none`}
+                            disabled={isSending || !announcementMsg.trim()}
+                            className="flex-[2] h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 disabled:opacity-50"
                         >
                             {isSending ? (
                                 <>

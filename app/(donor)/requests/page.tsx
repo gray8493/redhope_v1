@@ -257,7 +257,7 @@ export default function RequestsPage() {
                 <div className="flex-1 flex flex-col min-w-0">
                     <TopNav title="Yêu cầu hiến máu" />
                     <main className="flex flex-1 justify-center py-8">
-                        <div className="flex flex-col max-w-[1024px] flex-1 px-4 md:px-10">
+                        <div className="flex flex-col max-w-[1440px] flex-1 px-4 md:px-10">
                             {/* Page Heading */}
                             <div className="flex flex-wrap justify-between items-end gap-3 mb-6">
                                 <div className="flex min-w-72 flex-col gap-2">
@@ -378,7 +378,7 @@ export default function RequestsPage() {
                                                         <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                                             <Building2 className="w-3.5 h-3.5 text-indigo-500" />
                                                             <span className="text-[11px] font-bold truncate max-w-[150px]">
-                                                                {request.hospital?.hospital_name || "Bệnh viện ẩn"}
+                                                                {request.location_name || request.hospital?.hospital_name || request.hospital?.address || "Địa điểm chưa xác định"}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-1">
@@ -443,61 +443,135 @@ export default function RequestsPage() {
                     </VisuallyHidden>
                     {selectedRequest && (
                         <>
-                            <div
-                                className="h-56 bg-cover bg-center relative bg-slate-200"
-                                style={{ backgroundImage: `url("${selectedRequest.imageUrl || selectedRequest.image || "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600"}")` }}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
-                                <div className="absolute top-4 right-4 z-50">
-                                    <DialogClose asChild>
-                                        <div className="p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-colors cursor-pointer">
-                                            <X className="w-5 h-5" />
+                            <div className="relative">
+                                <div
+                                    className="h-64 bg-cover bg-center relative bg-slate-200"
+                                    style={{ backgroundImage: `url("${selectedRequest.imageUrl || selectedRequest.image || "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600"}")` }}
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+                                    <div className="absolute top-4 right-4 z-50">
+                                        <DialogClose asChild>
+                                            <div className="p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-colors cursor-pointer">
+                                                <X className="w-5 h-5" />
+                                            </div>
+                                        </DialogClose>
+                                    </div>
+                                    <div className="absolute bottom-6 left-6 right-6 text-white text-left">
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            <span className={`px-2.5 py-1 ${getUrgencyClass(selectedRequest.urgency_level)} text-white text-[10px] font-black uppercase tracking-wider rounded-md shadow-sm`}>
+                                                {selectedRequest.urgency_level === 'Emergency' ? 'Cấp cứu' : selectedRequest.urgency_level === 'Urgent' ? 'Khẩn cấp' : 'Tiêu chuẩn'}
+                                            </span>
+                                            {selectedRequest.type === 'campaign' && (
+                                                <span className="bg-white/20 backdrop-blur-md text-white px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-white/10">
+                                                    Chiến dịch
+                                                </span>
+                                            )}
                                         </div>
-                                    </DialogClose>
-                                </div>
-                                <div className="absolute bottom-6 left-6 text-white text-left">
-                                    <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400 mb-1 flex items-center gap-2">
-                                        <Building2 className="w-4 h-4" /> {selectedRequest.hospital?.hospital_name}
-                                    </p>
-                                    <h2 className="text-4xl font-black tracking-tight">Nhóm {selectedRequest.required_blood_group}</h2>
-                                </div>
-                            </div>
-                            <div className="p-8 flex flex-col gap-6">
-                                <div className="flex items-start gap-4 p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                    <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${getUrgencyClass(selectedRequest.urgency_level)} text-white`}>
-                                        <AlertCircle className="w-6 h-6" />
-                                    </div>
-                                    <div className="flex-1 text-left">
-                                        <h3 className="font-black text-[#120e1b] dark:text-white text-lg tracking-tight uppercase text-xs opacity-50 mb-1">Mô tả chi tiết</h3>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed italic">"{selectedRequest.description}"</p>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-left">
-                                        <MapPin className="w-5 h-5 text-[#6324eb] mb-2" />
-                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Khu vực</p>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                            {selectedRequest.hospital?.district}, {selectedRequest.hospital?.city}
+                                        <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight mb-2">
+                                            {selectedRequest.title}
+                                        </h2>
+                                        <p className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                                            <Building2 className="w-4 h-4 text-emerald-400" />
+                                            {selectedRequest.hospital?.hospital_name || "Bệnh viện"} • {selectedRequest.hospital?.district || "Khu vực chưa xác định"}
                                         </p>
                                     </div>
-                                    <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-left">
-                                        <ShieldCheck className="w-5 h-5 text-emerald-500 mb-2" />
-                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Yêu cầu</p>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedRequest.required_units} đơn vị</p>
+                                </div>
+                            </div>
+
+                            <div className="p-6 md:p-8 flex flex-col gap-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                                {/* Key Info Grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-start gap-3">
+                                        <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-indigo-500">
+                                            <Clock className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Thời gian</p>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                                {selectedRequest.start_time ? new Date(selectedRequest.start_time).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : "Đang cập nhật"}
+                                            </p>
+                                            {selectedRequest.start_time && selectedRequest.end_time && (
+                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                    {new Date(selectedRequest.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - {new Date(selectedRequest.end_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-start gap-3">
+                                        <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-rose-500">
+                                            <MapPin className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Địa điểm</p>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2">
+                                                {selectedRequest.location_name || selectedRequest.hospital?.address || "Đang cập nhật"}
+                                            </p>
+                                            {(selectedRequest.hospital?.district || selectedRequest.hospital?.city) && (
+                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                    {selectedRequest.hospital?.district}, {selectedRequest.hospital?.city}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-start gap-3">
+                                        <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-emerald-500">
+                                            <ShieldCheck className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Mục tiêu huy động</p>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                                {selectedRequest.displayUnits || selectedRequest.required_units || "0"} đơn vị máu
+                                            </p>
+                                            <p className="text-xs text-slate-500 mt-0.5">
+                                                Nhóm: <span className="font-bold text-slate-700 dark:text-slate-300">{selectedRequest.required_blood_group === 'Tất cả' ? 'Tất cả các nhóm' : selectedRequest.required_blood_group}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-start gap-3">
+                                        <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-amber-500">
+                                            <Building2 className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Đơn vị tổ chức</p>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                                {selectedRequest.hospital?.hospital_name || "Bệnh viện"}
+                                            </p>
+                                            {selectedRequest.hospital?.phone && (
+                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                    Liên hệ: {selectedRequest.hospital.phone}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex gap-4 mt-4">
-                                    <Button
-                                        onClick={() => handleRegister(selectedRequest)}
-                                        disabled={isSubmitting || isAlreadyRegistered(selectedRequest)}
-                                        className="flex-1 h-12 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
-                                    >
-                                        {isSubmitting ? "Đang xử lý..." : isAlreadyRegistered(selectedRequest) ? "Đã đăng ký tham gia" : "Đăng ký tham gia"}
-                                    </Button>
-                                    <Button variant="outline" className="h-12 w-12 p-0 rounded-xl border-slate-200 dark:border-slate-800">
-                                        <Phone className="w-5 h-5" />
-                                    </Button>
+
+                                {/* Description */}
+                                <div>
+                                    <h3 className="font-black text-[#120e1b] dark:text-white text-sm uppercase tracking-wider flex items-center gap-2 mb-3">
+                                        <div className="w-1 h-4 bg-[#6324eb] rounded-full"></div>
+                                        Thông tin chi tiết
+                                    </h3>
+                                    <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line bg-slate-50 dark:bg-slate-900/30 p-5 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+                                        {selectedRequest.description || "Chưa có mô tả chi tiết cho chương trình này."}
+                                    </div>
                                 </div>
+                            </div>
+
+                            {/* Footer Actions */}
+                            <div className="p-6 md:p-8 pt-0 mt-auto flex gap-4 bg-white dark:bg-[#1c162e]">
+                                <Button
+                                    onClick={() => handleRegister(selectedRequest)}
+                                    disabled={isSubmitting || isAlreadyRegistered(selectedRequest)}
+                                    className="flex-1 h-14 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
+                                >
+                                    {isSubmitting ? "Đang xử lý..." : isAlreadyRegistered(selectedRequest) ? "Đã đăng ký tham gia" : "Đăng ký tham gia ngay"}
+                                </Button>
+                                <Button variant="outline" className="h-14 w-14 p-0 rounded-xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
+                                    <Phone className="w-5 h-5 text-slate-500" />
+                                </Button>
                             </div>
                         </>
                     )}

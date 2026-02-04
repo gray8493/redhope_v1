@@ -41,7 +41,7 @@ export const campaignService = {
     async getActive(hospitalId?: string) {
         let query = supabase
             .from('campaigns')
-            .select('*, hospital:users(full_name, hospital_name, city, district), appointments(*)')
+            .select('*, hospital:users(full_name, hospital_name, city, district, address), appointments(*)')
             .eq('status', 'active')
             .order('start_time', { ascending: true });
 
@@ -53,11 +53,11 @@ export const campaignService = {
         if (error) throw error;
         return data || [];
     },
-
+    ư
     async getRequests(hospitalId?: string) {
         let query = supabase
             .from('blood_requests')
-            .select('*, hospital:users(full_name, hospital_name, city, district)')
+            .select('*, hospital:users(full_name, hospital_name, city, district, address)')
             .eq('status', 'Open')
             .order('created_at', { ascending: false });
 
@@ -307,12 +307,12 @@ export const campaignService = {
         return data || [];
     },
 
-    async sendAnnouncement(campaignId: string, message: string, notificationType: string = 'announcement') {
+    async sendAnnouncement(campaignId: string, message: string) {
         try {
             const response = await fetch('/api/campaign/send-announcement', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ campaignId, message, notificationType }),
+                body: JSON.stringify({ campaignId, message }),
             });
 
             const contentType = response.headers.get('content-type');
