@@ -53,7 +53,7 @@ export const campaignService = {
         if (error) throw error;
         return data || [];
     },
-    ư
+
     async getRequests(hospitalId?: string) {
         let query = supabase
             .from('blood_requests')
