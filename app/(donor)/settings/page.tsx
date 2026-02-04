@@ -317,63 +317,41 @@ export default function SettingsPage() {
                                     <h1 className="text-2xl font-bold tracking-tight">Hồ sơ & Thông tin</h1>
                                 </div>
 
-                                {/* Banner & Avatar */}
-                                <section className="relative mb-20">
-                                    <div className="h-64 md:h-80 w-full rounded-[2rem] overflow-hidden bg-slate-200 dark:bg-slate-800 relative group border border-slate-200 dark:border-slate-800 shadow-sm">
-                                        {cover ? (
-                                            <img src={cover} alt="Cover" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                                        ) : (
-                                            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                                                <Camera className="size-12 opacity-20 mb-2" />
-                                                <p className="text-sm font-bold">Chưa có ảnh bìa</p>
+                                {/* Profile Header - Redesigned */}
+                                <section className="flex flex-col items-center justify-center mb-12">
+                                    <div className="relative group mb-6">
+                                        <div className="w-32 h-32 md:w-40 md:h-40 bg-white dark:bg-[#120e1b] rounded-full p-1.5 shadow-2xl border-4 border-slate-100 dark:border-slate-800 overflow-hidden">
+                                            <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative">
+                                                {avatar ? (
+                                                    <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-4xl font-black text-[#6324eb] opacity-50">
+                                                        {name ? name.charAt(0).toUpperCase() : 'U'}
+                                                    </span>
+                                                )}
+                                                <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-pointer">
+                                                    <Camera className="text-white size-8" />
+                                                    <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+                                                </label>
                                             </div>
-                                        )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                                        <div className="absolute bottom-6 right-6">
-                                            <label className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all border border-white/30 cursor-pointer active:scale-95 shadow-lg">
-                                                <Camera className="size-4" />
-                                                <span>Thay đổi ảnh bìa</span>
-                                                <input type="file" className="hidden" accept="image/*" onChange={handleCoverUpload} />
-                                            </label>
+                                        </div>
+                                        <div className="absolute bottom-2 right-2 flex size-8 rounded-full bg-emerald-500 border-4 border-white dark:border-[#120e1b] items-center justify-center">
+                                            <CheckCircle2 className="text-white size-4" />
                                         </div>
                                     </div>
 
-                                    {/* Avatar Floating */}
-                                    <div className="absolute -bottom-14 left-10">
-                                        <div className="relative group">
-                                            <div className="w-32 h-32 md:w-40 md:h-40 bg-white dark:bg-[#120e1b] rounded-full p-1.5 shadow-2xl border-4 border-white dark:border-[#120e1b] overflow-hidden">
-                                                <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative">
-                                                    {avatar ? (
-                                                        <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <span className="text-4xl font-black text-[#6324eb] opacity-50">
-                                                            {name ? name.charAt(0).toUpperCase() : 'U'}
-                                                        </span>
-                                                    )}
-                                                    <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-pointer">
-                                                        <Camera className="text-white size-8" />
-                                                        <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="absolute bottom-2 right-2 flex size-8 rounded-full bg-emerald-500 border-4 border-white dark:border-[#120e1b] items-center justify-center">
-                                                <CheckCircle2 className="text-white size-4" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="absolute bottom-4 left-56 hidden md:block">
-                                        <h2 className="text-3xl font-black text-white mb-1 drop-shadow-md shadow-black">{name || "Người dùng"}</h2>
-                                        <p className="text-white/80 text-sm max-w-lg font-medium drop-shadow-sm shadow-black flex items-center gap-2">
-                                            <span className="bg-white/20 px-2 py-0.5 rounded text-xs backdrop-blur-sm border border-white/20">
+                                    <div className="text-center">
+                                        <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2">{name || "Người dùng"}</h2>
+                                        <div className="flex items-center justify-center gap-2 flex-wrap">
+                                            <span className="bg-[#6324eb]/10 text-[#6324eb] px-3 py-1 rounded-full text-xs font-bold border border-[#6324eb]/20">
                                                 {user?.role === 'admin' ? "Quản trị viên" : "Người hiến máu"}
                                             </span>
                                             {bloodGroup && (
-                                                <span className="bg-rose-500/80 px-2 py-0.5 rounded text-xs backdrop-blur-sm border border-rose-400/30">
+                                                <span className="bg-rose-500/10 text-rose-600 px-3 py-1 rounded-full text-xs font-bold border border-rose-500/20">
                                                     Nhóm máu: {bloodGroup}
                                                 </span>
                                             )}
-                                        </p>
+                                        </div>
                                     </div>
                                 </section>
 

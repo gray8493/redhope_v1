@@ -15,7 +15,7 @@ import { Progress } from "@/components/ui/progress";
 
 export function Sidebar() {
     return (
-        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between p-4 sticky top-0 h-screen hidden md:flex">
+        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between p-4 h-screen hidden md:flex">
             <div className="flex flex-col gap-8">
                 <Link href="/requests" className="flex items-center gap-3 px-2 hover:opacity-80 transition-opacity">
                     <div className="bg-[#6324eb] size-10 rounded-lg flex items-center justify-center text-white">

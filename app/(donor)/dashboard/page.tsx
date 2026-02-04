@@ -75,9 +75,9 @@ export default function DashboardPage() {
     const livesSaved = donorStats.length * 3;
 
     return (
-        <div className="flex min-h-screen bg-[#f6f6f8] dark:bg-[#161121] font-sans text-slate-900 dark:text-slate-100">
+        <div className="flex h-screen w-full flex-row overflow-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-slate-900 dark:text-slate-100">
             <Sidebar />
-            <main className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto relative">
                 <TopNav title="Tổng quan" />
                 <div className="p-8 flex flex-col gap-8 max-w-7xl mx-auto w-full">
                     <div className="flex flex-col gap-6 text-left">
@@ -252,7 +252,7 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
             <BloodDropChatbot />
         </div>
     );

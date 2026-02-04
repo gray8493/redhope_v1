@@ -53,7 +53,6 @@ export const campaignService = {
         if (error) throw error;
         return data || [];
     },
-
     async getRequests(hospitalId?: string) {
         let query = supabase
             .from('blood_requests')
@@ -137,29 +136,62 @@ export const campaignService = {
     },
 
     async registerToBloodRequest(userId: string, requestId: string) {
-        // 1. Check if already registered
-        const { data: existing } = await supabase
+        // 1. Check if already registered with Booked status
+        const { data: existingBooked } = await supabase
             .from('appointments')
             .select('id')
             .eq('user_id', userId)
             .eq('blood_request_id', requestId)
+            .eq('status', 'Booked')
             .maybeSingle();
 
-        if (existing) throw new Error("Bạn đã đăng ký hỗ trợ yêu cầu này rồi.");
+        if (existingBooked) throw new Error("Bạn đã đăng ký hỗ trợ yêu cầu này rồi.");
 
-        // 2. Tạo bản ghi đăng ký trong appointments
-        const { data, error } = await supabase
+        // 2. Check if there's a cancelled record to reactivate
+        const { data: existingCancelled } = await supabase
             .from('appointments')
-            .insert({
-                user_id: userId,
-                blood_request_id: requestId,
-                status: 'Booked',
-                scheduled_time: new Date().toISOString()
-            })
-            .select()
-            .single();
+            .select('id')
+            .eq('user_id', userId)
+            .eq('blood_request_id', requestId)
+            .eq('status', 'Cancelled')
+            .maybeSingle();
 
-        if (error) throw error;
+        let data: any;
+        let error: any;
+
+        if (existingCancelled) {
+            // Reactivate the cancelled record
+            const result = await supabase
+                .from('appointments')
+                .update({
+                    status: 'Booked',
+                    scheduled_time: new Date().toISOString()
+                })
+                .eq('id', existingCancelled.id)
+                .select()
+                .single();
+            data = result.data;
+            error = result.error;
+        } else {
+            // Create new record
+            const result = await supabase
+                .from('appointments')
+                .insert({
+                    user_id: userId,
+                    blood_request_id: requestId,
+                    status: 'Booked',
+                    scheduled_time: new Date().toISOString()
+                })
+                .select()
+                .single();
+            data = result.data;
+            error = result.error;
+        }
+
+        if (error) {
+            console.error('[CampaignService] Insert/Update error:', error);
+            throw new Error(error.message || error.details || 'Không thể tạo đăng ký. Vui lòng thử lại.');
+        }
 
         // 3. Lấy thông tin yêu cầu để gửi thông báo cho bệnh viện
         const { data: request } = await supabase
@@ -192,29 +224,62 @@ export const campaignService = {
     },
 
     async registerToCampaign(userId: string, campaignId: string) {
-        // 1. Check if already registered
-        const { data: existing } = await supabase
+        // 1. Check if already registered with Booked status
+        const { data: existingBooked } = await supabase
             .from('appointments')
             .select('id')
             .eq('user_id', userId)
             .eq('campaign_id', campaignId)
+            .eq('status', 'Booked')
             .maybeSingle();
 
-        if (existing) throw new Error("Bạn đã đăng ký tham gia chiến dịch này rồi.");
+        if (existingBooked) throw new Error("Bạn đã đăng ký tham gia chiến dịch này rồi.");
 
-        // 2. Tạo bản ghi đăng ký
-        const { data, error } = await supabase
+        // 2. Check if there's a cancelled record to reactivate
+        const { data: existingCancelled } = await supabase
             .from('appointments')
-            .insert({
-                user_id: userId,
-                campaign_id: campaignId,
-                status: 'Booked',
-                scheduled_time: new Date().toISOString()
-            })
-            .select()
-            .single();
+            .select('id')
+            .eq('user_id', userId)
+            .eq('campaign_id', campaignId)
+            .eq('status', 'Cancelled')
+            .maybeSingle();
 
-        if (error) throw error;
+        let data: any;
+        let error: any;
+
+        if (existingCancelled) {
+            // Reactivate the cancelled record
+            const result = await supabase
+                .from('appointments')
+                .update({
+                    status: 'Booked',
+                    scheduled_time: new Date().toISOString()
+                })
+                .eq('id', existingCancelled.id)
+                .select()
+                .single();
+            data = result.data;
+            error = result.error;
+        } else {
+            // Create new record
+            const result = await supabase
+                .from('appointments')
+                .insert({
+                    user_id: userId,
+                    campaign_id: campaignId,
+                    status: 'Booked',
+                    scheduled_time: new Date().toISOString()
+                })
+                .select()
+                .single();
+            data = result.data;
+            error = result.error;
+        }
+
+        if (error) {
+            console.error('[CampaignService] Insert/Update error:', error);
+            throw new Error(error.message || error.details || 'Không thể tạo đăng ký. Vui lòng thử lại.');
+        }
 
         // 3. Thông báo cho bệnh viện
         const { data: campaign } = await supabase
@@ -363,6 +428,23 @@ export const campaignService = {
             return data;
         } catch (error: any) {
             console.error('[CampaignService] Error in updateRegistration:', error.message || error);
+            throw error;
+        }
+    },
+
+    async cancelRegistration(appointmentId: string) {
+        try {
+            const { data, error } = await supabase
+                .from('appointments')
+                .update({ status: 'Cancelled' })
+                .eq('id', appointmentId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error: any) {
+            console.error('[CampaignService] Error in cancelRegistration:', error.message || error);
             throw error;
         }
     }
