@@ -41,7 +41,7 @@ export const bloodService = {
 
             return { success: true, data };
         } catch (error: any) {
-            console.error('[BloodService] Error completing donation:', error);
+            console.error('[BloodService] Error completing donation:', error.message || error.details || error);
             throw error;
         }
     },

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { campaignService, userService } from '@/services';
+import { bloodService } from '@/services/blood.service';
 import { toast } from 'sonner';
 import {
     ArrowLeft,
@@ -431,15 +432,28 @@ export default function CampaignDetailsPage() {
 
     // Handle confirm donation
     const handleConfirmDonation = async (regId: string) => {
+        const registration = registrations.find(r => r.id === regId);
+        if (!registration) return;
+
+        // Lấy lượng máu, mặc định là 350 nếu chưa chọn
+        const volume = registration.blood_volume || 350;
+        const donorId = registration.user_id;
+        const hospitalId = campaign.hospital_id;
+
         try {
-            // In demo mode, only update local state
-            await campaignService.updateRegistrationStatus(regId, 'Completed');
+            // 1. Tạo bản ghi hiến máu và kích hoạt email + cộng điểm (qua bloodService)
+            await bloodService.completeDonation(regId, donorId, hospitalId, volume);
+
+            // 2. Cập nhật state local để UI đổi màu/trạng thái ngay lập tức
             setRegistrations(prev => prev.map(r =>
                 r.id === regId ? { ...r, status: 'Completed' } : r
             ));
-            toast.success('Đã xác nhận hiến máu thành công!');
+
+            toast.success('Đã xác nhận hiến máu và gửi email chúc mừng!');
         } catch (error: any) {
-            toast.error('Lỗi xác nhận: ' + error.message);
+            console.error('Lỗi xác nhận:', error);
+            const msg = error.message || error.details || (typeof error === 'string' ? error : 'Cơ sở dữ liệu từ chối thao tác');
+            toast.error('Lỗi xác nhận: ' + msg);
         }
     };
 
