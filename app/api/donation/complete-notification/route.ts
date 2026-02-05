@@ -1,22 +1,22 @@
 import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import sgMail from '@sendgrid/mail';
 import { render } from '@react-email/render';
 import * as React from 'react';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import DonationSuccessEmail from '@/components/emails/DonationSuccessEmail';
 
 export async function POST(req: Request) {
-    const resendApiKey = process.env.RESEND_API_KEY;
+    const sendgridApiKey = process.env.SENDGRID_API_KEY;
 
-    if (!resendApiKey) {
-        console.warn('RESEND_API_KEY is not configured');
+    if (!sendgridApiKey) {
+        console.warn('SENDGRID_API_KEY is not configured');
         return NextResponse.json({
             success: false,
             message: 'Email service not configured'
         }, { status: 500 });
     }
 
-    const resend = new Resend(resendApiKey);
+    sgMail.setApiKey(sendgridApiKey);
 
     try {
         const { donorId, hospitalId, volumeMl } = await req.json();
@@ -51,22 +51,16 @@ export async function POST(req: Request) {
             })
         );
 
-        const { data, error } = await resend.emails.send({
-            from: 'RedHope <onboarding@resend.dev>',
-            to: [donor.email],
+        await sgMail.send({
+            to: donor.email,
+            from: 'at06012005@gmail.com',
             subject: subject,
             html: emailHtml,
         });
 
-        if (error) {
-            console.error('Resend error:', error);
-            return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
-        }
-
         return NextResponse.json({
             success: true,
-            message: 'Donation congratulation email sent',
-            id: data?.id
+            message: 'Donation congratulation email sent via SendGrid'
         });
 
     } catch (error: any) {

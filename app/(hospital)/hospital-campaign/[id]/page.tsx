@@ -410,7 +410,7 @@ export default function CampaignDetailsPage() {
                 const errorMessage = typeof firstError === 'object' ? (firstError.message || JSON.stringify(firstError)) : firstError;
 
                 toast.warning(`Thất bại: ${result.summary.failed}/${result.summary.total} người`, {
-                    description: `Lỗi: ${errorMessage || 'Hết hạn hoặc sai API Key'}. \n(Tài khoản Resend mới chỉ gửi được đến email của bạn).`
+                    description: `Lỗi: ${errorMessage || 'Lỗi xác thực'}. \n(Vui lòng kiểm tra SENDGRID_API_KEY và đảm bảo Email người gửi đã được xác thực trên SendGrid Dashboard).`
                 });
             } else {
                 toast.success("Đã gửi thông báo thành công!", {
@@ -1456,8 +1456,8 @@ export default function CampaignDetailsPage() {
                                     type="button"
                                     onClick={() => setEmailType('announcement')}
                                     className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'announcement'
-                                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
                                         }`}
                                 >
                                     <div className="flex items-center gap-2 mb-1">
@@ -1470,8 +1470,8 @@ export default function CampaignDetailsPage() {
                                     type="button"
                                     onClick={() => setEmailType('registration_success')}
                                     className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'registration_success'
-                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
                                         }`}
                                 >
                                     <div className="flex items-center gap-2 mb-1">
@@ -1484,8 +1484,8 @@ export default function CampaignDetailsPage() {
                                     type="button"
                                     onClick={() => setEmailType('reminder_8h')}
                                     className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'reminder_8h'
-                                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
                                         }`}
                                 >
                                     <div className="flex items-center gap-2 mb-1">
@@ -1498,8 +1498,8 @@ export default function CampaignDetailsPage() {
                                     type="button"
                                     onClick={() => setEmailType('reminder_4h')}
                                     className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'reminder_4h'
-                                            ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
                                         }`}
                                 >
                                     <div className="flex items-center gap-2 mb-1">
