@@ -121,7 +121,7 @@ export default function VoucherManagementPage() {
             points: 1000,
             stock: 100,
             category: 'Chung',
-            status: 'Inactive',
+            status: 'Active',
             expiryDate: '',
         });
         setIsModalOpen(true);
