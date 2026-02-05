@@ -1,6 +1,31 @@
 import { supabase } from '@/lib/supabase';
 import { notificationService } from './notification.service';
 
+// Helper function để gửi email thông báo chiến dịch mới
+// Exported để có thể mock trong tests
+export async function triggerCampaignEmail(campaignId: string): Promise<void> {
+    try {
+        const defaultMessage = `Chúng tôi vừa tổ chức chiến dịch hiến máu mới tại khu vực của bạn. Hãy tham gia để cùng chúng tôi cứu sống nhiều mảnh đời!`;
+
+        // Kiểm tra fetch tồn tại (để tránh lỗi trong môi trường Node.js/test)
+        if (typeof fetch !== 'undefined') {
+            await fetch('/api/campaign/send-announcement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    campaignId,
+                    message: defaultMessage,
+                    notificationType: 'new_campaign_invite'
+                }),
+            });
+        }
+    } catch (emailError) {
+        console.error('Error triggering campaign email:', emailError);
+        // Không throw error để không ảnh hưởng đến việc tạo chiến dịch
+    }
+}
+
+
 export const campaignService = {
     async getAll(hospitalId?: string) {
         try {
@@ -78,13 +103,18 @@ export const campaignService = {
 
         if (error) throw error;
 
-        // Gửi thông báo đến donors phù hợp (cùng tỉnh/thành)
+        // Gửi thông báo in-app đến donors phù hợp (cùng tỉnh/thành)
         try {
             await notificationService.sendCampaignNotification(data.id);
         } catch (notifError) {
             console.error('Failed to send campaign notifications:', notifError);
             // Không throw error để không ảnh hưởng đến việc tạo chiến dịch
         }
+
+        // Tự động gửi email thông báo chiến dịch mới (chạy trong background)
+        triggerCampaignEmail(data.id).catch(err => {
+            console.error('Background email trigger failed:', err);
+        });
 
         return data;
     },

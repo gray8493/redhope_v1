@@ -88,14 +88,15 @@ describe('NotificationService - Hospital gửi thông báo cho User', () => {
 
                 if (table === 'campaigns') {
                     chain.single.mockResolvedValue({ data: mockCampaign, error: null });
-                } else if (table === 'notifications') {
-                    chain.single.mockResolvedValue({
-                        data: { id: 'notif-123', title: '👤 Có người đăng ký mới!' },
-                        error: null,
-                    });
                 }
 
                 return chain;
+            });
+
+            // Mock RPC for notification creation
+            (supabase.rpc as jest.Mock) = jest.fn().mockResolvedValue({
+                data: { id: 'notif-123', user_id: 'hospital-123', title: '👤 Có người đăng ký mới!' },
+                error: null,
             });
 
             // Act
@@ -106,7 +107,7 @@ describe('NotificationService - Hospital gửi thông báo cho User', () => {
 
             // Assert
             expect(supabase.from).toHaveBeenCalledWith('campaigns');
-            expect(supabase.from).toHaveBeenCalledWith('notifications');
+            expect(supabase.rpc).toHaveBeenCalledWith('create_notification_secure', expect.any(Object));
         });
     });
 
@@ -116,15 +117,11 @@ describe('NotificationService - Hospital gửi thông báo cho User', () => {
      */
     describe('✅ Xác nhận đăng ký cho donor', () => {
         it('✅ Nên gửi thông báo xác nhận cho donor', async () => {
-            // Arrange
-            (supabase.from as jest.Mock) = jest.fn(() => ({
-                insert: jest.fn().mockReturnThis(),
-                select: jest.fn().mockReturnThis(),
-                single: jest.fn().mockResolvedValue({
-                    data: { id: 'notif-456', title: '✅ Đăng ký thành công!' },
-                    error: null,
-                }),
-            }));
+            // Mock RPC for notification creation
+            (supabase.rpc as jest.Mock) = jest.fn().mockResolvedValue({
+                data: { id: 'notif-456', user_id: 'donor-123', title: '✅ Đăng ký thành công!' },
+                error: null,
+            });
 
             // Act
             await notificationService.notifyDonorRegistrationSuccess(
@@ -134,7 +131,7 @@ describe('NotificationService - Hospital gửi thông báo cho User', () => {
             );
 
             // Assert
-            expect(supabase.from).toHaveBeenCalledWith('notifications');
+            expect(supabase.rpc).toHaveBeenCalledWith('create_notification_secure', expect.any(Object));
         });
     });
 
@@ -150,14 +147,11 @@ describe('NotificationService - Hospital gửi thông báo cho User', () => {
                 content: 'Test content',
             };
 
-            (supabase.from as jest.Mock) = jest.fn(() => ({
-                insert: jest.fn().mockReturnThis(),
-                select: jest.fn().mockReturnThis(),
-                single: jest.fn().mockResolvedValue({
-                    data: { id: 'notif-new', ...notificationData, is_read: false },
-                    error: null,
-                }),
-            }));
+            // Mock RPC for notification creation
+            (supabase.rpc as jest.Mock) = jest.fn().mockResolvedValue({
+                data: { id: 'notif-new', ...notificationData, is_read: false },
+                error: null,
+            });
 
             // Act
             const result = await notificationService.createNotification(notificationData);
@@ -165,6 +159,11 @@ describe('NotificationService - Hospital gửi thông báo cho User', () => {
             // Assert
             expect(result).toBeDefined();
             expect(result.user_id).toBe('user-123');
+            expect(supabase.rpc).toHaveBeenCalledWith('create_notification_secure', expect.objectContaining({
+                p_user_id: 'user-123',
+                p_title: 'Test Notification',
+                p_content: 'Test content',
+            }));
         });
     });
 

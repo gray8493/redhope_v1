@@ -15,6 +15,7 @@ jest.mock('@/lib/supabase', () => ({
             maybeSingle: jest.fn(),
             single: jest.fn(),
         })),
+        rpc: jest.fn().mockResolvedValue({ data: null, error: null }), // Add RPC mock
         auth: {
             signInWithPassword: jest.fn(),
             signUp: jest.fn(),
@@ -52,4 +53,20 @@ jest.mock('lucide-react', () => ({
     EyeOff: () => null,
     User: () => null,
     CheckCircle2: () => null,
+}));
+
+// Mock global fetch for campaign email tests
+global.fetch = jest.fn(() =>
+    Promise.resolve({
+        ok: true,
+        json: async () => ({ success: true }),
+    } as Response)
+) as jest.Mock;
+
+
+// Mock ResizeObserver for Radix UI components
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+    observe: jest.fn(),
+    unobserve: jest.fn(),
+    disconnect: jest.fn(),
 }));
