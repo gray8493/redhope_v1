@@ -87,7 +87,11 @@ export const pointService = {
             }
 
             // 3. Thực hiện giao dịch (Trừ điểm & Tạo bản ghi đổi quà)
-            // Lưu ý: Trong thực tế nên dùng RPC hoặc Database Transaction
+            // Sinh mã duy nhất cho lần đổi này
+            const timestamp = Date.now().toString(36).toUpperCase();
+            const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+            const redemptionCode = `RD-${timestamp}-${randomStr}`;
+
             const { error: updateError } = await supabase
                 .from('users')
                 .update({ current_points: user.current_points - voucher.point_cost })
@@ -100,7 +104,8 @@ export const pointService = {
                 .insert({
                     user_id: userId,
                     voucher_id: voucherId,
-                    status: 'Redeemed'
+                    status: 'Redeemed',
+                    redemption_code: redemptionCode
                 })
                 .select()
                 .single();
@@ -126,34 +131,31 @@ export const pointService = {
                 .select(`
                     id,
                     status,
-                    created_at,
+                    redeemed_at,
+                    redemption_code,
                     voucher_id,
                     vouchers (
+                        id,
+                        title,
                         partner_name,
-                        point_cost
+                        point_cost,
+                        image_url,
+                        description,
+                        code
                     )
                 `)
                 .eq('user_id', userId)
-                .order('created_at', { ascending: false });
+                .order('redeemed_at', { ascending: false });
 
             if (error) {
-                // RLS policy error - return empty array gracefully
                 if (error.code === '42501' || Object.keys(error).length === 0) {
-                    console.warn('[PointService] RLS policy may be blocking access. Please run fix-all-rls-policies.sql in Supabase.');
                     return [];
                 }
                 throw error;
             }
             return data || [];
         } catch (error: any) {
-            // Handle RLS policy issues gracefully
-            const errorStr = JSON.stringify(error);
-            if (errorStr === '{}' || !error?.message) {
-                console.warn('[PointService] RLS policy may be blocking access. Please run fix-all-rls-policies.sql in Supabase.');
-                return [];
-            }
-            console.warn('[PointService] Error fetching redemptions:', error?.message || error);
-            return []; // Return empty array instead of throwing
+            return [];
         }
     }
 };

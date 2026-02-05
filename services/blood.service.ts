@@ -22,6 +22,19 @@ export const bloodService = {
 
             if (error) throw error;
 
+            // Kích hoạt việc gửi email chúc mừng (chạy trong background)
+            if (typeof fetch !== 'undefined') {
+                fetch('/api/donation/complete-notification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        donorId,
+                        hospitalId,
+                        volumeMl
+                    }),
+                }).catch(err => console.error('Failed to trigger donation email:', err));
+            }
+
             // Trigger on_donation_verified sẽ tự động:
             // 1. Cập nhật appointments.status = 'Completed'
             // 2. Cộng 100 điểm cho users.current_points
