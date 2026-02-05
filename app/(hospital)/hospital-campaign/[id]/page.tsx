@@ -257,6 +257,7 @@ export default function CampaignDetailsPage() {
     const [isSending, setIsSending] = useState(false);
     const [announcementMsg, setAnnouncementMsg] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [emailType, setEmailType] = useState<'announcement' | 'registration_success' | 'reminder_8h' | 'reminder_4h'>('announcement');
 
     // Edit Campaign states
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -402,7 +403,7 @@ export default function CampaignDetailsPage() {
 
         setIsSending(true);
         try {
-            const result = await campaignService.sendAnnouncement(campaignId, announcementMsg);
+            const result = await campaignService.sendAnnouncement(campaignId, announcementMsg, emailType);
 
             if (result.summary?.failed > 0) {
                 const firstError = result.details?.find((d: any) => !d.success)?.error;
@@ -418,6 +419,7 @@ export default function CampaignDetailsPage() {
             }
             setIsDialogOpen(false);
             setAnnouncementMsg('');
+            setEmailType('announcement'); // Reset về default
         } catch (error: any) {
             toast.error("Gửi thông báo thất bại", {
                 description: error.message
@@ -1444,6 +1446,68 @@ export default function CampaignDetailsPage() {
                                         +{registrations.length - 5}
                                     </div>
                                 )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Loại thông báo</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setEmailType('announcement')}
+                                    className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'announcement'
+                                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Megaphone className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white">Thông báo chung</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500">Gửi thông tin chiến dịch</p>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setEmailType('registration_success')}
+                                    className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'registration_success'
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white">Xác nhận đăng ký</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500">Email cảm ơn & xác nhận</p>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setEmailType('reminder_8h')}
+                                    className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'reminder_8h'
+                                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white">Nhắc nhở 8 giờ</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500">Nhắc trước 8 tiếng</p>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setEmailType('reminder_4h')}
+                                    className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'reminder_4h'
+                                            ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20'
+                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white">Nhắc nhở 4 giờ</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500">Nhắc trước 4 tiếng</p>
+                                </button>
                             </div>
                         </div>
 

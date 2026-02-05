@@ -372,12 +372,12 @@ export const campaignService = {
         return data || [];
     },
 
-    async sendAnnouncement(campaignId: string, message: string) {
+    async sendAnnouncement(campaignId: string, message: string, notificationType: string = 'announcement') {
         try {
             const response = await fetch('/api/campaign/send-announcement', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ campaignId, message }),
+                body: JSON.stringify({ campaignId, message, notificationType }),
             });
 
             const contentType = response.headers.get('content-type');
