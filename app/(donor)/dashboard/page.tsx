@@ -49,8 +49,8 @@ export default function DashboardPage() {
                     bloodService.getDonorStats(user.id),
                     settingService.getSettings()
                 ]);
-                setCampaigns(campData.slice(0, 4));
-                setVouchers(vData.slice(0, 2));
+                setCampaigns(campData.slice(0, 8));
+                setVouchers(vData.slice(0, 4));
                 setDonorStats(sData);
 
                 // Calculate next donation date

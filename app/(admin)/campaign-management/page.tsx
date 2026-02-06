@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Search,
     Plus,
@@ -28,6 +28,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import { supabase } from '@/lib/supabase';
 
 const CAMPAIGNS = [
     {
@@ -149,7 +150,91 @@ export default function CampaignManagementPage() {
     const ITEMS_PER_PAGE = 4;
     const [inputError, setInputError] = useState<string | null>(null);
 
-    const [campaigns, setCampaigns] = useState(CAMPAIGNS);
+    const [campaigns, setCampaigns] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch campaigns from Supabase
+    useEffect(() => {
+        async function fetchCampaigns() {
+            try {
+                setLoading(true);
+                setError(null);
+
+                // Fetch campaigns with hospital information
+                const { data: campaignsData, error: campaignsError } = await supabase
+                    .from('campaigns')
+                    .select(`
+                        *,
+                        hospital:users!campaigns_hospital_id_fkey(
+                            full_name,
+                            hospital_name
+                        )
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (campaignsError) throw campaignsError;
+
+                // Fetch appointment counts for each campaign
+                const { data: appointmentsData, error: appointmentsError } = await supabase
+                    .from('appointments')
+                    .select('campaign_id');
+
+                if (appointmentsError) throw appointmentsError;
+
+                // Count appointments per campaign
+                const appointmentCounts = appointmentsData?.reduce((acc: any, apt: any) => {
+                    if (apt.campaign_id) {
+                        acc[apt.campaign_id] = (acc[apt.campaign_id] || 0) + 1;
+                    }
+                    return acc;
+                }, {}) || {};
+
+                // Map and format campaigns
+                const formattedCampaigns = campaignsData?.map((campaign: any) => {
+                    const startDate = campaign.start_time ? new Date(campaign.start_time) : null;
+                    const endDate = campaign.end_time ? new Date(campaign.end_time) : null;
+
+                    let dateString = '';
+                    if (startDate && endDate && startDate.toDateString() !== endDate.toDateString()) {
+                        dateString = `${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')}`;
+                    } else if (startDate) {
+                        dateString = startDate.toLocaleDateString('vi-VN');
+                    }
+
+                    // Map status from DB to UI
+                    const statusMap: Record<string, string> = {
+                        'active': 'Đang diễn ra',
+                        'draft': 'Sắp diễn ra',
+                        'ended': 'Đã kết thúc',
+                        'cancelled': 'Đã hủy'
+                    };
+
+                    return {
+                        id: campaign.id,
+                        name: campaign.name || 'Không có tên',
+                        hospital: campaign.hospital?.hospital_name || campaign.hospital?.full_name || 'Chưa xác định',
+                        date: dateString || 'Chưa cập nhật',
+                        status: statusMap[campaign.status] || 'Sắp diễn ra',
+                        participants: appointmentCounts[campaign.id] || 0,
+                        target: campaign.target_units || 0,
+                        location: campaign.city || campaign.district || 'Chưa cập nhật',
+                        type: 'Cộng đồng', // Default type since not in DB
+                        rawStatus: campaign.status // Keep original for updates
+                    };
+                }) || [];
+
+                setCampaigns(formattedCampaigns);
+            } catch (err: any) {
+                console.error('Error fetching campaigns:', err);
+                setError(err.message || 'Không thể tải dữ liệu chiến dịch');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchCampaigns();
+    }, []);
 
     const activeCampaigns = campaigns.filter(c => c.status === "Đang diễn ra").length;
     const totalParticipants = campaigns.reduce((acc, c) => acc + (c.participants || 0), 0);
@@ -442,7 +527,31 @@ export default function CampaignManagementPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {paginatedCampaigns.length > 0 ? (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-10 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-8 h-8 border-4 border-[#6324eb] border-t-transparent rounded-full animate-spin"></div>
+                                            <p className="text-gray-500 font-medium">Đang tải dữ liệu...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : error ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-10 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <AlertCircle className="w-12 h-12 text-red-500" />
+                                            <p className="text-red-600 font-medium">{error}</p>
+                                            <button
+                                                onClick={() => window.location.reload()}
+                                                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-medium transition-colors"
+                                            >
+                                                Thử lại
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : paginatedCampaigns.length > 0 ? (
                                 paginatedCampaigns.map((campaign) => {
                                     const progress = campaign.target > 0
                                         ? Math.min(Math.round((campaign.participants / campaign.target) * 100), 100)
