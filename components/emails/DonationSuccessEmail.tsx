@@ -32,7 +32,7 @@ export const DonationSuccessEmail = ({
         <Body style={main}>
             <Container style={container}>
                 <Section style={header}>
-                    <Heading style={h1}>🩸 Chúc mừng bạn đã hiến máu thành công!</Heading>
+                    <Heading style={h1}>Chúc mừng bạn đã hiến máu thành công!</Heading>
                 </Section>
                 <Section style={section}>
                     <Text style={text}>Chào <strong>{donorName}</strong>,</Text>

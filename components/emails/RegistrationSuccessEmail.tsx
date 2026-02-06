@@ -111,6 +111,11 @@ export const RegistrationSuccessEmail = ({
                         <Text style={footerText}>
                             © 2026 RedHope - Kết nối những trái tim nhân ái.
                         </Text>
+                        <Text style={footerText}>
+                            <Link href={`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/settings/notifications`} style={unsubscribeLink}>
+                                Hủy đăng ký nhận email
+                            </Link>
+                        </Text>
                     </Section>
                 </Container>
             </Body>
@@ -252,4 +257,10 @@ const messageContent = {
     color: '#1e3a8a',
     margin: '0',
     fontStyle: 'italic',
+};
+
+const unsubscribeLink = {
+    color: '#94a3b8',
+    fontSize: '12px',
+    textDecoration: 'underline',
 };

@@ -16,11 +16,11 @@ export async function POST(req: Request) {
         }, { status: 500 });
     }
 
-    sgMail.setApiKey(sendgridApiKey);
-
     try {
-        let { campaignId, message, notificationType = 'announcement' } = await req.json();
-        campaignId = campaignId?.trim();
+        sgMail.setApiKey(sendgridApiKey);
+        const body = await req.json();
+        const { campaignId, message, notificationType = 'announcement' } = body;
+        console.log(`[API Campaign] Sending ${notificationType} for campaign ${campaignId}`);
 
         if (!campaignId) {
             return NextResponse.json({ error: 'Missing campaignId' }, { status: 400 });
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
             .single();
 
         if (campaignError || !campaign) {
-            console.error('Error fetching campaign:', campaignError);
+            console.error('[API Campaign] Error fetching campaign:', campaignError);
             return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
         }
 
@@ -57,6 +57,7 @@ export async function POST(req: Request) {
 
             const { data: potentialDonors, error: donorsError } = await query;
             const users = potentialDonors || [];
+            console.log(`[API Campaign] Found ${users.length} potential donors for invite`);
 
             sendResults = await Promise.all(
                 users.map(async (user: any) => {
@@ -78,14 +79,14 @@ export async function POST(req: Request) {
 
                         await sgMail.send({
                             to: user.email,
-                            from: 'at06012005@gmail.com',
+                            from: 'RedHope <at06012005@gmail.com>',
                             subject: subject,
                             html: emailHtml,
                         });
 
                         return { success: true, email: user.email };
                     } catch (err: any) {
-                        console.error(`SendGrid Error for ${user?.email}:`, err.response?.body || err.message);
+                        console.error(`[Email Error] Failed invite for ${user?.email}:`, err.response?.body || err.message);
                         const errorMessage = err.response?.body?.errors?.[0]?.message || err.message;
                         return { success: false, email: user.email, error: errorMessage };
                     }
@@ -97,10 +98,20 @@ export async function POST(req: Request) {
                 .select('id, user_id, status, scheduled_time')
                 .eq('campaign_id', campaignId);
 
+            console.log(`[API Campaign] Found ${allAppointments?.length || 0} total appointments for manual trigger`);
+
             const rawAppointments = allAppointments?.filter((a: any) => {
                 const status = a.status?.toString().toLowerCase();
-                return notificationType === 'announcement' ? status !== 'cancelled' : (status === 'booked' || !status);
+                // Relax filter for manual triggers to allow testing on completed/booked records
+                // Only exclude 'cancelled'
+                if (notificationType === 'announcement' || notificationType === 'registration_success') {
+                    return status !== 'cancelled' && status !== 'rejected';
+                }
+                // Reminders are usually for upcoming ones
+                return (status === 'booked' || !status);
             }) || [];
+
+            console.log(`[API Campaign] Filtered to ${rawAppointments.length} eligible recipients (Type: ${notificationType})`);
 
             const userIds = rawAppointments.map((a: any) => a.user_id);
             const { data: users } = await supabaseAdmin.from('users').select('id, full_name, email').in('id', userIds);
@@ -113,15 +124,42 @@ export async function POST(req: Request) {
 
                     try {
                         let emailHtml;
-                        let subject = `📣 Thông báo từ: ${campaign.name}`;
+                        let subject = `[RedHope] Thong bao tu: ${campaign.name}`;
 
-                        // Rendering logic (same as before but using sgMail)
-                        // ... (omitted for brevity in explanation but included in code)
                         if (notificationType === 'registration_success') {
-                            subject = `✅ Đăng ký thành công: ${campaign.name}`;
-                            emailHtml = await render(React.createElement(RegistrationSuccessEmail, { donorName: donor.full_name || 'Người hiến máu', campaignName: campaign.name, hospitalName, locationName: campaign.location_name, startTime: app.scheduled_time || campaign.start_time, appointmentId: app.id, message }));
+                            subject = `[RedHope] Dang ky thanh cong: ${campaign.name}`;
+                            emailHtml = await render(React.createElement(RegistrationSuccessEmail, {
+                                donorName: donor.full_name || 'Người hiến máu',
+                                campaignName: campaign.name,
+                                hospitalName,
+                                locationName: campaign.location_name,
+                                startTime: app.scheduled_time || campaign.start_time,
+                                appointmentId: app.id,
+                                message
+                            }));
+                        } else if (notificationType === 'reminder_8h' || notificationType === 'reminder_4h') {
+                            const hours = notificationType === 'reminder_8h' ? 8 : 4;
+                            subject = `[RedHope] Nhac nho (${hours}h): ${campaign.name}`;
+                            emailHtml = await render(React.createElement(AppointmentReminderEmail, {
+                                donorName: donor.full_name || 'Người hiến máu',
+                                campaignName: campaign.name,
+                                hospitalName,
+                                locationName: campaign.location_name,
+                                startTime: app.scheduled_time || campaign.start_time,
+                                hoursLeft: hours as (4 | 8),
+                                message
+                            }));
                         } else {
-                            emailHtml = await render(React.createElement(CampaignAnnouncementEmail, { donorName: donor.full_name || 'Người hiến máu', campaignName: campaign.name, hospitalName, startTime: campaign.start_time, endTime: campaign.end_time, locationName: campaign.location_name, message }));
+                            // Default: announcement
+                            emailHtml = await render(React.createElement(CampaignAnnouncementEmail, {
+                                donorName: donor.full_name || 'Người hiến máu',
+                                campaignName: campaign.name,
+                                hospitalName,
+                                startTime: campaign.start_time,
+                                endTime: campaign.end_time,
+                                locationName: campaign.location_name,
+                                message
+                            }));
                         }
 
                         await sgMail.send({
@@ -133,7 +171,7 @@ export async function POST(req: Request) {
 
                         return { success: true, email: donor.email };
                     } catch (err: any) {
-                        console.error(`SendGrid Error for ${donor?.email}:`, err.response?.body || err.message);
+                        console.error(`[Email Error] Failed for ${donor?.email} (Type: ${notificationType}):`, err.response?.body || err);
                         const errorMessage = err.response?.body?.errors?.[0]?.message || err.message;
                         return { success: false, email: donor?.email, error: errorMessage };
                     }
@@ -142,12 +180,19 @@ export async function POST(req: Request) {
         }
 
         const successCount = sendResults.filter((r: any) => r.success).length;
+        const failedDetails = sendResults.filter((r: any) => !r.success);
+
+        if (failedDetails.length > 0) {
+            console.error('[API Campaign] Some emails failed:', failedDetails);
+        }
+
         return NextResponse.json({
             message: `Processed ${sendResults.length} emails`,
             summary: { total: sendResults.length, success: successCount, failed: sendResults.length - successCount },
             details: sendResults
         });
     } catch (error: any) {
+        console.error('[API Campaign] Global error:', error);
         return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }
