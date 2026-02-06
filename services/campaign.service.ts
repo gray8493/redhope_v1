@@ -319,13 +319,13 @@ export const campaignService = {
             .single();
 
         if (campaign) {
-            const { data: donor } = await supabase
-                .from('users')
-                .select('full_name')
-                .eq('id', userId)
-                .single();
-
             try {
+                const { data: donor } = await supabase
+                    .from('users')
+                    .select('full_name')
+                    .eq('id', userId)
+                    .single();
+
                 await notificationService.createNotification({
                     user_id: campaign.hospital_id,
                     title: '📅 Đăng ký chiến dịch mới',
@@ -336,6 +336,20 @@ export const campaignService = {
             } catch (notifError: any) {
                 console.error('Failed to send notification to hospital:', notifError);
             }
+        }
+
+        // 4. Tự động gửi email xác nhận đăng ký cho người hiến máu
+        const defaultRegMsg = `Cảm ơn bạn đã đăng ký tham gia chiến dịch hiến máu. Chúng tôi rất mong được gặp bạn!`;
+        if (typeof fetch !== 'undefined') {
+            fetch('/api/campaign/send-announcement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    campaignId,
+                    message: defaultRegMsg,
+                    notificationType: 'registration_success'
+                }),
+            }).catch(err => console.error('Background email trigger for registration failed:', err));
         }
 
         return data;
@@ -404,7 +418,8 @@ export const campaignService = {
 
     async sendAnnouncement(campaignId: string, message: string, notificationType: string = 'announcement') {
         try {
-            const response = await fetch('/api/campaign/send-announcement', {
+            const baseUrl = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
+            const response = await fetch(`${baseUrl}/api/campaign/send-announcement`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ campaignId, message, notificationType }),

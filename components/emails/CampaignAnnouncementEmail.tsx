@@ -102,6 +102,11 @@ export const CampaignAnnouncementEmail = ({
                         <Text style={footerText}>
                             Bạn nhận được email này vì đã đăng ký tham gia chiến dịch trên hệ thống của chúng tôi.
                         </Text>
+                        <Text style={footerText}>
+                            <Link href={`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/settings/notifications`} style={unsubscribeLink}>
+                                Hủy đăng ký nhận email
+                            </Link>
+                        </Text>
                     </Section>
                 </Container>
             </Body>
@@ -233,4 +238,10 @@ const footerText = {
     color: '#94a3b8',
     textAlign: 'center' as const,
     margin: '4px 0',
+};
+
+const unsubscribeLink = {
+    color: '#94a3b8',
+    fontSize: '12px',
+    textDecoration: 'underline',
 };
