@@ -24,7 +24,7 @@ export const AdminSidebar = () => {
         { href: '/campaign-management', icon: Megaphone, label: 'Quản lý chiến dịch' },
         { href: '/admin-hospitals', icon: Hospital, label: 'Bệnh viện' },
         { href: '/voucher-management', icon: Ticket, label: 'Quản lý Voucher' },
-        { href: '/global-ana', icon: BarChart3, label: 'Phân tích toàn cầu' },
+        { href: '/global-ana', icon: BarChart3, label: 'Phân tích hệ thống' },
         { href: '/system-setting', icon: Settings, label: 'Cài đặt hệ thống' },
     ];
 
@@ -48,8 +48,8 @@ export const AdminSidebar = () => {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${isActive
-                                        ? 'bg-[#6324eb]/10 text-[#6324eb]'
-                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    ? 'bg-[#6324eb]/10 text-[#6324eb]'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }`}
                             >
                                 <Icon className={`w-6 h-6 ${isActive ? 'text-[#6324eb]' : ''}`} />
