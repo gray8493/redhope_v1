@@ -8,7 +8,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { Resend } from 'resend';
+import sgMail from '@sendgrid/mail';
 
 // Mock Next.js server components before any imports
 jest.mock('next/server', () => ({
@@ -22,38 +22,29 @@ jest.mock('next/server', () => ({
 
 // Mock dependencies
 jest.mock('@/lib/supabase-admin');
-jest.mock('resend');
+jest.mock('@sendgrid/mail', () => ({
+    setApiKey: jest.fn(),
+    send: jest.fn().mockResolvedValue([{ statusCode: 202 }, {}]),
+}));
 jest.mock('@react-email/render', () => ({
     render: jest.fn(() => Promise.resolve('<html>Mock Email</html>')),
 }));
 
 describe('Campaign Email Auto-Send Feature', () => {
-    let mockResendInstance: any;
     let mockSupabaseFrom: jest.Mock;
 
     beforeEach(() => {
         jest.clearAllMocks();
 
-        // Mock Resend instance
-        mockResendInstance = {
-            emails: {
-                send: jest.fn().mockResolvedValue({
-                    data: { id: 'email-test-id' },
-                    error: null,
-                }),
-            },
-        };
-        (Resend as jest.MockedClass<typeof Resend>).mockImplementation(() => mockResendInstance);
-
         // Mock Supabase
         mockSupabaseFrom = supabaseAdmin.from as jest.Mock;
 
         // Set environment variable
-        process.env.RESEND_API_KEY = 'test-api-key';
+        process.env.SENDGRID_API_KEY = 'test-sendgrid-key';
     });
 
     afterEach(() => {
-        delete process.env.RESEND_API_KEY;
+        delete process.env.SENDGRID_API_KEY;
     });
 
     describe('Donor Filtering Logic', () => {
@@ -229,12 +220,12 @@ describe('Campaign Email Auto-Send Feature', () => {
             const result = await response.json();
 
             // Verify email was sent
-            expect(mockResendInstance.emails.send).toHaveBeenCalledTimes(1);
+            expect(sgMail.send).toHaveBeenCalledTimes(1);
 
             // Verify email subject
-            const emailCall = mockResendInstance.emails.send.mock.calls[0][0];
+            const emailCall = (sgMail.send as jest.Mock).mock.calls[0][0];
             expect(emailCall.subject).toBe('🩸 Chiến dịch hiến máu mới gần bạn!');
-            expect(emailCall.to).toEqual(['john@test.com']);
+            expect(emailCall.to).toBe('john@test.com');
         });
 
         test('should handle email sending failures gracefully', async () => {
@@ -261,9 +252,9 @@ describe('Campaign Email Auto-Send Feature', () => {
             mockSupabaseFrom.mockReturnValue(mockQuery);
 
             // First email succeeds, second fails
-            mockResendInstance.emails.send
-                .mockResolvedValueOnce({ data: { id: 'success' }, error: null })
-                .mockResolvedValueOnce({ data: null, error: { message: 'Failed' } });
+            (sgMail.send as jest.Mock)
+                .mockResolvedValueOnce([{ statusCode: 202 }, {}])
+                .mockRejectedValueOnce(new Error('Failed'));
 
             const { POST } = require('@/app/api/campaign/send-announcement/route');
 
@@ -318,7 +309,7 @@ describe('Campaign Email Auto-Send Feature', () => {
 
             expect(response.status).toBe(200);
             expect(result.summary.total).toBe(0);
-            expect(mockResendInstance.emails.send).not.toHaveBeenCalled();
+            expect(sgMail.send).not.toHaveBeenCalled();
         });
     });
 
@@ -349,8 +340,8 @@ describe('Campaign Email Auto-Send Feature', () => {
             expect(result.error).toBe('Campaign not found');
         });
 
-        test('should return 500 when RESEND_API_KEY is missing', async () => {
-            delete process.env.RESEND_API_KEY;
+        test('should return 500 when SENDGRID_API_KEY is missing', async () => {
+            delete process.env.SENDGRID_API_KEY;
 
             const { POST } = require('@/app/api/campaign/send-announcement/route');
 
@@ -366,7 +357,7 @@ describe('Campaign Email Auto-Send Feature', () => {
             const result = await response.json();
 
             expect(response.status).toBe(500);
-            expect(result.error).toContain('RESEND_API_KEY');
+            expect(result.error).toContain('SENDGRID_API_KEY');
         });
     });
 });

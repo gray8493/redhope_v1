@@ -25,8 +25,8 @@ export const settingService = {
             .eq('id', 1)
             .single();
 
-        if (error) {
-            console.warn("Could not load settings from DB, using defaults or LocalStorage fallback", error);
+        if (error || !data) {
+            if (error) console.warn("Could not load settings from DB, using defaults or LocalStorage fallback", error);
             // Default object matches DB defaults
             return {
                 low_stock_alert: false,

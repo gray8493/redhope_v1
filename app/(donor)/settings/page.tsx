@@ -32,6 +32,7 @@ import { userService } from "@/services/user.service";
 import { authService } from "@/services/auth.service";
 import { BLOOD_GROUPS } from "@/lib/database.types";
 import { LocationSelector } from "@/components/shared/LocationSelector";
+import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -533,6 +534,22 @@ export default function SettingsPage() {
                                 </div>
 
                                 <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm space-y-6">
+                                    {/* Push Notification Section */}
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-black mb-4 flex items-center text-slate-800 dark:text-white">
+                                            <Bell className="text-[#6324eb] mr-2 size-5" />
+                                            Thông báo đẩy (Push)
+                                        </h3>
+                                        <PushNotificationToggle />
+                                    </div>
+
+                                    <div className="h-px bg-slate-200 dark:bg-slate-700 my-6"></div>
+
+                                    <h3 className="text-lg font-black mb-4 flex items-center text-slate-800 dark:text-white">
+                                        <Mail className="text-indigo-500 mr-2 size-5" />
+                                        Cài đặt Email & SMS
+                                    </h3>
+
                                     <div className="p-8 bg-slate-50 dark:bg-slate-800/20 rounded-3xl border border-slate-300 dark:border-slate-800">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-start gap-5">

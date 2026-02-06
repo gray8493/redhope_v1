@@ -66,7 +66,7 @@ export const donationService = {
      */
     async getLeaderboard(limit: number = 10) {
         try {
-            // Lấy tất cả donations đã hoàn thành có donor_id (không ẩn danh)
+            // Lấy tất cả donations đã hoàn thành (không ẩn danh)
             const { data, error } = await supabase
                 .from('financial_donations')
                 .select(`
@@ -75,29 +75,29 @@ export const donationService = {
                     amount
                 `)
                 .eq('status', 'completed')
-                .eq('is_anonymous', false)
-                .not('donor_id', 'is', null);
+                .eq('is_anonymous', false);
 
             if (error) throw error;
 
-            // Tổng hợp theo donor
-            const donorTotals: Record<string, { name: string; total: number; count: number }> = {};
+            // Tổng hợp theo donor_name (cho phép donor_id null)
+            const donorTotals: Record<string, { id: string | null; total: number; count: number }> = {};
 
             data?.forEach(d => {
-                if (d.donor_id) {
-                    if (!donorTotals[d.donor_id]) {
-                        donorTotals[d.donor_id] = { name: d.donor_name, total: 0, count: 0 };
+                const name = d.donor_name;
+                if (name && name !== 'Ẩn danh') {
+                    if (!donorTotals[name]) {
+                        donorTotals[name] = { id: d.donor_id, total: 0, count: 0 };
                     }
-                    donorTotals[d.donor_id].total += d.amount || 0;
-                    donorTotals[d.donor_id].count += 1;
+                    donorTotals[name].total += d.amount || 0;
+                    donorTotals[name].count += 1;
                 }
             });
 
             // Chuyển thành mảng và sắp xếp
             const leaderboard = Object.entries(donorTotals)
-                .map(([id, info]) => ({
-                    donor_id: id,
-                    donor_name: info.name,
+                .map(([name, info]) => ({
+                    donor_id: info.id || name,
+                    donor_name: name,
                     total_amount: info.total,
                     donation_count: info.count
                 }))

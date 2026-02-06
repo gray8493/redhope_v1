@@ -1,17 +1,22 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import MiniFooter from "@/components/shared/MiniFooter";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { startOfMonth, startOfQuarter, startOfYear, isAfter, isBefore } from "date-fns";
+import { startOfMonth, startOfQuarter, startOfYear, isAfter, isBefore, format, subMonths, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, endOfDay } from "date-fns";
+import { vi } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area } from "recharts";
+import { Download, FileSpreadsheet, FileText } from "lucide-react";
 
 export default function ReportsPage() {
     const { user } = useAuth();
     const [timeFilter, setTimeFilter] = useState<'month' | 'quarter' | 'year'>('month');
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
+    const reportRef = useRef<HTMLDivElement>(null);
     const [rawData, setRawData] = useState<{
         campaigns: any[];
         appointments: any[];
@@ -50,8 +55,6 @@ export default function ReportsPage() {
                 if (campError) throw campError;
 
                 // Fetch Appointments (Deep fetch for demographics)
-                // Note: We need user dob/gender.
-                // We'll fetch all appointments for these campaigns.
                 const campaignIds = campaigns?.map(c => c.id) || [];
 
                 if (campaignIds.length === 0) {
@@ -93,7 +96,6 @@ export default function ReportsPage() {
 
     // --- 2. Process Data based on Filter ---
     const metricsData = useMemo(() => {
-        // Define Start Date based on filter
         const now = new Date();
         let startDate = startOfMonth(now);
 
@@ -110,39 +112,26 @@ export default function ReportsPage() {
         const totalRegistered = filteredApps.length;
         const totalCompleted = filteredApps.filter(a => a.status === 'Completed').length;
         const totalDeferred = filteredApps.filter(a => a.status === 'Deferred').length;
-        // Assuming Arrived = Completed + Deferred (people who showed up)
         const totalArrived = totalCompleted + totalDeferred;
-
-        // No Show = Registered - Arrived
-        // Note: Sometimes appointments are just 'Booked' if date passed. We treat them as No Show if date passed.
-        // For simplicity here: No Show = Registered - Arrived.
         const totalNoShow = Math.max(0, totalRegistered - totalArrived);
 
         // Rates
-        const retentionRateVal = totalRegistered > 0 ? 0 : 0; // Placeholder for now, hard to calc accurately without full history
-        // Let's try a heuristic for Retention: Users who have last_donation_date
         const returningDonors = filteredApps.filter(a => a.user?.last_donation_date).length;
         const retentionRate = totalArrived > 0 ? Math.round((returningDonors / totalArrived) * 100) : 0;
-
         const deferralRate = totalArrived > 0 ? Math.round((totalDeferred / totalArrived) * 100) : 0;
         const noShowRate = totalRegistered > 0 ? Math.round((totalNoShow / totalRegistered) * 100) : 0;
 
-        // Growth (Mocked for now as we don't fetch Previous Period to compare yet)
-        // In real app, we would fetch data for [startDate - period, startDate] to compare.
+        // Growth (Mocked)
         const retentionGrowth = "+2.5%";
         const deferralGrowth = "-1.0%";
         const noShowGrowth = "-0.5%";
 
         // 2. Demographics (Age Groups)
-        // < 22: Gen Z / Student
-        // 22 - 35: Young Professional
-        // 35 - 50: Mature
-        // > 50: Senior
         const ageGroups = {
             student: 0,
             office: 0,
-            freelance: 0, // Mapping "Mature" here
-            other: 0      // Mapping "Senior" here
+            freelance: 0,
+            other: 0
         };
 
         filteredApps.forEach(app => {
@@ -159,7 +148,6 @@ export default function ReportsPage() {
             else ageGroups.other++;
         });
 
-        // Convert to Percentages for UI
         const totalDemo = totalRegistered || 1;
         const demographics = [
             { label: "Sinh viên (<23t)", pct: Math.round((ageGroups.student / totalDemo) * 100), color: "bg-[#6366f1]" },
@@ -168,14 +156,47 @@ export default function ReportsPage() {
             { label: "Khác (>50t)", pct: Math.round((ageGroups.other / totalDemo) * 100), color: "bg-slate-300" }
         ];
 
-        // 3. Source (Mocked - Random deterministic based on ID)
-        // We don't track source yet.
+        // 3. Source (Mocked)
         const source = [
             { label: "Facebook", count: Math.round(totalRegistered * 0.4), pct: 40 },
             { label: "Trường học", count: Math.round(totalRegistered * 0.3), pct: 30 },
             { label: "Bạn bè", count: Math.round(totalRegistered * 0.2), pct: 20 },
             { label: "Zalo/SMS", count: Math.round(totalRegistered * 0.1), pct: 10 }
         ];
+
+        // 4. Time Series Data for Line Chart
+        let intervals: Date[] = [];
+        let dateFormat = "dd/MM";
+
+        if (timeFilter === 'month') {
+            intervals = eachDayOfInterval({ start: startDate, end: now });
+            dateFormat = "dd/MM";
+        } else if (timeFilter === 'quarter') {
+            intervals = eachWeekOfInterval({ start: startDate, end: now });
+            dateFormat = "'Tuần' w";
+        } else {
+            intervals = eachMonthOfInterval({ start: startDate, end: now });
+            dateFormat = "MMM";
+        }
+
+        const timeSeriesData = intervals.map(date => {
+            const dayStart = startOfDay(date);
+            const dayEnd = timeFilter === 'month' ? endOfDay(date) :
+                timeFilter === 'quarter' ? endOfDay(new Date(date.getTime() + 6 * 24 * 60 * 60 * 1000)) :
+                    endOfDay(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+
+            const dayApps = rawData.appointments.filter(app => {
+                const appDate = new Date(app.created_at);
+                return appDate >= dayStart && appDate <= dayEnd;
+            });
+
+            return {
+                date: format(date, dateFormat, { locale: vi }),
+                registrations: dayApps.length,
+                completed: dayApps.filter(a => a.status === 'Completed').length,
+                deferred: dayApps.filter(a => a.status === 'Deferred').length,
+            };
+        });
 
         return {
             retentionRate, retentionGrowth, isPositive: true,
@@ -184,14 +205,98 @@ export default function ReportsPage() {
             funnel: {
                 registered: totalRegistered,
                 arrived: totalArrived,
-                screeningPass: totalCompleted, // Screening pass usually = collected
+                screeningPass: totalCompleted,
                 collected: totalCompleted
             },
             demographics,
-            source
+            source,
+            timeSeriesData
         };
 
     }, [rawData, timeFilter]);
+
+    // --- Export Functions ---
+    const exportToCSV = () => {
+        setExporting(true);
+        try {
+            const { funnel, demographics, source, timeSeriesData } = metricsData;
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+
+            // Header
+            csvContent += "BÁO CÁO HIỆU QUẢ CHIẾN DỊCH HIẾN MÁU\n";
+            csvContent += `Thời gian: ${timeFilter === 'month' ? 'Tháng này' : timeFilter === 'quarter' ? 'Quý này' : 'Năm nay'}\n\n`;
+
+            // Funnel metrics
+            csvContent += "THỐNG KÊ CHUYỂN ĐỔI\n";
+            csvContent += "Giai đoạn,Số lượng\n";
+            csvContent += `Đăng ký trực tuyến,${funnel.registered}\n`;
+            csvContent += `Check-in (Có mặt),${funnel.arrived}\n`;
+            csvContent += `Khám sàng lọc,${funnel.screeningPass}\n`;
+            csvContent += `Hiến máu thành công,${funnel.collected}\n\n`;
+
+            // Demographics
+            csvContent += "NHÂN KHẨU HỌC\n";
+            csvContent += "Độ tuổi,Tỷ lệ (%)\n";
+            demographics.forEach(d => {
+                csvContent += `${d.label},${d.pct}\n`;
+            });
+            csvContent += "\n";
+
+            // Time Series
+            csvContent += "DỮ LIỆU THEO THỜI GIAN\n";
+            csvContent += "Ngày,Đăng ký,Hoàn thành,Hoãn\n";
+            timeSeriesData.forEach(d => {
+                csvContent += `${d.date},${d.registrations},${d.completed},${d.deferred}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `bao-cao-hien-mau-${format(new Date(), 'dd-MM-yyyy')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            toast.success("Đã xuất báo cáo CSV thành công!");
+        } catch (error) {
+            toast.error("Lỗi khi xuất báo cáo");
+        } finally {
+            setExporting(false);
+        }
+    };
+
+    const exportToPDF = async () => {
+        setExporting(true);
+        try {
+            // Dynamic import for client-side only
+            const html2canvas = (await import('html2canvas')).default;
+            const jsPDF = (await import('jspdf')).default;
+
+            if (!reportRef.current) return;
+
+            const canvas = await html2canvas(reportRef.current, {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`bao-cao-hien-mau-${format(new Date(), 'dd-MM-yyyy')}.pdf`);
+
+            toast.success("Đã xuất báo cáo PDF thành công!");
+        } catch (error) {
+            console.error("PDF export error:", error);
+            toast.error("Lỗi khi xuất PDF. Vui lòng thử lại.");
+        } finally {
+            setExporting(false);
+        }
+    };
 
 
     if (loading) {
@@ -220,7 +325,7 @@ export default function ReportsPage() {
                 .shadow-soft { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
             `}</style>
 
-            <div className="p-10 space-y-8 max-w-[1600px] mx-auto w-full">
+            <div ref={reportRef} className="p-10 space-y-8 max-w-[1600px] mx-auto w-full">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div className="space-y-1">
                         <div className="flex gap-2 mb-2">
@@ -231,15 +336,27 @@ export default function ReportsPage() {
                         <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Phân tích Hiệu quả Chiến dịch</h3>
                         <p className="text-slate-500 font-medium">Theo dõi dòng chảy người hiến và chỉ số nhân khẩu học theo thời gian thực.</p>
                     </div>
-                    <div className="flex items-center gap-6">
-
-                        <button className="flex items-center gap-2 px-5 py-2.5 bg-[#6366f1] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#6366f1]/20 hover:bg-[#4f46e5] transition-all">
-                            <span className="material-symbols-outlined text-lg">download</span>
-                            Xuất Báo Cáo
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={exportToCSV}
+                            disabled={exporting}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all disabled:opacity-50"
+                        >
+                            <FileSpreadsheet className="w-4 h-4" />
+                            Excel/CSV
+                        </button>
+                        <button
+                            onClick={exportToPDF}
+                            disabled={exporting}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-[#6366f1] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#6366f1]/20 hover:bg-[#4f46e5] transition-all disabled:opacity-50"
+                        >
+                            <FileText className="w-4 h-4" />
+                            {exporting ? "Đang xuất..." : "Xuất PDF"}
                         </button>
                     </div>
                 </div>
 
+                {/* KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="bg-white dark:bg-[#1c162e] p-6 rounded-2xl shadow-soft border border-slate-50 dark:border-slate-800 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
                         <div className="absolute right-0 top-0 size-24 bg-[#6366f1]/5 rounded-bl-full -mr-4 -mt-4 group-hover:bg-[#6366f1]/10 transition-colors"></div>
@@ -289,6 +406,46 @@ export default function ReportsPage() {
                         </div>
                         <p className="text-xs text-slate-400 mt-2">Đăng ký nhưng không check-in</p>
                     </div>
+                </div>
+
+                {/* NEW: Time Series Line Chart */}
+                <div className="bg-white dark:bg-[#1c162e] p-8 rounded-2xl shadow-soft border border-slate-50 dark:border-slate-800">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h4 className="text-lg font-bold text-slate-900 dark:text-white">Xu hướng Đăng ký theo Thời gian</h4>
+                            <p className="text-sm text-slate-500">Biểu đồ thống kê số lượng đăng ký, hoàn thành và hoãn hiến</p>
+                        </div>
+                    </div>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={metricsData.timeSeriesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorReg" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                </linearGradient>
+                                <linearGradient id="colorComp" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                            <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
+                            <YAxis stroke="#94a3b8" fontSize={12} />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: '#1e293b',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    color: '#fff'
+                                }}
+                                labelStyle={{ color: '#94a3b8' }}
+                            />
+                            <Legend />
+                            <Area type="monotone" dataKey="registrations" name="Đăng ký" stroke="#6366f1" fillOpacity={1} fill="url(#colorReg)" strokeWidth={2} />
+                            <Area type="monotone" dataKey="completed" name="Hoàn thành" stroke="#10b981" fillOpacity={1} fill="url(#colorComp)" strokeWidth={2} />
+                            <Line type="monotone" dataKey="deferred" name="Hoãn" stroke="#f59e0b" strokeWidth={2} dot={false} />
+                        </AreaChart>
+                    </ResponsiveContainer>
                 </div>
 
                 <div className="grid grid-cols-12 gap-8">
