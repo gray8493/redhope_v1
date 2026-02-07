@@ -213,7 +213,7 @@ describeOrSkip('Campaign Auto-Email Integration Test', () => {
 
             if (donors && donors.length > 0) {
                 console.log(`✅ Found ${donors.length} potential donors in TP.HCM with A+/O+ blood`);
-                donors.forEach(d => {
+                donors.forEach((d: any) => {
                     console.log(`   - ${d.full_name} (${d.blood_group}) - ${d.city}`);
                 });
             } else {

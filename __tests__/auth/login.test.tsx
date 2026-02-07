@@ -54,6 +54,18 @@ jest.mock('sonner', () => ({
     },
 }));
 
+// Mock lucide-react
+jest.mock('lucide-react', () => ({
+    Loader2: () => <div data-testid="loader" />,
+    Mail: () => <div data-testid="mail" />,
+    Lock: () => <div data-testid="lock" />,
+    Eye: () => <div data-testid="eye" />,
+    EyeOff: () => <div data-testid="eye-off" />,
+    AlertCircle: () => <div data-testid="alert-circle" />,
+    ChevronLeft: () => <div data-testid="chevron-left" />,
+    CheckCircle2: () => <div data-testid="check-circle" />,
+}));
+
 // Mock UI components simply
 jest.mock('@/components/ui/button', () => ({
     Button: ({ children, disabled, type, ...props }: any) => (
@@ -64,17 +76,25 @@ jest.mock('@/components/ui/input', () => ({
     Input: (props: any) => <input {...props} />,
 }));
 jest.mock('@/components/ui/label', () => ({
-    Label: ({ children, ...props }: any) => <label {...props}>{children}</label>,
+    Label: ({ children, htmlFor, ...props }: any) => <label htmlFor={htmlFor} {...props}>{children}</label>,
 }));
 jest.mock('@/components/ui/checkbox', () => ({
-    Checkbox: ({ checked, onCheckedChange, ...props }: any) => (
-        <input type="checkbox" checked={checked} onChange={(e) => onCheckedChange(e.target.checked)} {...props} />
+    Checkbox: ({ checked, id, onCheckedChange, ...props }: any) => (
+        <input id={id} type="checkbox" checked={checked} onChange={(e) => onCheckedChange?.(e.target.checked)} {...props} />
     ),
 }));
 jest.mock('@/components/ui/alert', () => ({
     Alert: ({ children }: any) => <div role="alert">{children}</div>,
     AlertTitle: ({ children }: any) => <strong>{children}</strong>,
     AlertDescription: ({ children }: any) => <div>{children}</div>,
+}));
+jest.mock('@/components/ui/card', () => ({
+    Card: ({ children }: any) => <div>{children}</div>,
+    CardHeader: ({ children }: any) => <header>{children}</header>,
+    CardTitle: ({ children }: any) => <h2>{children}</h2>,
+    CardDescription: ({ children }: any) => <p>{children}</p>,
+    CardContent: ({ children }: any) => <section>{children}</section>,
+    CardFooter: ({ children }: any) => <footer>{children}</footer>,
 }));
 
 describe('LoginPage', () => {

@@ -50,11 +50,11 @@ export const settingService = {
     async updateSettings(settings: Partial<SystemSettings>): Promise<void> {
         const { error } = await supabase
             .from('system_settings')
-            .update({
+            .upsert({
+                id: 1, // Đảm bảo luôn sử dụng record duy nhất
                 ...settings,
                 updated_at: new Date().toISOString()
-            })
-            .eq('id', 1);
+            });
 
         if (error) throw error;
     }

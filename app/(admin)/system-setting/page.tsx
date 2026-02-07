@@ -127,7 +127,12 @@ const SystemSettingsPage = () => {
             await settingService.updateSettings(settingsToSave);
             toast.success("Lưu thay đổi thành công!");
         } catch (error: any) {
-            console.error("Save failed", error);
+            console.error("Save failed:", {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
             toast.error("Lưu thất bại: " + (error.message || 'Lỗi hệ thống'));
         } finally {
             setSaving(false);
@@ -163,7 +168,12 @@ const SystemSettingsPage = () => {
 
             toast.success("Đã khôi phục cài đặt mặc định!");
         } catch (error: any) {
-            console.error("Reset failed", error);
+            console.error("Reset failed:", {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
             toast.error("Khôi phục thất bại: " + error.message);
         } finally {
             setSaving(false);

@@ -11,13 +11,46 @@ jest.mock('next/navigation', () => ({
 
 // Mock lucide-react
 jest.mock('lucide-react', () => ({
-    Loader2: () => React.createElement('div', { 'data-testid': 'loader' }),
-    Mail: () => React.createElement('div', { 'data-testid': 'mail' }),
-    Lock: () => React.createElement('div', { 'data-testid': 'lock' }),
-    Eye: () => React.createElement('div', { 'data-testid': 'eye' }),
-    EyeOff: () => React.createElement('div', { 'data-testid': 'eye-off' }),
-    User: () => React.createElement('div', { 'data-testid': 'user' }),
-    CheckCircle2: () => React.createElement('div', { 'data-testid': 'check-circle' }),
+    Loader2: () => <div data-testid="loader" />,
+    Mail: () => <div data-testid="mail" />,
+    Lock: () => <div data-testid="lock" />,
+    Eye: () => <div data-testid="eye" />,
+    EyeOff: () => <div data-testid="eye-off" />,
+    User: () => <div data-testid="user" />,
+    CheckCircle2: () => <div data-testid="check-circle" />,
+    ChevronLeft: () => <div data-testid="chevron-left" />,
+    AlertCircle: () => <div data-testid="alert-circle" />,
+}));
+
+// Mock UI components simply
+jest.mock('@/components/ui/button', () => ({
+    Button: ({ children, disabled, type, ...props }: any) => (
+        <button type={type} disabled={disabled} {...props}>{children}</button>
+    ),
+}));
+jest.mock('@/components/ui/input', () => ({
+    Input: (props: any) => <input {...props} />,
+}));
+jest.mock('@/components/ui/label', () => ({
+    Label: ({ children, htmlFor, ...props }: any) => <label htmlFor={htmlFor} {...props}>{children}</label>,
+}));
+jest.mock('@/components/ui/checkbox', () => ({
+    Checkbox: ({ checked, id, onCheckedChange, ...props }: any) => (
+        <input id={id} type="checkbox" checked={checked} onChange={(e) => onCheckedChange?.(e.target.checked)} {...props} />
+    ),
+}));
+jest.mock('@/components/ui/alert', () => ({
+    Alert: ({ children, variant }: any) => <div role="alert" data-variant={variant}>{children}</div>,
+    AlertTitle: ({ children }: any) => <strong>{children}</strong>,
+    AlertDescription: ({ children }: any) => <div>{children}</div>,
+}));
+jest.mock('@/components/ui/card', () => ({
+    Card: ({ children }: any) => <div>{children}</div>,
+    CardHeader: ({ children }: any) => <header>{children}</header>,
+    CardTitle: ({ children }: any) => <h2>{children}</h2>,
+    CardDescription: ({ children }: any) => <p>{children}</p>,
+    CardContent: ({ children }: any) => <section>{children}</section>,
+    CardFooter: ({ children }: any) => <footer>{children}</footer>,
 }));
 
 // Mock supabase client is already handled in jest.setup.ts
@@ -63,7 +96,8 @@ describe('RegisterPage', () => {
         });
 
         // Check the checkbox
-        fireEvent.click(screen.getByRole('checkbox'));
+        const checkbox = screen.getByLabelText(/Tôi đồng ý với Điều khoản & Chính sách/i);
+        fireEvent.click(checkbox);
 
         // Submit
         fireEvent.click(screen.getByRole('button', { name: /Đăng ký ngay/i }));
@@ -114,7 +148,7 @@ describe('RegisterPage', () => {
             target: { value: 'password123' },
         });
 
-        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(screen.getByLabelText(/Tôi đồng ý với Điều khoản & Chính sách/i));
 
         fireEvent.click(screen.getByRole('button', { name: /Đăng ký ngay/i }));
 
@@ -150,7 +184,7 @@ describe('RegisterPage', () => {
             target: { value: 'wrongpass' },
         });
 
-        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(screen.getByLabelText(/Tôi đồng ý với Điều khoản & Chính sách/i));
 
         fireEvent.click(screen.getByRole('button', { name: /Đăng ký ngay/i }));
 
@@ -172,7 +206,7 @@ describe('RegisterPage', () => {
         fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), { target: { value: 'existing@test.com' } });
         fireEvent.change(screen.getAllByPlaceholderText(/••••••••/i)[0], { target: { value: 'password123' } });
         fireEvent.change(screen.getAllByPlaceholderText(/••••••••/i)[1], { target: { value: 'password123' } });
-        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(screen.getByLabelText(/Tôi đồng ý với Điều khoản & Chính sách/i));
 
         fireEvent.click(screen.getByRole('button', { name: /Đăng ký ngay/i }));
 

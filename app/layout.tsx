@@ -19,25 +19,25 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport = {
+  themeColor: "#6324eb",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "RedHope - Hệ thống Hiến máu",
   description: "Nền tảng kết nối cộng đồng hiến máu tình nguyện. Đăng ký hiến máu, theo dõi chiến dịch và nhận thông báo mới nhất.",
   manifest: "/manifest.json",
-  themeColor: "#6324eb",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "RedHope",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
   icons: {
     icon: [
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
       { url: "/icons/icon-192x192.png" },
