@@ -29,7 +29,7 @@ const ForgotPasswordPage = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-6">
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-gray-100">
-                <Link href="/login" className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-[#6324eb] mb-8 transition-colors">
+                <Link href="/login" className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-[#0065FF] mb-8 transition-colors">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại đăng nhập
                 </Link>
 
@@ -47,7 +47,7 @@ const ForgotPasswordPage = () => {
                         </p>
                         <button
                             onClick={() => setSuccess(false)}
-                            className="w-full py-4 text-[#6324eb] font-bold text-sm bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-all"
+                            className="w-full py-4 text-[#0065FF] font-bold text-sm bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-all"
                         >
                             Thử lại với email khác
                         </button>
@@ -74,7 +74,7 @@ const ForgotPasswordPage = () => {
                                         <Mail className="w-5 h-5 text-gray-400" />
                                     </div>
                                     <input
-                                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all bg-gray-50/50"
+                                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all bg-gray-50/50"
                                         placeholder="name@example.com"
                                         type="email"
                                         required
@@ -86,7 +86,7 @@ const ForgotPasswordPage = () => {
 
                             <button
                                 disabled={loading}
-                                className="w-full py-4 bg-[#6324eb] text-white font-bold rounded-xl hover:bg-[#501ac2] shadow-lg shadow-indigo-100 transition-all flex justify-center transform active:scale-[0.98] disabled:opacity-70"
+                                className="w-full py-4 bg-[#0065FF] text-white font-bold rounded-xl hover:bg-[#0052cc] shadow-lg shadow-indigo-100 transition-all flex justify-center transform active:scale-[0.98] disabled:opacity-70"
                                 type="submit"
                             >
                                 {loading ? <Loader2 className="animate-spin" /> : 'Gửi link khôi phục'}

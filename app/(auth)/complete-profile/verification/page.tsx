@@ -131,7 +131,7 @@ export default function VerificationProfilePage() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#101622]">
-                <Loader2 className="w-10 h-10 animate-spin text-[#2b6cee]" />
+                <Loader2 className="w-10 h-10 animate-spin text-[#0065FF]" />
             </div>
         );
     }
@@ -150,7 +150,7 @@ export default function VerificationProfilePage() {
                             <div className="flex flex-col gap-3">
                                 <div className="flex justify-between items-center flex-wrap gap-4">
                                     <h1 className="text-2xl font-bold">Lịch sử hiến máu & Sức khỏe</h1>
-                                    <span className="text-[#2b6cee] text-sm font-semibold bg-[#2b6cee]/10 px-3 py-1 rounded-full whitespace-nowrap">
+                                    <span className="text-[#0065FF] text-sm font-semibold bg-[#0065FF]/10 px-3 py-1 rounded-full whitespace-nowrap">
                                         Bước 2 / 2
                                     </span>
                                 </div>
@@ -165,7 +165,7 @@ export default function VerificationProfilePage() {
                                         <p className="text-sm font-medium">100%</p>
                                     </div>
                                     <div className="h-2 w-full bg-[#cfd7e7] dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#2b6cee] w-full rounded-full transition-all duration-500"></div>
+                                        <div className="h-full bg-[#0065FF] w-full rounded-full transition-all duration-500"></div>
                                     </div>
                                 </div>
                             </div>
@@ -196,7 +196,7 @@ export default function VerificationProfilePage() {
                                                 value={formData.weight}
                                                 onChange={handleChange}
                                                 placeholder="VD: 65"
-                                                className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] focus:ring-2 focus:ring-[#2b6cee]/20 outline-none transition-all text-sm"
+                                                className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] focus:ring-2 focus:ring-[#0065FF]/20 outline-none transition-all text-sm"
                                             />
                                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">kg</span>
                                         </div>
@@ -210,7 +210,7 @@ export default function VerificationProfilePage() {
                                                 name="last_donation_date"
                                                 value={formData.last_donation_date}
                                                 onChange={handleChange}
-                                                className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] focus:ring-2 focus:ring-[#2b6cee]/20 outline-none transition-all text-sm"
+                                                className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] focus:ring-2 focus:ring-[#0065FF]/20 outline-none transition-all text-sm"
                                             />
                                             <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                                         </div>
@@ -223,7 +223,7 @@ export default function VerificationProfilePage() {
                                             name="health_history"
                                             value={formData.health_history}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] focus:ring-2 focus:ring-[#2b6cee]/20 outline-none transition-all text-sm min-h-[100px]"
+                                            className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] focus:ring-2 focus:ring-[#0065FF]/20 outline-none transition-all text-sm min-h-[100px]"
                                             placeholder="Vui lòng liệt kê các bệnh mãn tính, dị ứng thuốc, hoặc các phẫu thuật gần đây (nếu có)..."
                                         ></textarea>
                                     </label>
@@ -243,7 +243,7 @@ export default function VerificationProfilePage() {
                                         <div className="flex flex-col gap-2">
                                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">CCCD (Mặt trước & sau)</span>
                                             <div className="border-2 border-dashed border-[#cfd7e7] dark:border-gray-700 rounded-xl p-6 flex flex-col items-center justify-center gap-3 bg-gray-50 dark:bg-[#1a2332]/50 hover:bg-gray-100 dark:hover:bg-[#1a2332] transition-colors cursor-pointer group">
-                                                <div className="w-12 h-12 rounded-full bg-[#2b6cee]/10 flex items-center justify-center text-[#2b6cee] group-hover:scale-110 transition-transform">
+                                                <div className="w-12 h-12 rounded-full bg-[#0065FF]/10 flex items-center justify-center text-[#0065FF] group-hover:scale-110 transition-transform">
                                                     <BadgeCheck className="w-6 h-6" />
                                                 </div>
                                                 <div className="text-center">
@@ -257,7 +257,7 @@ export default function VerificationProfilePage() {
                                         <div className="flex flex-col gap-2">
                                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Giấy chứng nhận hiến máu (Tùy chọn)</span>
                                             <div className="border-2 border-dashed border-[#cfd7e7] dark:border-gray-700 rounded-xl p-6 flex flex-col items-center justify-center gap-3 bg-gray-50 dark:bg-[#1a2332]/50 hover:bg-gray-100 dark:hover:bg-[#1a2332] transition-colors cursor-pointer group">
-                                                <div className="w-12 h-12 rounded-full bg-[#2b6cee]/10 flex items-center justify-center text-[#2b6cee] group-hover:scale-110 transition-transform">
+                                                <div className="w-12 h-12 rounded-full bg-[#0065FF]/10 flex items-center justify-center text-[#0065FF] group-hover:scale-110 transition-transform">
                                                     <Activity className="w-6 h-6" />
                                                 </div>
                                                 <div className="text-center">
@@ -270,7 +270,7 @@ export default function VerificationProfilePage() {
                                 </div>
 
                                 {/* Security Badge */}
-                                <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-[#2b6cee]/10 rounded-lg text-[#2b6cee]">
+                                <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-[#0065FF]/10 rounded-lg text-[#0065FF]">
                                     <ShieldCheck className="w-6 h-6 shrink-0" />
                                     <p className="text-xs text-[#4c669a] dark:text-blue-200">
                                         Thông tin y tế của bạn được bảo mật tuyệt đối theo Luật Khám chữa bệnh và chỉ được chia sẻ với bác sĩ phụ trách.
@@ -292,7 +292,7 @@ export default function VerificationProfilePage() {
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="flex items-center gap-2 px-8 py-3 rounded-lg bg-[#2b6cee] hover:bg-[#2b6cee]/90 text-white font-bold text-sm shadow-lg shadow-[#2b6cee]/30 transition-transform active:scale-95 disabled:opacity-50"
+                                        className="flex items-center gap-2 px-8 py-3 rounded-lg bg-[#0065FF] hover:bg-[#0065FF]/90 text-white font-bold text-sm shadow-lg shadow-[#0065FF]/30 transition-transform active:scale-95 disabled:opacity-50"
                                     >
                                         {submitting ? "Đang xử lý..." : "Hoàn tất đăng ký"}
                                         <CheckCircle className="w-4 h-4" />

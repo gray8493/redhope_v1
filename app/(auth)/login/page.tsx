@@ -69,7 +69,15 @@ export default function LoginPage() {
             router.push('/admin-dashboard');
             break;
           case 'hospital':
-            router.push('/hospital-dashboard');
+            // Check if profile is complete (needs address and phone)
+            // Cast to any to access custom fields if TS is strict
+            const profileData = profile as any;
+            const isComplete = profileData?.hospital_address && profileData?.phone;
+            if (isComplete) {
+              router.push('/hospital-dashboard');
+            } else {
+              router.push('/complete-hospital-profile');
+            }
             break;
           default:
             router.push('/requests');
@@ -164,7 +172,7 @@ export default function LoginPage() {
 
         {/* Right Side: Auth Form */}
         <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 lg:p-12 overflow-y-auto bg-gray-50/50 relative">
-          <Card className="w-full max-w-md bg-white rounded-[32px] shadow-2xl shadow-indigo-100/50 border border-gray-100 relative z-10 overflow-hidden">
+          <Card className="w-full max-w-md bg-white rounded-[32px] shadow-2xl shadow-blue-100/50 border border-gray-100 relative z-10 overflow-hidden">
             <CardHeader className="pt-8 lg:pt-10 px-8 lg:px-10 text-center">
               <CardTitle className="text-2xl font-extrabold text-gray-900 tracking-tight">Chào mừng trở lại</CardTitle>
               <CardDescription className="text-sm text-gray-500 mt-2 font-medium">Đăng nhập để vào hệ thống điều hành</CardDescription>
@@ -187,13 +195,13 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-bold text-gray-700 ml-1">Địa chỉ Email</Label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#0065FF] transition-colors z-10">
                       <Mail className="h-5 w-5" />
                     </div>
                     <Input
                       id="email"
                       type="email"
-                      className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] transition-all font-medium text-base"
+                      className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] transition-all font-medium text-base"
                       placeholder="hero@redhope.vn"
                       required
                       value={email}
@@ -206,17 +214,17 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center ml-1">
                     <Label htmlFor="password" className="text-sm font-bold text-gray-700">Mật khẩu</Label>
-                    <Link href="/forgot-password" title="Quên mật khẩu?" className="text-xs font-bold text-[#6324eb] hover:underline">
+                    <Link href="/forgot-password" title="Quên mật khẩu?" className="text-xs font-bold text-[#0065FF] hover:underline">
                       Quên mật khẩu?
                     </Link>
                   </div>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#0065FF] transition-colors z-10">
                       <Lock className="h-5 w-5" />
                     </div>
                     <Input
                       id="password"
-                      className="pl-12 pr-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] transition-all font-medium text-sm"
+                      className="pl-12 pr-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] transition-all font-medium text-sm"
                       placeholder="••••••••"
                       required
                       type={showPassword ? "text" : "password"}
@@ -228,7 +236,7 @@ export default function LoginPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#6324eb] hover:bg-transparent transition-colors z-20"
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#0065FF] hover:bg-transparent transition-colors z-20"
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </Button>
@@ -241,7 +249,7 @@ export default function LoginPage() {
                     id="remember"
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    className="rounded-md border-gray-300 data-[state=checked]:bg-[#6324eb] data-[state=checked]:border-[#6324eb]"
+                    className="rounded-md border-gray-300 data-[state=checked]:bg-[#0065FF] data-[state=checked]:border-[#0065FF]"
                   />
                   <Label
                     htmlFor="remember"
@@ -253,7 +261,7 @@ export default function LoginPage() {
 
                 {/* Submit Button */}
                 <Button
-                  className="w-full py-7 text-base font-extrabold rounded-2xl bg-[#6324eb] hover:bg-[#501ac2] text-white shadow-xl shadow-indigo-100 transition-all transform active:scale-[0.98] disabled:opacity-50"
+                  className="w-full py-7 text-base font-extrabold rounded-2xl bg-[#0065FF] hover:bg-[#0052cc] text-white shadow-xl shadow-blue-100 transition-all transform active:scale-[0.98] disabled:opacity-50"
                   type="submit"
                   disabled={loading}
                 >
@@ -302,7 +310,7 @@ export default function LoginPage() {
               {/* Footer */}
               <p className="text-center text-sm font-medium text-gray-500">
                 Chưa có tài khoản?{' '}
-                <Link href="/register" title="Tham gia ngay" className="font-bold text-[#6324eb] hover:underline">
+                <Link href="/register" title="Tham gia ngay" className="font-bold text-[#0065FF] hover:underline">
                   Tham gia ngay
                 </Link>
               </p>
@@ -311,8 +319,8 @@ export default function LoginPage() {
 
           {/* Footer Small Print */}
           <footer className="mt-10 lg:mt-16 text-center text-xs text-gray-400 space-x-6 font-medium">
-            <Link href="#" className="hover:text-[#6324eb] transition-colors">Chính sách bảo mật</Link>
-            <Link href="#" className="hover:text-[#6324eb] transition-colors">Điều khoản dịch vụ</Link>
+            <Link href="#" className="hover:text-[#0065FF] transition-colors">Chính sách bảo mật</Link>
+            <Link href="#" className="hover:text-[#0065FF] transition-colors">Điều khoản dịch vụ</Link>
             <span className="opacity-50">© 2026 REDHOPE Global</span>
           </footer>
         </div>

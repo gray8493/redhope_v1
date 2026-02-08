@@ -61,7 +61,7 @@ function DonorProfileContent() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#f6f6f8] dark:bg-[#101622]">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-10 h-10 text-[#2b6cee] animate-spin" />
+                    <Loader2 className="w-10 h-10 text-[#0065FF] animate-spin" />
                     <p className="text-sm font-medium text-gray-500">Đang tải thông tin...</p>
                 </div>
             </div>
@@ -177,7 +177,7 @@ function DonorProfileContent() {
                             <div className="flex flex-col gap-3">
                                 <div className="flex justify-between items-center flex-wrap gap-4">
                                     <h1 className="text-2xl font-bold">Thông tin cá nhân cơ bản</h1>
-                                    <span className="text-[#2b6cee] text-sm font-semibold bg-[#2b6cee]/10 px-3 py-1 rounded-full whitespace-nowrap">
+                                    <span className="text-[#0065FF] text-sm font-semibold bg-[#0065FF]/10 px-3 py-1 rounded-full whitespace-nowrap">
                                         Bước 1 / 2
                                     </span>
                                 </div>
@@ -192,7 +192,7 @@ function DonorProfileContent() {
                                         <p className="text-sm font-medium">50%</p>
                                     </div>
                                     <div className="h-2 w-full bg-[#cfd7e7] dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#2b6cee] w-1/2 rounded-full transition-all duration-500"></div>
+                                        <div className="h-full bg-[#0065FF] w-1/2 rounded-full transition-all duration-500"></div>
                                     </div>
                                 </div>
                             </div>
@@ -223,7 +223,7 @@ function DonorProfileContent() {
                                                 name="full_name"
                                                 value={formData.full_name}
                                                 onChange={handleChange}
-                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] focus:ring-2 focus:ring-[#2b6cee]/20 outline-none transition-all text-sm"
+                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] focus:ring-2 focus:ring-[#0065FF]/20 outline-none transition-all text-sm"
                                             />
                                             <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                                         </div>
@@ -238,7 +238,7 @@ function DonorProfileContent() {
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleChange}
-                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] focus:ring-2 focus:ring-[#2b6cee]/20 outline-none transition-all text-sm"
+                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] focus:ring-2 focus:ring-[#0065FF]/20 outline-none transition-all text-sm"
                                             />
                                             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                                         </div>
@@ -251,7 +251,7 @@ function DonorProfileContent() {
                                             <div className="relative">
                                                 <select
                                                     required
-                                                    className="w-full px-3 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] outline-none text-sm appearance-none"
+                                                    className="w-full px-3 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] outline-none text-sm appearance-none"
                                                     value={formData.dob ? formData.dob.split('-')[2] : ""}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
@@ -274,7 +274,7 @@ function DonorProfileContent() {
                                             <div className="relative">
                                                 <select
                                                     required
-                                                    className="w-full px-3 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] outline-none text-sm appearance-none"
+                                                    className="w-full px-3 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] outline-none text-sm appearance-none"
                                                     value={formData.dob ? formData.dob.split('-')[1] : ""}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
@@ -297,7 +297,7 @@ function DonorProfileContent() {
                                             <div className="relative">
                                                 <select
                                                     required
-                                                    className="w-full px-3 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] outline-none text-sm appearance-none"
+                                                    className="w-full px-3 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] outline-none text-sm appearance-none"
                                                     value={formData.dob ? formData.dob.split('-')[0] : ""}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
@@ -324,7 +324,7 @@ function DonorProfileContent() {
                                             name="gender"
                                             value={formData.gender}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] outline-none text-sm"
+                                            className="w-full px-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] outline-none text-sm"
                                         >
                                             <option value="Nam">Nam</option>
                                             <option value="Nữ">Nữ</option>
@@ -339,7 +339,7 @@ function DonorProfileContent() {
                                                 name="blood_group"
                                                 value={formData.blood_group}
                                                 onChange={handleChange}
-                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] outline-none text-sm appearance-none"
+                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] outline-none text-sm appearance-none"
                                             >
                                                 {BLOOD_GROUPS.map(bg => (
                                                     <option key={bg} value={bg}>{bg}</option>
@@ -377,7 +377,7 @@ function DonorProfileContent() {
                                                 name="address"
                                                 value={formData.address}
                                                 onChange={handleChange}
-                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#2b6cee] outline-none transition-all text-sm"
+                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] outline-none transition-all text-sm"
                                             />
                                             <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                                         </div>
@@ -389,7 +389,7 @@ function DonorProfileContent() {
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="flex items-center gap-2 px-8 py-3 rounded-lg bg-[#2b6cee] hover:bg-[#2b6cee]/90 text-white font-bold text-sm shadow-lg shadow-[#2b6cee]/30 transition-transform active:scale-95 disabled:opacity-50"
+                                        className="flex items-center gap-2 px-8 py-3 rounded-lg bg-[#0065FF] hover:bg-[#0065FF]/90 text-white font-bold text-sm shadow-lg shadow-[#0065FF]/30 transition-transform active:scale-95 disabled:opacity-50"
                                     >
                                         {submitting ? "Đang lưu..." : "Lưu và Tiếp tục"}
                                         <ArrowRight className="w-4 h-4" />

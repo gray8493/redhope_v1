@@ -82,7 +82,7 @@ const UpdatePasswordPage = () => {
                                         <Lock className="w-5 h-5 text-gray-400" />
                                     </div>
                                     <input
-                                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all bg-gray-50/50"
+                                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all bg-gray-50/50"
                                         placeholder="••••••••"
                                         type="password"
                                         required
@@ -99,7 +99,7 @@ const UpdatePasswordPage = () => {
                                         <Lock className="w-5 h-5 text-gray-400" />
                                     </div>
                                     <input
-                                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all bg-gray-50/50"
+                                        className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all bg-gray-50/50"
                                         placeholder="••••••••"
                                         type="password"
                                         required
@@ -111,7 +111,7 @@ const UpdatePasswordPage = () => {
 
                             <button
                                 disabled={loading}
-                                className="w-full py-4 bg-[#6324eb] text-white font-bold rounded-xl hover:bg-[#501ac2] shadow-lg shadow-indigo-100 transition-all flex justify-center transform active:scale-[0.98] disabled:opacity-70"
+                                className="w-full py-4 bg-[#0065FF] text-white font-bold rounded-xl hover:bg-[#0052cc] shadow-lg shadow-indigo-100 transition-all flex justify-center transform active:scale-[0.98] disabled:opacity-70"
                                 type="submit"
                             >
                                 {loading ? <Loader2 className="animate-spin" /> : 'Cập nhật mật khẩu'}

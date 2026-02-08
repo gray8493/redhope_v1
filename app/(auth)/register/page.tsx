@@ -127,7 +127,7 @@ export default function RegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center p-0 pt-2">
-            <Loader2 className="w-8 h-8 animate-spin text-[#6324eb]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#0065FF]" />
           </CardContent>
         </Card>
       </div>
@@ -187,12 +187,12 @@ export default function RegisterPage() {
           </div>
 
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-red-400/20 rounded-full blur-[120px]"></div>
-          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[500px] h-[500px] bg-indigo-500/30 rounded-full blur-[100px]"></div>
+          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px]"></div>
         </div>
 
         {/* Right Side: Register Form */}
         <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 lg:p-12 bg-gray-50/50 overflow-y-auto relative">
-          <Card className="w-full max-w-md bg-white rounded-[32px] shadow-2xl shadow-indigo-100/50 border border-gray-100 relative z-10 overflow-hidden">
+          <Card className="w-full max-w-md bg-white rounded-[32px] shadow-2xl shadow-blue-100/50 border border-gray-100 relative z-10 overflow-hidden">
             <CardHeader className="pt-8 lg:pt-10 px-8 lg:px-10 text-center">
               <CardTitle className="text-2xl font-extrabold text-gray-900 tracking-tight">Tạo tài khoản</CardTitle>
               <CardDescription className="text-sm text-gray-500 mt-2 font-medium">Bắt đầu bằng cách chọn loại tài khoản của bạn</CardDescription>
@@ -207,7 +207,7 @@ export default function RegisterPage() {
                     type="button"
                     onClick={() => setSelectedRole(role)}
                     className={`flex-1 py-2.5 flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300 uppercase tracking-wider ${selectedRole === role
-                      ? "bg-white text-[#6324eb] shadow-sm active:scale-95"
+                      ? "bg-white text-[#0065FF] shadow-sm active:scale-95"
                       : "text-gray-500 hover:text-gray-700 font-extrabold"
                       }`}
                   >
@@ -229,7 +229,7 @@ export default function RegisterPage() {
                 <div className="space-y-2">
                   <Label htmlFor="fullName" className="ml-1 font-bold text-gray-700">Họ và tên</Label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#0065FF] transition-colors z-10">
                       <UserIcon className="w-5 h-5" />
                     </div>
                     <Input
@@ -237,7 +237,7 @@ export default function RegisterPage() {
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] transition-all font-medium text-base"
+                      className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] transition-all font-medium text-base"
                       placeholder="Nguyễn Văn A"
                       required
                     />
@@ -247,7 +247,7 @@ export default function RegisterPage() {
                 <div className="space-y-2">
                   <Label htmlFor="email" className="ml-1 font-bold text-gray-700">Địa chỉ Email</Label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#0065FF] transition-colors z-10">
                       <Mail className="w-5 h-5" />
                     </div>
                     <Input
@@ -255,7 +255,7 @@ export default function RegisterPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] transition-all font-medium text-base"
+                      className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] transition-all font-medium text-base"
                       placeholder="hero@redhope.vn"
                       required
                     />
@@ -266,7 +266,7 @@ export default function RegisterPage() {
                   <div className="space-y-2">
                     <Label htmlFor="password" className="ml-1 font-bold text-gray-700">Mật khẩu</Label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#0065FF] transition-colors z-10">
                         <Lock className="w-5 h-5" />
                       </div>
                       <Input
@@ -274,7 +274,7 @@ export default function RegisterPage() {
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] transition-all font-medium text-sm"
+                        className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] transition-all font-medium text-sm"
                         placeholder="••••••••"
                         required
                       />
@@ -283,7 +283,7 @@ export default function RegisterPage() {
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword" className="ml-1 font-bold text-gray-700">Xác nhận</Label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#6324eb] transition-colors z-10">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#0065FF] transition-colors z-10">
                         <Lock className="w-5 h-5" />
                       </div>
                       <Input
@@ -291,7 +291,7 @@ export default function RegisterPage() {
                         type={showPassword ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] transition-all font-medium text-sm"
+                        className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] transition-all font-medium text-sm"
                         placeholder="••••••••"
                         required
                       />
@@ -301,7 +301,7 @@ export default function RegisterPage() {
 
                 <div className="flex items-center gap-3 px-1">
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="terms" required className="rounded-md border-gray-300 data-[state=checked]:bg-[#6324eb] data-[state=checked]:border-[#6324eb]" />
+                    <Checkbox id="terms" required className="rounded-md border-gray-300 data-[state=checked]:bg-[#0065FF] data-[state=checked]:border-[#0065FF]" />
                     <Label htmlFor="terms" className="text-xs text-gray-500 font-bold cursor-pointer">
                       Tôi đồng ý với Điều khoản & Chính sách
                     </Label>
@@ -311,7 +311,7 @@ export default function RegisterPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="ml-auto text-gray-400 hover:text-[#6324eb] hover:bg-transparent"
+                    className="ml-auto text-gray-400 hover:text-[#0065FF] hover:bg-transparent"
                   >
                     {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                   </Button>
@@ -320,7 +320,7 @@ export default function RegisterPage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-7 text-base font-extrabold rounded-2xl bg-[#6324eb] hover:bg-[#501ac2] text-white shadow-xl shadow-indigo-100 transition-all transform active:scale-[0.98] disabled:opacity-50"
+                  className="w-full py-7 text-base font-extrabold rounded-2xl bg-[#0065FF] hover:bg-[#0052cc] text-white shadow-xl shadow-blue-100 transition-all transform active:scale-[0.98] disabled:opacity-50"
                 >
                   {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Đăng ký ngay"}
                 </Button>
@@ -364,7 +364,7 @@ export default function RegisterPage() {
 
               <p className="text-center text-sm font-medium text-gray-500">
                 Đã có tài khoản?{' '}
-                <Link href="/login" className="font-bold text-[#6324eb] hover:underline">Đăng nhập</Link>
+                <Link href="/login" className="font-bold text-[#0065FF] hover:underline">Đăng nhập</Link>
               </p>
             </CardContent>
           </Card>
