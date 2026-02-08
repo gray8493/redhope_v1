@@ -225,12 +225,14 @@ export async function sendCampaignNotification(campaignId: string): Promise<void
         if (!campaign) throw new Error('Campaign not found');
 
         // 2. Query donors phù hợp (cùng tỉnh/thành)
-        // Note: Nếu campaign có yêu cầu nhóm máu cụ thể, có thể filter thêm
+        // Normalize city name for better matching
+        const cleanCity = campaign.city.replace(/^(Thành phố|Tỉnh)\s+/i, '').trim();
+
         const { data: donors, error: donorsError } = await supabase
             .from('users')
             .select('id, full_name, blood_group')
             .eq('role', 'donor')
-            .eq('city', campaign.city);
+            .ilike('city', `%${cleanCity}%`);
 
         if (donorsError) throw donorsError;
         if (!donors || donors.length === 0) {
@@ -238,13 +240,13 @@ export async function sendCampaignNotification(campaignId: string): Promise<void
             return;
         }
 
-        // 3. Tạo thông báo hàng loạt
+        // 3. Tạo thông báo hàng loạt (Thư mời tham gia)
         const hospitalName = campaign.hospital?.hospital_name || 'Bệnh viện';
         await createBulkNotifications(
             donors.map(d => d.id),
             {
-                title: '🩸 Chiến dịch hiến máu mới gần bạn!',
-                content: `${hospitalName} tổ chức chiến dịch "${campaign.name}" tại ${campaign.district}, ${campaign.city}. Hãy đăng ký ngay!`,
+                title: '✉️ Thư mời tham gia hiến máu',
+                content: `Kính mời bạn tham gia chiến dịch hiến máu "${campaign.name}" do ${hospitalName} tổ chức tại địa phương. Sự góp mặt của bạn là vô cùng quý giá!`,
                 action_type: 'view_campaign',
                 action_url: `/campaigns/${campaignId}`,
                 metadata: {

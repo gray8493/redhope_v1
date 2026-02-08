@@ -44,27 +44,50 @@ export async function POST(req: Request) {
         let sendResults: any[] = [];
 
         if (notificationType === 'new_campaign_invite') {
-            const targetBloodGroups = campaign.target_blood_group || [];
+            let targetBloodGroups: string[] = [];
+
+            // Parse target_blood_group because it's stored as varchar/JSON string in DB
+            if (campaign.target_blood_group) {
+                if (Array.isArray(campaign.target_blood_group)) {
+                    targetBloodGroups = campaign.target_blood_group;
+                } else if (typeof campaign.target_blood_group === 'string') {
+                    const trimmed = campaign.target_blood_group.trim();
+                    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                        try {
+                            targetBloodGroups = JSON.parse(trimmed);
+                        } catch (e) {
+                            console.error('[API Campaign] JSON parse error for blood groups:', e);
+                        }
+                    } else if (trimmed) {
+                        targetBloodGroups = trimmed.split(',').map((s: string) => s.trim()).filter(Boolean);
+                    }
+                }
+            }
+
+            // Normalize city name for better matching
+            const cleanCity = campaign.city.replace(/^(Thành phố|Tỉnh)\s+/i, '').trim();
+
             let query = supabaseAdmin
                 .from('users')
-                .select('id, full_name, email, blood_group')
+                .select('id, full_name, email, blood_group, city')
                 .eq('role', 'donor')
-                .eq('city', campaign.city);
+                .ilike('city', `%${cleanCity}%`);
 
-            if (targetBloodGroups && targetBloodGroups.length > 0 && targetBloodGroups.length < 8) {
+            if (targetBloodGroups.length > 0 && targetBloodGroups.length < 8) {
                 query = query.in('blood_group', targetBloodGroups);
             }
 
             const { data: potentialDonors, error: donorsError } = await query;
             const users = potentialDonors || [];
-            console.log(`[API Campaign] Found ${users.length} potential donors for invite`);
+            console.log(`[API Campaign] DEBUG: Found ${users.length} donors. Details:`, users.map(u => ({ email: u.email, id: u.id, city: u.city })));
+            console.log(`[API Campaign] City: ${cleanCity}, Groups: ${targetBloodGroups.join(',')}`);
 
             sendResults = await Promise.all(
                 users.map(async (user: any) => {
                     if (!user?.email) return { success: false, email: 'N/A', error: 'No email' };
 
                     try {
-                        const subject = `🩸 Chiến dịch hiến máu mới gần bạn!`;
+                        const subject = `✉️ Thư mời tham gia chiến dịch hiến máu: ${campaign.name}`;
                         const emailHtml = await render(
                             React.createElement(CampaignAnnouncementEmail, {
                                 donorName: user.full_name || 'Người hiến máu',
@@ -77,13 +100,14 @@ export async function POST(req: Request) {
                             })
                         );
 
-                        await sgMail.send({
+                        const response = await sgMail.send({
                             to: user.email,
                             from: 'RedHope <at06012005@gmail.com>',
                             subject: subject,
                             html: emailHtml,
                         });
 
+                        console.log(`[Email Success] Invite sent to ${user.email}. SendGrid Status: ${response[0].statusCode}`);
                         return { success: true, email: user.email };
                     } catch (err: any) {
                         console.error(`[Email Error] Failed invite for ${user?.email}:`, err.response?.body || err.message);
@@ -162,13 +186,14 @@ export async function POST(req: Request) {
                             }));
                         }
 
-                        await sgMail.send({
+                        const response = await sgMail.send({
                             to: donor.email,
                             from: 'RedHope <at06012005@gmail.com>',
                             subject: subject,
                             html: emailHtml,
                         });
 
+                        console.log(`[Email Success] ${notificationType} sent to ${donor.email}. SendGrid Status: ${response[0].statusCode}`);
                         return { success: true, email: donor.email };
                     } catch (err: any) {
                         console.error(`[Email Error] Failed for ${donor?.email} (Type: ${notificationType}):`, err.response?.body || err);

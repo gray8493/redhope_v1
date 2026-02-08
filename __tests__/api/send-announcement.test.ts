@@ -65,6 +65,7 @@ describe('Campaign Email Auto-Send Feature', () => {
             const mockQuery = {
                 select: jest.fn().mockReturnThis(),
                 eq: jest.fn().mockReturnThis(),
+                ilike: jest.fn().mockReturnThis(),
                 in: jest.fn().mockResolvedValue({ data: donorsInHCM, error: null }),
                 single: jest.fn().mockResolvedValue({ data: campaign, error: null }),
             };
@@ -84,8 +85,8 @@ describe('Campaign Email Auto-Send Feature', () => {
 
             await POST(mockRequest);
 
-            // Verify .eq('city', 'TP. Hồ Chí Minh') was called
-            expect(mockQuery.eq).toHaveBeenCalledWith('city', 'TP. Hồ Chí Minh');
+            // Verify city filter is applied with ilike
+            expect(mockQuery.ilike).toHaveBeenCalledWith('city', expect.stringContaining('Hồ Chí Minh'));
         });
 
         test('should filter donors by blood group when specified', async () => {
@@ -104,6 +105,7 @@ describe('Campaign Email Auto-Send Feature', () => {
             const mockQuery = {
                 select: jest.fn().mockReturnThis(),
                 eq: jest.fn().mockReturnThis(),
+                ilike: jest.fn().mockReturnThis(),
                 in: jest.fn().mockResolvedValue({ data: donorsWithAB, error: null }),
                 single: jest.fn().mockResolvedValue({ data: campaign, error: null }),
             };
@@ -150,7 +152,8 @@ describe('Campaign Email Auto-Send Feature', () => {
             // Mock for donors query
             const mockDonorsQuery = {
                 select: jest.fn().mockReturnThis(),
-                eq: jest.fn().mockResolvedValue({ data: allDonors, error: null }),
+                eq: jest.fn().mockReturnThis(),
+                ilike: jest.fn().mockResolvedValue({ data: allDonors, error: null }),
                 in: jest.fn().mockResolvedValue({ data: allDonors, error: null }),
             };
 
@@ -173,8 +176,8 @@ describe('Campaign Email Auto-Send Feature', () => {
 
             await POST(mockRequest);
 
-            // Verify city filter was applied to donors query
-            expect(mockDonorsQuery.eq).toHaveBeenCalled();
+            // Verify city filter was applied to donors query with ilike
+            expect(mockDonorsQuery.ilike).toHaveBeenCalled();
             // Since target_blood_group is empty, .in() should NOT be called
             expect(mockDonorsQuery.in).not.toHaveBeenCalled();
         });
@@ -200,6 +203,7 @@ describe('Campaign Email Auto-Send Feature', () => {
             const mockQuery = {
                 select: jest.fn().mockReturnThis(),
                 eq: jest.fn().mockReturnThis(),
+                ilike: jest.fn().mockReturnThis(),
                 in: jest.fn().mockResolvedValue({ data: donors, error: null }),
                 single: jest.fn().mockResolvedValue({ data: campaign, error: null }),
             };
@@ -224,7 +228,7 @@ describe('Campaign Email Auto-Send Feature', () => {
 
             // Verify email subject
             const emailCall = (sgMail.send as jest.Mock).mock.calls[0][0];
-            expect(emailCall.subject).toBe('🩸 Chiến dịch hiến máu mới gần bạn!');
+            expect(emailCall.subject).toBe(`✉️ Thư mời tham gia chiến dịch hiến máu: ${campaign.name}`);
             expect(emailCall.to).toBe('john@test.com');
         });
 
@@ -245,6 +249,7 @@ describe('Campaign Email Auto-Send Feature', () => {
             const mockQuery = {
                 select: jest.fn().mockReturnThis(),
                 eq: jest.fn().mockReturnThis(),
+                ilike: jest.fn().mockReturnThis(),
                 in: jest.fn().mockResolvedValue({ data: donors, error: null }),
                 single: jest.fn().mockResolvedValue({ data: campaign, error: null }),
             };
@@ -288,6 +293,7 @@ describe('Campaign Email Auto-Send Feature', () => {
             const mockQuery = {
                 select: jest.fn().mockReturnThis(),
                 eq: jest.fn().mockReturnThis(),
+                ilike: jest.fn().mockReturnThis(),
                 in: jest.fn().mockResolvedValue({ data: [], error: null }), // No donors
                 single: jest.fn().mockResolvedValue({ data: campaign, error: null }),
             };

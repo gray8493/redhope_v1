@@ -20,7 +20,7 @@ describe('NotificationService - Hospital gửi thông báo cho User', () => {
      * Kịch bản: Hospital tạo chiến dịch mới, hệ thống tự động gửi thông báo đến donors phù hợp
      */
     describe('🩸 Gửi thông báo chiến dịch mới', () => {
-        it.skip('✅ Nên gửi thông báo đến donors cùng thành phố', async () => {
+        it('✅ Nên gửi thông báo đến donors cùng thành phố', async () => {
             // Arrange - Chuẩn bị dữ liệu
             const mockCampaign = {
                 id: 'campaign-123',
@@ -41,6 +41,7 @@ describe('NotificationService - Hospital gửi thông báo cho User', () => {
                     select: jest.fn().mockReturnThis(),
                     eq: jest.fn().mockReturnThis(),
                     order: jest.fn().mockReturnThis(),
+                    ilike: jest.fn().mockReturnThis(),
                     single: jest.fn(),
                     insert: jest.fn(),
                 };
@@ -48,7 +49,7 @@ describe('NotificationService - Hospital gửi thông báo cho User', () => {
                 if (table === 'campaigns') {
                     chain.single.mockResolvedValue({ data: mockCampaign, error: null });
                 } else if (table === 'users') {
-                    chain.eq = jest.fn().mockResolvedValue({ data: mockDonors, error: null });
+                    chain.ilike = jest.fn().mockResolvedValue({ data: mockDonors, error: null });
                 } else if (table === 'notifications') {
                     chain.insert.mockResolvedValue({ data: null, error: null });
                 }

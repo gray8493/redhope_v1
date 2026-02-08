@@ -259,7 +259,7 @@ export default function CampaignDetailsPage() {
     const [isSending, setIsSending] = useState(false);
     const [announcementMsg, setAnnouncementMsg] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [emailType, setEmailType] = useState<'announcement' | 'registration_success' | 'reminder_8h' | 'reminder_4h'>('announcement');
+    const [emailType, setEmailType] = useState<'announcement' | 'registration_success' | 'reminder_8h' | 'reminder_4h' | 'new_campaign_invite'>('announcement');
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     // Edit Campaign states
@@ -413,16 +413,17 @@ export default function CampaignDetailsPage() {
                 const errorMessage = typeof firstError === 'object' ? (firstError.message || JSON.stringify(firstError)) : firstError;
 
                 toast.warning(`Thất bại: ${result.summary.failed}/${result.summary.total} người`, {
-                    description: `Lỗi: ${errorMessage || 'Lỗi xác thực'}. \n(Vui lòng kiểm tra SENDGRID_API_KEY và đảm bảo Email người gửi đã được xác thực trên SendGrid Dashboard).`
+                    description: `Lỗi: ${errorMessage || 'Lỗi xác thực'}. \n(Vui lòng kiểm tra SENDGRID_API_KEY).`
                 });
             } else {
+                const targetText = emailType === 'new_campaign_invite' ? 'người hiến máu mới trong khu vực' : 'người đã đăng ký';
                 toast.success("Đã gửi thông báo thành công!", {
-                    description: `Đã gửi đến ${result.summary?.success || 0} người hiến máu.`
+                    description: `Đã gửi đến ${result.summary?.success || 0} ${targetText}.`
                 });
             }
             setIsDialogOpen(false);
             setAnnouncementMsg('');
-            setEmailType('announcement'); // Reset về default
+            setEmailType('announcement');
         } catch (error: any) {
             toast.error("Gửi thông báo thất bại", {
                 description: error.message
@@ -1538,6 +1539,20 @@ export default function CampaignDetailsPage() {
                                         <span className="text-xs font-bold text-slate-900 dark:text-white">Nhắc nhở 4 giờ</span>
                                     </div>
                                     <p className="text-[10px] text-slate-500">Nhắc trước 4 tiếng</p>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setEmailType('new_campaign_invite')}
+                                    className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'new_campaign_invite'
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Search className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white">Mời hiến máu</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500">Gửi tới khu vực lân cận</p>
                                 </button>
                             </div>
                         </div>

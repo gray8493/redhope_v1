@@ -369,13 +369,17 @@ export default function RequestsPage() {
         }
     };
 
-    const isAlreadyRegistered = (item: any) => {
-        if (!item) return false;
-        return userAppointments.some(appt =>
-            ((item.type === 'campaign' && appt.campaign_id === item.id) ||
-                (item.type === 'request' && appt.blood_request_id === item.id)) &&
-            appt.status === 'Booked'
+    const getAppointmentStatus = (item: any) => {
+        if (!item) return null;
+        const appt = userAppointments.find(appt =>
+        ((item.type === 'campaign' && appt.campaign_id === item.id) ||
+            (item.type === 'request' && appt.blood_request_id === item.id))
         );
+        return appt ? appt.status : null;
+    };
+
+    const isAlreadyRegistered = (item: any) => {
+        return getAppointmentStatus(item) === 'Booked';
     };
 
     return (
@@ -701,23 +705,49 @@ export default function RequestsPage() {
 
                             {/* Footer Actions */}
                             <div className="p-6 md:p-8 pt-0 mt-auto shrink-0 flex gap-4 bg-white dark:bg-[#1c162e]">
-                                {isAlreadyRegistered(selectedRequest) ? (
-                                    <Button
-                                        onClick={() => handleCancelRegistration(selectedRequest)}
-                                        disabled={isSubmitting}
-                                        className="flex-1 h-14 bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-black rounded-xl hover:bg-red-200 dark:hover:bg-red-900/30 shadow-none uppercase tracking-widest text-sm border-2 border-transparent hover:border-red-200 dark:hover:border-red-800 transition-all"
-                                    >
-                                        {isSubmitting ? "Đang xử lý..." : "Hủy đăng ký"}
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        onClick={() => handleRegister(selectedRequest)}
-                                        disabled={isSubmitting}
-                                        className="flex-1 h-14 bg-[#0065FF] text-white font-black rounded-xl hover:bg-[#0052CC] shadow-xl shadow-blue-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
-                                    >
-                                        {isSubmitting ? "Đang xử lý..." : "Đăng ký tham gia ngay"}
-                                    </Button>
-                                )}
+                                {(() => {
+                                    const status = getAppointmentStatus(selectedRequest);
+                                    if (status === 'Booked') {
+                                        return (
+                                            <Button
+                                                onClick={() => handleCancelRegistration(selectedRequest)}
+                                                disabled={isSubmitting}
+                                                className="flex-1 h-14 bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-black rounded-xl hover:bg-red-200 dark:hover:bg-red-900/30 shadow-none uppercase tracking-widest text-sm border-2 border-transparent hover:border-red-200 dark:hover:border-red-800 transition-all"
+                                            >
+                                                {isSubmitting ? "Đang xử lý..." : "Hủy đăng ký"}
+                                            </Button>
+                                        );
+                                    } else if (status === 'Completed') {
+                                        return (
+                                            <Button
+                                                disabled
+                                                className="flex-1 h-14 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 font-black rounded-xl shadow-none uppercase tracking-widest text-sm border-2 border-emerald-200"
+                                            >
+                                                <ShieldCheck className="w-5 h-5 mr-2" />
+                                                Đã hoàn thành hiến máu
+                                            </Button>
+                                        );
+                                    } else if (status === 'Rejected') {
+                                        return (
+                                            <Button
+                                                disabled
+                                                className="flex-1 h-14 bg-slate-100 text-slate-500 font-black rounded-xl shadow-none uppercase tracking-widest text-sm"
+                                            >
+                                                Đăng ký bị từ chối
+                                            </Button>
+                                        );
+                                    } else {
+                                        return (
+                                            <Button
+                                                onClick={() => handleRegister(selectedRequest)}
+                                                disabled={isSubmitting}
+                                                className="flex-1 h-14 bg-[#0065FF] text-white font-black rounded-xl hover:bg-[#0052CC] shadow-xl shadow-blue-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
+                                            >
+                                                {isSubmitting ? "Đang xử lý..." : "Đăng ký tham gia ngay"}
+                                            </Button>
+                                        );
+                                    }
+                                })()}
                                 <Button variant="outline" className="h-14 w-14 p-0 rounded-xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
                                     <Phone className="w-5 h-5 text-slate-500" />
                                 </Button>

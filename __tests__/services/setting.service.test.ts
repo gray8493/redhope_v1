@@ -14,6 +14,7 @@ describe('settingService', () => {
         jest.clearAllMocks();
         mockSupabaseQuery = {
             select: jest.fn().mockReturnThis(),
+            upsert: jest.fn().mockReturnThis(),
             update: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
             single: jest.fn().mockReturnThis(),
@@ -99,32 +100,32 @@ describe('settingService', () => {
                 donation_interval_months: 4,
             };
 
-            mockSupabaseQuery.eq.mockResolvedValue({ error: null });
+            mockSupabaseQuery.upsert.mockResolvedValue({ error: null });
 
             await settingService.updateSettings(updates);
 
             expect(supabase.from).toHaveBeenCalledWith('system_settings');
-            expect(mockSupabaseQuery.update).toHaveBeenCalledWith({
+            expect(mockSupabaseQuery.upsert).toHaveBeenCalledWith({
+                id: 1,
                 ...updates,
                 updated_at: expect.any(String),
             });
-            expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('id', 1);
         });
 
         test('should include updated_at timestamp', async () => {
             const updates = { ai_sensitivity: 9 };
-            mockSupabaseQuery.eq.mockResolvedValue({ error: null });
+            mockSupabaseQuery.upsert.mockResolvedValue({ error: null });
 
             await settingService.updateSettings(updates);
 
-            const updateCall = mockSupabaseQuery.update.mock.calls[0][0];
-            expect(updateCall.updated_at).toBeDefined();
-            expect(typeof updateCall.updated_at).toBe('string');
+            const upsertCall = mockSupabaseQuery.upsert.mock.calls[0][0];
+            expect(upsertCall.updated_at).toBeDefined();
+            expect(typeof upsertCall.updated_at).toBe('string');
         });
 
         test('should throw error when update fails', async () => {
             const dbError = { message: 'Update failed' };
-            mockSupabaseQuery.eq.mockResolvedValue({ error: dbError });
+            mockSupabaseQuery.upsert.mockResolvedValue({ error: dbError });
 
             await expect(settingService.updateSettings({ ai_sensitivity: 10 })).rejects.toEqual(
                 dbError
@@ -148,12 +149,12 @@ describe('settingService', () => {
                 two_factor_auth: 'Tùy chọn',
             };
 
-            mockSupabaseQuery.eq.mockResolvedValue({ error: null });
+            mockSupabaseQuery.upsert.mockResolvedValue({ error: null });
 
             await expect(settingService.updateSettings(updates)).resolves.not.toThrow();
 
-            const updateCall = mockSupabaseQuery.update.mock.calls[0][0];
-            expect(updateCall).toMatchObject(updates);
+            const upsertCall = mockSupabaseQuery.upsert.mock.calls[0][0];
+            expect(upsertCall).toMatchObject(updates);
         });
 
         test('should handle partial updates', async () => {
@@ -161,13 +162,13 @@ describe('settingService', () => {
                 ai_sensitivity: 6,
             };
 
-            mockSupabaseQuery.eq.mockResolvedValue({ error: null });
+            mockSupabaseQuery.upsert.mockResolvedValue({ error: null });
 
             await settingService.updateSettings(partialUpdates);
 
-            const updateCall = mockSupabaseQuery.update.mock.calls[0][0];
-            expect(updateCall.ai_sensitivity).toBe(6);
-            expect(updateCall.updated_at).toBeDefined();
+            const upsertCall = mockSupabaseQuery.upsert.mock.calls[0][0];
+            expect(upsertCall.ai_sensitivity).toBe(6);
+            expect(upsertCall.updated_at).toBeDefined();
         });
     });
 });

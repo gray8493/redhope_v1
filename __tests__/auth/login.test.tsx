@@ -145,16 +145,25 @@ describe('LoginPage', () => {
         }, { timeout: 3000 });
     });
 
-    it.skip('nên hiển thị thông báo lỗi khi đăng nhập thất bại', async () => {
+    it('nên hiển thị thông báo lỗi khi đăng nhập thất bại', async () => {
         mockSignInWithPassword.mockResolvedValue({
             data: { user: null, session: null },
             error: { message: 'Invalid login credentials' },
         });
 
         render(<LoginPage />);
+
+        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), {
+            target: { value: 'error@test.com' },
+        });
+        fireEvent.change(screen.getByPlaceholderText(/••••••••/i), {
+            target: { value: 'wrongpassword' },
+        });
+
         fireEvent.click(screen.getByRole('button', { name: /Đăng nhập ngay/i }));
 
-        const alert = await screen.findByRole('alert');
-        expect(alert).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText(/Email hoặc mật khẩu không đúng/i)).toBeInTheDocument();
+        });
     });
 });
