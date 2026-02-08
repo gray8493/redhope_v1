@@ -54,6 +54,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 // Blood volume options
 const BLOOD_VOLUMES = [250, 350, 450];
@@ -133,7 +134,7 @@ const TimeInput = ({ value, onChange }: { value: string, onChange: (val: string)
     };
 
     return (
-        <div className="flex items-center justify-center gap-1 h-10 w-24 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/20 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/5 transition-all outline-none">
+        <div className="flex items-center justify-center gap-1 h-10 w-24 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/20 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/5 transition-all outline-none">
             <input
                 type="text"
                 maxLength={2}
@@ -259,6 +260,7 @@ export default function CampaignDetailsPage() {
     const [announcementMsg, setAnnouncementMsg] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [emailType, setEmailType] = useState<'announcement' | 'registration_success' | 'reminder_8h' | 'reminder_4h'>('announcement');
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     // Edit Campaign states
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -630,11 +632,13 @@ export default function CampaignDetailsPage() {
         }
     };
 
-    const handleEndCampaign = async () => {
-        if (!confirm('Bạn có chắc chắn muốn kết thúc chiến dịch này sớm? Tất cả các lịch hẹn "Đã đặt lịch" sẽ bị hủy.')) return;
+    const handleEndCampaign = () => {
+        setIsConfirmOpen(true);
+    };
+
+    const confirmEndCampaign = async () => {
         try {
             setIsSubmitting(true);
-
             // 1. Update campaign status. Use 'cancelled' as it is a standard valid status likely allowed by constraint.
             // 'completed', 'closed', 'paused' seem to be invalid based on user reports.
             await campaignService.updateCampaign(campaignId, { status: 'cancelled' });
@@ -684,9 +688,9 @@ export default function CampaignDetailsPage() {
     // Get avatar color based on name
     const getAvatarColor = (name: string) => {
         const colors = [
-            'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600',
             'bg-blue-50 dark:bg-blue-900/30 text-blue-600',
-            'bg-purple-50 dark:bg-purple-900/30 text-purple-600',
+            'bg-blue-100 dark:bg-blue-900/40 text-blue-700',
+            'bg-sky-50 dark:bg-sky-900/30 text-sky-600',
             'bg-pink-50 dark:bg-pink-900/30 text-pink-600',
             'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600',
             'bg-amber-50 dark:bg-amber-900/30 text-amber-600',
@@ -716,7 +720,7 @@ export default function CampaignDetailsPage() {
             default:
                 return {
                     label: 'Đã đặt lịch',
-                    className: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800'
+                    className: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800'
                 };
         }
     };
@@ -767,7 +771,7 @@ export default function CampaignDetailsPage() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsDialogOpen(true)}
-                            className="flex items-center gap-2.5 px-5 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-black rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all active:scale-95 uppercase tracking-wider"
+                            className="flex items-center gap-2.5 px-5 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-[#0065FF] dark:text-blue-400 text-[11px] font-black rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all active:scale-95 uppercase tracking-wider"
                         >
                             <Megaphone className="w-4 h-4" />
                             Gửi Email Thông Báo
@@ -811,8 +815,8 @@ export default function CampaignDetailsPage() {
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                     <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400 mb-3">
-                            <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+                        <div className="flex items-center gap-2.5 text-blue-600 dark:text-blue-400 mb-3">
+                            <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                                 <Users className="w-4 h-4" />
                             </div>
                             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Đăng ký</span>
@@ -841,8 +845,8 @@ export default function CampaignDetailsPage() {
                     </div>
 
                     <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400 mb-3">
-                            <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+                        <div className="flex items-center gap-2.5 text-blue-600 dark:text-blue-400 mb-3">
+                            <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                                 <Droplet className="w-4 h-4" />
                             </div>
                             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tiến độ</span>
@@ -853,7 +857,7 @@ export default function CampaignDetailsPage() {
                         </div>
                         <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                             <div
-                                className="bg-indigo-600 h-full transition-all duration-500"
+                                className="bg-blue-600 h-full transition-all duration-500"
                                 style={{ width: `${Math.min(progress, 100)}%` }}
                             />
                         </div>
@@ -870,7 +874,7 @@ export default function CampaignDetailsPage() {
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500/20 text-xs transition-all outline-none"
+                                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 text-xs transition-all outline-none"
                                 placeholder="Tìm kiếm theo tên, email, số điện thoại..."
                             />
                         </div>
@@ -878,7 +882,7 @@ export default function CampaignDetailsPage() {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 focus:ring-2 focus:ring-indigo-500/20 min-w-[170px] outline-none"
+                                className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 focus:ring-2 focus:ring-blue-500/20 min-w-[170px] outline-none"
                             >
                                 <option value="all">Tất cả trạng thái</option>
                                 <option value="Booked">Đã đặt lịch</option>
@@ -889,7 +893,7 @@ export default function CampaignDetailsPage() {
                             <select
                                 value={bloodTypeFilter}
                                 onChange={(e) => setBloodTypeFilter(e.target.value)}
-                                className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 focus:ring-2 focus:ring-indigo-500/20 min-w-[150px] outline-none"
+                                className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 focus:ring-2 focus:ring-blue-500/20 min-w-[150px] outline-none"
                             >
                                 <option value="all">Tất cả nhóm máu</option>
                                 {BLOOD_TYPES.map(type => (
@@ -898,7 +902,7 @@ export default function CampaignDetailsPage() {
                             </select>
                             <button
                                 onClick={handleExport}
-                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-100 dark:shadow-none whitespace-nowrap"
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-100 dark:shadow-none whitespace-nowrap"
                             >
                                 <Download className="w-4 h-4" />
                                 XUẤT CSV
@@ -945,8 +949,8 @@ export default function CampaignDetailsPage() {
                                             : 'bg-rose-50/50 dark:bg-rose-900/5 border-rose-100/50 dark:border-rose-900/20 text-rose-400';
 
                                         const volumeStyle = isBooked
-                                            ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-900/30 text-indigo-600'
-                                            : 'bg-indigo-50/50 dark:bg-indigo-900/5 border-indigo-100/50 dark:border-indigo-900/20 text-indigo-400';
+                                            ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 text-blue-600'
+                                            : 'bg-blue-50/50 dark:bg-blue-900/5 border-blue-100/50 dark:border-blue-900/20 text-blue-400';
 
                                         return (
                                             <tr key={reg.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group ${isDropdownOpen ? 'relative z-[50]' : ''}`}>
@@ -1037,7 +1041,7 @@ export default function CampaignDetailsPage() {
                                                                     setOpenActionMenu(null);
                                                                 }
                                                             }}
-                                                            className={`flex items-center justify-between px-2.5 py-1.5 border rounded-lg w-24 transition-all ${volumeStyle} ${!isCampaignEnded && isBooked ? 'cursor-pointer hover:shadow-md hover:border-indigo-300 active:scale-95' : 'cursor-default opacity-80'}`}
+                                                            className={`flex items-center justify-between px-2.5 py-1.5 border rounded-lg w-24 transition-all ${volumeStyle} ${!isCampaignEnded && isBooked ? 'cursor-pointer hover:shadow-md hover:border-blue-300 active:scale-95' : 'cursor-default opacity-80'}`}
                                                         >
                                                             <span className="text-xs font-bold">{bloodVolume} ml</span>
                                                             {!isCampaignEnded && isBooked && (
@@ -1060,7 +1064,7 @@ export default function CampaignDetailsPage() {
                                                                             handleUpdateVolume(reg.id, vol);
                                                                         }}
                                                                         className={`w-full px-4 py-2 text-left text-sm font-bold transition-all ${bloodVolume === vol
-                                                                            ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+                                                                            ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20'
                                                                             : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                                                                             }`}
                                                                     >
@@ -1103,7 +1107,7 @@ export default function CampaignDetailsPage() {
                                                                             setOpenBloodTypeDropdown(null);
                                                                             setOpenVolumeDropdown(null);
                                                                         }}
-                                                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                                                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                                                     >
                                                                         <MoreVertical className="w-4 h-4" />
                                                                     </button>
@@ -1134,7 +1138,7 @@ export default function CampaignDetailsPage() {
                                                                         setOpenBloodTypeDropdown(null);
                                                                         setOpenVolumeDropdown(null);
                                                                     }}
-                                                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                                                 >
                                                                     <MoreVertical className="w-4 h-4" />
                                                                 </button>
@@ -1167,13 +1171,26 @@ export default function CampaignDetailsPage() {
                                                                             <button
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
-                                                                                    handleConfirmDonation(reg.id);
+                                                                                    handleEditRegistration(reg.id);
                                                                                     setOpenActionMenu(null);
                                                                                 }}
-                                                                                className="w-full px-3 py-1.5 text-left text-[13px] font-bold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center gap-2 border-t border-slate-50 dark:border-slate-800 mt-1 pt-1"
+                                                                                className="w-full px-3 py-1.5 text-left text-[13px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
                                                                             >
-                                                                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                                                                Xác nhận hiến
+                                                                                <Edit2 className="w-3.5 h-3.5" />
+                                                                                Chỉnh sửa
+                                                                            </button>
+                                                                        )}
+                                                                        {isBooked && (
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleDeferDonation(reg.id);
+                                                                                    setOpenActionMenu(null);
+                                                                                }}
+                                                                                className="w-full px-3 py-1.5 text-left text-[13px] font-bold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2 border-t border-slate-50 dark:border-slate-800 mt-1 pt-1"
+                                                                            >
+                                                                                <Clock className="w-3.5 h-3.5" />
+                                                                                Hủy hồ sơ
                                                                             </button>
                                                                         )}
                                                                     </div>
@@ -1199,7 +1216,7 @@ export default function CampaignDetailsPage() {
                             <button className="p-2 disabled:opacity-30 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" disabled>
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
-                            <button className="w-8 h-8 rounded-lg bg-indigo-600 text-white text-xs font-bold">1</button>
+                            <button className="w-8 h-8 rounded-lg bg-[#0065FF] text-white text-xs font-bold">1</button>
                             <button className="p-2 disabled:opacity-30 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" disabled>
                                 <ChevronRight className="w-5 h-5" />
                             </button>
@@ -1216,7 +1233,7 @@ export default function CampaignDetailsPage() {
                         {/* Header */}
                         <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="size-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                <div className="size-10 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-[#0065FF] dark:text-blue-400">
                                     <CalendarDays className="w-6 h-6" />
                                 </div>
                                 <div>
@@ -1273,7 +1290,7 @@ export default function CampaignDetailsPage() {
                                         type="text"
                                         value={editFormData.name}
                                         onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                                        className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm transition-all duration-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                        className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm transition-all duration-300 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
                                         placeholder="Nhập tên chiến dịch..."
                                     />
                                 </div>
@@ -1284,7 +1301,7 @@ export default function CampaignDetailsPage() {
                                         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                             <PopoverTrigger asChild>
                                                 <button className={cn(
-                                                    "flex w-full items-center justify-between rounded-full h-11 px-5 text-sm border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 hover:border-indigo-400 transition-all outline-none shadow-sm",
+                                                    "flex w-full items-center justify-between rounded-full h-11 px-5 text-sm border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 hover:border-blue-400 transition-all outline-none shadow-sm",
                                                     !editFormData.date && "text-slate-400"
                                                 )}>
                                                     <span className="font-medium text-slate-700 dark:text-slate-300">
@@ -1332,7 +1349,7 @@ export default function CampaignDetailsPage() {
                                             type="text"
                                             value={editFormData.location_name}
                                             onChange={(e) => setEditFormData({ ...editFormData, location_name: e.target.value })}
-                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
                                             placeholder="Địa chỉ tổ chức..."
                                         />
                                         <MapPin className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -1344,7 +1361,7 @@ export default function CampaignDetailsPage() {
                                     <textarea
                                         value={editFormData.description}
                                         onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                                        className="w-full h-24 px-5 py-3 rounded-2xl border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white resize-none"
+                                        className="w-full h-24 px-5 py-3 rounded-2xl border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white resize-none"
                                         placeholder="Nhập nội dung giới thiệu chiến dịch..."
                                     />
                                 </div>
@@ -1359,7 +1376,7 @@ export default function CampaignDetailsPage() {
                                                 key={group}
                                                 onClick={() => toggleBloodGroup(group)}
                                                 className={`h-9 flex items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300 border ${editFormData.target_blood_group.includes(group)
-                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-200 scale-105'
+                                                    ? 'bg-[#0065FF] text-white border-[#0065FF] shadow-lg shadow-blue-200 scale-105'
                                                     : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:bg-slate-100'
                                                     }`}
                                             >
@@ -1376,7 +1393,7 @@ export default function CampaignDetailsPage() {
                                             type="number"
                                             value={editFormData.target_units}
                                             onChange={(e) => setEditFormData({ ...editFormData, target_units: parseInt(e.target.value) || 0 })}
-                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-1.5">
@@ -1385,7 +1402,7 @@ export default function CampaignDetailsPage() {
                                             <select
                                                 value={editFormData.status}
                                                 onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
-                                                className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm appearance-none focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                                className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm appearance-none focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
                                             >
                                                 <option value="active">Đang hoạt động</option>
                                                 <option value="paused">Tạm dừng</option>
@@ -1416,7 +1433,7 @@ export default function CampaignDetailsPage() {
                                 <button
                                     onClick={handleUpdateCampaign}
                                     disabled={isSubmitting}
-                                    className="px-6 h-10 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-full text-xs font-extrabold shadow-lg shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                                    className="px-6 h-10 bg-gradient-to-r from-[#0065FF] to-blue-500 text-white rounded-full text-xs font-extrabold shadow-lg shadow-blue-200 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                                 >
                                     {isSubmitting ? (
                                         <Clock className="w-3.5 h-3.5 animate-spin" />
@@ -1435,7 +1452,7 @@ export default function CampaignDetailsPage() {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="sm:max-w-[500px] rounded-3xl border-slate-200 dark:border-slate-800 p-0 overflow-hidden bg-white dark:bg-slate-900">
                     <DialogHeader className="p-8 pb-0 space-y-4">
-                        <div className="size-14 bg-indigo-50 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <div className="size-14 bg-blue-50 dark:bg-blue-900/40 rounded-2xl flex items-center justify-center text-[#0065FF] dark:text-blue-400">
                             <Megaphone className="w-7 h-7" />
                         </div>
                         <div>
@@ -1470,12 +1487,12 @@ export default function CampaignDetailsPage() {
                                     type="button"
                                     onClick={() => setEmailType('announcement')}
                                     className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'announcement'
-                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                                         : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
                                         }`}
                                 >
                                     <div className="flex items-center gap-2 mb-1">
-                                        <Megaphone className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                        <Megaphone className="w-4 h-4 text-[#0065FF] dark:text-blue-400" />
                                         <span className="text-xs font-bold text-slate-900 dark:text-white">Thông báo chung</span>
                                     </div>
                                     <p className="text-[10px] text-slate-500">Gửi thông tin chiến dịch</p>
@@ -1531,7 +1548,7 @@ export default function CampaignDetailsPage() {
                                 value={announcementMsg}
                                 onChange={(e) => setAnnouncementMsg(e.target.value)}
                                 placeholder="Ví dụ: Cảm ơn các bạn đã đăng ký! Chiến dịch sẽ diễn ra vào lúc 8:00 sáng mai tại sảnh chính bệnh viện..."
-                                className="w-full h-40 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/5 text-sm font-medium transition-all outline-none text-slate-900 dark:text-white resize-none"
+                                className="w-full h-40 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5 text-sm font-medium transition-all outline-none text-slate-900 dark:text-white resize-none"
                             />
                         </div>
                     </div>
@@ -1548,7 +1565,7 @@ export default function CampaignDetailsPage() {
                         <Button
                             onClick={handleSendAnnouncement}
                             disabled={isSending || !announcementMsg.trim()}
-                            className="flex-[2] h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 disabled:opacity-50"
+                            className="flex-[2] h-12 rounded-xl bg-[#0065FF] hover:bg-blue-700 text-white font-black shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-95 disabled:opacity-50"
                         >
                             {isSending ? (
                                 <>
@@ -1565,6 +1582,16 @@ export default function CampaignDetailsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            {/* Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Kết thúc chiến dịch"
+                description='Bạn có chắc chắn muốn kết thúc chiến dịch này sớm? Tất cả các lịch hẹn "Đã đặt lịch" sẽ bị hủy.'
+                onConfirm={confirmEndCampaign}
+                confirmText="Xác nhận kết thúc"
+                variant="destructive"
+            />
         </main>
     );
 }

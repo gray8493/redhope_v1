@@ -99,7 +99,7 @@ const TimeInput = ({ value, onChange }: { value: string, onChange: (val: string)
     };
 
     return (
-        <div className="flex items-center justify-center gap-1.5 h-10 w-24 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/20 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/5 transition-all outline-none">
+        <div className="flex items-center justify-center gap-1.5 h-10 w-24 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/20 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/5 transition-all outline-none">
             <input
                 type="text"
                 maxLength={2}
@@ -386,7 +386,7 @@ export default function CampaignManagementPage() {
             {/* Quick Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="size-12 rounded-full bg-red-50 flex items-center justify-center text-[#6324eb]">
+                    <div className="size-12 rounded-full bg-blue-50 flex items-center justify-center text-[#0065FF]">
                         <Droplet className="w-6 h-6" />
                     </div>
                     <div>
@@ -434,13 +434,13 @@ export default function CampaignManagementPage() {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-indigo-50 dark:border-indigo-900/30 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="size-12 rounded-full bg-indigo-100 flex items-center justify-center text-[#6324eb]">
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-blue-50 dark:border-blue-900/30 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
+                    <div className="size-12 rounded-full bg-blue-100 flex items-center justify-center text-[#0065FF]">
                         <AlertCircle className="w-6 h-6" />
                     </div>
                     <div>
                         <p className="text-sm font-medium text-slate-500">Thiếu hụt chỉ tiêu</p>
-                        <div className="text-2xl font-black text-[#6324eb]">
+                        <div className="text-2xl font-black text-[#0065FF]">
                             {loading ? <Skeleton className="h-8 w-12" /> : underTargetCount} <span className="text-sm font-normal text-slate-400">Đợt</span>
                         </div>
                         <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần đẩy mạnh truyền thông</p>
@@ -453,7 +453,7 @@ export default function CampaignManagementPage() {
                 <div className="relative w-full lg:flex-1">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                     <input
-                        className="w-full h-11 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-full pl-12 pr-4 text-sm focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] text-slate-900 dark:text-white placeholder-slate-500 outline-none transition-all shadow-sm"
+                        className="w-full h-11 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-full pl-12 pr-4 text-sm focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] text-slate-900 dark:text-white placeholder-slate-500 outline-none transition-all shadow-sm"
                         placeholder="Tìm kiếm tên chiến dịch hoặc địa điểm..."
                         type="text"
                         value={searchQuery}
@@ -466,26 +466,26 @@ export default function CampaignManagementPage() {
             <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800 mb-6">
                 <button
                     onClick={() => handleTabChange('active')}
-                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'active' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'active' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                     Đang hoạt động
                     <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-xs">{activeCampaigns.length}</span>
-                    {activeTab === 'active' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-t-full"></span>}
+                    {activeTab === 'active' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0065FF] rounded-t-full"></span>}
                 </button>
                 <button
                     onClick={() => handleTabChange('history')}
-                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'history' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'history' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                     Lịch sử
-                    {activeTab === 'history' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-t-full"></span>}
+                    {activeTab === 'history' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0065FF] rounded-t-full"></span>}
                 </button>
                 <button
                     onClick={() => handleTabChange('drafts')}
-                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'drafts' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'drafts' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                     Bản nháp
                     <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-xs">{draftCampaigns.length}</span>
-                    {activeTab === 'drafts' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-t-full"></span>}
+                    {activeTab === 'drafts' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0065FF] rounded-t-full"></span>}
                 </button>
             </div>
 
@@ -498,13 +498,13 @@ export default function CampaignManagementPage() {
                     <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-800 text-[#6324eb]' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-800 text-[#0065FF]' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             <LayoutGrid className="w-5 h-5" />
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-800 text-[#6324eb]' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-800 text-[#0065FF]' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             <List className="w-5 h-5" />
                         </button>
@@ -557,10 +557,10 @@ export default function CampaignManagementPage() {
                                 statusColor = 'bg-slate-400';
                             }
 
-                            // Back to brand purple
-                            const gradientClass = 'from-indigo-500 to-purple-600';
-                            const brandColor = 'text-[#6324eb]';
-                            const brandBg = 'bg-[#6324eb]';
+                            // Back to brand blue
+                            const gradientClass = 'from-blue-500 to-blue-700';
+                            const brandColor = 'text-[#0065FF]';
+                            const brandBg = 'bg-[#0065FF]';
 
                             if (viewMode === 'list') {
                                 return (
@@ -622,7 +622,7 @@ export default function CampaignManagementPage() {
                                             </div>
 
                                             <div className="ml-8 pr-4">
-                                                <div className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-indigo-100 dark:border-slate-800 bg-indigo-50/50 dark:bg-slate-800/50 ${brandColor} text-[9px] font-black uppercase tracking-wider opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500`}>
+                                                <div className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-100 dark:border-slate-800 bg-blue-50/50 dark:bg-slate-800/50 ${brandColor} text-[9px] font-black uppercase tracking-wider opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500`}>
                                                     Chi tiết
                                                     <ArrowRight className="w-3 h-3" />
                                                 </div>
@@ -797,7 +797,7 @@ export default function CampaignManagementPage() {
                                         type="text"
                                         value={editFormData.name}
                                         onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                                        className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                        className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
                                         placeholder="Nhập tên chiến dịch..."
                                     />
                                 </div>
@@ -808,7 +808,7 @@ export default function CampaignManagementPage() {
                                         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                             <PopoverTrigger asChild>
                                                 <button className={cn(
-                                                    "flex w-full items-center justify-between rounded-full h-11 px-5 text-sm border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 hover:border-indigo-400 transition-all outline-none shadow-sm",
+                                                    "flex w-full items-center justify-between rounded-full h-11 px-5 text-sm border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 hover:border-blue-400 transition-all outline-none shadow-sm",
                                                     !editFormData.date && "text-slate-400"
                                                 )}>
                                                     <span className="font-medium text-slate-700 dark:text-slate-300">
@@ -856,7 +856,7 @@ export default function CampaignManagementPage() {
                                             type="text"
                                             value={editFormData.location_name}
                                             onChange={(e) => setEditFormData({ ...editFormData, location_name: e.target.value })}
-                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
                                             placeholder="Địa chỉ tổ chức..."
                                         />
                                         <MapPin className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -868,7 +868,7 @@ export default function CampaignManagementPage() {
                                     <textarea
                                         value={editFormData.description}
                                         onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                                        className="w-full h-24 px-5 py-3 rounded-2xl border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white resize-none"
+                                        className="w-full h-24 px-5 py-3 rounded-2xl border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white resize-none"
                                         placeholder="Nhập nội dung giới thiệu chiến dịch..."
                                     />
                                 </div>
@@ -883,7 +883,7 @@ export default function CampaignManagementPage() {
                                                 key={group}
                                                 onClick={() => toggleBloodGroup(group)}
                                                 className={`h-9 flex items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300 border ${editFormData.target_blood_group.includes(group)
-                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-200 scale-105'
+                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200 scale-105'
                                                     : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:bg-slate-100'
                                                     }`}
                                             >
@@ -900,7 +900,7 @@ export default function CampaignManagementPage() {
                                             type="number"
                                             value={editFormData.target_units}
                                             onChange={(e) => setEditFormData({ ...editFormData, target_units: parseInt(e.target.value) || 0 })}
-                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-1.5">
@@ -909,7 +909,7 @@ export default function CampaignManagementPage() {
                                             <select
                                                 value={editFormData.status}
                                                 onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
-                                                className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm appearance-none focus:ring-4 focus:ring-indigo-500/5 outline-none text-slate-900 dark:text-white"
+                                                className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm appearance-none focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
                                             >
                                                 <option value="active">Đang hoạt động</option>
                                                 <option value="paused">Tạm dừng</option>
@@ -932,7 +932,7 @@ export default function CampaignManagementPage() {
                             <button
                                 onClick={handleUpdateCampaign}
                                 disabled={isSubmitting}
-                                className="px-6 h-10 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-full text-xs font-extrabold shadow-lg shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                                className="px-6 h-10 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-full text-xs font-extrabold shadow-lg shadow-blue-200 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                             >
                                 {isSubmitting ? (
                                     <Clock className="w-3.5 h-3.5 animate-spin" />

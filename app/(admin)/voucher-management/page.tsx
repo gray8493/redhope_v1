@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { voucherService } from '@/services/voucher.service';
 import { Voucher, VoucherStatus } from '@/lib/database.types';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 // Extend the DB type for UI purposes (mocking missing fields)
 interface SentinelVoucher extends Voucher {
@@ -21,6 +23,8 @@ export default function VoucherManagementPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingVoucher, setEditingVoucher] = useState<SentinelVoucher | null>(null);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
     // Form State
     const [formData, setFormData] = useState<{
@@ -76,7 +80,7 @@ export default function VoucherManagementPage() {
             setVouchers(uiVouchers);
         } catch (error: any) {
             console.error('Failed to load vouchers:', error);
-            alert('Không thể tải danh sách mã ưu đãi: ' + error.message);
+            toast.error('Không thể tải danh sách mã ưu đãi: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -90,14 +94,22 @@ export default function VoucherManagementPage() {
         v.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa mã ưu đãi này không?')) return;
+    const handleDelete = (id: string) => {
+        setItemToDelete(id);
+        setIsConfirmOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
         try {
-            await voucherService.delete(id);
-            setVouchers(prev => prev.filter(v => v.id !== id));
+            await voucherService.delete(itemToDelete);
+            setVouchers(prev => prev.filter(v => v.id !== itemToDelete));
+            toast.success('Xóa mã ưu đãi thành công');
         } catch (error) {
             console.error('Delete failed:', error);
-            alert('Xóa thất bại');
+            toast.error('Xóa mã ưu đãi thất bại');
+        } finally {
+            setItemToDelete(null);
         }
     };
 
@@ -132,12 +144,12 @@ export default function VoucherManagementPage() {
 
         // Validate form data
         if (!formData.name || formData.name.trim() === '') {
-            alert('Vui lòng nhập tên voucher');
+            toast.error('Vui lòng nhập tên voucher');
             return;
         }
 
         if (!formData.points || formData.points < 0) {
-            alert('Vui lòng nhập chi phí điểm hợp lệ');
+            toast.error('Vui lòng nhập chi phí điểm hợp lệ');
             return;
         }
 
@@ -166,7 +178,7 @@ export default function VoucherManagementPage() {
                     expires_at: updated.expires_at,
                 } : v));
 
-                alert('Cập nhật voucher thành công!');
+                toast.success('Cập nhật voucher thành công!');
             } else {
                 // Create with retry logic for unique code
                 console.log('Creating new voucher...');
@@ -231,13 +243,13 @@ export default function VoucherManagementPage() {
                     image: created.image_url || 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&q=80&w=200'
                 } as SentinelVoucher, ...prev]);
 
-                alert('Tạo voucher mới thành công!');
+                toast.success('Tạo voucher mới thành công!');
             }
             setIsModalOpen(false);
         } catch (error: any) {
             console.error('Save failed:', error);
             const errorMessage = error.message || 'Có lỗi xảy ra khi lưu voucher';
-            alert(`Lỗi: ${errorMessage}\n\nVui lòng kiểm tra:\n- Quyền truy cập của bạn\n- Kết nối mạng\n- Console để xem chi tiết`);
+            toast.error(`Lỗi: ${errorMessage}`);
         }
     };
 
@@ -250,7 +262,7 @@ export default function VoucherManagementPage() {
                             <span className="material-symbols-outlined text-gray-400 text-xl">search</span>
                         </span>
                         <input
-                            className="block w-full pl-10 pr-3 py-2 border-none bg-gray-100 rounded-lg text-sm placeholder-gray-500 focus:ring-2 focus:ring-[#6324eb] focus:bg-white transition-all outline-none"
+                            className="block w-full pl-10 pr-3 py-2 border-none bg-gray-100 rounded-lg text-sm placeholder-gray-500 focus:ring-2 focus:ring-[#0065FF] focus:bg-white transition-all outline-none"
                             placeholder="Tìm kiếm mã ưu đãi..."
                             type="text"
                             value={searchTerm}
@@ -260,7 +272,7 @@ export default function VoucherManagementPage() {
                 </div>
                 <button
                     onClick={handleAddNew}
-                    className="flex items-center gap-2 bg-[#6324eb] text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#501ac2] transition-colors shadow-lg shadow-[#6324eb]/20"
+                    className="flex items-center gap-2 bg-[#0065FF] text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#0052cc] transition-colors shadow-lg shadow-[#0065FF]/20"
                 >
                     <span className="material-symbols-outlined text-xl">add</span>
                     Tạo Mã ưu đãi
@@ -270,7 +282,7 @@ export default function VoucherManagementPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Stats Cards */}
                 <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-                    <div className="size-12 rounded-full bg-purple-100 flex items-center justify-center text-[#6324eb]">
+                    <div className="size-12 rounded-full bg-blue-100 flex items-center justify-center text-[#0065FF]">
                         <span className="material-symbols-outlined">confirmation_number</span>
                     </div>
                     <div>
@@ -319,7 +331,7 @@ export default function VoucherManagementPage() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-1 text-[#6324eb] font-bold">
+                                    <div className="flex items-center gap-1 text-[#0065FF] font-bold">
                                         <span className="material-symbols-outlined text-sm">stars</span>
                                         {(voucher.points || 0).toLocaleString()}
                                     </div>
@@ -351,7 +363,7 @@ export default function VoucherManagementPage() {
                                         <button
                                             onClick={() => handleEdit(voucher)}
                                             aria-label={`Chỉnh sửa ${voucher.name}`}
-                                            className="p-2 text-gray-500 hover:text-[#6324eb] hover:bg-[#6324eb]/5 rounded-lg transition-colors"
+                                            className="p-2 text-gray-500 hover:text-[#0065FF] hover:bg-[#0065FF]/5 rounded-lg transition-colors"
                                         >
                                             <span className="material-symbols-outlined text-xl">edit</span>
                                         </button>
@@ -401,7 +413,7 @@ export default function VoucherManagementPage() {
                                     type="text"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] outline-none transition-all"
                                     placeholder="ví dụ: Thẻ mua sắm $50"
                                 />
                             </div>
@@ -414,7 +426,7 @@ export default function VoucherManagementPage() {
                                         min="0"
                                         value={formData.points}
                                         onChange={e => setFormData({ ...formData, points: Math.max(0, Number(e.target.value) || 0) })}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] outline-none transition-all"
                                     />
                                 </div>
                                 <div>
@@ -425,7 +437,7 @@ export default function VoucherManagementPage() {
                                         min="0"
                                         value={formData.stock}
                                         onChange={e => setFormData({ ...formData, stock: Math.max(0, Number(e.target.value) || 0) })}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] outline-none transition-all"
                                     />
                                     <p className="text-[10px] text-gray-400 mt-1">*Chỉ lưu giao diện</p>
                                 </div>
@@ -436,7 +448,7 @@ export default function VoucherManagementPage() {
                                     <select
                                         value={formData.category}
                                         onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] outline-none transition-all"
                                     >
                                         <option value="Chung">Chung</option>
                                         <option value="Thực phẩm & Đồ uống">Thực phẩm & Đồ uống</option>
@@ -450,7 +462,7 @@ export default function VoucherManagementPage() {
                                     <select
                                         value={formData.status}
                                         onChange={e => setFormData({ ...formData, status: e.target.value as VoucherStatus })}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all"
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] outline-none transition-all"
                                     >
                                         <option value="Active">Hoạt động</option>
                                         <option value="Inactive">Không hoạt động</option>
@@ -463,7 +475,7 @@ export default function VoucherManagementPage() {
                                     type="date"
                                     value={formData.expiryDate}
                                     onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] outline-none transition-all text-gray-500"
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] outline-none transition-all text-gray-500"
                                 />
                                 <p className="text-[10px] text-gray-400 mt-1">*Chỉ lưu giao diện</p>
                             </div>
@@ -477,7 +489,7 @@ export default function VoucherManagementPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2.5 bg-[#6324eb] hover:bg-[#501ac2] text-white font-bold rounded-xl shadow-lg shadow-[#6324eb]/20 transition-all"
+                                    className="flex-1 px-4 py-2.5 bg-[#0065FF] hover:bg-[#0052cc] text-white font-bold rounded-xl shadow-lg shadow-[#0065FF]/20 transition-all"
                                 >
                                     {editingVoucher ? 'Lưu thay đổi' : 'Tạo Mã ưu đãi'}
                                 </button>
@@ -486,6 +498,16 @@ export default function VoucherManagementPage() {
                     </div>
                 </div>
             )}
+            {/* Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Xác nhận xóa"
+                description="Bạn có chắc chắn muốn xóa mã ưu đãi này không? Hành động này không thể hoàn tác."
+                onConfirm={confirmDelete}
+                confirmText="Xóa mã ưu đãi"
+                variant="destructive"
+            />
         </div>
     );
 }

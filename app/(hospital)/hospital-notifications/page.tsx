@@ -88,13 +88,13 @@ export default function HospitalNotificationsPage() {
     const getIconByType = (actionType: string) => {
         switch (actionType) {
             case 'view_registrations':
-                return <div className="p-4 bg-med-primary/10 text-med-primary rounded-[20px] shadow-inner"><Users className="size-6" /></div>;
+                return <div className="p-4 bg-blue-500/10 text-[#0065FF] rounded-[20px] shadow-inner"><Users className="size-6" /></div>;
             case 'campaign_approved':
                 return <div className="p-4 bg-emerald-500/10 text-emerald-500 rounded-[20px] shadow-inner"><CheckCircle className="size-6" /></div>;
             case 'campaign_rejected':
                 return <div className="p-4 bg-rose-500/10 text-rose-500 rounded-[20px] shadow-inner"><AlertTriangle className="size-6" /></div>;
             default:
-                return <div className="p-4 bg-med-blue/10 text-med-blue rounded-[20px] shadow-inner"><Info className="size-6" /></div>;
+                return <div className="p-4 bg-blue-500/10 text-[#0065FF] rounded-[20px] shadow-inner"><Info className="size-6" /></div>;
         }
     };
 
@@ -103,16 +103,16 @@ export default function HospitalNotificationsPage() {
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
                 <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 bg-med-primary/10 text-med-primary text-[10px] font-black rounded-full uppercase tracking-widest border border-med-primary/20">Trung tâm Điều hành</span>
-                        <span className="size-1.5 bg-med-primary rounded-full animate-pulse"></span>
+                        <span className="px-3 py-1 bg-blue-500/10 text-[#0065FF] text-[10px] font-black rounded-full uppercase tracking-widest border border-blue-500/20">Trung tâm Điều hành</span>
+                        <span className="size-1.5 bg-[#0065FF] rounded-full animate-pulse"></span>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-medical-header text-slate-900 dark:text-white tracking-tight leading-none">Thông báo <span className="text-med-primary underline decoration-emerald-200 decoration-8 underline-offset-4">Hệ thống</span></h2>
+                    <h2 className="text-3xl md:text-4xl font-medical-header text-slate-900 dark:text-white tracking-tight leading-none">Thông báo <span className="text-[#0065FF] underline decoration-blue-200 decoration-8 underline-offset-4">Hệ thống</span></h2>
                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium max-w-2xl italic opacity-80">Theo dõi dòng chảy dữ liệu và các phản hồi từ cộng đồng trong thời gian thực.</p>
                 </div>
                 {unreadCount > 0 && (
                     <button
                         onClick={handleMarkAllRead}
-                        className="flex items-center gap-3 px-6 py-4 bg-white/80 backdrop-blur-md text-med-primary border border-med-primary/20 rounded-[24px] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-200/50 hover:bg-med-primary hover:text-white transition-all group active:scale-95"
+                        className="flex items-center gap-3 px-6 py-4 bg-white/80 backdrop-blur-md text-[#0065FF] border border-blue-500/20 rounded-[24px] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-200/50 hover:bg-[#0065FF] hover:text-white transition-all group active:scale-95"
                     >
                         <CheckCheck className="size-4 group-hover:rotate-12 transition-transform" /> Đọc Tất cả
                     </button>
@@ -124,7 +124,7 @@ export default function HospitalNotificationsPage() {
                     <button
                         onClick={() => setFilter('all')}
                         className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${filter === 'all'
-                            ? 'bg-white text-med-primary shadow-xl shadow-slate-300/10 scale-105'
+                            ? 'bg-white text-[#0065FF] shadow-xl shadow-slate-300/10 scale-105'
                             : 'text-slate-400 hover:text-slate-600'
                             }`}
                     >
@@ -133,7 +133,7 @@ export default function HospitalNotificationsPage() {
                     <button
                         onClick={() => setFilter('unread')}
                         className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 ${filter === 'unread'
-                            ? 'bg-white text-med-primary shadow-xl shadow-slate-300/10 scale-105'
+                            ? 'bg-white text-[#0065FF] shadow-xl shadow-slate-300/10 scale-105'
                             : 'text-slate-400 hover:text-slate-600'
                             }`}
                     >
@@ -143,9 +143,9 @@ export default function HospitalNotificationsPage() {
                 </div>
 
                 <div className="relative w-full lg:max-w-md group">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-med-primary transition-colors" />
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-[#0065FF] transition-colors" />
                     <input
-                        className="w-full h-14 bg-white/70 backdrop-blur-md border border-slate-200/50 rounded-3xl pl-14 pr-6 text-sm focus:ring-2 focus:ring-med-primary/20 focus:border-med-primary placeholder-slate-400 font-medium outline-none transition-all shadow-med"
+                        className="w-full h-14 bg-white/70 backdrop-blur-md border border-slate-200/50 rounded-3xl pl-14 pr-6 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-[#0065FF] placeholder-slate-400 font-medium outline-none transition-all shadow-med"
                         placeholder="Tìm kiếm nội dung thông báo..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -157,7 +157,7 @@ export default function HospitalNotificationsPage() {
                 <div className="divide-y divide-slate-100/50">
                     {loading ? (
                         <div className="py-32 flex flex-col items-center justify-center text-slate-400">
-                            <Loader2 className="size-12 animate-spin mb-4 text-med-primary" />
+                            <Loader2 className="size-12 animate-spin mb-4 text-[#0065FF]" />
                             <p className="font-bold uppercase tracking-widest text-[10px]">Đang đồng bộ dữ liệu...</p>
                         </div>
                     ) : filteredNotifications.length > 0 ? (
@@ -165,13 +165,13 @@ export default function HospitalNotificationsPage() {
                             <div
                                 key={notif.id}
                                 onClick={() => handleMarkAsRead(notif)}
-                                className={`group p-8 flex gap-8 transition-all cursor-pointer hover:bg-white relative ${!notif.is_read ? 'bg-med-primary/5' : ''}`}
+                                className={`group p-8 flex gap-8 transition-all cursor-pointer hover:bg-white relative ${!notif.is_read ? 'bg-blue-500/5' : ''}`}
                             >
-                                {!notif.is_read && <div className="absolute left-0 top-0 w-1.5 h-full bg-med-primary rounded-r-full shadow-[2px_0_10px_rgba(13,148,136,0.3)]"></div>}
+                                {!notif.is_read && <div className="absolute left-0 top-0 w-1.5 h-full bg-[#0065FF] rounded-r-full shadow-[2px_0_10px_rgba(0,101,255,0.3)]"></div>}
 
                                 <div className="shrink-0 relative">
                                     {getIconByType(notif.action_type || '')}
-                                    {!notif.is_read && <div className="absolute -top-1 -right-1 size-3 bg-med-primary rounded-full border-2 border-white animate-pulse"></div>}
+                                    {!notif.is_read && <div className="absolute -top-1 -right-1 size-3 bg-[#0065FF] rounded-full border-2 border-white animate-pulse"></div>}
                                 </div>
 
                                 <div className="flex-1 min-w-0">
@@ -188,7 +188,7 @@ export default function HospitalNotificationsPage() {
                                     </p>
 
                                     <div className="flex items-center gap-6">
-                                        <button className="text-[10px] font-black uppercase tracking-widest text-med-primary flex items-center gap-2 group/btn">
+                                        <button className="text-[10px] font-black uppercase tracking-widest text-[#0065FF] flex items-center gap-2 group/btn">
                                             Xem chi tiết <ArrowRight className="size-3 group-hover/btn:translate-x-1 transition-transform" />
                                         </button>
                                         <button className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 transition-colors flex items-center gap-2">
@@ -213,7 +213,7 @@ export default function HospitalNotificationsPage() {
 
                 {filteredNotifications.length > 5 && (
                     <div className="p-8 border-t border-slate-100 bg-slate-50/30 text-center">
-                        <button className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-med-primary transition-colors flex items-center gap-3 mx-auto">
+                        <button className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-[#0065FF] transition-colors flex items-center gap-3 mx-auto">
                             Tải thêm dữ liệu lịch sử <ChevronDown className="size-4" />
                         </button>
                     </div>

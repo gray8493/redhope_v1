@@ -179,7 +179,7 @@ export default function DonorManagementPage() {
                         <input
                             type="text"
                             placeholder="Tìm kiếm..."
-                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#6324eb]"
+                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#0065FF]"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -187,7 +187,7 @@ export default function DonorManagementPage() {
                     </form>
                     <button
                         onClick={openAddModal}
-                        className="flex items-center gap-2 bg-[#6324eb] px-4 py-2 rounded-lg text-sm font-semibold text-white hover:bg-opacity-90 transition-colors shadow-lg shadow-purple-500/30"
+                        className="flex items-center gap-2 bg-[#0065FF] px-4 py-2 rounded-lg text-sm font-semibold text-white hover:bg-opacity-90 transition-colors shadow-lg shadow-blue-500/30"
                     >
                         <Plus className="w-5 h-5" />
                         Thêm người hiến mới
@@ -251,7 +251,7 @@ export default function DonorManagementPage() {
                                     <tr key={donor.id} className="hover:bg-gray-50 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="size-9 rounded-full bg-purple-100 flex items-center justify-center text-[#6324eb] font-bold text-xs overflow-hidden uppercase border border-purple-200">
+                                                <div className="size-9 rounded-full bg-blue-50 flex items-center justify-center text-[#0065FF] font-bold text-xs overflow-hidden uppercase border border-blue-100">
                                                     {donor.full_name?.charAt(0) || 'U'}
                                                 </div>
                                                 <div className="flex flex-col">
@@ -323,7 +323,7 @@ export default function DonorManagementPage() {
                                 <label className="text-sm font-medium text-gray-700">Họ và tên <span className="text-red-500">*</span></label>
                                 <input
                                     required
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF]"
                                     value={currentUser.full_name || ''}
                                     onChange={e => setCurrentUser({ ...currentUser, full_name: e.target.value })}
                                     placeholder="Nguyễn Văn A"
@@ -336,7 +336,7 @@ export default function DonorManagementPage() {
                                     required
                                     type="email"
                                     disabled={mode === 'edit'}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] disabled:bg-gray-100 disabled:text-gray-500"
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] disabled:bg-gray-100 disabled:text-gray-500"
                                     value={currentUser.email || ''}
                                     onChange={e => setCurrentUser({ ...currentUser, email: e.target.value })}
                                     placeholder="email@example.com"
@@ -347,7 +347,7 @@ export default function DonorManagementPage() {
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-700">Nhóm máu</label>
                                     <select
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF]"
                                         value={currentUser.blood_group || ''}
                                         onChange={e => setCurrentUser({ ...currentUser, blood_group: e.target.value })}
                                     >
@@ -361,7 +361,7 @@ export default function DonorManagementPage() {
                                     <label className="text-sm font-medium text-gray-700">Điểm thưởng</label>
                                     <input
                                         type="number"
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF]"
                                         value={currentUser.current_points || 0}
                                         onChange={e => setCurrentUser({ ...currentUser, current_points: Number(e.target.value) })}
                                     />
@@ -388,7 +388,7 @@ export default function DonorManagementPage() {
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="px-6 py-2 text-sm font-bold text-white bg-[#6324eb] hover:bg-[#501ac2] rounded-lg shadow-lg shadow-purple-500/20 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    className="px-6 py-2 text-sm font-bold text-white bg-[#0065FF] hover:bg-[#0052cc] rounded-lg shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     {mode === 'add' ? 'Thêm mới' : 'Lưu thay đổi'}

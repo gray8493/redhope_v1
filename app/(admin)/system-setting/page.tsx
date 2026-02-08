@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { settingService, SystemSettings } from '@/services/setting.service';
 import { Loader2, Save, RefreshCw } from 'lucide-react';
 import { toast } from "sonner";
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 const Toggle = ({
     checked,
@@ -25,7 +26,7 @@ const Toggle = ({
             aria-checked={checked}
             aria-label={label}
             onClick={() => onChange(!checked)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#6324eb] focus:ring-offset-2 ${checked ? 'bg-[#6324eb]' : 'bg-gray-200'}`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#0065FF] focus:ring-offset-2 ${checked ? 'bg-[#0065FF]' : 'bg-gray-200'}`}
         >
             <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
@@ -37,6 +38,7 @@ const Toggle = ({
 const SystemSettingsPage = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     // Notification Settings
     const [lowStockAlert, setLowStockAlert] = useState(false);
@@ -139,10 +141,11 @@ const SystemSettingsPage = () => {
         }
     };
 
-    const handleReset = async () => {
-        if (!confirm("Bạn có chắc chắn muốn khôi phục tất cả cài đặt về mặc định không?")) return;
+    const handleReset = () => {
+        setIsConfirmOpen(true);
+    };
 
-        setSaving(true);
+    const confirmReset = async () => {
         try {
             // Define defaults
             const defaults: Partial<SystemSettings> = {
@@ -183,7 +186,7 @@ const SystemSettingsPage = () => {
     if (loading) {
         return (
             <div className="flex h-[50vh] items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-[#6324eb]" />
+                <Loader2 className="w-8 h-8 animate-spin text-[#0065FF]" />
             </div>
         );
     }
@@ -207,7 +210,7 @@ const SystemSettingsPage = () => {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-6 py-2 bg-[#6324eb] text-white text-sm font-bold rounded-lg hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2 disabled:opacity-70"
+                        className="px-6 py-2 bg-[#0065FF] text-white text-sm font-bold rounded-lg hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2 disabled:opacity-70"
                     >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         Lưu thay đổi
@@ -219,7 +222,7 @@ const SystemSettingsPage = () => {
                 {/* AI Screening Configuration */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-                        <span className="material-symbols-outlined text-[#6324eb]">psychology</span>
+                        <span className="material-symbols-outlined text-[#0065FF]">psychology</span>
                         <h3 className="font-bold text-[#1f1f1f]">Cấu hình Sàng lọc AI</h3>
                     </div>
                     <div className="p-6 space-y-6">
@@ -227,14 +230,14 @@ const SystemSettingsPage = () => {
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Độ nhạy Khảo sát Sức khỏe</label>
                             <div className="flex items-center gap-4">
                                 <input
-                                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#6324eb]"
+                                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#0065FF]"
                                     max="10"
                                     min="1"
                                     type="range"
                                     value={aiSensitivity}
                                     onChange={(e) => setAiSensitivity(Number(e.target.value))}
                                 />
-                                <span className={`text-sm font-bold px-3 py-1 rounded-lg ${aiSensitivity >= 8 ? 'bg-[#6324eb]/10 text-[#6324eb]' :
+                                <span className={`text-sm font-bold px-3 py-1 rounded-lg ${aiSensitivity >= 8 ? 'bg-[#0065FF]/10 text-[#0065FF]' :
                                     aiSensitivity >= 5 ? 'bg-orange-100 text-orange-600' :
                                         'bg-red-100 text-red-600'
                                     }`}>
@@ -246,7 +249,7 @@ const SystemSettingsPage = () => {
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Hemoglobin Tối thiểu (g/dL)</label>
                                 <input
-                                    className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all"
+                                    className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] focus:border-transparent transition-all"
                                     placeholder="12.5"
                                     step="0.1"
                                     min="0.1"
@@ -258,7 +261,7 @@ const SystemSettingsPage = () => {
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Cân nặng Tối thiểu (kg)</label>
                                 <input
-                                    className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all"
+                                    className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] focus:border-transparent transition-all"
                                     placeholder="50"
                                     min="30"
                                     type="number"
@@ -270,7 +273,7 @@ const SystemSettingsPage = () => {
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Phiên bản Câu hỏi Sàng lọc</label>
                             <select
-                                className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all"
+                                className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] focus:border-transparent transition-all"
                                 value={questionVersion}
                                 onChange={(e) => setQuestionVersion(e.target.value)}
                             >
@@ -283,7 +286,7 @@ const SystemSettingsPage = () => {
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Khoảng cách giữa các lần hiến máu (Tháng)</label>
                             <div className="flex items-center gap-4">
                                 <input
-                                    className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all"
+                                    className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] focus:border-transparent transition-all"
                                     type="number"
                                     min="1"
                                     max="24"
@@ -307,7 +310,7 @@ const SystemSettingsPage = () => {
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Điểm cho mỗi lần hiến máu</label>
                                 <div className="relative">
                                     <input
-                                        className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all pr-10"
+                                        className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] focus:border-transparent transition-all pr-10"
                                         type="number"
                                         value={pointsPerDonation}
                                         onChange={(e) => setPointsPerDonation(Math.max(0, Number(e.target.value) || 0))}
@@ -319,7 +322,7 @@ const SystemSettingsPage = () => {
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Thưởng giới thiệu</label>
                                 <div className="relative">
                                     <input
-                                        className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all pr-10"
+                                        className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] focus:border-transparent transition-all pr-10"
                                         type="number"
                                         value={referralBonus}
                                         onChange={(e) => setReferralBonus(Math.max(0, Number(e.target.value) || 0))}
@@ -333,7 +336,7 @@ const SystemSettingsPage = () => {
                             <div className="flex items-center gap-4">
                                 <span className="text-sm font-medium">$1.00 = </span>
                                 <input
-                                    className="block w-32 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all"
+                                    className="block w-32 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] focus:border-transparent transition-all"
                                     type="number"
                                     value={exchangeRate}
                                     onChange={(e) => setExchangeRate(Math.max(0, Number(e.target.value) || 0))}
@@ -344,7 +347,7 @@ const SystemSettingsPage = () => {
                         <div className="flex items-center gap-3">
                             <input
                                 id="pointsExpiry"
-                                className="w-4 h-4 text-[#6324eb] border-gray-300 rounded focus:ring-[#6324eb]"
+                                className="w-4 h-4 text-[#0065FF] border-gray-300 rounded focus:ring-[#0065FF]"
                                 type="checkbox"
                                 checked={pointsExpiry}
                                 onChange={(e) => setPointsExpiry(e.target.checked)}
@@ -397,13 +400,13 @@ const SystemSettingsPage = () => {
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Khóa API (Đọc/Ghi)</label>
                             <div className="flex gap-2">
                                 <input
-                                    className="block flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all font-mono"
+                                    className="block flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] focus:border-transparent transition-all font-mono"
                                     readOnly
                                     type="text"
                                     value={apiKey}
                                 />
                                 <button
-                                    onClick={() => alert("Secure copy requires server authentication")}
+                                    onClick={() => toast.info("Yêu cầu xác thực máy chủ để sao chép khóa bảo mật")}
                                     className="px-3 py-2 bg-gray-100 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors"
                                 >
                                     <span className="material-symbols-outlined text-lg">content_copy</span>
@@ -413,7 +416,7 @@ const SystemSettingsPage = () => {
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Chính sách 2FA</label>
                             <select
-                                className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent transition-all"
+                                className="block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] focus:border-transparent transition-all"
                                 value={twoFactorAuth}
                                 onChange={(e) => setTwoFactorAuth(e.target.value)}
                             >
@@ -425,7 +428,7 @@ const SystemSettingsPage = () => {
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Phân cấp Vai trò Quản trị</label>
                             <div className="flex flex-wrap gap-2">
-                                <span className="px-2 py-1 bg-[#6324eb]/10 text-[#6324eb] rounded text-[10px] font-bold">QUẢN TRỊ VIÊN CẤP CAO</span>
+                                <span className="px-2 py-1 bg-[#0065FF]/10 text-[#0065FF] rounded text-[10px] font-bold">QUẢN TRỊ VIÊN CẤP CAO</span>
                                 <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-bold">QUẢN TRỊ VIÊN KHU VỰC</span>
                                 <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-bold">QUẢN LÝ BỆNH VIỆN</span>
                             </div>
@@ -434,6 +437,16 @@ const SystemSettingsPage = () => {
                 </div>
             </div>
 
+            {/* Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Khôi phục mặc định"
+                description="Bạn có chắc chắn muốn khôi phục tất cả cài đặt về mặc định không? Hành động này không thể hoàn tác."
+                onConfirm={confirmReset}
+                confirmText="Khôi phục"
+                variant="destructive"
+            />
         </div>
     );
 };

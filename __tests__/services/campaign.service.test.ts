@@ -240,3 +240,38 @@ describe('campaignService.createCampaign', () => {
         expect(global.fetch).toHaveBeenCalled();
     });
 });
+
+describe('campaignService.deleteCampaign', () => {
+    let mockSupabaseQuery: any;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockSupabaseQuery = {
+            delete: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+        };
+        (supabase.from as jest.Mock).mockReturnValue(mockSupabaseQuery);
+    });
+
+    test('should delete campaign successfully', async () => {
+        mockSupabaseQuery.eq.mockResolvedValue({
+            error: null,
+        });
+
+        const result = await campaignService.deleteCampaign('campaign-123');
+
+        expect(result).toBe(true);
+        expect(supabase.from).toHaveBeenCalledWith('campaigns');
+        expect(mockSupabaseQuery.delete).toHaveBeenCalled();
+        expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('id', 'campaign-123');
+    });
+
+    test('should throw error when deletion fails', async () => {
+        const dbError = { message: 'Database error' };
+        mockSupabaseQuery.eq.mockResolvedValue({
+            error: dbError,
+        });
+
+        await expect(campaignService.deleteCampaign('campaign-123')).rejects.toEqual(dbError);
+    });
+});

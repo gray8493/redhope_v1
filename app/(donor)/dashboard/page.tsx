@@ -89,7 +89,7 @@ export default function DashboardPage() {
                             <div className="flex items-center gap-3">
                                 {!isVerified ? (
                                     <Link href="/complete-profile">
-                                        <Button className="h-auto py-2.5 rounded-xl bg-[#6324eb] hover:bg-[#501ac2] shadow-lg shadow-indigo-500/20 font-bold text-sm gap-2">
+                                        <Button className="h-auto py-2.5 rounded-xl bg-[#0065FF] hover:bg-[#0052CC] shadow-lg shadow-blue-500/20 font-bold text-sm gap-2">
                                             <span className="size-2 bg-white rounded-full animate-ping"></span>
                                             Hoàn thành hồ sơ
                                         </Button>
@@ -115,7 +115,7 @@ export default function DashboardPage() {
                             <CardContent className="p-6 flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
                                     <p className="text-slate-500 text-sm font-semibold uppercase tracking-wider">Điểm tích lũy</p>
-                                    <Award className="text-[#6324eb] w-6 h-6" />
+                                    <Award className="text-[#0065FF] w-6 h-6" />
                                 </div>
                                 <div className="flex items-baseline gap-3">
                                     <p className="text-slate-900 dark:text-white text-3xl font-black">{currentPoints.toLocaleString()}</p>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                                                     <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{v.title || `Voucher ${v.partner_name}`}</p>
                                                     <p className="text-xs text-slate-500">{v.partner_name}</p>
                                                 </div>
-                                                <p className="text-xs font-black text-[#6324eb] uppercase whitespace-nowrap">{v.point_cost} pts</p>
+                                                <p className="text-xs font-black text-[#0065FF] uppercase whitespace-nowrap">{v.point_cost} pts</p>
                                             </div>
                                         ))
                                     ) : (
@@ -202,7 +202,7 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-4 text-left">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Chiến dịch hiến máu đang diễn ra</h3>
-                            <Link href="/campaigns" className="text-[#6324eb] text-sm font-bold hover:underline">Xem tất cả</Link>
+                            <Link href="/campaigns" className="text-[#0065FF] text-sm font-bold hover:underline">Xem tất cả</Link>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {loading ? (
@@ -210,19 +210,19 @@ export default function DashboardPage() {
                             ) : campaigns.length > 0 ? (
                                 campaigns.map(camp => (
                                     <Link href={`/campaigns/${camp.id}`} key={camp.id}>
-                                        <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] hover:border-[#6324eb]/50 transition-all cursor-pointer group h-full">
+                                        <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] hover:border-[#0065FF]/50 transition-all cursor-pointer group h-full">
                                             <CardContent className="p-4 flex flex-col h-full gap-3">
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="size-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center text-[#6324eb] group-hover:bg-[#6324eb] group-hover:text-white transition-all">
+                                                        <div className="size-10 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center text-[#0065FF] group-hover:bg-[#0065FF] group-hover:text-white transition-all">
                                                             <Award className="w-5 h-5" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-group-hover:text-[#6324eb] transition-colors">{camp.name}</p>
+                                                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-group-hover:text-[#0065FF] transition-colors">{camp.name}</p>
                                                             <p className="text-xs text-slate-500 line-clamp-1">{camp.hospital?.hospital_name || "Bệnh viện tổ chức"}</p>
                                                         </div>
                                                     </div>
-                                                    <Badge variant="outline" className="border-indigo-100 text-indigo-600 dark:border-indigo-900 dark:text-indigo-400 text-[10px] uppercase font-bold px-2">
+                                                    <Badge variant="outline" className="border-blue-100 text-blue-600 dark:border-blue-900 dark:text-blue-400 text-[10px] uppercase font-bold px-2">
                                                         Active
                                                     </Badge>
                                                 </div>

@@ -12,12 +12,12 @@ import {
     MapPin,
     Clock,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    Building2
 } from 'lucide-react';
 import {
     Pagination,
     PaginationContent,
-    PaginationEllipsis,
     PaginationItem,
     PaginationLink,
     PaginationNext,
@@ -28,120 +28,11 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { supabase } from '@/lib/supabase';
-
-const CAMPAIGNS = [
-    {
-        id: 1,
-        name: "Giọt máu hồng - Xuân 2024",
-        hospital: "Bệnh viện Chợ Rẫy",
-        date: "24/02/2024 - 28/02/2024",
-        status: "Đang diễn ra",
-        participants: 156,
-        target: 200,
-        location: "Hồ Chí Minh",
-        type: "Khẩn cấp"
-    },
-    {
-        id: 2,
-        name: "Ngày hội Hiến máu Sinh viên",
-        hospital: "Bệnh viện Đại học Y Dược",
-        date: "15/03/2024",
-        status: "Sắp diễn ra",
-        participants: 0,
-        target: 500,
-        location: "Hồ Chí Minh",
-        type: "Định kỳ"
-    },
-    {
-        id: 3,
-        name: "Chủ nhật Đỏ - Lần thứ XVI",
-        hospital: "Viện Huyết học - Truyền máu TW",
-        date: "10/01/2024",
-        status: "Đã kết thúc",
-        participants: 1240,
-        target: 1000,
-        location: "Hà Nội",
-        type: "Lễ hội"
-    },
-    {
-        id: 4,
-        name: "Hiến máu cứu người - Tết 2024",
-        hospital: "Bệnh viện Nhân Dân 115",
-        date: "05/02/2024",
-        status: "Đã kết thúc",
-        participants: 85,
-        target: 100,
-        location: "Hồ Chí Minh",
-        type: "Cộng đồng"
-    },
-    {
-        id: 5,
-        name: "Lễ hội Xuân Hồng 2024",
-        hospital: "Viện Huyết học - Truyền máu TW",
-        date: "18/02/2024",
-        status: "Đã kết thúc",
-        participants: 850,
-        target: 1000,
-        location: "Hà Nội",
-        type: "Lễ hội"
-    },
-    {
-        id: 6,
-        name: "Trao đời sự sống",
-        hospital: "Bệnh viện Bạch Mai",
-        date: "20/03/2024",
-        status: "Sắp diễn ra",
-        participants: 12,
-        target: 150,
-        location: "Hà Nội",
-        type: "Khẩn cấp"
-    },
-    {
-        id: 7,
-        name: "Blouse trắng - Trái tim hồng",
-        hospital: "Bệnh viện Đại học Y Hà Nội",
-        date: "27/02/2024",
-        status: "Đã kết thúc",
-        participants: 320,
-        target: 300,
-        location: "Hà Nội",
-        type: "Định kỳ"
-    },
-    {
-        id: 8,
-        name: "Giọt máu nghĩa tình",
-        hospital: "Bệnh viện Đa khoa Đà Nẵng",
-        date: "10/04/2024",
-        status: "Sắp diễn ra",
-        participants: 5,
-        target: 200,
-        location: "Đà Nẵng",
-        type: "Cộng đồng"
-    },
-    {
-        id: 9,
-        name: "Hành trình Đỏ - Kết nối dòng máu Việt",
-        hospital: "Bệnh viện Huyết học - Truyền máu Cần Thơ",
-        date: "30/04/2024",
-        status: "Sắp diễn ra",
-        participants: 0,
-        target: 500,
-        location: "Cần Thơ",
-        type: "Lễ hội"
-    },
-    {
-        id: 10,
-        name: "Ngày hội hiến máu tình nguyện đợt 1",
-        hospital: "Bệnh viện Quân Y 103",
-        date: "15/01/2024",
-        status: "Đã kết thúc",
-        participants: 180,
-        target: 200,
-        location: "Hà Nội",
-        type: "Định kỳ"
-    }
-];
+import { campaignService } from '@/services/campaign.service';
+import { hospitalService } from '@/services/hospital.service';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { User } from '@/lib/database.types';
 
 export default function CampaignManagementPage() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -151,89 +42,73 @@ export default function CampaignManagementPage() {
     const [inputError, setInputError] = useState<string | null>(null);
 
     const [campaigns, setCampaigns] = useState<any[]>([]);
+    const [hospitals, setHospitals] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch campaigns from Supabase
-    useEffect(() => {
-        async function fetchCampaigns() {
-            try {
-                setLoading(true);
-                setError(null);
+    const fetchCampaigns = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await campaignService.getAll();
 
-                // Fetch campaigns with hospital information
-                const { data: campaignsData, error: campaignsError } = await supabase
-                    .from('campaigns')
-                    .select(`
-                        *,
-                        hospital:users!campaigns_hospital_id_fkey(
-                            full_name,
-                            hospital_name
-                        )
-                    `)
-                    .order('created_at', { ascending: false });
+            const statusMap: Record<string, string> = {
+                'active': 'Đang diễn ra',
+                'draft': 'Sắp diễn ra',
+                'ended': 'Đã kết thúc',
+                'cancelled': 'Đã hủy'
+            };
 
-                if (campaignsError) throw campaignsError;
+            const formattedCampaigns = data.map((campaign: any) => {
+                const startDate = campaign.start_time ? new Date(campaign.start_time) : null;
+                const endDate = campaign.end_time ? new Date(campaign.end_time) : null;
 
-                // Fetch appointment counts for each campaign
-                const { data: appointmentsData, error: appointmentsError } = await supabase
-                    .from('appointments')
-                    .select('campaign_id');
+                let dateString = '';
+                if (startDate && endDate && startDate.toDateString() !== endDate.toDateString()) {
+                    dateString = `${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')}`;
+                } else if (startDate) {
+                    dateString = startDate.toLocaleDateString('vi-VN');
+                }
 
-                if (appointmentsError) throw appointmentsError;
+                return {
+                    id: campaign.id,
+                    name: campaign.name || 'Không có tên',
+                    hospital: campaign.hospital?.hospital_name || campaign.hospital?.full_name || 'Chưa xác định',
+                    hospital_id: campaign.hospital_id,
+                    date: dateString || 'Chưa cập nhật',
+                    start_time: campaign.start_time,
+                    end_time: campaign.end_time,
+                    status: statusMap[campaign.status] || 'Sắp diễn ra',
+                    participants: campaign.appointments?.length || 0,
+                    target: campaign.target_units || 0,
+                    city: campaign.city || 'Chưa cập nhật',
+                    district: campaign.district || '',
+                    type: campaign.type || 'Cộng đồng',
+                    rawStatus: campaign.status
+                };
+            });
 
-                // Count appointments per campaign
-                const appointmentCounts = appointmentsData?.reduce((acc: any, apt: any) => {
-                    if (apt.campaign_id) {
-                        acc[apt.campaign_id] = (acc[apt.campaign_id] || 0) + 1;
-                    }
-                    return acc;
-                }, {}) || {};
-
-                // Map and format campaigns
-                const formattedCampaigns = campaignsData?.map((campaign: any) => {
-                    const startDate = campaign.start_time ? new Date(campaign.start_time) : null;
-                    const endDate = campaign.end_time ? new Date(campaign.end_time) : null;
-
-                    let dateString = '';
-                    if (startDate && endDate && startDate.toDateString() !== endDate.toDateString()) {
-                        dateString = `${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')}`;
-                    } else if (startDate) {
-                        dateString = startDate.toLocaleDateString('vi-VN');
-                    }
-
-                    // Map status from DB to UI
-                    const statusMap: Record<string, string> = {
-                        'active': 'Đang diễn ra',
-                        'draft': 'Sắp diễn ra',
-                        'ended': 'Đã kết thúc',
-                        'cancelled': 'Đã hủy'
-                    };
-
-                    return {
-                        id: campaign.id,
-                        name: campaign.name || 'Không có tên',
-                        hospital: campaign.hospital?.hospital_name || campaign.hospital?.full_name || 'Chưa xác định',
-                        date: dateString || 'Chưa cập nhật',
-                        status: statusMap[campaign.status] || 'Sắp diễn ra',
-                        participants: appointmentCounts[campaign.id] || 0,
-                        target: campaign.target_units || 0,
-                        location: campaign.city || campaign.district || 'Chưa cập nhật',
-                        type: 'Cộng đồng', // Default type since not in DB
-                        rawStatus: campaign.status // Keep original for updates
-                    };
-                }) || [];
-
-                setCampaigns(formattedCampaigns);
-            } catch (err: any) {
-                console.error('Error fetching campaigns:', err);
-                setError(err.message || 'Không thể tải dữ liệu chiến dịch');
-            } finally {
-                setLoading(false);
-            }
+            setCampaigns(formattedCampaigns);
+        } catch (err: any) {
+            console.error('Error fetching campaigns:', err);
+            setError(err.message || 'Không thể tải dữ liệu chiến dịch');
+        } finally {
+            setLoading(false);
         }
+    };
 
+    const fetchHospitals = async () => {
+        try {
+            const data = await hospitalService.getAll();
+            setHospitals(data);
+        } catch (err) {
+            console.error('Error fetching hospitals:', err);
+        }
+    };
+
+    useEffect(() => {
         fetchCampaigns();
+        fetchHospitals();
     }, []);
 
     const activeCampaigns = campaigns.filter(c => c.status === "Đang diễn ra").length;
@@ -245,18 +120,23 @@ export default function CampaignManagementPage() {
     const formatNumber = (num: number) => {
         return num >= 1000 ? (num / 1000).toFixed(1) + 'k' : num.toString();
     };
+
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
     const [newCampaign, setNewCampaign] = useState({
         name: "",
-        hospital: "",
-        date: "",
-        target: "",
-        location: "",
-        type: "Khẩn cấp",
-        status: "Sắp diễn ra"
+        hospital_id: "",
+        start_time: "",
+        end_time: "",
+        target_units: "",
+        city: "",
+        district: "",
+        type: "Định kỳ",
+        status: "draft"
     });
 
     const filteredCampaigns = campaigns.filter(campaign => {
@@ -266,17 +146,13 @@ export default function CampaignManagementPage() {
         return matchesSearch && matchesStatus;
     });
 
-    // Calculate pagination
     const totalPages = Math.ceil(filteredCampaigns.length / ITEMS_PER_PAGE);
-
-    // Get current items
     const paginatedCampaigns = filteredCampaigns.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
 
-    // Reset pagination when filters change
-    React.useEffect(() => {
+    useEffect(() => {
         setCurrentPage(1);
     }, [searchQuery, filterStatus]);
 
@@ -289,149 +165,109 @@ export default function CampaignManagementPage() {
     const handleEdit = (campaign: any) => {
         setNewCampaign({
             name: campaign.name,
-            hospital: campaign.hospital,
-            date: campaign.date,
-            target: campaign.target.toString(),
-            location: campaign.location,
-            type: campaign.type,
-            status: campaign.status
+            hospital_id: campaign.hospital_id,
+            start_time: campaign.start_time ? new Date(campaign.start_time).toISOString().split('T')[0] : "",
+            end_time: campaign.end_time ? new Date(campaign.end_time).toISOString().split('T')[0] : "",
+            target_units: campaign.target.toString(),
+            city: campaign.city || "",
+            district: campaign.district || "",
+            type: campaign.type || "Định kỳ",
+            status: campaign.rawStatus || "draft"
         });
         setEditingId(campaign.id);
         setIsModalOpen(true);
         setActiveMenuId(null);
     };
 
-    const handleDelete = (id: number) => {
-        if (window.confirm("Bạn có chắc chắn muốn xóa chiến dịch này không?")) {
-            setCampaigns(campaigns.filter(c => c.id !== id));
-        }
+    const handleDelete = (id: string) => {
+        setItemToDelete(id);
+        setIsConfirmOpen(true);
         setActiveMenuId(null);
     };
 
-    const handleAddCampaign = () => {
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
+        try {
+            setLoading(true);
+            await campaignService.deleteCampaign(itemToDelete);
+            toast.success("Xóa chiến dịch thành công");
+            fetchCampaigns();
+        } catch (err: any) {
+            toast.error("Xóa thất bại: " + err.message);
+        } finally {
+            setLoading(false);
+            setItemToDelete(null);
+        }
+    };
+
+    const handleAddCampaign = async () => {
         setInputError(null);
-        if (!newCampaign.name || !newCampaign.hospital) {
-            setInputError("Vui lòng nhập tên chiến dịch và bệnh viện");
+        if (!newCampaign.name || !newCampaign.hospital_id) {
+            setInputError("Vui lòng nhập tên chiến dịch và chọn bệnh viện");
             return;
         }
 
-        const target = parseInt(newCampaign.target);
+        const target = parseInt(newCampaign.target_units);
         if (isNaN(target) || target <= 0) {
             setInputError("Mục tiêu phải là số nguyên dương");
             return;
         }
 
-        if (!newCampaign.location.trim()) {
-            setInputError("Địa điểm không được để trống");
+        if (!newCampaign.city.trim()) {
+            setInputError("Tỉnh/Thành phố không được để trống");
             return;
         }
 
-        // Simple date validation (assuming DD/MM/YYYY or ISO)
-        // Ideally use a date picker, but for text input:
-        if (!newCampaign.date) {
-            setInputError("Vui lòng chọn ngày");
+        if (!newCampaign.start_time) {
+            setInputError("Vui lòng chọn ngày bắt đầu");
             return;
         }
 
-        // Validate Date (Single or Range)
-        const validateDate = (dateStr: string) => {
-            const parts = dateStr.split('/');
-            if (parts.length !== 3) return false;
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10);
-            const year = parseInt(parts[2], 10);
-
-            if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
-            if (month < 1 || month > 12) return false;
-
-            const date = new Date(year, month - 1, day);
-            return date.getDate() === day &&
-                date.getMonth() === month - 1 &&
-                date.getFullYear() === year;
-        };
-
-        const dateInput = newCampaign.date.trim();
-        let validDate = false;
-
-        // Pattern 1: Single Date (DD/MM/YYYY)
-        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateInput)) {
-            validDate = validateDate(dateInput);
-        }
-        // Pattern 2: Date Range (DD/MM/YYYY - DD/MM/YYYY)
-        else if (dateInput.includes('-')) {
-            const parts = dateInput.split('-').map(s => s.trim());
-            if (parts.length === 2 &&
-                /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parts[0]) &&
-                /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parts[1])) {
-                validDate = validateDate(parts[0]) && validateDate(parts[1]);
-            }
-        }
-
-        if (!validDate) {
-            setInputError("Ngày không hợp lệ. Vui lòng nhập DD/MM/YYYY hoặc khoảng thời gian (VD: 24/02/2024 - 28/02/2024)");
-            return;
-        }
-
-        if (editingId) {
-            // Update existing campaign
-            setCampaigns(campaigns.map(campaign =>
-                campaign.id === editingId
-                    ? {
-                        ...campaign,
-                        name: newCampaign.name,
-                        hospital: newCampaign.hospital,
-                        date: newCampaign.date,
-                        target: parseInt(newCampaign.target) || 0,
-                        location: newCampaign.location,
-                        type: newCampaign.type,
-                        status: newCampaign.status
-                    }
-                    : campaign
-            ));
-        } else {
-            // Create new campaign with unique numeric ID
-            const maxId = campaigns.length > 0
-                ? Math.max(...campaigns.map(c => Number(c.id)))
-                : 0;
-
-            const campaign = {
-                id: maxId + 1,
+        try {
+            setLoading(true);
+            const campaignData = {
                 name: newCampaign.name,
-                hospital: newCampaign.hospital,
-                date: newCampaign.date || new Date().toLocaleDateString('vi-VN'),
-                status: newCampaign.status,
-                participants: 0,
-                target: parseInt(newCampaign.target) || 0,
-                location: newCampaign.location,
-                type: newCampaign.type
+                hospital_id: newCampaign.hospital_id,
+                start_time: new Date(newCampaign.start_time).toISOString(),
+                end_time: newCampaign.end_time ? new Date(newCampaign.end_time).toISOString() : new Date(newCampaign.start_time).toISOString(),
+                target_units: target,
+                city: newCampaign.city,
+                district: newCampaign.district,
+                type: newCampaign.type,
+                status: newCampaign.status
             };
-            setCampaigns([campaign, ...campaigns]);
-        }
 
-        setIsModalOpen(false);
-        setEditingId(null);
-        setNewCampaign({
-            name: "",
-            hospital: "",
-            date: "",
-            target: "",
-            location: "",
-            type: "Khẩn cấp",
-            status: "Sắp diễn ra"
-        });
+            if (editingId) {
+                await campaignService.updateCampaign(editingId, campaignData);
+                toast.success("Cập nhật chiến dịch thành công");
+            } else {
+                await campaignService.createCampaign(campaignData);
+                toast.success("Tạo chiến dịch thành công");
+            }
+
+            setIsModalOpen(false);
+            setEditingId(null);
+            fetchCampaigns();
+        } catch (err: any) {
+            toast.error("Thao tác thất bại: " + err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const openCreateModal = () => {
         setEditingId(null);
-        setInputError(null); // Clear previous errors
+        setInputError(null);
         setNewCampaign({
             name: "",
-            hospital: "",
-            date: "",
-            target: "",
-            location: "",
-            type: "Khẩn cấp",
-            status: "Sắp diễn ra"
+            hospital_id: "",
+            start_time: "",
+            end_time: "",
+            target_units: "",
+            city: "",
+            district: "",
+            type: "Định kỳ",
+            status: "draft"
         });
         setIsModalOpen(true);
     };
@@ -446,7 +282,7 @@ export default function CampaignManagementPage() {
                 </div>
                 <button
                     onClick={openCreateModal}
-                    className="flex items-center gap-2 bg-[#6324eb] hover:bg-[#501ac2] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-[#6324eb]/20"
+                    className="flex items-center gap-2 bg-[#0065FF] hover:bg-[#0052cc] text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-[#0065FF]/20"
                 >
                     <Plus className="w-5 h-5" />
                     Tạo chiến dịch mới
@@ -492,7 +328,7 @@ export default function CampaignManagementPage() {
                         <input
                             type="text"
                             placeholder="Tìm kiếm chiến dịch, bệnh viện..."
-                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] transition-all"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -515,9 +351,9 @@ export default function CampaignManagementPage() {
                     </div>
                 </div>
 
-                <div className="overflow-x-visible">
+                <div className="flex-1 overflow-auto">
                     <table className="w-full text-left border-collapse">
-                        <thead>
+                        <thead className="sticky top-0 bg-white z-10 shadow-sm">
                             <tr className="bg-gray-50/50">
                                 <th className="px-6 py-4 text-xs font-bold uppercase text-gray-500 tracking-wider">Chiến dịch</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase text-gray-500 tracking-wider">Thời gian & Địa điểm</th>
@@ -527,11 +363,11 @@ export default function CampaignManagementPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {loading ? (
+                            {loading && campaigns.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-10 text-center">
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="w-8 h-8 border-4 border-[#6324eb] border-t-transparent rounded-full animate-spin"></div>
+                                            <div className="w-8 h-8 border-4 border-[#0065FF] border-t-transparent rounded-full animate-spin"></div>
                                             <p className="text-gray-500 font-medium">Đang tải dữ liệu...</p>
                                         </div>
                                     </td>
@@ -543,7 +379,7 @@ export default function CampaignManagementPage() {
                                             <AlertCircle className="w-12 h-12 text-red-500" />
                                             <p className="text-red-600 font-medium">{error}</p>
                                             <button
-                                                onClick={() => window.location.reload()}
+                                                onClick={() => fetchCampaigns()}
                                                 className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-medium transition-colors"
                                             >
                                                 Thử lại
@@ -572,19 +408,19 @@ export default function CampaignManagementPage() {
                                                         <Calendar className="w-4 h-4 text-gray-400" /> {campaign.date}
                                                     </span>
                                                     <span className="text-xs text-gray-500 flex items-center gap-2">
-                                                        <MapPin className="w-4 h-4 text-gray-400" /> {campaign.location}
+                                                        <MapPin className="w-4 h-4 text-gray-400" /> {campaign.city}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-5">
                                                 <div className="flex flex-col gap-1.5 items-center w-full max-w-[120px] mx-auto">
                                                     <div className="flex justify-between w-full text-[10px] font-bold">
-                                                        <span className="text-[#6324eb]">{campaign.participants}/{campaign.target}</span>
+                                                        <span className="text-[#0065FF]">{campaign.participants}/{campaign.target}</span>
                                                         <span className="text-gray-500">{progress}%</span>
                                                     </div>
                                                     <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                                         <div
-                                                            className="h-full bg-[#6324eb] rounded-full transition-all duration-1000"
+                                                            className="h-full bg-[#0065FF] rounded-full transition-all duration-1000"
                                                             style={{ width: `${progress}%` }}
                                                         ></div>
                                                     </div>
@@ -618,7 +454,7 @@ export default function CampaignManagementPage() {
                                                     <PopoverContent align="end" className="w-40 p-1 rounded-xl shadow-xl border-gray-100 bg-white">
                                                         <button
                                                             onClick={() => handleEdit(campaign)}
-                                                            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#6324eb] flex items-center gap-2 rounded-lg transition-colors"
+                                                            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#0065FF] flex items-center gap-2 rounded-lg transition-colors"
                                                         >
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                                                             Chỉnh sửa
@@ -647,7 +483,7 @@ export default function CampaignManagementPage() {
                     </table>
                 </div>
 
-                <div className="p-6 border-t border-gray-50 flex items-center justify-center mt-auto">
+                <div className="p-6 border-t border-gray-50 flex items-center justify-center bg-white">
                     {totalPages > 1 && (
                         <Pagination>
                             <PaginationContent>
@@ -682,7 +518,7 @@ export default function CampaignManagementPage() {
 
             {/* Create/Edit Campaign Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div
                         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                         onClick={() => setIsModalOpen(false)}
@@ -699,7 +535,7 @@ export default function CampaignManagementPage() {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                             </button>
                         </div>
-                        <div className="p-6 flex flex-col gap-4">
+                        <div className="p-6 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
                             {inputError && (
                                 <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold flex items-center gap-2">
                                     <AlertCircle className="w-4 h-4" />
@@ -712,51 +548,64 @@ export default function CampaignManagementPage() {
                                     type="text"
                                     value={newCampaign.name}
                                     onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] transition-all"
                                     placeholder="Nhập tên chiến dịch..."
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-bold text-gray-700">Đơn vị tổ chức (Bệnh viện)</label>
-                                <input
-                                    type="text"
-                                    value={newCampaign.hospital}
-                                    onChange={(e) => setNewCampaign({ ...newCampaign, hospital: e.target.value })}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
-                                    placeholder="VD: Bệnh viện Chợ Rẫy"
-                                />
+                                <label className="text-sm font-bold text-gray-700">Bệnh viện tổ chức</label>
+                                <select
+                                    value={newCampaign.hospital_id}
+                                    onChange={(e) => setNewCampaign({ ...newCampaign, hospital_id: e.target.value })}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] transition-all"
+                                >
+                                    <option value="">Chọn bệnh viện...</option>
+                                    {hospitals.map(h => (
+                                        <option key={h.id} value={h.id}>{h.hospital_name || h.full_name}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-bold text-gray-700">Thời gian</label>
+                                    <label className="text-sm font-bold text-gray-700">Ngày bắt đầu</label>
+                                    <input
+                                        type="date"
+                                        value={newCampaign.start_time}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, start_time: e.target.value })}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] transition-all"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-gray-700">Ngày kết thúc</label>
+                                    <input
+                                        type="date"
+                                        value={newCampaign.end_time}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, end_time: e.target.value })}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] transition-all"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-gray-700">Tỉnh/Thành phố</label>
                                     <input
                                         type="text"
-                                        value={newCampaign.date}
-                                        onChange={(e) => setNewCampaign({ ...newCampaign, date: e.target.value })}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
-                                        placeholder="DD/MM/YYYY hoặc khoảng thời gian..."
+                                        value={newCampaign.city}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, city: e.target.value })}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] transition-all"
+                                        placeholder="VD: TP. Hồ Chí Minh"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-sm font-bold text-gray-700">Mục tiêu (lượt)</label>
                                     <input
                                         type="number"
-                                        value={newCampaign.target}
-                                        onChange={(e) => setNewCampaign({ ...newCampaign, target: e.target.value })}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                        value={newCampaign.target_units}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, target_units: e.target.value })}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] transition-all"
                                         placeholder="0"
                                     />
                                 </div>
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-bold text-gray-700">Địa điểm</label>
-                                <input
-                                    type="text"
-                                    value={newCampaign.location}
-                                    onChange={(e) => setNewCampaign({ ...newCampaign, location: e.target.value })}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
-                                    placeholder="Nhập địa điểm..."
-                                />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
@@ -764,11 +613,11 @@ export default function CampaignManagementPage() {
                                     <select
                                         value={newCampaign.status}
                                         onChange={(e) => setNewCampaign({ ...newCampaign, status: e.target.value })}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] transition-all"
                                     >
-                                        <option value="Sắp diễn ra">Sắp diễn ra</option>
-                                        <option value="Đang diễn ra">Đang diễn ra</option>
-                                        <option value="Đã kết thúc">Đã kết thúc</option>
+                                        <option value="draft">Sắp diễn ra (Nháp)</option>
+                                        <option value="active">Đang diễn ra</option>
+                                        <option value="ended">Đã kết thúc</option>
                                     </select>
                                 </div>
                                 <div className="flex flex-col gap-1.5">
@@ -776,7 +625,7 @@ export default function CampaignManagementPage() {
                                     <select
                                         value={newCampaign.type}
                                         onChange={(e) => setNewCampaign({ ...newCampaign, type: e.target.value })}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] transition-all"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] transition-all"
                                     >
                                         <option value="Khẩn cấp">Khẩn cấp</option>
                                         <option value="Định kỳ">Định kỳ</option>
@@ -795,19 +644,25 @@ export default function CampaignManagementPage() {
                             </button>
                             <button
                                 onClick={handleAddCampaign}
-                                className="px-5 py-2.5 rounded-xl bg-[#6324eb] text-white font-bold shadow-lg shadow-[#6324eb]/20 hover:bg-[#501ac2] transition-all"
+                                disabled={loading}
+                                className="px-5 py-2.5 rounded-xl bg-[#0065FF] text-white font-bold shadow-lg shadow-[#0065FF]/20 hover:bg-[#0052cc] transition-all disabled:opacity-50"
                             >
-                                {editingId ? "Cập nhật" : "Tạo chiến dịch"}
+                                {loading ? "Đang xử lý..." : (editingId ? "Cập nhật" : "Tạo chiến dịch")}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
+            {/* Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Xác nhận xóa"
+                description="Bạn có chắc chắn muốn xóa chiến dịch này không? Hành động này không thể hoàn tác."
+                onConfirm={confirmDelete}
+                confirmText="Xóa chiến dịch"
+                variant="destructive"
+            />
         </div>
     );
 }
-
-// Internal icons helper for readability
-const Building2 = ({ className }: { className?: string }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" /><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" /><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" /><path d="M10 6h4" /><path d="M10 10h4" /><path d="M10 14h4" /><path d="M10 18h4" /></svg>
-);

@@ -492,5 +492,20 @@ export const campaignService = {
             console.error('[CampaignService] Error in cancelRegistration:', error.message || error);
             throw error;
         }
+    },
+
+    async deleteCampaign(id: string) {
+        try {
+            const { error } = await supabase
+                .from('campaigns')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            return true;
+        } catch (error: any) {
+            console.error('[CampaignService] Error in deleteCampaign:', error.message || error);
+            throw error;
+        }
     }
 };

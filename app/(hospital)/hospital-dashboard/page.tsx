@@ -82,7 +82,7 @@ export default function HospitalDashboard() {
         { name: "Nhóm AB", value: 0 },
     ];
 
-    const COLORS = ["#ef4444", "#6366f1", "#3b82f6", "#f59e0b"];
+    const COLORS = ["#ef4444", "#0065FF", "#3b82f6", "#f59e0b"];
 
     return (
         <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#0f172a] p-4 md:p-8 text-left">
@@ -95,7 +95,7 @@ export default function HospitalDashboard() {
                     <div className="relative hidden lg:block">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
-                            className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-[#6366f1] w-[400px] shadow-sm transition-all focus:shadow-md outline-none"
+                            className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-[#0065FF] w-[400px] shadow-sm transition-all focus:shadow-md outline-none"
                             placeholder="Tìm kiếm theo tên chiến dịch hoặc địa điểm..."
                             type="text"
                             value={searchQuery}
@@ -110,7 +110,7 @@ export default function HospitalDashboard() {
                 <div className="bg-white dark:bg-slate-800/50 p-6 rounded-[24px] shadow-sm border border-slate-300 dark:border-slate-700 transition-all hover:shadow-md group">
                     <div className="flex justify-between items-start mb-4">
                         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Người đăng ký (Hẹn)</span>
-                        <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-[#6366f1]">
+                        <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-[#0065FF]">
                             <UserPlus className="w-5 h-5 opacity-60" />
                         </div>
                     </div>
@@ -159,18 +159,18 @@ export default function HospitalDashboard() {
                             <div className="flex gap-8">
                                 <button
                                     onClick={() => setActiveTab("active")}
-                                    className={`text-xs font-black tracking-widest uppercase pb-2 px-1 transition-all border-b-2 ${activeTab === "active" ? 'text-[#6366f1] border-[#6366f1]' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
+                                    className={`text-xs font-black tracking-widest uppercase pb-2 px-1 transition-all border-b-2 ${activeTab === "active" ? 'text-[#0065FF] border-[#0065FF]' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
                                 >
                                     ĐANG HOẠT ĐỘNG
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("finished")}
-                                    className={`text-xs font-black tracking-widest uppercase pb-2 px-1 transition-all border-b-2 ${activeTab === "finished" ? 'text-[#6366f1] border-[#6366f1]' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
+                                    className={`text-xs font-black tracking-widest uppercase pb-2 px-1 transition-all border-b-2 ${activeTab === "finished" ? 'text-[#0065FF] border-[#0065FF]' : 'text-slate-400 border-transparent hover:text-slate-600'}`}
                                 >
                                     ĐÃ KẾT THÚC
                                 </button>
                             </div>
-                            <Link href="/hospital-campaign" className="text-[11px] font-black text-[#6366f1] flex items-center gap-1.5 uppercase tracking-wider hover:underline group">
+                            <Link href="/hospital-campaign" className="text-[11px] font-black text-[#0065FF] flex items-center gap-1.5 uppercase tracking-wider hover:underline group">
                                 Quản lý chiến dịch
                             </Link>
                         </div>
@@ -202,7 +202,7 @@ export default function HospitalDashboard() {
                                                     className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors cursor-pointer group"
                                                 >
                                                     <td className="px-6 py-5">
-                                                        <p className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-[#6366f1] transition-colors">{camp.name}</p>
+                                                        <p className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-[#0065FF] transition-colors">{camp.name}</p>
                                                         <p className="text-[11px] text-slate-500 font-medium">{camp.location_name}</p>
                                                     </td>
                                                     <td className="px-6 py-5 text-center">
@@ -295,7 +295,7 @@ export default function HospitalDashboard() {
                     </div>
 
                     {/* Performance Summary Card */}
-                    <div className="bg-[#6366f1] text-white rounded-[32px] shadow-xl shadow-indigo-500/20 p-8 relative overflow-hidden group">
+                    <div className="bg-[#0065FF] text-white rounded-[32px] shadow-xl shadow-blue-500/20 p-8 relative overflow-hidden group">
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
@@ -327,7 +327,7 @@ export default function HospitalDashboard() {
 
                         {/* Animated background shapes */}
                         <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
-                        <div className="absolute -top-10 -left-10 w-40 h-40 bg-indigo-400/20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+                        <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-400/20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
                     </div>
 
 

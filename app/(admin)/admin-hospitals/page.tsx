@@ -201,7 +201,7 @@ export default function HospitalDirectoryPage() {
                             type="text"
                             placeholder="Tìm kiếm..."
                             aria-label="Search hospitals"
-                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#6324eb]"
+                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#0065FF]"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -209,7 +209,7 @@ export default function HospitalDirectoryPage() {
                     </div>
                     <button
                         onClick={openAddModal}
-                        className="bg-[#6324eb] text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-opacity-90 transition-all shadow-lg shadow-[#6324eb]/20"
+                        className="bg-[#0065FF] text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-opacity-90 transition-all shadow-lg shadow-[#0065FF]/20"
                     >
                         <Plus className="w-5 h-5" />
                         <span>Đăng ký Bệnh viện mới</span>
@@ -264,7 +264,7 @@ export default function HospitalDirectoryPage() {
                                 <tr key={hospital.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="size-10 rounded-lg bg-gray-100 flex items-center justify-center text-[#6324eb] overflow-hidden">
+                                            <div className="size-10 rounded-lg bg-blue-50 flex items-center justify-center text-[#0065FF] overflow-hidden">
                                                 <span className="material-symbols-outlined text-2xl">local_hospital</span>
                                             </div>
                                             <div className="flex flex-col">
@@ -340,7 +340,7 @@ export default function HospitalDirectoryPage() {
                                 <input
                                     id="hospital_name"
                                     required
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF]"
                                     value={currentHospital.hospital_name || ''}
                                     onChange={e => setCurrentHospital({ ...currentHospital, hospital_name: e.target.value })}
                                 />
@@ -349,7 +349,7 @@ export default function HospitalDirectoryPage() {
                                 <label htmlFor="license_number" className="text-sm font-medium text-gray-700">Số giấy phép</label>
                                 <input
                                     id="license_number"
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF]"
                                     value={currentHospital.license_number || ''}
                                     onChange={e => setCurrentHospital({ ...currentHospital, license_number: e.target.value })}
                                 />
@@ -369,7 +369,7 @@ export default function HospitalDirectoryPage() {
                                 <label htmlFor="hospital_address" className="text-sm font-medium text-gray-700">Địa chỉ chi tiết</label>
                                 <input
                                     id="hospital_address"
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb]"
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF]"
                                     value={currentHospital.hospital_address || ''}
                                     onChange={e => setCurrentHospital({ ...currentHospital, hospital_address: e.target.value })}
                                 />
@@ -381,14 +381,14 @@ export default function HospitalDirectoryPage() {
                                     id="is_verified"
                                     checked={currentHospital.is_verified || false}
                                     onChange={e => setCurrentHospital({ ...currentHospital, is_verified: e.target.checked })}
-                                    className="rounded border-gray-300 text-[#6324eb] focus:ring-[#6324eb]"
+                                    className="rounded border-gray-300 text-[#0065FF] focus:ring-[#0065FF]"
                                 />
                                 <label htmlFor="is_verified" className="text-sm font-medium text-gray-700">Đã xác minh</label>
                             </div>
 
                             <div className="pt-4 flex gap-3 justify-end">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg">Hủy bỏ</button>
-                                <button type="submit" disabled={isSaving} className="px-6 py-2 text-sm font-bold text-white bg-[#6324eb] hover:bg-[#501ac2] rounded-lg shadow-lg flex items-center gap-2">
+                                <button type="submit" disabled={isSaving} className="px-6 py-2 text-sm font-bold text-white bg-[#0065FF] hover:bg-[#0052cc] rounded-lg shadow-lg flex items-center gap-2">
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     {mode === 'add' ? 'Thêm mới' : 'Lưu thay đổi'}
                                 </button>

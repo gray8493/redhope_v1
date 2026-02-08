@@ -114,7 +114,7 @@ export default function AdminDashboard() {
                     { label: "Tổng người hiến", value: stats.donors, icon: Activity, trend: donorsTrend, color: "blue", sub: "Hoạt động" },
                     { label: "Bệnh viện", value: stats.hospitals, icon: Building2, sub: "Ổn định", color: "sky" },
                     { label: "Yêu cầu máu", value: stats.requests, icon: FileText, sub: "Đang chờ", color: "red" },
-                    { label: "Tổng quỹ điểm", value: `${(stats.points / 1000).toFixed(1)}K`, icon: Award, sub: "Tích lũy", color: "indigo" }
+                    { label: "Tổng quỹ điểm", value: `${(stats.points / 1000).toFixed(1)}K`, icon: Award, sub: "Tích lũy", color: "blue" }
                 ].map((item, i) => (
                     <Card key={i} className="border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-300 group overflow-hidden">
                         <CardContent className="p-6 relative">

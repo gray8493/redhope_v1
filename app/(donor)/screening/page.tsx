@@ -178,7 +178,7 @@ export default function ScreeningPage() {
         // but for a strict check, clearing on *start of survey* is better.
 
         if (!authLoading && profile && profile.is_verified !== true) {
-            alert("Vui lòng hoàn thành xác minh hồ sơ trước khi thực hiện sàng lọc y tế.");
+            toast.error("Vui lòng hoàn thành xác minh hồ sơ trước khi thực hiện sàng lọc y tế.");
             router.push("/complete-profile/verification");
         }
     }, [profile, authLoading, router]);
@@ -329,7 +329,7 @@ export default function ScreeningPage() {
                         {/* Nút quay về trang yêu cầu hiến máu */}
                         <button
                             onClick={() => router.push('/requests')}
-                            className="mb-6 flex items-center gap-2 text-slate-500 hover:text-[#0ea5e9] transition-colors group w-fit"
+                            className="mb-6 flex items-center gap-2 text-slate-500 hover:text-[#0065FF] transition-colors group w-fit"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -359,12 +359,12 @@ export default function ScreeningPage() {
                                 ].map((s, i) => (
                                     <div key={s.id} className="flex flex-col items-center group">
                                         <div className={`size-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm ${step === s.id
-                                            ? 'bg-[#0ea5e9] text-white scale-110 shadow-blue-500/25 ring-4 ring-blue-500/10'
+                                            ? 'bg-[#0065FF] text-white scale-110 shadow-blue-500/25 ring-4 ring-blue-500/10'
                                             : 'bg-white dark:bg-slate-800 text-slate-400 opacity-60'
                                             }`}>
                                             <s.icon className="size-6" />
                                         </div>
-                                        <span className={`mt-3 text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${step === s.id ? 'text-[#0ea5e9]' : 'text-slate-400'
+                                        <span className={`mt-3 text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${step === s.id ? 'text-[#0065FF]' : 'text-slate-400'
                                             }`}>
                                             {s.label}
                                         </span>
@@ -380,7 +380,7 @@ export default function ScreeningPage() {
                                 {/* PHẦN 1: KIỂM TRA NHANH CHỈ SỐ SỨC KHỎE */}
                                 <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-200/60 dark:border-slate-800 p-8 md:p-14">
                                     <div className="mb-14 flex items-center gap-6 border-b border-slate-100 dark:border-slate-800 pb-10">
-                                        <div className="size-16 rounded-[1.5rem] bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[#0ea5e9]">
+                                        <div className="size-16 rounded-[1.5rem] bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[#0065FF]">
                                             <Activity className="size-8" />
                                         </div>
                                         <div>
@@ -404,17 +404,17 @@ export default function ScreeningPage() {
                                                             key={opt.value}
                                                             onClick={() => handleAnswer(q.id, opt.value, opt.isRisk)}
                                                             className={`group relative p-6 rounded-3xl border-2 text-left transition-all duration-300 ${answers[q.id]?.value === opt.value
-                                                                ? 'border-[#0ea5e9] bg-blue-50/50 dark:bg-blue-500/5 ring-4 ring-blue-500/5'
+                                                                ? 'border-[#0065FF] bg-blue-50/50 dark:bg-blue-500/5 ring-4 ring-blue-500/5'
                                                                 : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900/50'
                                                                 }`}
                                                         >
                                                             <div className="flex items-center justify-between">
-                                                                <span className={`text-base font-bold transition-colors ${answers[q.id]?.value === opt.value ? 'text-[#0ea5e9]' : 'text-slate-600 dark:text-slate-400'
+                                                                <span className={`text-base font-bold transition-colors ${answers[q.id]?.value === opt.value ? 'text-[#0065FF]' : 'text-slate-600 dark:text-slate-400'
                                                                     }`}>
                                                                     {opt.label}
                                                                 </span>
                                                                 <div className={`size-6 rounded-full border-2 transition-all flex items-center justify-center ${answers[q.id]?.value === opt.value
-                                                                    ? 'border-[#0ea5e9] bg-[#0ea5e9]'
+                                                                    ? 'border-[#0065FF] bg-[#0065FF]'
                                                                     : 'border-slate-200 dark:border-slate-700'
                                                                     }`}>
                                                                     {answers[q.id]?.value === opt.value && <div className="size-2 rounded-full bg-white animate-in zoom-in" />}
@@ -451,7 +451,7 @@ export default function ScreeningPage() {
                                                 </div>
                                                 <div className="ml-0 md:ml-14">
                                                     <textarea
-                                                        className="w-full h-44 p-8 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-800 dark:text-white focus:border-[#0ea5e9] focus:ring-8 focus:ring-blue-500/5 transition-all outline-none font-medium resize-none text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-inner"
+                                                        className="w-full h-44 p-8 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-800 dark:text-white focus:border-[#0065FF] focus:ring-8 focus:ring-blue-500/5 transition-all outline-none font-medium resize-none text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-inner"
                                                         placeholder={q.placeholder}
                                                         value={answers[q.id]?.value || ""}
                                                         onChange={(e) => handleAnswer(q.id, e.target.value)}
@@ -481,7 +481,7 @@ export default function ScreeningPage() {
                                                 <p className="text-xl font-black uppercase tracking-tighter">Xác nhận & Phân tích AI</p>
                                                 <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Neural Engine 4.2</p>
                                             </div>
-                                            <div className="size-12 rounded-full bg-[#0ea5e9] flex items-center justify-center text-white group-hover:rotate-12 transition-transform">
+                                            <div className="size-12 rounded-full bg-[#0065FF] flex items-center justify-center text-white group-hover:rotate-12 transition-transform">
                                                 <BrainCircuit className="size-6" />
                                             </div>
                                         </div>
@@ -494,17 +494,17 @@ export default function ScreeningPage() {
                             <div className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border border-slate-200/60 dark:border-slate-800 p-16 md:p-24 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in-95 duration-700 relative overflow-hidden">
                                 {/* Scanline Effect */}
                                 <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
-                                    <div className="w-full h-1 bg-[#0ea5e9] absolute left-0 animate-scan pointer-events-none shadow-[0_0_20px_#0ea5e9]"></div>
+                                    <div className="w-full h-1 bg-[#0065FF] absolute left-0 animate-scan pointer-events-none shadow-[0_0_20px_#0065FF]"></div>
                                 </div>
 
                                 <div className="relative size-72 mb-16">
                                     {/* Outer Ring */}
                                     <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-slate-800 animate-[spin_10s_linear_infinite]" />
-                                    <div className="absolute inset-0 rounded-full border-t-2 border-[#0ea5e9] animate-spin shadow-[0_0_15px_rgba(14,165,233,0.3)]" />
+                                    <div className="absolute inset-0 rounded-full border-t-2 border-[#0065FF] animate-spin shadow-[0_0_15px_rgba(0,101,255,0.3)]" />
 
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="size-48 rounded-[2.5rem] bg-slate-50 dark:bg-slate-800 shadow-xl border border-white dark:border-slate-700 flex flex-col items-center justify-center backdrop-blur-md">
-                                            <BrainCircuit className="size-20 text-[#0ea5e9] animate-pulse" />
+                                            <BrainCircuit className="size-20 text-[#0065FF] animate-pulse" />
                                             <span className="text-xl font-bold text-slate-900 dark:text-white mt-2 tracking-tighter">{progress}%</span>
                                         </div>
                                     </div>
@@ -519,7 +519,7 @@ export default function ScreeningPage() {
                                     </div>
 
                                     <div className="flex flex-col items-center gap-4">
-                                        <div className="px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-[#0ea5e9] text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3">
+                                        <div className="px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-[#0065FF] text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3">
                                             <Loader2 className="size-4 animate-spin" />
                                             {progress < 30 ? 'Initial Screening' : progress < 60 ? 'Risk Pattern Matching' : progress < 90 ? 'Cross-Database Verification' : 'Generating Report'}
                                         </div>
@@ -564,10 +564,10 @@ export default function ScreeningPage() {
 
                                         <div className="flex flex-col items-center gap-2 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800 min-w-[200px]">
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Confidence Score</span>
-                                            <span className={`text-5xl font-black tracking-tighter ${aiResult.score > 80 ? 'text-emerald-500' : 'text-[#0ea5e9]'
+                                            <span className={`text-5xl font-black tracking-tighter ${aiResult.score > 80 ? 'text-emerald-500' : 'text-[#0065FF]'
                                                 }`}>{aiResult.score}%</span>
                                             <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-2 overflow-hidden">
-                                                <div className="h-full bg-[#0ea5e9] transition-all duration-1000" style={{ width: `${aiResult.score}%` }} />
+                                                <div className="h-full bg-[#0065FF] transition-all duration-1000" style={{ width: `${aiResult.score}%` }} />
                                             </div>
                                         </div>
                                     </div>
@@ -575,12 +575,12 @@ export default function ScreeningPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
                                         <div className="space-y-6">
                                             <h4 className="flex items-center gap-3 text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">
-                                                <Activity className="size-5 text-[#0ea5e9]" /> Khuyến nghị từ AI
+                                                <Activity className="size-5 text-[#0065FF]" /> Khuyến nghị từ AI
                                             </h4>
                                             <div className="space-y-4">
                                                 {aiResult.recommendations.map((rec, i) => (
                                                     <div key={i} className="flex gap-4 p-5 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100/50 dark:border-slate-800 font-medium text-slate-600 dark:text-slate-400">
-                                                        <div className="size-2 rounded-full bg-[#0ea5e9] mt-2 flex-none" />
+                                                        <div className="size-2 rounded-full bg-[#0065FF] mt-2 flex-none" />
                                                         {rec}
                                                     </div>
                                                 ))}
@@ -588,7 +588,7 @@ export default function ScreeningPage() {
                                         </div>
                                         <div className="space-y-6">
                                             <h4 className="flex items-center gap-3 text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">
-                                                <Shield className="size-5 text-[#0ea5e9]" /> Xác thực Y khoa
+                                                <Shield className="size-5 text-[#0065FF]" /> Xác thực Y khoa
                                             </h4>
                                             <div className="p-8 bg-blue-50/30 dark:bg-blue-500/5 border border-blue-100/50 dark:border-blue-500/10 rounded-3xl space-y-4">
                                                 <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
@@ -625,7 +625,7 @@ export default function ScreeningPage() {
                                                             localStorage.removeItem(`${userKey}_failed`);
                                                             router.push('/requests');
                                                         }}
-                                                        className="h-16 flex-1 bg-[#6324eb] text-white rounded-2xl font-black text-base uppercase tracking-widest hover:bg-[#501ac2] transition-all shadow-xl shadow-purple-500/20"
+                                                        className="h-16 flex-1 bg-[#0065FF] text-white rounded-2xl font-black text-base uppercase tracking-widest hover:bg-[#0052CC] transition-all shadow-xl shadow-blue-500/20"
                                                     >
                                                         Đăng ký chiến dịch ngay
                                                     </Button>

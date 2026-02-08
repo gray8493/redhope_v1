@@ -105,8 +105,8 @@ export default function TestNotificationPage() {
                 <div className="max-w-4xl mx-auto p-6 space-y-6">
                     <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-slate-200 dark:border-[#2d263d] p-6">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="size-12 rounded-full bg-[#6324eb]/10 flex items-center justify-center">
-                                <Bell className="w-6 h-6 text-[#6324eb]" />
+                            <div className="size-12 rounded-full bg-blue-600/10 flex items-center justify-center">
+                                <Bell className="w-6 h-6 text-blue-600" />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -148,7 +148,7 @@ export default function TestNotificationPage() {
                                     <button
                                         key={idx}
                                         onClick={() => applyTemplate(template)}
-                                        className="p-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-[#6324eb] hover:bg-[#6324eb]/5 transition-all text-left"
+                                        className="p-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-blue-600 hover:bg-blue-50/50 transition-all text-left"
                                     >
                                         <p className="font-bold text-sm text-slate-900 dark:text-white">
                                             {template.name}
@@ -172,7 +172,7 @@ export default function TestNotificationPage() {
                                     value={formData.userId}
                                     onChange={(e) => setFormData(prev => ({ ...prev, userId: e.target.value }))}
                                     placeholder="Nhập User ID nhận thông báo"
-                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#6324eb] focus:border-transparent outline-none"
+                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
                                 />
                             </div>
 
@@ -184,7 +184,7 @@ export default function TestNotificationPage() {
                                     type="text"
                                     value={formData.title}
                                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#6324eb] focus:border-transparent outline-none"
+                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
                                 />
                             </div>
 
@@ -196,7 +196,7 @@ export default function TestNotificationPage() {
                                     value={formData.content}
                                     onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                                     rows={3}
-                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#6324eb] focus:border-transparent outline-none"
+                                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
                                 />
                             </div>
 
@@ -208,7 +208,7 @@ export default function TestNotificationPage() {
                                     <select
                                         value={formData.action_type}
                                         onChange={(e) => setFormData(prev => ({ ...prev, action_type: e.target.value }))}
-                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#6324eb] focus:border-transparent outline-none"
+                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
                                     >
                                         <option value="view_campaign">view_campaign</option>
                                         <option value="view_appointment">view_appointment</option>
@@ -224,7 +224,7 @@ export default function TestNotificationPage() {
                                         type="text"
                                         value={formData.action_url}
                                         onChange={(e) => setFormData(prev => ({ ...prev, action_url: e.target.value }))}
-                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#6324eb] focus:border-transparent outline-none"
+                                        className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
                                     />
                                 </div>
                             </div>
@@ -232,7 +232,7 @@ export default function TestNotificationPage() {
                             <Button
                                 onClick={handleSendTest}
                                 disabled={isLoading || !formData.userId}
-                                className="w-full bg-[#6324eb] hover:bg-[#501ac2] text-white py-6 text-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isLoading ? (
                                     <>

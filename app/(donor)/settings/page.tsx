@@ -286,24 +286,24 @@ export default function SettingsPage() {
                         <div className="flex items-center space-x-8 mb-8 border-b border-slate-300 dark:border-slate-800">
                             <button
                                 onClick={() => setActiveTab('profile')}
-                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'profile' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-[#501ac2]'}`}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'profile' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-[#0052CC]'}`}
                             >
                                 Hồ sơ Cá nhân
-                                {activeTab === 'profile' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-full" />}
+                                {activeTab === 'profile' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0065FF] rounded-full" />}
                             </button>
                             <button
                                 onClick={() => setActiveTab('notifications')}
-                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'notifications' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-[#501ac2]'}`}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'notifications' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-[#0052CC]'}`}
                             >
                                 Thông báo
-                                {activeTab === 'notifications' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-full" />}
+                                {activeTab === 'notifications' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0065FF] rounded-full" />}
                             </button>
                             <button
                                 onClick={() => setActiveTab('security')}
-                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'security' ? 'text-[#6324eb]' : 'text-slate-500 hover:text-[#501ac2]'}`}
+                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'security' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-[#0052CC]'}`}
                             >
                                 Bảo mật
-                                {activeTab === 'security' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#6324eb] rounded-full" />}
+                                {activeTab === 'security' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0065FF] rounded-full" />}
                             </button>
                         </div>
 
@@ -312,7 +312,7 @@ export default function SettingsPage() {
                             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
                                 {/* Header Title */}
                                 <div className="flex items-center mb-8">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-[#6324eb] to-indigo-600 rounded-xl flex items-center justify-center text-white mr-4 shadow-lg shadow-[#6324eb]/20">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-[#0065FF] to-blue-600 rounded-xl flex items-center justify-center text-white mr-4 shadow-lg shadow-[#0065FF]/20">
                                         <User className="size-5" />
                                     </div>
                                     <h1 className="text-2xl font-bold tracking-tight">Hồ sơ & Thông tin</h1>
@@ -326,7 +326,7 @@ export default function SettingsPage() {
                                                 {avatar ? (
                                                     <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <span className="text-4xl font-black text-[#6324eb] opacity-50">
+                                                    <span className="text-4xl font-black text-[#0065FF] opacity-50">
                                                         {name ? name.charAt(0).toUpperCase() : 'U'}
                                                     </span>
                                                 )}
@@ -344,7 +344,7 @@ export default function SettingsPage() {
                                     <div className="text-center">
                                         <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2">{name || "Người dùng"}</h2>
                                         <div className="flex items-center justify-center gap-2 flex-wrap">
-                                            <span className="bg-[#6324eb]/10 text-[#6324eb] px-3 py-1 rounded-full text-xs font-bold border border-[#6324eb]/20">
+                                            <span className="bg-[#0065FF]/10 text-[#0065FF] px-3 py-1 rounded-full text-xs font-bold border border-[#0065FF]/20">
                                                 {user?.role === 'admin' ? "Quản trị viên" : "Người hiến máu"}
                                             </span>
                                             {bloodGroup && (
@@ -361,7 +361,7 @@ export default function SettingsPage() {
                                     {/* Personal Info */}
                                     <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                                         <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
-                                            <User className="text-[#6324eb] mr-2 size-5" />
+                                            <User className="text-[#0065FF] mr-2 size-5" />
                                             Thông tin cá nhân
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -370,7 +370,7 @@ export default function SettingsPage() {
                                                 <input
                                                     value={name}
                                                     onChange={(e) => setName(e.target.value)}
-                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                                     placeholder="Nhập họ tên đầy đủ"
                                                 />
                                             </div>
@@ -380,7 +380,7 @@ export default function SettingsPage() {
                                                     <select
                                                         value={gender}
                                                         onChange={(e) => setGender(e.target.value)}
-                                                        className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm appearance-none"
+                                                        className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm appearance-none"
                                                     >
                                                         <option value="Nam">Nam</option>
                                                         <option value="Nữ">Nữ</option>
@@ -394,7 +394,7 @@ export default function SettingsPage() {
                                                     type="date"
                                                     value={dob}
                                                     onChange={(e) => setDob(e.target.value)}
-                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                                 />
                                             </div>
                                             <div className="space-y-2">
@@ -402,7 +402,7 @@ export default function SettingsPage() {
                                                 <input
                                                     value={citizenId}
                                                     onChange={(e) => setCitizenId(e.target.value)}
-                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                                     placeholder="Số định danh cá nhân"
                                                 />
                                             </div>
@@ -412,7 +412,7 @@ export default function SettingsPage() {
                                     {/* Contact Info */}
                                     <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                                         <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
-                                            <Smartphone className="text-[#6324eb] mr-2 size-5" />
+                                            <Smartphone className="text-[#0065FF] mr-2 size-5" />
                                             Liên hệ & Sức khỏe
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -424,7 +424,7 @@ export default function SettingsPage() {
                                                         type="email"
                                                         value={email}
                                                         onChange={(e) => setEmail(e.target.value)}
-                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                                         placeholder="email@example.com"
                                                     />
                                                 </div>
@@ -437,7 +437,7 @@ export default function SettingsPage() {
                                                         type="tel"
                                                         value={phone}
                                                         onChange={(e) => setPhone(e.target.value)}
-                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                                         placeholder="0912..."
                                                     />
                                                 </div>
@@ -449,7 +449,7 @@ export default function SettingsPage() {
                                                     <select
                                                         value={bloodGroup}
                                                         onChange={(e) => setBloodGroup(e.target.value)}
-                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm appearance-none"
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm appearance-none"
                                                     >
                                                         <option value="">Chưa có thông tin</option>
                                                         {BLOOD_GROUPS.map(bg => <option key={bg} value={bg}>{bg}</option>)}
@@ -464,7 +464,7 @@ export default function SettingsPage() {
                                                         type="number"
                                                         value={weight}
                                                         onChange={(e) => setWeight(e.target.value)}
-                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                        className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                                         placeholder="KG"
                                                     />
                                                 </div>
@@ -474,7 +474,7 @@ export default function SettingsPage() {
                                                 <textarea
                                                     value={healthHistory}
                                                     onChange={(e) => setHealthHistory(e.target.value)}
-                                                    className="w-full px-6 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm resize-none"
+                                                    className="w-full px-6 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm resize-none"
                                                     rows={3}
                                                     placeholder="Ghi chú về tiền sử bệnh lý của bạn (nếu có)..."
                                                 />
@@ -485,7 +485,7 @@ export default function SettingsPage() {
                                     {/* Address */}
                                     <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                                         <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
-                                            <MapPin className="text-[#6324eb] mr-2 size-5" />
+                                            <MapPin className="text-[#0065FF] mr-2 size-5" />
                                             Địa chỉ liên lạc
                                         </h3>
                                         <div className="space-y-6">
@@ -501,7 +501,7 @@ export default function SettingsPage() {
                                                 <input
                                                     value={address}
                                                     onChange={(e) => setAddress(e.target.value)}
-                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                                     placeholder="Số nhà, tên đường..."
                                                 />
                                             </div>
@@ -513,7 +513,7 @@ export default function SettingsPage() {
                                         <button
                                             onClick={handleSave}
                                             disabled={isSaving || isUploading}
-                                            className={`bg-gradient-to-r from-[#6324eb] to-indigo-600 text-white px-12 py-4 rounded-full font-black text-base flex items-center space-x-3 transition-all shadow-2xl shadow-indigo-500/30 active:scale-95 ${isSaving || isUploading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
+                                            className={`bg-gradient-to-r from-[#0065FF] to-blue-600 text-white px-12 py-4 rounded-full font-black text-base flex items-center space-x-3 transition-all shadow-2xl shadow-blue-500/30 active:scale-95 ${isSaving || isUploading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
                                         >
                                             <Save className={`size-5 ${isSaving || isUploading ? 'animate-spin' : ''}`} />
                                             <span>{isUploading ? "Đang tải ảnh..." : (isSaving ? "Đang lưu..." : "Lưu thay đổi hồ sơ")}</span>
@@ -527,7 +527,7 @@ export default function SettingsPage() {
                         {activeTab === 'notifications' && (
                             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="flex items-center">
-                                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-[#6324eb] mr-4">
+                                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-[#0065FF] mr-4">
                                         <Bell className="size-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold tracking-tight">Cấu hình Thông báo</h2>
@@ -537,7 +537,7 @@ export default function SettingsPage() {
                                     {/* Push Notification Section */}
                                     <div className="mb-6">
                                         <h3 className="text-lg font-black mb-4 flex items-center text-slate-800 dark:text-white">
-                                            <Bell className="text-[#6324eb] mr-2 size-5" />
+                                            <Bell className="text-[#0065FF] mr-2 size-5" />
                                             Thông báo đẩy (Push)
                                         </h3>
                                         <PushNotificationToggle />
@@ -546,14 +546,14 @@ export default function SettingsPage() {
                                     <div className="h-px bg-slate-200 dark:bg-slate-700 my-6"></div>
 
                                     <h3 className="text-lg font-black mb-4 flex items-center text-slate-800 dark:text-white">
-                                        <Mail className="text-indigo-500 mr-2 size-5" />
+                                        <Mail className="text-blue-500 mr-2 size-5" />
                                         Cài đặt Email & SMS
                                     </h3>
 
                                     <div className="p-8 bg-slate-50 dark:bg-slate-800/20 rounded-3xl border border-slate-300 dark:border-slate-800">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-start gap-5">
-                                                <div className="size-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[#6324eb] shrink-0">
+                                                <div className="size-12 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-[#0065FF] shrink-0">
                                                     <Mail className="size-6" />
                                                 </div>
                                                 <div>
@@ -563,7 +563,7 @@ export default function SettingsPage() {
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input type="checkbox" className="sr-only peer" defaultChecked />
-                                                <div className="w-14 h-8 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-[#6324eb]"></div>
+                                                <div className="w-14 h-8 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-[#0065FF]"></div>
                                             </label>
                                         </div>
                                     </div>
@@ -581,13 +581,13 @@ export default function SettingsPage() {
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input type="checkbox" className="sr-only peer" defaultChecked />
-                                                <div className="w-14 h-8 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-[#6324eb]"></div>
+                                                <div className="w-14 h-8 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-[#0065FF]"></div>
                                             </label>
                                         </div>
                                     </div>
 
                                     <div className="flex justify-end pt-4">
-                                        <button className="bg-[#6324eb] text-white px-10 py-4 rounded-full font-black text-base shadow-2xl shadow-[#6324eb]/20 active:scale-95 transition-all hover:-translate-y-1">
+                                        <button className="bg-[#0065FF] text-white px-10 py-4 rounded-full font-black text-base shadow-2xl shadow-[#0065FF]/20 active:scale-95 transition-all hover:-translate-y-1">
                                             Lưu cấu hình
                                         </button>
                                     </div>
@@ -614,12 +614,12 @@ export default function SettingsPage() {
                                                     type={showPassword ? "text" : "password"}
                                                     value={currentPassword}
                                                     onChange={(e) => setCurrentPassword(e.target.value)}
-                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                    className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                                     placeholder="••••••••"
                                                 />
                                                 <button
                                                     onClick={() => setShowPassword(!showPassword)}
-                                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#6324eb]"
+                                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0065FF]"
                                                 >
                                                     {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                                                 </button>
@@ -632,7 +632,7 @@ export default function SettingsPage() {
                                                 type="password"
                                                 value={newPassword}
                                                 onChange={(e) => setNewPassword(e.target.value)}
-                                                className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                                 placeholder="Ít nhất 6 ký tự"
                                             />
                                         </div>
@@ -643,7 +643,7 @@ export default function SettingsPage() {
                                                 type="password"
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                                className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#6324eb]/10 focus:border-[#6324eb] outline-none transition-all font-bold text-sm"
+                                                className="w-full px-6 py-3.5 rounded-full border border-slate-400 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                                 placeholder="Gõ lại mật khẩu mới"
                                             />
                                         </div>

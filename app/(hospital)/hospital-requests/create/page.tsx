@@ -74,7 +74,7 @@ const TimeInput = ({ value, onChange }: { value: string, onChange: (val: string)
     };
 
     return (
-        <div className="flex items-center justify-center gap-1.5 h-10 w-24 rounded-2xl border border-slate-300 bg-white focus-within:border-[#6D28D9] focus-within:ring-2 focus-within:ring-[#6D28D9]/5 transition-all outline-none">
+        <div className="flex items-center justify-center gap-1.5 h-10 w-24 rounded-2xl border border-slate-300 bg-white focus-within:border-[#0065FF] focus-within:ring-2 focus-within:ring-[#0065FF]/5 transition-all outline-none">
             <input
                 type="text"
                 maxLength={2}
@@ -101,7 +101,7 @@ const TEMPLATES = [
     {
         id: "emergency",
         name: "Khẩn cấp",
-        color: "bg-indigo-500",
+        color: "bg-blue-500",
         data: {
             name: "Yêu cầu Máu Khẩn cấp - Tai nạn liên hoàn",
             org: "Bệnh viện Chợ Rẫy",
@@ -246,7 +246,7 @@ export default function CreateRequestPage() {
             toast.success("Tải ảnh thành công", { id: loadingToast });
         } catch (error: any) {
             console.error("Upload failed:", error);
-            toast.error("Lỗi tải ảnh: " + (error.message || "Không xác định"), { id: loadingToast });
+            toast.error("Lỗi hệ thống: " + (error.message || "Không xác định"), { id: loadingToast });
             // Keep the base64 preview so the user doesn't lose context, 
             // but know that it might fail to save if too large.
         }
@@ -272,14 +272,14 @@ export default function CreateRequestPage() {
 
         if (!isDraft) {
             if (!campaignName || !location || !selectedDate || pTargetAmount <= 0) {
-                alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
+                toast.error("Vui lòng nhập đầy đủ các thông tin bắt buộc (*)");
                 return;
             }
         }
 
         try {
             if (!user) {
-                alert("Vui lòng đăng nhập tài khoản bệnh viện!");
+                toast.error("Vui lòng đăng nhập tài khoản bệnh viện!");
                 router.push('/login');
                 return;
             }
@@ -343,7 +343,7 @@ export default function CreateRequestPage() {
                 } catch (e) {
                     // Ignore quota exceeded error
                 }
-                alert("Cập nhật chiến dịch thành công!");
+                toast.success("Cập nhật chiến dịch thành công!");
             } else {
                 await campaignService.createCampaign(payload);
                 try {
@@ -351,17 +351,17 @@ export default function CreateRequestPage() {
                 } catch (e) {
                     // Ignore quota exceeded error
                 }
-                alert("Tạo chiến dịch mới thành công!");
+                toast.success("Tạo chiến dịch mới thành công!");
             }
 
             router.push("/hospital-campaign"); // Redirect to campaign list
         } catch (error: any) {
             console.error("Failed to create campaign:", error);
             if (error.code === '23503' || error.message?.includes('foreign key constraint')) {
-                alert("Lỗi: Hồ sơ bệnh viện chưa tồn tại hoặc chưa đầy đủ. Vui lòng vào phần Cài đặt -> Hồ sơ và nhấn 'Lưu thay đổi' để cập nhật thông tin hệ thống.");
+                toast.error("Lỗi: Hồ sơ bệnh viện chưa tồn tại hoặc chưa đầy đủ. Vui lòng vào phần Cài đặt -> Hồ sơ và nhấn 'Lưu thay đổi' để cập nhật thông tin hệ thống.");
                 router.push("/hospital/settings");
             } else {
-                alert(`Lỗi khi tạo chiến dịch: ${error.message || "Vui lòng thử lại"}`);
+                toast.error(`Lỗi khi tạo chiến dịch: ${error.message || "Vui lòng thử lại"}`);
             }
         }
     };
@@ -389,7 +389,7 @@ export default function CreateRequestPage() {
                     {/* Header Section */}
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-2">
                         <div className="flex flex-col gap-1">
-                            <h1 className="text-slate-900 text-3xl font-black tracking-tight">Tạo Yêu cầu <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6]">Máu Mới</span></h1>
+                            <h1 className="text-slate-900 text-3xl font-black tracking-tight">Tạo Yêu cầu <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0065FF] to-blue-600">Máu Mới</span></h1>
                             <p className="text-slate-500 text-sm font-medium">Hệ thống AI sẽ tự động điều phối tới người hiến tiềm năng nhất.</p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -398,7 +398,7 @@ export default function CreateRequestPage() {
                                 <button
                                     key={t.id}
                                     onClick={() => applyTemplate(t.data)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-full text-[12px] font-bold text-slate-600 hover:border-[#6D28D9]/40 hover:text-[#6D28D9] transition-all shadow-sm"
+                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-full text-[12px] font-bold text-slate-600 hover:border-[#0065FF]/40 hover:text-[#0065FF] transition-all shadow-sm"
                                 >
                                     <span className={`size-2 rounded-full ${t.color}`}></span> {t.name}
                                 </button>
@@ -407,16 +407,16 @@ export default function CreateRequestPage() {
                     </div>
 
                     {/* Main Form Card */}
-                    <div className={`bg-white border rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] transition-all duration-500 ${isUrgent ? 'border-indigo-300 shadow-indigo-500/10' : 'border-slate-200'}`}>
+                    <div className={`bg-white border rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] transition-all duration-500 ${isUrgent ? 'border-blue-300 shadow-blue-500/10' : 'border-slate-200'}`}>
 
                         {/* Emergency Toggle Banner */}
-                        <div className={`mb-10 rounded-2xl p-5 flex items-center justify-between border transition-all ${isUrgent ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200/60'}`}>
+                        <div className={`mb-10 rounded-2xl p-5 flex items-center justify-between border transition-all ${isUrgent ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-200/60'}`}>
                             <div className="flex items-center gap-4">
-                                <div className={`size-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isUrgent ? 'bg-indigo-500 animate-pulse shadow-indigo-200' : 'bg-indigo-500 shadow-indigo-200'}`}>
+                                <div className={`size-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${isUrgent ? 'bg-blue-500 animate-pulse shadow-blue-200' : 'bg-blue-500 shadow-blue-200'}`}>
                                     <MaterialIcon name={isUrgent ? "priority_high" : "check"} className="font-black" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <p className={`text-sm font-black uppercase tracking-tight ${isUrgent ? 'text-indigo-600' : 'text-indigo-600'}`}>
+                                    <p className={`text-sm font-black uppercase tracking-tight ${isUrgent ? 'text-blue-600' : 'text-blue-600'}`}>
                                         Chế độ {isUrgent ? 'Khẩn cấp' : 'Tiêu chuẩn'}
                                     </p>
                                     <p className="text-slate-500 text-[13px] font-medium">
@@ -427,8 +427,8 @@ export default function CreateRequestPage() {
                             <button
                                 onClick={() => setIsUrgent(!isUrgent)}
                                 className={`px-6 py-2.5 rounded-full text-xs font-black transition-all border-2 active:scale-95 ${isUrgent
-                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-200'
-                                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600'}`}
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:border-blue-400 hover:text-blue-600'}`}
                             >
                                 {isUrgent ? 'Đang bật' : 'Bật KHẨN CẤP'}
                             </button>
@@ -437,16 +437,16 @@ export default function CreateRequestPage() {
                         {/* Section 1: Tổ chức */}
                         <section className="mb-12">
                             <div className="flex items-center gap-3 mb-8">
-                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">1</span>
+                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#0065FF] to-[#0052cc] text-white text-[12px] font-bold shadow-lg shrink-0">1</span>
                                 <h2 className="text-slate-900 text-lg font-black tracking-tight">Thông tin Tổ chức</h2>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-slate-700 text-[13px] font-bold ml-4">Tên Chiến dịch <span className="text-indigo-500">*</span></label>
+                                    <label className="text-slate-700 text-[13px] font-bold ml-4">Tên Chiến dịch <span className="text-blue-500">*</span></label>
                                     <input
                                         value={campaignName}
                                         onChange={(e) => setCampaignName(e.target.value)}
-                                        className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 transition-all px-6 outline-none shadow-sm"
+                                        className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#0065FF] focus:ring-4 focus:ring-[#0065FF]/5 transition-all px-6 outline-none shadow-sm"
                                         placeholder="Yêu cầu Máu Khẩn cấp..."
                                     />
                                 </div>
@@ -455,17 +455,17 @@ export default function CreateRequestPage() {
                                     <input
                                         value={mrn}
                                         onChange={(e) => setMrn(e.target.value)}
-                                        className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 transition-all px-6 outline-none shadow-sm"
+                                        className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#0065FF] focus:ring-4 focus:ring-[#0065FF]/5 transition-all px-6 outline-none shadow-sm"
                                         placeholder="Vd: EV-2024-001"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2 md:col-span-2">
-                                    <label className="text-slate-700 text-[13px] font-bold ml-4">Đơn vị tiếp nhận <span className="text-indigo-500">*</span></label>
+                                    <label className="text-slate-700 text-[13px] font-bold ml-4">Đơn vị tiếp nhận <span className="text-blue-500">*</span></label>
                                     <div className="relative">
                                         <select
                                             value={organization}
                                             onChange={(e) => setOrganization(e.target.value)}
-                                            className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 transition-all px-6 outline-none appearance-none shadow-sm"
+                                            className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#0065FF] focus:ring-4 focus:ring-[#0065FF]/5 transition-all px-6 outline-none appearance-none shadow-sm"
                                         >
                                             <option>Bệnh viện Chợ Rẫy</option>
                                             <option>Cộng đồng (Công khai)</option>
@@ -481,7 +481,7 @@ export default function CreateRequestPage() {
                         {/* Section 2: Blood Requirements */}
                         <section className="mb-12">
                             <div className="flex items-center gap-3 mb-8">
-                                <span className="section-number flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">2</span>
+                                <span className="section-number flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#0065FF] to-[#0052cc] text-white text-[12px] font-bold shadow-lg shrink-0">2</span>
                                 <h2 className="text-slate-900 text-lg font-black tracking-tight">Yêu cầu về Máu</h2>
                             </div>
                             <div className="flex flex-col gap-8">
@@ -493,8 +493,8 @@ export default function CreateRequestPage() {
                                                 key={type}
                                                 onClick={() => toggleBloodType(type)}
                                                 className={`flex h-11 items-center justify-center rounded-full border text-xs font-bold transition-all duration-300 ${selectedBloodTypes.includes(type)
-                                                    ? 'bg-[#F5F3FF] border-[#6D28D9] text-[#6D28D9] shadow-lg shadow-[#6D28D9]/10 scale-105 border-2'
-                                                    : 'bg-white border-slate-300 text-slate-500 hover:border-[#6D28D9]/30 hover:bg-[#F5F3FF]/30 hover:text-[#6D28D9]'
+                                                    ? 'bg-blue-50 border-[#0065FF] text-[#0065FF] shadow-lg shadow-blue-500/10 scale-105 border-2'
+                                                    : 'bg-white border-slate-300 text-slate-500 hover:border-[#0065FF]/30 hover:bg-blue-50/30 hover:text-[#0065FF]'
                                                     }`}
                                             >
                                                 {type}
@@ -504,7 +504,7 @@ export default function CreateRequestPage() {
                                 </div>
 
                                 {/* Smart Insight AI Block - Re-designed to avoid overlap */}
-                                <div className="relative group overflow-hidden bg-gradient-to-br from-[#6D28D9] via-[#8B5CF6] to-[#7C3AED] rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-200/50">
+                                <div className="relative group overflow-hidden bg-gradient-to-br from-[#0065FF] via-blue-600 to-[#0052cc] rounded-[2rem] p-6 text-white shadow-xl shadow-blue-200/50">
                                     {/* AI Pattern Overlay */}
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                         <MaterialIcon name="neurology" className="text-8xl" />
@@ -512,7 +512,7 @@ export default function CreateRequestPage() {
 
                                     <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
                                         <div className="flex items-center gap-4 shrink-0 bg-white/10 backdrop-blur-md p-4 rounded-3xl border border-white/20">
-                                            <div className="size-12 bg-white rounded-2xl flex items-center justify-center text-[#6D28D9] shadow-inner">
+                                            <div className="size-12 bg-white rounded-2xl flex items-center justify-center text-[#0065FF] shadow-inner">
                                                 <MaterialIcon name="psychology" className="text-[28px] fill-1" />
                                             </div>
                                             <div className="text-left">
@@ -568,12 +568,12 @@ export default function CreateRequestPage() {
                                                 setLastChanged('count');
                                                 setTargetCount(val);
                                             }}
-                                            className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-6 outline-none shadow-sm"
+                                            className="rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#0065FF] focus:ring-4 focus:ring-[#0065FF]/5 px-6 outline-none shadow-sm"
                                             placeholder="Vd: 63"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-slate-700 text-[13px] font-bold ml-4">Mục tiêu (Đơn vị) <span className="text-indigo-500">*</span></label>
+                                        <label className="text-slate-700 text-[13px] font-bold ml-4">Mục tiêu (Đơn vị) <span className="text-blue-500">*</span></label>
                                         <div className="relative">
                                             <input
                                                 type="number"
@@ -583,7 +583,7 @@ export default function CreateRequestPage() {
                                                     setLastChanged('amount');
                                                     setTargetAmount(val);
                                                 }}
-                                                className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 pl-6 pr-16 outline-none shadow-sm"
+                                                className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#0065FF] focus:ring-4 focus:ring-[#0065FF]/5 pl-6 pr-16 outline-none shadow-sm"
                                                 placeholder="50"
                                             />
                                             <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-black uppercase tracking-widest">Đơn vị</span>
@@ -596,7 +596,7 @@ export default function CreateRequestPage() {
                         {/* Section 3: Logistics */}
                         <section className="mb-12">
                             <div className="flex items-center gap-3 mb-8">
-                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">3</span>
+                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#0065FF] to-[#0052cc] text-white text-[12px] font-bold shadow-lg shrink-0">3</span>
                                 <h2 className="text-slate-900 text-lg font-black tracking-tight">Địa điểm & Hậu cần</h2>
                             </div>
                             <div className="flex flex-col gap-8">
@@ -616,7 +616,7 @@ export default function CreateRequestPage() {
                                             <input
                                                 value={location}
                                                 onChange={(e) => setLocation(e.target.value)}
-                                                className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 pl-12 pr-6 outline-none shadow-sm"
+                                                className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#0065FF] focus:ring-4 focus:ring-[#0065FF]/5 pl-12 pr-6 outline-none shadow-sm"
                                                 placeholder="Khoa Cấp cứu - BV Chợ Rẫy"
                                             />
                                         </div>
@@ -629,7 +629,7 @@ export default function CreateRequestPage() {
                                                 <select
                                                     value={radius}
                                                     onChange={(e) => setRadius(e.target.value)}
-                                                    className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-6 outline-none appearance-none shadow-sm"
+                                                    className="w-full rounded-full h-12 text-sm border border-slate-300 bg-white focus:border-[#0065FF] focus:ring-4 focus:ring-[#0065FF]/5 px-6 outline-none appearance-none shadow-sm"
                                                 >
                                                     <option>5km (Lân cận)</option>
                                                     <option>10km (Toàn thành phố)</option>
@@ -651,21 +651,21 @@ export default function CreateRequestPage() {
 
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="relative">
-                                            <span className="absolute -inset-8 bg-indigo-500/20 rounded-full animate-ping"></span>
-                                            <MaterialIcon name="location_on" className="text-indigo-500 text-6xl drop-shadow-[0_0_15px_rgba(99,102,241,0.5)] fill-1 z-10" />
+                                            <span className="absolute -inset-8 bg-blue-500/20 rounded-full animate-ping"></span>
+                                            <MaterialIcon name="location_on" className="text-blue-500 text-6xl drop-shadow-[0_0_15px_rgba(0,101,255,0.5)] fill-1 z-10" />
                                         </div>
                                     </div>
 
                                     {/* Glass Info Card - Repositioned for visibility */}
                                     <div className="absolute bottom-6 left-6 right-6 bg-white/80 backdrop-blur-xl p-5 rounded-3xl shadow-2xl border border-white/50 max-w-[360px] animate-in fade-in slide-in-from-bottom-4 duration-700">
                                         <div className="flex items-center gap-4">
-                                            <div className="bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] p-3 rounded-2xl text-white shadow-lg shadow-indigo-200">
+                                            <div className="bg-gradient-to-br from-[#0065FF] to-[#0052cc] p-3 rounded-2xl text-white shadow-lg shadow-blue-200">
                                                 <MaterialIcon name="local_hospital" className="text-[22px] fill-1" />
                                             </div>
                                             <div className="overflow-hidden text-left">
                                                 <p className="text-slate-900 font-extrabold text-[15px] truncate tracking-tight">{profile?.hospital_name || "Bệnh viện Đã Chọn"}</p>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <MaterialIcon name="pin_drop" className="text-[12px] text-indigo-500" />
+                                                    <MaterialIcon name="pin_drop" className="text-[12px] text-blue-500" />
                                                     <p className="text-slate-500 text-[11px] font-bold truncate tracking-wide">
                                                         {district ? `${district}, ${city}` : "Vị trí tiếp nhận đã xác minh"}
                                                     </p>
@@ -680,7 +680,7 @@ export default function CreateRequestPage() {
                                         <label className="text-slate-700 text-[13px] font-bold ml-4">Ngày diễn ra</label>
                                         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                                             <PopoverTrigger asChild>
-                                                <button className="flex w-full items-center justify-between rounded-full h-12 text-sm border border-slate-300/80 bg-white focus:border-[#6D28D9] focus:ring-4 focus:ring-[#6D28D9]/5 px-6 outline-none transition-all text-left shadow-sm">
+                                                <button className="flex w-full items-center justify-between rounded-full h-12 text-sm border border-slate-300/80 bg-white focus:border-[#0065FF] focus:ring-4 focus:ring-[#0065FF]/5 px-6 outline-none transition-all text-left shadow-sm">
                                                     <span className={selectedDate ? "font-bold" : "text-slate-400"}>
                                                         {selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: vi }) : "Chọn ngày..."}
                                                     </span>
@@ -721,7 +721,7 @@ export default function CreateRequestPage() {
                         {/* Section 4: Image */}
                         <section className="mb-12">
                             <div className="flex items-center gap-3 mb-8">
-                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">4</span>
+                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#0065FF] to-[#0052cc] text-white text-[12px] font-bold shadow-lg shrink-0">4</span>
                                 <h2 className="text-slate-900 text-lg font-black tracking-tight">Hình ảnh hiển thị</h2>
                             </div>
                             <div className="flex flex-col gap-4">
@@ -745,7 +745,7 @@ export default function CreateRequestPage() {
                                         onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
                                         onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
                                         onDrop={handleFileDrop}
-                                        className={`w-full h-64 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group ${image ? 'border-transparent' : isDragging ? 'border-[#6D28D9] bg-[#F5F3FF]' : 'border-slate-300 hover:border-[#6D28D9] hover:bg-slate-50'}`}
+                                        className={`w-full h-64 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group ${image ? 'border-transparent' : isDragging ? 'border-[#0065FF] bg-blue-50' : 'border-slate-300 hover:border-[#0065FF] hover:bg-slate-50'}`}
                                     >
                                         {image ? (
                                             <>
@@ -758,10 +758,10 @@ export default function CreateRequestPage() {
                                             </>
                                         ) : (
                                             <div className="flex flex-col items-center gap-3 text-slate-400">
-                                                <div className={`size-16 rounded-full flex items-center justify-center transition-colors ${isDragging ? 'bg-[#6D28D9]/10 text-[#6D28D9]' : 'bg-slate-100'}`}>
+                                                <div className={`size-16 rounded-full flex items-center justify-center transition-colors ${isDragging ? 'bg-[#0065FF]/10 text-[#0065FF]' : 'bg-slate-100'}`}>
                                                     <MaterialIcon name="add_photo_alternate" className="text-3xl" />
                                                 </div>
-                                                <p className={`text-sm font-bold ${isDragging ? 'text-[#6D28D9]' : ''}`}>{isDragging ? 'Thả file để tải lên' : 'Nhấn để tải ảnh lên'}</p>
+                                                <p className={`text-sm font-bold ${isDragging ? 'text-[#0065FF]' : ''}`}>{isDragging ? 'Thả file để tải lên' : 'Nhấn để tải ảnh lên'}</p>
                                                 <p className="text-xs">Hoặc kéo thả file vào đây (PNG, JPG)</p>
                                             </div>
                                         )}
@@ -788,7 +788,7 @@ export default function CreateRequestPage() {
                         {/* Section 5: Description */}
                         <section className="mb-10">
                             <div className="flex items-center gap-3 mb-8">
-                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#6D28D9] to-[#8B5CF6] text-white text-[12px] font-bold shadow-lg shrink-0">5</span>
+                                <span className="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-[#0065FF] to-[#0052cc] text-white text-[12px] font-bold shadow-lg shrink-0">5</span>
                                 <h2 className="text-slate-900 text-lg font-black tracking-tight">Chi tiết Chiến dịch</h2>
                             </div>
                             <div className="flex flex-col gap-2">
@@ -810,8 +810,8 @@ export default function CreateRequestPage() {
                             <button
                                 onClick={() => handleCreate(false)}
                                 className={`w-full sm:flex-[2] h-15 h-14 rounded-full font-black text-base shadow-2xl transition-all flex items-center justify-center gap-3 group active:scale-95 ${isUrgent
-                                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-indigo-500/30 hover:shadow-indigo-500/50'
-                                    : 'bg-gradient-to-r from-[#6D28D9] to-[#8B5CF6] text-white shadow-indigo-500/30 hover:shadow-indigo-500/50'}`}
+                                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-blue-500/30 hover:shadow-blue-500/50'
+                                    : 'bg-gradient-to-r from-[#0065FF] to-blue-400 text-white shadow-blue-500/30 hover:shadow-blue-500/50'}`}
                             >
                                 <MaterialIcon name="send" className="text-[20px] group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                                 Đăng Yêu cầu {isUrgent ? 'KHẨN CẤP' : 'Công khai'}
@@ -830,8 +830,8 @@ export default function CreateRequestPage() {
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-4 pb-14 border-t border-slate-100 pt-8">
                         <p className="text-[11px] text-slate-400 font-bold tracking-wide">© 2024 REDHOPE HEALTH SYSTEMS. BẢO MẬT CHUẨN AES-256.</p>
                         <div className="flex gap-8">
-                            <a className="text-[11px] text-slate-500 font-black hover:text-[#6D28D9] transition-all underline decoration-slate-200 underline-offset-4" href="#">Trung tâm Hướng dẫn</a>
-                            <a className="text-[11px] text-slate-500 font-black hover:text-[#6D28D9] transition-all underline decoration-slate-200 underline-offset-4" href="#">Yêu cầu Hỗ trợ</a>
+                            <a className="text-[11px] text-slate-500 font-black hover:text-[#0065FF] transition-all underline decoration-slate-200 underline-offset-4" href="#">Trung tâm Hướng dẫn</a>
+                            <a className="text-[11px] text-slate-500 font-black hover:text-[#0065FF] transition-all underline decoration-slate-200 underline-offset-4" href="#">Yêu cầu Hỗ trợ</a>
                         </div>
                     </div>
                 </div>

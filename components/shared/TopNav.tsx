@@ -155,8 +155,8 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
     // Helper to get Icon and Color
     const getNotificationStyle = (n: any) => {
         let Icon = Bell;
-        let color = "text-[#6324eb]";
-        let bg = "bg-[#6324eb]/5";
+        let color = "text-[#0065FF]";
+        let bg = "bg-[#0065FF]/5";
 
         if (n.action_type === 'view_registrations' || n.title?.includes('đăng ký')) {
             Icon = Users;
@@ -164,8 +164,8 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
             bg = "bg-blue-50";
         } else if (n.action_type === 'view_campaign' || n.title?.includes('chiến dịch')) {
             Icon = LayoutGrid;
-            color = "text-indigo-600";
-            bg = "bg-indigo-50";
+            color = "text-blue-600";
+            bg = "bg-blue-50";
         } else if (n.action_type === 'view_appointment' || n.title?.includes('hẹn')) {
             Icon = Droplet;
             color = "text-rose-500";
@@ -286,8 +286,8 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                             data.type === 'feedback' ? Star :
                                 data.type === 'system' ? ShieldCheck :
                                     data.type === 'down' ? TrendingDown : Clock,
-                color: data.color || (userRole === 'hospital' ? "text-[#6324eb]" : "text-[#6324eb]"),
-                bg: data.bg || (userRole === 'hospital' ? "bg-indigo-50" : "bg-[#6324eb]/5")
+                color: data.color || (userRole === 'hospital' ? "text-[#0065FF]" : "text-[#0065FF]"),
+                bg: data.bg || (userRole === 'hospital' ? "bg-blue-50" : "bg-[#0065FF]/5")
             };
             setNotifications(prev => [newNoti, ...prev]);
         };
@@ -368,11 +368,11 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                 <div className="relative" ref={notiRef}>
                     <button
                         onClick={toggleNoti}
-                        className={`relative p-2 rounded-lg transition-all ${showNotifications ? 'bg-[#6324eb]/10 text-[#6324eb]' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                        className={`relative p-2 rounded-lg transition-all ${showNotifications ? 'bg-[#0065FF]/10 text-[#0065FF]' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                     >
                         <Bell className="w-5 h-5" />
                         {notifications.some(n => n.unread) && (
-                            <span className="absolute top-2 right-2 size-2 bg-[#6324eb] rounded-full ring-2 ring-white dark:ring-slate-900"></span>
+                            <span className="absolute top-2 right-2 size-2 bg-[#0065FF] rounded-full ring-2 ring-white dark:ring-slate-900"></span>
                         )}
                     </button>
 
@@ -381,7 +381,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                         <div className="absolute right-0 top-full mt-4 w-80 sm:w-96 bg-white dark:bg-[#1c162e] rounded-xl shadow-2xl border border-[#ebe7f3] dark:border-[#2d263d] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right">
                             <div className="p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] flex justify-between items-center bg-slate-50/50 dark:bg-[#251e36]/50">
                                 <h3 className="font-bold text-[#120e1b] dark:text-white">Thông báo</h3>
-                                <button onClick={markAllAsRead} className="text-xs font-bold text-[#6324eb] hover:underline">Đánh dấu đã đọc</button>
+                                <button onClick={markAllAsRead} className="text-xs font-bold text-[#0065FF] hover:underline">Đánh dấu đã đọc</button>
                             </div>
                             <div className="max-h-[400px] overflow-y-auto">
                                 {notifications.length > 0 ? (
@@ -389,7 +389,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                                         <div
                                             key={item.id}
                                             onClick={() => handleNotificationClick(item)}
-                                            className={`p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors cursor-pointer flex gap-3 ${item.unread ? 'bg-[#6324eb]/5' : ''}`}
+                                            className={`p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors cursor-pointer flex gap-3 ${item.unread ? 'bg-[#0065FF]/5' : ''}`}
                                         >
                                             <div className={`size-10 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0`}>
                                                 <item.icon className={`w-5 h-5 ${item.color}`} />
@@ -399,7 +399,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                                                 <p className="text-xs text-[#654d99] dark:text-[#a594c9] leading-relaxed mb-1">{item.desc}</p>
                                                 <p className="text-[10px] text-slate-400 font-medium">{item.time}</p>
                                             </div>
-                                            {item.unread && <div className={`size-2 rounded-full mt-1.5 ${userRole === 'hospital' ? 'bg-[#6324eb]' : 'bg-[#6324eb]'}`}></div>}
+                                            {item.unread && <div className={`size-2 rounded-full mt-1.5 ${userRole === 'hospital' ? 'bg-[#0065FF]' : 'bg-[#0065FF]'}`}></div>}
                                         </div>
                                     ))
                                 ) : (
@@ -412,7 +412,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                             <div className="p-3 text-center border-t border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36]">
                                 <Link
                                     href={userRole === 'admin' ? "/admin-notifications" : userRole === 'hospital' ? "/hospital-notifications" : "/notifications"}
-                                    className="text-sm font-bold text-[#6324eb] hover:underline block w-full"
+                                    className="text-sm font-bold text-[#0065FF] hover:underline block w-full"
                                 >
                                     Xem tất cả
                                 </Link>
@@ -434,11 +434,11 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                             <p className="text-xs text-slate-500">{displayRole}</p>
                         </div>
 
-                        <Avatar className={`size-10 border-2 transition-colors ${showUserMenu ? 'border-[#6324eb]' : 'border-emerald-500/20'}`}>
+                        <Avatar className={`size-10 border-2 transition-colors ${showUserMenu ? 'border-[#0065FF]' : 'border-emerald-500/20'}`}>
                             {avatarUrl ? (
                                 <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />
                             ) : null}
-                            <AvatarFallback className="bg-[#6324eb] text-white font-bold">{getInitials(displayName)}</AvatarFallback>
+                            <AvatarFallback className="bg-[#0065FF] text-white font-bold">{getInitials(displayName)}</AvatarFallback>
                         </Avatar>
                     </button>
 
@@ -475,7 +475,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                             <div className="p-2 border-t border-[#ebe7f3] dark:border-[#2d263d]">
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                                 >
                                     <LogOut className="w-4 h-4" /> Đăng xuất
                                 </button>

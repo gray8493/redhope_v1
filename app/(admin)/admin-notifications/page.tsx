@@ -82,7 +82,7 @@ export default function NotificationsPage() {
         }
         // Hoạt động của BỆNH VIỆN (Phát yêu cầu, tạo chiến dịch, duyệt/từ chối)
         if (['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(actionType)) {
-            return <div className="p-3 bg-indigo-100 text-[#6324eb] rounded-full"><LayoutGrid className="w-6 h-6" /></div>;
+            return <div className="p-3 bg-blue-100 text-[#0065FF] rounded-full"><LayoutGrid className="w-6 h-6" /></div>;
         }
 
         // Mặc định cho hệ thống
@@ -95,7 +95,7 @@ export default function NotificationsPage() {
             return <span className="px-2 py-0.5 bg-rose-100 text-rose-500 text-[10px] font-bold rounded uppercase tracking-wider">Người hiến</span>;
         }
         if (['view_campaign', 'campaign_approved', 'campaign_rejected'].includes(actionType)) {
-            return <span className="px-2 py-0.5 bg-indigo-100 text-[#6324eb] text-[10px] font-bold rounded uppercase tracking-wider">Bệnh viện</span>;
+            return <span className="px-2 py-0.5 bg-blue-100 text-[#0065FF] text-[10px] font-bold rounded uppercase tracking-wider">Bệnh viện</span>;
         }
         return <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase tracking-wider">Hệ thống</span>;
     };
@@ -111,7 +111,7 @@ export default function NotificationsPage() {
                     {unreadCount > 0 && (
                         <button
                             onClick={handleMarkAllRead}
-                            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1c162e] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-[#6324eb] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1c162e] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-[#0065FF] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                         >
                             <CheckCheck className="w-4 h-4" />
                             Đánh dấu tất cả đã đọc
@@ -126,13 +126,13 @@ export default function NotificationsPage() {
                     <div className="flex items-center bg-slate-200 dark:bg-slate-800 p-1 rounded-lg">
                         <button
                             onClick={() => setFilter('all')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filter === 'all' ? 'bg-white dark:bg-[#1c162e] text-[#6324eb] shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filter === 'all' ? 'bg-white dark:bg-[#1c162e] text-[#0065FF] shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
                         >
                             Tất cả
                         </button>
                         <button
                             onClick={() => setFilter('unread')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filter === 'unread' ? 'bg-white dark:bg-[#1c162e] text-[#6324eb] shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filter === 'unread' ? 'bg-white dark:bg-[#1c162e] text-[#0065FF] shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
                         >
                             Chưa đọc {unreadCount > 0 && `(${unreadCount})`}
                         </button>
@@ -144,7 +144,7 @@ export default function NotificationsPage() {
                             placeholder="Tìm kiếm thông báo..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#1c162e] border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent outline-none"
+                            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#1c162e] border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] focus:border-transparent outline-none"
                         />
                     </div>
                 </div>
@@ -153,7 +153,7 @@ export default function NotificationsPage() {
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                     {loading ? (
                         <div className="py-20 flex flex-col items-center justify-center text-slate-500">
-                            <Loader2 className="w-10 h-10 animate-spin mb-4 text-[#6324eb]" />
+                            <Loader2 className="w-10 h-10 animate-spin mb-4 text-[#0065FF]" />
                             <p className="font-medium">Đang tải thông báo...</p>
                         </div>
                     ) : filteredNotifications.length > 0 ? (
@@ -161,7 +161,7 @@ export default function NotificationsPage() {
                             <div
                                 key={notif.id}
                                 onClick={() => handleMarkAsRead(notif)}
-                                className={`group p-6 flex gap-5 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-[#251e36] ${!notif.is_read ? 'bg-purple-50/40 dark:bg-[#251e36]/40' : 'bg-white dark:bg-[#1c162e]'}`}
+                                className={`group p-6 flex gap-5 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-[#251e36] ${!notif.is_read ? 'bg-blue-50/40 dark:bg-[#251e36]/40' : 'bg-white dark:bg-[#1c162e]'}`}
                             >
                                 <div className="shrink-0 mt-1">
                                     {getIconByType(notif.action_type || '')}
@@ -172,7 +172,7 @@ export default function NotificationsPage() {
                                             {getCategoryBadge(notif.action_type || '')}
                                             <h3 className={`text-base font-bold truncate ${!notif.is_read ? 'text-[#1d1d1f] dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
                                                 {notif.title}
-                                                {!notif.is_read && <span className="ml-2 inline-block w-2 h-2 bg-[#6324eb] rounded-full align-middle"></span>}
+                                                {!notif.is_read && <span className="ml-2 inline-block w-2 h-2 bg-[#0065FF] rounded-full align-middle"></span>}
                                             </h3>
                                         </div>
                                         <span className="text-xs text-slate-400 font-medium whitespace-nowrap ml-4">
@@ -201,7 +201,7 @@ export default function NotificationsPage() {
                 {/* Pagination / Footer */}
                 {filteredNotifications.length > 0 && (
                     <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#251e36]/50 text-center">
-                        <button className="text-sm font-bold text-slate-500 hover:text-[#6324eb] transition-colors">
+                        <button className="text-sm font-bold text-slate-500 hover:text-[#0065FF] transition-colors">
                             Tải thêm thông báo cũ hơn
                         </button>
                     </div>

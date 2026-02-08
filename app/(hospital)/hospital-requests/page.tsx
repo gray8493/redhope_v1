@@ -14,7 +14,7 @@ export default function HospitalRequestsPage() {
     return (
         <div className="flex-1 flex items-center justify-center min-h-screen">
             <div className="text-center">
-                <div className="loading w-8 h-8 text-[#6324eb] mx-auto mb-4"></div>
+                <div className="loading w-8 h-8 text-[#0065FF] mx-auto mb-4"></div>
                 <p className="text-slate-500">Đang chuyển hướng...</p>
             </div>
         </div>

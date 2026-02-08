@@ -81,8 +81,8 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
           category = "Người hiến";
         } else if (isHospitalRelated) {
           Icon = LayoutGrid;
-          color = "text-indigo-600";
-          bg = "bg-indigo-100";
+          color = "text-blue-600";
+          bg = "bg-blue-100";
           category = "Bệnh viện";
         } else if (n.title.includes('Cảnh báo') || n.title.includes('⚠️')) {
           Icon = AlertTriangle;
@@ -147,8 +147,8 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
           category = "Người hiến";
         } else if (isHospitalRelated) {
           Icon = LayoutGrid;
-          color = "text-indigo-600";
-          bg = "bg-indigo-100";
+          color = "text-blue-600";
+          bg = "bg-blue-100";
           category = "Bệnh viện";
         }
 
@@ -238,7 +238,7 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
         <div className="relative" ref={notificationRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className={`p-2 rounded-lg transition-all relative ${showNotifications ? 'bg-slate-100 text-[#6324eb]' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+            className={`p-2 rounded-lg transition-all relative ${showNotifications ? 'bg-slate-100 text-[#0065FF]' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
@@ -252,7 +252,7 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
               <div className="p-4 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-[#1c162e]">
                 <h3 className="font-bold text-base text-[#120e1b] dark:text-white">Thông báo</h3>
                 {unreadCount > 0 && (
-                  <button onClick={handleMarkAllRead} className="text-xs font-bold text-[#6324eb] hover:bg-[#6324eb]/10 px-2 py-1 rounded transition-colors">
+                  <button onClick={handleMarkAllRead} className="text-xs font-bold text-[#0065FF] hover:bg-[#0065FF]/10 px-2 py-1 rounded transition-colors">
                     Đánh dấu đã đọc
                   </button>
                 )}
@@ -271,7 +271,7 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
                       <div className="flex-1">
                         <div className="flex flex-col gap-0.5 mb-1">
                           <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded w-fit ${notif.category === 'Người hiến' ? 'bg-rose-50 text-rose-500' :
-                            notif.category === 'Bệnh viện' ? 'bg-indigo-50 text-indigo-600' :
+                            notif.category === 'Bệnh viện' ? 'bg-blue-50 text-blue-600' :
                               'bg-slate-50 text-slate-500'
                             }`}>
                             {notif.category}
@@ -292,7 +292,7 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
               <div className="p-2 border-t border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-[#251e36]/50">
                 <Link
                   href={userRole === 'hospital' ? "/hospital-notifications" : "/admin-notifications"}
-                  className="block w-full text-center py-2 text-xs font-bold text-[#6324eb] hover:bg-[#6324eb]/5 rounded-lg transition-colors"
+                  className="block w-full text-center py-2 text-xs font-bold text-[#0065FF] hover:bg-[#0065FF]/5 rounded-lg transition-colors"
                 >
                   Xem tất cả
                 </Link>
@@ -311,12 +311,12 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
           >
             <div className="text-right hidden sm:block">
               <p className="text-sm font-bold text-slate-900 dark:text-white">{displayName}</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#6324eb]">{displayRole}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#0065FF]">{displayRole}</p>
             </div>
 
-            <Avatar className={`size-10 border-2 transition-colors ${showUserMenu ? 'border-[#6324eb]' : 'border-emerald-500/20'}`}>
+            <Avatar className={`size-10 border-2 transition-colors ${showUserMenu ? 'border-[#0065FF]' : 'border-emerald-500/20'}`}>
               {userProfile?.avatar_url && <AvatarImage src={userProfile.avatar_url} alt={displayName} className="object-cover" />}
-              <AvatarFallback className="bg-gradient-to-br from-[#6324eb] to-[#501ac2] text-white font-bold">{getInitials(displayName)}</AvatarFallback>
+              <AvatarFallback className="bg-gradient-to-br from-[#0065FF] to-[#0052cc] text-white font-bold">{getInitials(displayName)}</AvatarFallback>
             </Avatar>
           </button>
 

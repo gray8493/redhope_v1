@@ -36,8 +36,8 @@ export default function NotificationsPage() {
 
                 if (n.action_type === 'view_campaign' || n.title.includes('chiến dịch')) {
                     Icon = AlertCircle;
-                    color = "text-[#6324eb]";
-                    bg = "bg-[#6324eb]/5";
+                    color = "text-blue-600";
+                    bg = "bg-blue-50";
                 } else if (n.action_type === 'view_registrations' || n.title.includes('đăng ký')) {
                     Icon = Users;
                     color = "text-blue-500";
@@ -119,7 +119,7 @@ export default function NotificationsPage() {
                             <ArrowLeft className="w-6 h-6 text-slate-700 dark:text-slate-300" />
                         </Link>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <Bell className="w-6 h-6 text-[#6324eb]" />
+                            <Bell className="w-6 h-6 text-blue-600" />
                             Tất cả thông báo
                         </h1>
                     </div>
@@ -129,13 +129,13 @@ export default function NotificationsPage() {
                         <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                             <button
                                 onClick={() => setFilter('all')}
-                                className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filter === 'all' ? 'bg-white dark:bg-[#1c162e] text-[#6324eb] shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                                className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filter === 'all' ? 'bg-white dark:bg-[#1c162e] text-blue-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
                             >
                                 Tất cả
                             </button>
                             <button
                                 onClick={() => setFilter('unread')}
-                                className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filter === 'unread' ? 'bg-white dark:bg-[#1c162e] text-[#6324eb] shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                                className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${filter === 'unread' ? 'bg-white dark:bg-[#1c162e] text-blue-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
                             >
                                 Chưa đọc ({notifications.filter(n => n.unread).length})
                             </button>
@@ -148,7 +148,7 @@ export default function NotificationsPage() {
                                 placeholder="Tìm kiếm thông báo..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-[#6324eb] focus:border-transparent outline-none"
+                                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
                             />
                         </div>
                     </div>
@@ -168,7 +168,7 @@ export default function NotificationsPage() {
                                     <div
                                         key={item.id}
                                         onClick={() => handleNotificationClick(item)}
-                                        className={`p-6 hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors flex gap-4 cursor-pointer ${item.unread ? 'bg-[#6324eb]/5' : ''}`}
+                                        className={`p-6 hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors flex gap-4 cursor-pointer ${item.unread ? 'bg-blue-600/5' : ''}`}
                                     >
                                         <div className={`size-12 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0`}>
                                             <item.icon className={`w-6 h-6 ${item.color}`} />
@@ -182,7 +182,7 @@ export default function NotificationsPage() {
                                             </div>
                                             <p className="text-sm text-slate-600 dark:text-[#a594c9] leading-relaxed">{item.desc}</p>
                                         </div>
-                                        {item.unread && <div className="self-center"><div className="size-3 rounded-full bg-[#6324eb]"></div></div>}
+                                        {item.unread && <div className="self-center"><div className="size-3 rounded-full bg-blue-600"></div></div>}
                                     </div>
                                 ))}
                             </div>

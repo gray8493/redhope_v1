@@ -24,7 +24,7 @@ export default function ReportsPage() {
 
     // Constants for Chart Colors
     const chartColors = {
-        student: "#6366f1", // Indigo
+        student: "#0065FF", // Blue
         office: "#10b981",  // Emerald
         freelance: "#f59e0b", // Amber
         other: "#cbd5e1",   // Slate
@@ -150,7 +150,7 @@ export default function ReportsPage() {
 
         const totalDemo = totalRegistered || 1;
         const demographics = [
-            { label: "Sinh viên (<23t)", pct: Math.round((ageGroups.student / totalDemo) * 100), color: "bg-[#6366f1]" },
+            { label: "Sinh viên (<23t)", pct: Math.round((ageGroups.student / totalDemo) * 100), color: "bg-blue-600" },
             { label: "Văn phòng (23-35t)", pct: Math.round((ageGroups.office / totalDemo) * 100), color: "bg-emerald-400" },
             { label: "Trung niên (35-50t)", pct: Math.round((ageGroups.freelance / totalDemo) * 100), color: "bg-orange-400" },
             { label: "Khác (>50t)", pct: Math.round((ageGroups.other / totalDemo) * 100), color: "bg-slate-300" }
@@ -329,9 +329,9 @@ export default function ReportsPage() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div className="space-y-1">
                         <div className="flex gap-2 mb-2">
-                            <button onClick={() => setTimeFilter('month')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${timeFilter === 'month' ? 'bg-white dark:bg-slate-800 shadow-soft text-[#6366f1]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>Tháng này</button>
-                            <button onClick={() => setTimeFilter('quarter')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${timeFilter === 'quarter' ? 'bg-white dark:bg-slate-800 shadow-soft text-[#6366f1]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>Quý này</button>
-                            <button onClick={() => setTimeFilter('year')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${timeFilter === 'year' ? 'bg-white dark:bg-slate-800 shadow-soft text-[#6366f1]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>Năm nay</button>
+                            <button onClick={() => setTimeFilter('month')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${timeFilter === 'month' ? 'bg-white dark:bg-slate-800 shadow-soft text-[#0065FF]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>Tháng này</button>
+                            <button onClick={() => setTimeFilter('quarter')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${timeFilter === 'quarter' ? 'bg-white dark:bg-slate-800 shadow-soft text-[#0065FF]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>Quý này</button>
+                            <button onClick={() => setTimeFilter('year')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${timeFilter === 'year' ? 'bg-white dark:bg-slate-800 shadow-soft text-[#0065FF]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>Năm nay</button>
                         </div>
                         <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Phân tích Hiệu quả Chiến dịch</h3>
                         <p className="text-slate-500 font-medium">Theo dõi dòng chảy người hiến và chỉ số nhân khẩu học theo thời gian thực.</p>
@@ -348,7 +348,7 @@ export default function ReportsPage() {
                         <button
                             onClick={exportToPDF}
                             disabled={exporting}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-[#6366f1] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#6366f1]/20 hover:bg-[#4f46e5] transition-all disabled:opacity-50"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-[#0065FF] text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50"
                         >
                             <FileText className="w-4 h-4" />
                             {exporting ? "Đang xuất..." : "Xuất PDF"}
@@ -359,7 +359,7 @@ export default function ReportsPage() {
                 {/* KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="bg-white dark:bg-[#1c162e] p-6 rounded-2xl shadow-soft border border-slate-50 dark:border-slate-800 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
-                        <div className="absolute right-0 top-0 size-24 bg-[#6366f1]/5 rounded-bl-full -mr-4 -mt-4 group-hover:bg-[#6366f1]/10 transition-colors"></div>
+                        <div className="absolute right-0 top-0 size-24 bg-blue-500/5 rounded-bl-full -mr-4 -mt-4 group-hover:bg-blue-500/10 transition-colors"></div>
                         <div className="flex items-center gap-4 mb-4">
                             <div className="size-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
                                 <span className="material-symbols-outlined">sync_alt</span>
@@ -376,9 +376,9 @@ export default function ReportsPage() {
                         <p className="text-xs text-slate-400 mt-2">Người hiến quay lại từ đợt trước</p>
                     </div>
                     <div className="bg-white dark:bg-[#1c162e] p-6 rounded-2xl shadow-soft border border-slate-50 dark:border-slate-800 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
-                        <div className="absolute right-0 top-0 size-24 bg-[#8b5cf6]/5 rounded-bl-full -mr-4 -mt-4 group-hover:bg-[#8b5cf6]/10 transition-colors"></div>
+                        <div className="absolute right-0 top-0 size-24 bg-blue-500/5 rounded-bl-full -mr-4 -mt-4 group-hover:bg-blue-500/10 transition-colors"></div>
                         <div className="flex items-center gap-4 mb-4">
-                            <div className="size-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600">
+                            <div className="size-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
                                 <span className="material-symbols-outlined">medical_services</span>
                             </div>
                             <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Tỷ lệ Hoãn hiến</span>
@@ -393,16 +393,16 @@ export default function ReportsPage() {
                         <p className="text-xs text-slate-400 mt-2">Hoãn do kiểm tra sức khỏe tại chỗ</p>
                     </div>
                     <div className="bg-white dark:bg-[#1c162e] p-6 rounded-2xl shadow-soft border border-slate-50 dark:border-slate-800 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
-                        <div className="absolute right-0 top-0 size-24 bg-[#6366f1]/5 rounded-bl-full -mr-4 -mt-4 group-hover:bg-[#6366f1]/10 transition-colors"></div>
+                        <div className="absolute right-0 top-0 size-24 bg-blue-500/5 rounded-bl-full -mr-4 -mt-4 group-hover:bg-blue-500/10 transition-colors"></div>
                         <div className="flex items-center gap-4 mb-4">
-                            <div className="size-12 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600">
+                            <div className="size-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
                                 <span className="material-symbols-outlined">person_off</span>
                             </div>
                             <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Tỷ lệ Vắng mặt</span>
                         </div>
                         <div className="flex items-baseline gap-2">
                             <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{metricsData.noShowRate}%</p>
-                            <span className={`text-sm font-bold ${metricsData.isNoShowGood ? 'text-green-500' : 'text-indigo-500'}`}>{metricsData.noShowGrowth}</span>
+                            <span className={`text-sm font-bold ${metricsData.isNoShowGood ? 'text-green-500' : 'text-blue-500'}`}>{metricsData.noShowGrowth}</span>
                         </div>
                         <p className="text-xs text-slate-400 mt-2">Đăng ký nhưng không check-in</p>
                     </div>
@@ -420,8 +420,8 @@ export default function ReportsPage() {
                         <AreaChart data={metricsData.timeSeriesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <defs>
                                 <linearGradient id="colorReg" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="#0065FF" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#0065FF" stopOpacity={0} />
                                 </linearGradient>
                                 <linearGradient id="colorComp" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
@@ -441,7 +441,7 @@ export default function ReportsPage() {
                                 labelStyle={{ color: '#94a3b8' }}
                             />
                             <Legend />
-                            <Area type="monotone" dataKey="registrations" name="Đăng ký" stroke="#6366f1" fillOpacity={1} fill="url(#colorReg)" strokeWidth={2} />
+                            <Area type="monotone" dataKey="registrations" name="Đăng ký" stroke="#0065FF" fillOpacity={1} fill="url(#colorReg)" strokeWidth={2} />
                             <Area type="monotone" dataKey="completed" name="Hoàn thành" stroke="#10b981" fillOpacity={1} fill="url(#colorComp)" strokeWidth={2} />
                             <Line type="monotone" dataKey="deferred" name="Hoãn" stroke="#f59e0b" strokeWidth={2} dot={false} />
                         </AreaChart>
@@ -456,15 +456,15 @@ export default function ReportsPage() {
                                 <p className="text-sm text-slate-500">Hành trình từ đăng ký đến thành công</p>
                             </div>
                             <div className="text-right">
-                                <span className="text-2xl font-black text-[#6366f1]">{metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.collected / metricsData.funnel.registered) * 100) : 0}%</span>
+                                <span className="text-2xl font-black text-[#0065FF]">{metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.collected / metricsData.funnel.registered) * 100) : 0}%</span>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase">Tỷ lệ chuyển đổi</p>
                             </div>
                         </div>
                         <div className="space-y-8">
                             {[
-                                { label: "1. Đăng ký Trực tuyến", val: metricsData.funnel.registered, pct: "100%", sub: "Tổng lượng", color: "bg-indigo-100 dark:bg-indigo-900/40", textColor: "text-indigo-700 dark:text-indigo-300" },
-                                { label: "2. Check-in (Có mặt)", val: metricsData.funnel.arrived, pct: getFunnelWidth(metricsData.funnel.arrived, metricsData.funnel.registered), sub: `${metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.arrived / metricsData.funnel.registered) * 100) : 0}% Giữ chân`, color: "bg-indigo-300 dark:bg-indigo-700", textColor: "text-indigo-900 dark:text-indigo-100" },
-                                { label: "3. Khám Sàng lọc", val: metricsData.funnel.screeningPass, pct: getFunnelWidth(metricsData.funnel.screeningPass, metricsData.funnel.registered), sub: `${metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.screeningPass / metricsData.funnel.registered) * 100) : 0}% Đạt chuẩn`, color: "bg-[#6366f1]", textColor: "text-white" },
+                                { label: "1. Đăng ký Trực tuyến", val: metricsData.funnel.registered, pct: "100%", sub: "Tổng lượng", color: "bg-blue-100 dark:bg-blue-900/40", textColor: "text-blue-700 dark:text-blue-300" },
+                                { label: "2. Check-in (Có mặt)", val: metricsData.funnel.arrived, pct: getFunnelWidth(metricsData.funnel.arrived, metricsData.funnel.registered), sub: `${metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.arrived / metricsData.funnel.registered) * 100) : 0}% Giữ chân`, color: "bg-blue-300 dark:bg-blue-700", textColor: "text-blue-900 dark:text-blue-100" },
+                                { label: "3. Khám Sàng lọc", val: metricsData.funnel.screeningPass, pct: getFunnelWidth(metricsData.funnel.screeningPass, metricsData.funnel.registered), sub: `${metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.screeningPass / metricsData.funnel.registered) * 100) : 0}% Đạt chuẩn`, color: "bg-[#0065FF]", textColor: "text-white" },
                                 { label: "4. Hiến máu Thành công", val: metricsData.funnel.collected, pct: getFunnelWidth(metricsData.funnel.collected, metricsData.funnel.registered), sub: `${metricsData.funnel.registered > 0 ? Math.round((metricsData.funnel.collected / metricsData.funnel.registered) * 100) : 0}% Thành công`, color: "bg-emerald-500", textColor: "text-white" }
                             ].map((step, idx) => (
                                 <div key={idx} className="space-y-2">
@@ -474,7 +474,7 @@ export default function ReportsPage() {
                                     </div>
                                     <div className="w-full bg-slate-100 dark:bg-slate-800 h-10 rounded-xl overflow-hidden relative">
                                         <div className={`h-full transition-all duration-700 ${step.color}`} style={{ width: step.pct }}></div>
-                                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold uppercase ${idx > 0 && idx < 2 ? 'text-indigo-800' : step.textColor}`}>
+                                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold uppercase ${idx > 0 && idx < 2 ? 'text-blue-800' : step.textColor}`}>
                                             {step.sub}
                                         </span>
                                     </div>

@@ -42,6 +42,7 @@ import {
 import { campaignService } from "@/services/campaign.service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 // Helper to parse blood groups from various formats (Array, CSV string, JSON string)
 const parseBloodGroups = (data: any): string[] => {
@@ -93,6 +94,8 @@ export default function RequestsPage() {
     const [userAppointments, setUserAppointments] = useState<any[]>([]);
     // Screening status: 'not_done' | 'passed' | 'failed'
     const [screeningStatus, setScreeningStatus] = useState<'not_done' | 'passed' | 'failed'>('not_done');
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [itemToCancel, setItemToCancel] = useState<any | null>(null);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -199,7 +202,7 @@ export default function RequestsPage() {
         return (
             <div className="flex h-screen items-center justify-center bg-[#f6f6f8] dark:bg-[#161121]">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="size-12 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin"></div>
+                    <div className="size-12 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin"></div>
                     <p className="text-sm font-bold text-slate-500">Đang chuẩn bị dữ liệu...</p>
                 </div>
             </div>
@@ -337,11 +340,16 @@ export default function RequestsPage() {
             return;
         }
 
-        if (!confirm("Bạn có chắc chắn muốn hủy đăng ký tham gia này không?")) return;
+        setItemToCancel(appointment);
+        setIsConfirmOpen(true);
+    };
+
+    const confirmCancel = async () => {
+        if (!itemToCancel) return;
 
         setIsSubmitting(true);
         try {
-            await campaignService.cancelRegistration(appointment.id);
+            await campaignService.cancelRegistration(itemToCancel.id);
             toast.success("Đã hủy đăng ký thành công.", {
                 description: "Lịch hẹn của bạn đã được hủy bỏ."
             });
@@ -357,6 +365,7 @@ export default function RequestsPage() {
             toast.error("Lỗi khi hủy đăng ký: " + error.message);
         } finally {
             setIsSubmitting(false);
+            setItemToCancel(null);
         }
     };
 
@@ -421,7 +430,7 @@ export default function RequestsPage() {
                                     key={f}
                                     onClick={() => handleFilterChange(f)}
                                     variant={activeFilter === f ? "default" : "outline"}
-                                    className={`rounded-xl h-11 font-bold ${activeFilter === f ? "bg-[#6324eb] hover:bg-[#501ac2]" : "bg-white dark:bg-[#1c162e] border-slate-200 dark:border-slate-800"}`}
+                                    className={`rounded-xl h-11 font-bold ${activeFilter === f ? "bg-[#0065FF] hover:bg-[#0052CC]" : "bg-white dark:bg-[#1c162e] border-slate-200 dark:border-slate-800"}`}
                                 >
                                     {f}
                                 </Button>
@@ -442,11 +451,11 @@ export default function RequestsPage() {
                                     const getStatusHelper = (level: string) => {
                                         switch (level) {
                                             case 'Emergency':
-                                                return { label: 'Cần gấp', color: 'text-purple-600 bg-purple-100' };
+                                                return { label: 'Cần gấp', color: 'text-blue-600 bg-blue-100' };
                                             case 'High':
-                                                return { label: 'Sắp hết', color: 'text-purple-600 bg-purple-100' };
+                                                return { label: 'Sắp hết', color: 'text-blue-600 bg-blue-100' };
                                             default:
-                                                return { label: 'Bổ sung', color: 'text-purple-600 bg-purple-100' };
+                                                return { label: 'Bổ sung', color: 'text-blue-600 bg-blue-100' };
                                         }
                                     };
                                     const statusInfo = getStatusHelper(request.urgency_level);
@@ -455,7 +464,7 @@ export default function RequestsPage() {
                                         <Card
                                             key={request.id}
                                             onClick={() => setSelectedRequest(request)}
-                                            className="flex flex-col overflow-hidden hover:shadow-xl hover:shadow-indigo-500/10 transition-all cursor-pointer group bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] rounded-2xl h-full"
+                                            className="flex flex-col overflow-hidden hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer group bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] rounded-2xl h-full"
                                         >
                                             {/* Header Image Section */}
                                             <div
@@ -473,7 +482,7 @@ export default function RequestsPage() {
                                                     <span className={`px-2.5 py-1 ${getUrgencyClass(request.urgency_level)} text-white text-[10px] font-black uppercase tracking-wider rounded-md shadow-sm`}>
                                                         {request.urgency_level === 'Emergency' ? 'Cấp cứu' : request.urgency_level === 'Urgent' ? 'Khẩn cấp' : 'Tiêu chuẩn'}
                                                     </span>
-                                                    <span className="bg-white/90 text-[#6324eb] text-[10px] font-black px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
+                                                    <span className="bg-white/90 text-[#0065FF] text-[10px] font-black px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1">
                                                         <MapPin className="w-3 h-3" />
                                                         {request.hospital?.district || "Gần bạn"}
                                                     </span>
@@ -508,16 +517,16 @@ export default function RequestsPage() {
                                                 {/* Footer Info */}
                                                 <div className="flex items-center justify-between mt-auto">
                                                     <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 flex-1 mr-2 overflow-hidden">
-                                                        <Building2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                                        <Building2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                                                         <span className="text-[11px] font-bold truncate">
                                                             {request.location_name || request.hospital?.hospital_name || request.hospital?.address || "Địa điểm chưa xác định"}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-1 shrink-0">
-                                                        <span className="text-[#6324eb] text-xs font-black whitespace-nowrap">
+                                                        <span className="text-[#0065FF] text-xs font-black whitespace-nowrap">
                                                             Chi tiết
                                                         </span>
-                                                        <ArrowRight className="w-3 h-3 text-[#6324eb]" />
+                                                        <ArrowRight className="w-3 h-3 text-[#0065FF]" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -612,7 +621,7 @@ export default function RequestsPage() {
                                 {/* Key Info Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-start gap-3">
-                                        <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-indigo-500">
+                                        <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-blue-500">
                                             <Clock className="w-5 h-5" />
                                         </div>
                                         <div>
@@ -681,7 +690,7 @@ export default function RequestsPage() {
                                 {/* Description */}
                                 <div>
                                     <h3 className="font-black text-[#120e1b] dark:text-white text-sm uppercase tracking-wider flex items-center gap-2 mb-3">
-                                        <div className="w-1 h-4 bg-[#6324eb] rounded-full"></div>
+                                        <div className="w-1 h-4 bg-[#0065FF] rounded-full"></div>
                                         Thông tin chi tiết
                                     </h3>
                                     <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line bg-slate-50 dark:bg-slate-900/30 p-5 rounded-2xl border border-slate-100 dark:border-slate-800/50">
@@ -704,7 +713,7 @@ export default function RequestsPage() {
                                     <Button
                                         onClick={() => handleRegister(selectedRequest)}
                                         disabled={isSubmitting}
-                                        className="flex-1 h-14 bg-[#6324eb] text-white font-black rounded-xl hover:bg-[#501ac2] shadow-xl shadow-indigo-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
+                                        className="flex-1 h-14 bg-[#0065FF] text-white font-black rounded-xl hover:bg-[#0052CC] shadow-xl shadow-blue-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
                                     >
                                         {isSubmitting ? "Đang xử lý..." : "Đăng ký tham gia ngay"}
                                     </Button>
@@ -717,6 +726,16 @@ export default function RequestsPage() {
                     )}
                 </DialogContent>
             </Dialog>
+            {/* Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={isConfirmOpen}
+                onOpenChange={setIsConfirmOpen}
+                title="Hủy đăng ký"
+                description="Bạn có chắc chắn muốn hủy đăng ký tham gia này không? Bạn có thể đăng ký lại sau nếu chiến dịch vẫn còn chỗ."
+                onConfirm={confirmCancel}
+                confirmText="Xác nhận hủy"
+                variant="destructive"
+            />
         </div>
     );
 }

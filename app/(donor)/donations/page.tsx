@@ -109,7 +109,7 @@ export default function DonationsPage() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 text-left">
                             <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-5">
-                                <div className="h-12 w-12 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600">
+                                <div className="h-12 w-12 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
                                     <Activity className="w-6 h-6" />
                                 </div>
                                 <div>
@@ -152,24 +152,24 @@ export default function DonationsPage() {
                                 <input
                                     type="text"
                                     placeholder="Tìm kiếm bệnh viện, địa điểm..."
-                                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
+                                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
                             <div className="flex gap-4">
                                 <div className="relative">
-                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6324eb] w-4 h-4 pointer-events-none" />
+                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 w-4 h-4 pointer-events-none" />
                                     <input
                                         type="date"
-                                        className="pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] outline-none text-sm font-semibold [color-scheme:light] dark:[color-scheme:dark]"
+                                        className="pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none text-sm font-semibold [color-scheme:light] dark:[color-scheme:dark]"
                                         value={dateFilter}
                                         onChange={(e) => setDateFilter(e.target.value)}
                                     />
                                 </div>
                                 <div className="relative min-w-[180px]">
                                     <select
-                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#6324eb]/20 focus:border-[#6324eb] outline-none text-sm font-semibold appearance-none cursor-pointer"
+                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none text-sm font-semibold appearance-none cursor-pointer"
                                         value={statusFilter}
                                         onChange={(e) => setStatusFilter(e.target.value)}
                                     >

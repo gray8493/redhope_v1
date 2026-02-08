@@ -32,7 +32,7 @@ export const AdminSidebar = () => {
         <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between p-4 sticky top-0 h-screen hidden md:flex">
             <div className="flex flex-col gap-8">
                 <Link href="/admin-dashboard" className="flex items-center gap-3 px-2 hover:opacity-80 transition-opacity">
-                    <div className="bg-[#6324eb] size-10 rounded-lg flex items-center justify-center text-white">
+                    <div className="bg-[#0065FF] size-10 rounded-lg flex items-center justify-center text-white">
                         <RedHopeLogo className="w-24 h-24 fill-current" />
                     </div>
                     <div className="flex flex-col">
@@ -48,11 +48,11 @@ export const AdminSidebar = () => {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${isActive
-                                    ? 'bg-[#6324eb]/10 text-[#6324eb]'
+                                    ? 'bg-[#0065FF]/10 text-[#0065FF]'
                                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }`}
                             >
-                                <Icon className={`w-6 h-6 ${isActive ? 'text-[#6324eb]' : ''}`} />
+                                <Icon className={`w-6 h-6 ${isActive ? 'text-[#0065FF]' : ''}`} />
                                 <p className={`text-sm ${isActive ? 'font-bold' : 'font-medium'}`}>
                                     {item.label}
                                 </p>
@@ -65,8 +65,8 @@ export const AdminSidebar = () => {
             {/* Status Card - Visual consistency with donor sidebar if it had one, 
                 but keeping it consistent with the overall theme */}
             <div className="mt-auto">
-                <div className="bg-[#6324eb]/5 dark:bg-[#6324eb]/10 rounded-2xl p-4 border border-[#6324eb]/10">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#6324eb] mb-2">Trạng thái hệ thống</p>
+                <div className="bg-[#0065FF]/5 dark:bg-[#0065FF]/10 rounded-2xl p-4 border border-[#0065FF]/10">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#0065FF] mb-2">Trạng thái hệ thống</p>
                     <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full bg-emerald-500 animate-pulse"></div>
                         <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Hoạt động bình thường</span>
