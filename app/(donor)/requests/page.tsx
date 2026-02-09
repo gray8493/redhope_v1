@@ -16,10 +16,14 @@ import {
     AlertCircle,
     ArrowRight,
     HeartPulse,
-    XCircle
+    XCircle,
+    Navigation,
+    Map as MapIcon,
+    ChevronDown
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
+import { LocationSelector } from "@/components/shared/LocationSelector";
 import MiniFooter from "@/components/shared/MiniFooter";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,6 +100,16 @@ export default function RequestsPage() {
     const [screeningStatus, setScreeningStatus] = useState<'not_done' | 'passed' | 'failed'>('not_done');
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [itemToCancel, setItemToCancel] = useState<any | null>(null);
+
+    // Dynamic Location Filters
+    const [selectedCity, setSelectedCity] = useState<string>("");
+    const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+
+    useEffect(() => {
+        if (profile?.city && activeFilter === "Gần tôi" && !selectedCity) {
+            setSelectedCity(profile.city);
+        }
+    }, [profile, activeFilter, selectedCity]);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -214,9 +228,18 @@ export default function RequestsPage() {
     // Filter logic
     const filteredData = requests.filter(item => {
         if (activeFilter === "Tất cả") return true;
+
+        // Basic filters
         if (activeFilter === "Nhóm của tôi") return item.required_blood_group === profile?.blood_group || item.required_blood_group === 'Tất cả';
         if (activeFilter === "Khẩn cấp") return item.urgency_level === "Emergency" || item.urgency_level === "High" || item.urgency_level === "Urgent";
-        if (activeFilter === "Gần tôi") return item.hospital?.city === profile?.city;
+
+        // Location filter (Enhanced)
+        if (activeFilter === "Gần tôi") {
+            const cityMatch = !selectedCity || item.hospital?.city === selectedCity;
+            const districtMatch = !selectedDistrict || item.hospital?.district === selectedDistrict;
+            return cityMatch && districtMatch;
+        }
+
         return true;
     });
 
@@ -382,6 +405,13 @@ export default function RequestsPage() {
         return getAppointmentStatus(item) === 'Booked';
     };
 
+    const handleGetDirections = (item: any) => {
+        const hospital = item.hospital;
+        if (!hospital) return;
+        const query = encodeURIComponent(`${hospital.hospital_name || ""} ${hospital.hospital_address || hospital.address || ""}`);
+        window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+    };
+
     return (
         <div className="flex h-screen w-full flex-row overflow-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <Sidebar />
@@ -427,22 +457,51 @@ export default function RequestsPage() {
                             </div>
                         </div>
 
-                        {/* Filter Chips */}
-                        <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-2 no-scrollbar">
-                            {["Tất cả", "Nhóm của tôi", "Gần tôi", "Khẩn cấp"].map(f => (
-                                <Button
-                                    key={f}
-                                    onClick={() => handleFilterChange(f)}
-                                    variant={activeFilter === f ? "default" : "outline"}
-                                    className={`rounded-xl h-11 font-bold ${activeFilter === f ? "bg-[#0065FF] hover:bg-[#0052CC]" : "bg-white dark:bg-[#1c162e] border-slate-200 dark:border-slate-800"}`}
-                                >
-                                    {f}
+                        {/* Filter Chips & Location Selector */}
+                        <div className="space-y-4 mb-8">
+                            <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
+                                {["Tất cả", "Nhóm của tôi", "Gần tôi", "Khẩn cấp"].map(f => (
+                                    <Button
+                                        key={f}
+                                        onClick={() => handleFilterChange(f)}
+                                        variant={activeFilter === f ? "default" : "outline"}
+                                        className={`rounded-xl h-11 font-bold ${activeFilter === f ? "bg-[#0065FF] hover:bg-[#0052CC]" : "bg-white dark:bg-[#1c162e] border-slate-200 dark:border-slate-800"}`}
+                                    >
+                                        {f}
+                                    </Button>
+                                ))}
+                                <Button variant="outline" className="h-11 gap-2 rounded-xl bg-white dark:bg-[#1c162d] border-slate-200 dark:border-slate-800">
+                                    <span className="text-sm font-bold">Lọc thêm</span>
+                                    <SlidersHorizontal className="w-4 h-4" />
                                 </Button>
-                            ))}
-                            <Button variant="outline" className="h-11 gap-2 rounded-xl bg-white dark:bg-[#1c162d] border-slate-200 dark:border-slate-800">
-                                <span className="text-sm font-bold">Lọc thêm</span>
-                                <SlidersHorizontal className="w-4 h-4" />
-                            </Button>
+                            </div>
+
+                            {activeFilter === "Gần tôi" && (
+                                <Card className="border-none shadow-sm dark:bg-[#1c162e] rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                    <CardContent className="p-4">
+                                        <div className="flex flex-col md:flex-row items-end gap-4">
+                                            <LocationSelector
+                                                className="flex-1 grid-cols-1 md:grid-cols-2 gap-4"
+                                                defaultCity={selectedCity || profile?.city}
+                                                defaultDistrict={selectedDistrict}
+                                                onCityChange={setSelectedCity}
+                                                onDistrictChange={setSelectedDistrict}
+                                            />
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-slate-400 font-bold h-10 px-4"
+                                                onClick={() => {
+                                                    setSelectedCity(profile?.city || "");
+                                                    setSelectedDistrict("");
+                                                }}
+                                            >
+                                                Đặt lại vị trí
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
 
                         {/* Grid of Requests */}
@@ -748,6 +807,14 @@ export default function RequestsPage() {
                                         );
                                     }
                                 })()}
+                                <Button
+                                    variant="outline"
+                                    title="Chỉ đường"
+                                    onClick={() => handleGetDirections(selectedRequest)}
+                                    className="h-14 w-14 p-0 rounded-xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 group"
+                                >
+                                    <Navigation className="w-5 h-5 text-[#0065FF] group-hover:scale-110 transition-transform" />
+                                </Button>
                                 <Button variant="outline" className="h-14 w-14 p-0 rounded-xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
                                     <Phone className="w-5 h-5 text-slate-500" />
                                 </Button>
