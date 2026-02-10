@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { screeningService } from "@/services/screening.service";
@@ -88,6 +88,7 @@ const stripHtml = (html: string): string => {
 
 export default function RequestsPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { user, profile, loading } = useAuth();
     const [requests, setRequests] = useState<any[]>([]);
     const [requestsLoading, setRequestsLoading] = useState(true);
@@ -118,6 +119,25 @@ export default function RequestsPage() {
     }, [user, loading, router]);
 
 
+
+    // Initial filter from query params
+    useEffect(() => {
+        const filterParam = searchParams.get('filter');
+        if (filterParam === 'campaign' || filterParam === 'campaigns') {
+            setActiveFilter("Chiến dịch");
+        }
+    }, [searchParams]);
+
+    // Handle deep linking to a specific request/campaign
+    useEffect(() => {
+        const requestId = searchParams.get('requestId') || searchParams.get('id');
+        if (requestId && requests.length > 0) {
+            const item = requests.find(r => r.id === requestId);
+            if (item) {
+                setSelectedRequest(item);
+            }
+        }
+    }, [searchParams, requests]);
 
     // Check screening status on mount and periodically
     useEffect(() => {
@@ -239,6 +259,9 @@ export default function RequestsPage() {
             const districtMatch = !selectedDistrict || item.hospital?.district === selectedDistrict;
             return cityMatch && districtMatch;
         }
+
+        // Type filters
+        if (activeFilter === "Chiến dịch") return item.type === 'campaign';
 
         return true;
     });
@@ -420,10 +443,10 @@ export default function RequestsPage() {
                 <main className="flex flex-1 justify-center py-8">
                     <div className="flex flex-col max-w-[1440px] flex-1 px-4 md:px-10">
                         {/* Page Heading */}
-                        <div className="flex flex-wrap justify-between items-end gap-3 mb-6">
-                            <div className="flex min-w-72 flex-col gap-2">
-                                <h1 className="text-[#120e1b] dark:text-white text-4xl font-black tracking-tight">Yêu cầu hiến máu</h1>
-                                <p className="text-[#654d99] dark:text-[#a594c9] text-base font-normal leading-normal max-w-2xl">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                            <div className="flex flex-col gap-1 md:gap-2">
+                                <h1 className="text-[#120e1b] dark:text-white text-3xl md:text-4xl font-black tracking-tight">Yêu cầu hiến máu</h1>
+                                <p className="text-[#654d99] dark:text-[#a594c9] text-sm md:text-base font-normal leading-normal max-w-2xl">
                                     Nhu cầu khẩn cấp từ các cơ sở y tế trong khu vực của bạn.
                                 </p>
                             </div>
@@ -460,7 +483,7 @@ export default function RequestsPage() {
                         {/* Filter Chips & Location Selector */}
                         <div className="space-y-4 mb-8">
                             <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
-                                {["Tất cả", "Nhóm của tôi", "Gần tôi", "Khẩn cấp"].map(f => (
+                                {["Tất cả", "Chiến dịch", "Nhóm của tôi", "Gần tôi", "Khẩn cấp"].map(f => (
                                     <Button
                                         key={f}
                                         onClick={() => handleFilterChange(f)}
@@ -680,7 +703,7 @@ export default function RequestsPage() {
                                 </div>
                             </div>
 
-                            <div className="p-6 md:p-8 flex flex-col gap-6 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="p-5 md:p-8 flex flex-col gap-6 overflow-y-auto custom-scrollbar flex-1">
                                 {/* Key Info Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-start gap-3">
@@ -763,7 +786,7 @@ export default function RequestsPage() {
                             </div>
 
                             {/* Footer Actions */}
-                            <div className="p-6 md:p-8 pt-0 mt-auto shrink-0 flex gap-4 bg-white dark:bg-[#1c162e]">
+                            <div className="p-5 md:p-8 pt-0 mt-auto shrink-0 flex flex-col sm:flex-row gap-3 sm:gap-4 bg-white dark:bg-[#1c162e]">
                                 {(() => {
                                     const status = getAppointmentStatus(selectedRequest);
                                     if (status === 'Booked') {

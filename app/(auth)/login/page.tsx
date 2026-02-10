@@ -32,6 +32,10 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
+    // Clear old cookies to prevent role conflicts
+    Cookies.remove('auth-token');
+    Cookies.remove('user-role');
+
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
@@ -50,6 +54,7 @@ export default function LoginPage() {
         // Ưu tiên lấy role từ metadata (vì nó có sẵn ngay sau khi signIn)
         // Sau đó mới lấy từ DB (có thể bị chặn bởi RLS lúc mới login)
         const role = profile?.role || data.user.user_metadata?.role || 'donor';
+        console.log("Detected Role for user:", data.user.id, "is:", role);
 
         if (profileError && profileError.code !== 'PGRST116') {
           // Log nhẹ nhàng hơn vì đã có fallback
@@ -115,9 +120,9 @@ export default function LoginPage() {
       {/* Back to Home Button - Top Left of the whole page */}
       <Link
         href="/"
-        className="absolute top-6 left-6 z-50"
+        className="absolute top-4 left-4 lg:top-6 lg:left-6 z-50"
       >
-        <Button variant="ghost" className="gap-2 text-sm font-bold text-white/80 hover:text-white hover:bg-white/10 backdrop-blur-md border border-white/20 group transition-all rounded-full h-11 px-5">
+        <Button variant="ghost" className="gap-2 text-sm font-bold text-slate-600 lg:text-white/80 hover:text-slate-900 lg:hover:text-white bg-white/20 lg:bg-white/10 backdrop-blur-md border border-slate-200 lg:border-white/20 group transition-all rounded-full h-10 lg:h-11 px-4 lg:px-5">
           <ChevronLeft className="size-5 group-hover:-translate-x-1 transition-transform" />
           <span className="hidden sm:inline">Quay về trang chủ</span>
         </Button>
@@ -178,7 +183,7 @@ export default function LoginPage() {
               <CardDescription className="text-sm text-gray-500 mt-2 font-medium">Đăng nhập để vào hệ thống điều hành</CardDescription>
             </CardHeader>
 
-            <CardContent className="px-8 lg:px-10 pb-8 lg:pb-10 space-y-8">
+            <CardContent className="px-6 lg:px-10 pb-8 lg:pb-10 space-y-6 lg:space-y-8">
               {/* Error Message */}
               {error && (
                 <Alert variant="destructive" className="rounded-2xl border-red-100 bg-red-50 text-red-600 animate-in fade-in slide-in-from-top-2">

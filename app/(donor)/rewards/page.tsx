@@ -247,7 +247,7 @@ export default function RewardsPage() {
 
                         <div className="flex flex-wrap justify-between items-end gap-3 mb-6 text-left">
                             <div className="flex min-w-72 flex-col gap-3">
-                                <h1 className="text-[#120e1b] dark:text-white text-4xl font-black tracking-tight">Đổi quà tri ân</h1>
+                                <h1 className="text-[#120e1b] dark:text-white text-3xl md:text-4xl font-black tracking-tight">Đổi quà tri ân</h1>
                                 <p className="text-blue-600/80 dark:text-blue-400/80 text-base font-normal leading-normal max-w-2xl">
                                     Bạn có <span className="font-bold text-[#0065FF]">{userPoints.toLocaleString()} điểm</span> khả dụng. Cảm ơn bạn đã chung tay cứu người!
                                 </p>
@@ -311,62 +311,100 @@ export default function RewardsPage() {
                         </div>
 
                         {activeTab === "history" ? (
-                            <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] overflow-hidden">
-                                {loadingHistory ? (
-                                    <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-[#0065FF]" /></div>
-                                ) : (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left">
-                                            <thead>
-                                                <tr className="border-b border-[#ebe7f3] dark:border-[#2d263d] bg-[#f6f6f8] dark:bg-[#251e36]">
-                                                    <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ưu đãi</th>
-                                                    <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Điểm</th>
-                                                    <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ngày đổi</th>
-                                                    <th className="py-4 px-6 text-sm font-bold text-slate-500 dark:text-slate-400">Mã code</th>
-                                                    <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Hành động</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {filteredHistory.map((item) => (
-                                                    <tr key={item.id} className="border-b border-[#ebe7f3] dark:border-[#2d263d] last:border-b-0 hover:bg-[#f6f6f8] dark:hover:bg-[#251e36] transition-colors">
-                                                        <td className="py-4 px-6 text-left">
-                                                            <span className="font-bold text-[#120e1b] dark:text-white">{item.vouchers?.partner_name}</span>
-                                                        </td>
-                                                        <td className="py-4 px-6 text-left">
-                                                            <span className="text-[#0065FF] font-bold">-{item.vouchers?.point_cost} pts</span>
-                                                        </td>
-                                                        <td className="py-4 px-6 text-left">
-                                                            <span className="text-[#654d99] dark:text-[#a594c9]">{new Date(item.redeemed_at).toLocaleDateString('vi-VN')}</span>
-                                                        </td>
-                                                        <td className="py-4 px-6 text-left">
-                                                            <code className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs font-mono font-bold text-[#0065FF] uppercase">
-                                                                {item.redemption_code || '---'}
-                                                            </code>
-                                                        </td>
-                                                        <td className="py-4 px-6 text-left">
-                                                            {item.redemption_code ? (
-                                                                <button
-                                                                    onClick={() => handleShowQr(item)}
-                                                                    className="flex items-center gap-2 text-xs font-bold text-[#0065FF] hover:underline"
-                                                                >
-                                                                    <QrCode className="w-4 h-4" /> Xem mã QR
-                                                                </button>
-                                                            ) : (
-                                                                <span className="text-xs text-slate-400">Không có mã</span>
-                                                            )}
-                                                        </td>
+                            <>
+                                <div className="hidden md:block bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] overflow-hidden">
+                                    {loadingHistory ? (
+                                        <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-[#0065FF]" /></div>
+                                    ) : (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left">
+                                                <thead>
+                                                    <tr className="border-b border-[#ebe7f3] dark:border-[#2d263d] bg-[#f6f6f8] dark:bg-[#251e36]">
+                                                        <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ưu đãi</th>
+                                                        <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Điểm</th>
+                                                        <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Ngày đổi</th>
+                                                        <th className="py-4 px-6 text-sm font-bold text-slate-500 dark:text-slate-400">Mã code</th>
+                                                        <th className="py-4 px-6 text-sm font-bold text-[#654d99] dark:text-[#a594c9]">Hành động</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                        {filteredHistory.length === 0 && (
-                                            <div className="py-12 text-center text-[#654d99] dark:text-[#a594c9]">
-                                                Không tìm thấy lịch sử đổi quà
+                                                </thead>
+                                                <tbody>
+                                                    {filteredHistory.map((item) => (
+                                                        <tr key={item.id} className="border-b border-[#ebe7f3] dark:border-[#2d263d] last:border-b-0 hover:bg-[#f6f6f8] dark:hover:bg-[#251e36] transition-colors">
+                                                            <td className="py-4 px-6 text-left">
+                                                                <span className="font-bold text-[#120e1b] dark:text-white">{item.vouchers?.partner_name}</span>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-left">
+                                                                <span className="text-[#0065FF] font-bold">-{item.vouchers?.point_cost} pts</span>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-left">
+                                                                <span className="text-[#654d99] dark:text-[#a594c9]">{new Date(item.redeemed_at).toLocaleDateString('vi-VN')}</span>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-left">
+                                                                <code className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs font-mono font-bold text-[#0065FF] uppercase">
+                                                                    {item.redemption_code || '---'}
+                                                                </code>
+                                                            </td>
+                                                            <td className="py-4 px-6 text-left">
+                                                                {item.redemption_code ? (
+                                                                    <button
+                                                                        onClick={() => handleShowQr(item)}
+                                                                        className="flex items-center gap-2 text-xs font-bold text-[#0065FF] hover:underline"
+                                                                    >
+                                                                        <QrCode className="w-4 h-4" /> Xem mã QR
+                                                                    </button>
+                                                                ) : (
+                                                                    <span className="text-xs text-slate-400">Không có mã</span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                            {filteredHistory.length === 0 && (
+                                                <div className="py-12 text-center text-[#654d99] dark:text-[#a594c9]">
+                                                    Không tìm thấy lịch sử đổi quà
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Mobile History Cards */}
+                                <div className="md:hidden space-y-4">
+                                    {loadingHistory ? (
+                                        <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-[#0065FF]" /></div>
+                                    ) : filteredHistory.length > 0 ? (
+                                        filteredHistory.map((item) => (
+                                            <div key={item.id} className="bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d] p-4 shadow-sm space-y-4">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h3 className="font-bold text-[#120e1b] dark:text-white">{item.vouchers?.partner_name}</h3>
+                                                        <p className="text-xs text-[#654d99] dark:text-[#a594c9] mt-1">{new Date(item.redeemed_at).toLocaleDateString('vi-VN')}</p>
+                                                    </div>
+                                                    <span className="text-[#0065FF] font-black">-{item.vouchers?.point_cost} pts</span>
+                                                </div>
+                                                <div className="flex items-center justify-between pt-4 border-t border-[#ebe7f3] dark:border-[#2d263d]">
+                                                    <code className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs font-mono font-bold text-[#0065FF] uppercase">
+                                                        {item.redemption_code || '---'}
+                                                    </code>
+                                                    {item.redemption_code && (
+                                                        <button
+                                                            onClick={() => handleShowQr(item)}
+                                                            className="flex items-center gap-2 text-xs font-bold text-[#0065FF] hover:bg-blue-50 dark:hover:bg-blue-900/20 px-3 py-1.5 rounded-lg transition-colors"
+                                                        >
+                                                            <QrCode className="w-4 h-4" /> Xem QR
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="py-12 text-center text-[#654d99] dark:text-[#a594c9] bg-white dark:bg-[#1c162e] rounded-xl border border-[#ebe7f3] dark:border-[#2d263d]">
+                                            Không tìm thấy lịch sử đổi quà
+                                        </div>
+                                    )}
+                                </div>
+                            </>
                         ) : (
                             <>
                                 {loadingRewards ? (

@@ -178,7 +178,7 @@ export default function DonatePage() {
                     <div className="flex flex-col max-w-[1200px] flex-1 px-4 md:px-10">
 
                         {/* Hero Section */}
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-10 bg-gradient-to-r from-[#0065FF] to-[#0052CC] rounded-2xl p-8 text-white shadow-xl shadow-blue-500/30 relative overflow-hidden">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-10 bg-gradient-to-r from-red-900 via-red-800 to-red-500 rounded-2xl p-8 text-white shadow-xl shadow-red-500/30 relative overflow-hidden">
                             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                             <div className="flex flex-col gap-4 max-w-2xl relative z-10">
                                 <h1 className="text-3xl md:text-5xl font-black leading-tight">Chung tay vì cộng đồng</h1>
@@ -213,21 +213,21 @@ export default function DonatePage() {
                             {/* Left Column: Donation Form */}
                             <div className="lg:col-span-2 flex flex-col gap-6">
                                 <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-blue-400">
+                                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800 dark:text-slate-200">
                                         <Wallet className="w-6 h-6" /> Quyên góp ngay
                                     </h2>
 
                                     <div className="flex flex-col gap-6">
                                         <div>
-                                            <label className="block text-sm font-bold text-blue-700 dark:text-blue-400 mb-3 uppercase tracking-wider">Chọn mức đóng góp</label>
+                                            <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 uppercase tracking-wider">Chọn mức đóng góp</label>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                                 {donationPresets.map((preset) => (
                                                     <button
                                                         key={preset}
                                                         onClick={() => setAmount(preset)}
                                                         className={`py-3 px-4 rounded-lg border-2 font-bold transition-all ${amount === preset
-                                                            ? "border-[#0065FF] bg-blue-50 dark:bg-blue-500/10 text-[#0065FF]"
-                                                            : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-200 hover:border-[#0065FF]"
+                                                            ? "border-red-900 bg-red-50 dark:bg-red-900/10 text-red-900"
+                                                            : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-200 hover:border-red-900"
                                                             }`}
                                                     >
                                                         {formatAmount(preset)}đ
@@ -237,16 +237,16 @@ export default function DonatePage() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-bold text-blue-700 dark:text-blue-400 mb-3 uppercase tracking-wider">Hoặc nhập số tiền khác</label>
+                                            <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 uppercase tracking-wider">Hoặc nhập số tiền khác</label>
                                             <div className="relative">
                                                 <input
                                                     type="text"
-                                                    className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl py-4 px-4 text-xl font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#0065FF] placeholder:text-slate-400"
+                                                    className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl py-4 px-4 text-xl font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-red-900 placeholder:text-slate-400"
                                                     placeholder="Nhập số tiền (VNĐ)"
                                                     value={formatAmount(amount)}
                                                     onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))}
                                                 />
-                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-600 font-bold">VNĐ</span>
+                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-900 font-bold">VNĐ</span>
                                             </div>
                                         </div>
 
@@ -256,18 +256,18 @@ export default function DonatePage() {
                                                 type="checkbox"
                                                 checked={isAnonymous}
                                                 onChange={(e) => setIsAnonymous(e.target.checked)}
-                                                className="w-5 h-5 rounded border-slate-300 text-[#0065FF] focus:ring-[#0065FF]"
+                                                className="w-5 h-5 rounded border-slate-300 text-red-900 focus:ring-red-900"
                                             />
-                                            <span className="text-sm font-medium text-slate-600 dark:text-blue-200">Quyên góp ẩn danh</span>
+                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-200">Quyên góp ẩn danh</span>
                                         </label>
 
                                         <div>
-                                            <label className="block text-sm font-bold text-blue-700 dark:text-blue-400 mb-3 uppercase tracking-wider">Phương thức thanh toán</label>
+                                            <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 uppercase tracking-wider">Phương thức thanh toán</label>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <button
                                                     onClick={() => setPaymentMethod("momo")}
                                                     className={`flex items-center gap-4 p-4 rounded-xl border transition-all group text-left hover:shadow-md ${paymentMethod === "momo"
-                                                        ? "border-[#0065FF] bg-blue-50/50 dark:bg-blue-500/5 shadow-md shadow-blue-500/10"
+                                                        ? "border-red-900 bg-red-50/50 dark:bg-red-900/5 shadow-md shadow-red-900/10"
                                                         : "border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c162e]"
                                                         }`}
                                                 >
@@ -283,7 +283,7 @@ export default function DonatePage() {
                                                 <button
                                                     onClick={() => setPaymentMethod("bank_transfer")}
                                                     className={`flex items-center gap-4 p-4 rounded-xl border transition-all group text-left hover:shadow-md ${paymentMethod === "bank_transfer"
-                                                        ? "border-[#0065FF] bg-blue-50/50 dark:bg-blue-500/5 shadow-md shadow-blue-500/10"
+                                                        ? "border-red-900 bg-red-50/50 dark:bg-red-900/5 shadow-md shadow-red-900/10"
                                                         : "border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c162e]"
                                                         }`}
                                                 >
@@ -302,7 +302,7 @@ export default function DonatePage() {
                                         <button
                                             onClick={handleConfirmDonation}
                                             disabled={isProcessing}
-                                            className="w-full py-4 bg-[#0065FF] hover:bg-[#0052CC] text-white text-lg font-black rounded-xl shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98] mt-2 ring-offset-2 focus:ring-2 ring-[#0065FF] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                            className="w-full py-4 bg-red-900 hover:bg-black text-white text-lg font-black rounded-xl shadow-xl shadow-red-900/20 transition-all active:scale-[0.98] mt-2 ring-offset-2 focus:ring-2 ring-red-900 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                         >
                                             {isProcessing ? (
                                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -314,7 +314,7 @@ export default function DonatePage() {
 
                                 {/* Recent Activity */}
                                 <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                                    <h3 className="font-bold text-lg mb-4 text-slate-900 dark:text-blue-100">Hoạt động gần đây</h3>
+                                    <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-slate-200">Hoạt động gần đây</h3>
                                     <div className="space-y-4">
                                         {loading ? (
                                             [1, 2, 3].map((i) => (
@@ -327,14 +327,14 @@ export default function DonatePage() {
                                             recentDonations.map((donation) => (
                                                 <div key={donation.id} className="flex items-center justify-between pb-4 border-b border-red-100 dark:border-red-900/20 last:border-0 last:pb-0">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center font-bold text-xs text-blue-600">
+                                                        <div className="size-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center font-bold text-xs text-red-900">
                                                             {donation.is_anonymous ? "AD" : donation.donor_name.charAt(0).toUpperCase()}
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-bold text-[#450a0a] dark:text-white">
                                                                 {donation.is_anonymous ? "Người dùng ẩn danh" : donation.donor_name}
                                                             </p>
-                                                            <p className="text-xs text-blue-500 dark:text-blue-300">{timeAgo(donation.created_at)}</p>
+                                                            <p className="text-xs text-red-800 dark:text-red-300">{timeAgo(donation.created_at)}</p>
                                                         </div>
                                                     </div>
                                                     <span className="text-[#15803d] font-bold text-sm">+{formatAmount(donation.amount.toString())}đ</span>
@@ -350,11 +350,11 @@ export default function DonatePage() {
                             {/* Right Column: Leaderboard */}
                             <div className="lg:col-span-1 flex flex-col gap-6">
                                 <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-slate-200 dark:border-slate-800 p-0 shadow-sm overflow-hidden flex flex-col h-full max-h-[800px]">
-                                    <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-blue-50 to-white dark:from-[#1c162e] dark:to-[#0f0a19]">
-                                        <h2 className="text-xl font-bold flex items-center gap-2 text-blue-700">
+                                    <div className="p-6 pb-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-red-50 to-white dark:from-[#1c162e] dark:to-[#0f0a19]">
+                                        <h2 className="text-xl font-bold flex items-center gap-2 text-red-900">
                                             <Trophy className="w-6 h-6 fill-current" /> Bảng vàng Vinh danh
                                         </h2>
-                                        <p className="text-sm text-blue-600 mt-1 dark:text-blue-300">Top nhà hảo tâm</p>
+                                        <p className="text-sm text-red-900 mt-1 dark:text-red-300">Top nhà hảo tâm</p>
                                     </div>
 
                                     <div className="flex-1 overflow-y-auto">
@@ -368,12 +368,12 @@ export default function DonatePage() {
                                             leaderboard.map((donor, index) => (
                                                 <div
                                                     key={donor.donor_id}
-                                                    className={`p-4 flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors ${index === 0 ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
+                                                    className={`p-4 flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors ${index === 0 ? 'bg-red-50 dark:bg-red-900/10' : ''}`}
                                                 >
-                                                    <div className={`flex-none font-black w-8 text-center ${index === 0 ? 'text-2xl text-blue-600 drop-shadow-sm' : index < 3 ? 'text-xl text-slate-400' : 'text-sm text-slate-400'}`}>
+                                                    <div className={`flex-none font-black w-8 text-center ${index === 0 ? 'text-2xl text-red-900 drop-shadow-sm' : index < 3 ? 'text-xl text-slate-400' : 'text-sm text-slate-400'}`}>
                                                         {index + 1}
                                                     </div>
-                                                    <div className={`rounded-full overflow-hidden ${index === 0 ? 'size-12 border-2 border-blue-600 p-0.5' : index < 3 ? 'size-10 border-2 border-slate-300 p-0.5' : 'size-8 bg-slate-200 dark:bg-slate-700'}`}>
+                                                    <div className={`rounded-full overflow-hidden ${index === 0 ? 'size-12 border-2 border-red-900 p-0.5' : index < 3 ? 'size-10 border-2 border-slate-300 p-0.5' : 'size-8 bg-slate-200 dark:bg-slate-700'}`}>
                                                         <img
                                                             src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${donor.donor_name}`}
                                                             alt={donor.donor_name}
@@ -384,17 +384,17 @@ export default function DonatePage() {
                                                         <p className={`font-bold truncate ${index === 0 ? 'text-sm text-[#450a0a] dark:text-white' : 'text-sm text-[#450a0a] dark:text-white'}`}>
                                                             {donor.donor_name}
                                                         </p>
-                                                        <p className="text-xs text-blue-600 dark:text-blue-300">
+                                                        <p className="text-xs text-red-900 dark:text-red-300">
                                                             {index === 0 ? 'VIP Donor' : `Quyên góp ${donor.donation_count} lần`}
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-sm font-black text-blue-600">{formatCurrency(donor.total_amount)}</p>
+                                                        <p className="text-sm font-black text-red-900">{formatCurrency(donor.total_amount)}</p>
                                                     </div>
                                                 </div>
                                             ))
                                         ) : (
-                                            <div className="p-8 text-center text-blue-600/60">
+                                            <div className="p-8 text-center text-red-600/60">
                                                 <Trophy className="w-12 h-12 mx-auto mb-2 opacity-30" />
                                                 <p className="text-sm">Chưa có nhà hảo tâm nào</p>
                                             </div>
@@ -403,7 +403,7 @@ export default function DonatePage() {
                                 </div>
 
                                 {/* Motivation Card */}
-                                <div className="bg-gradient-to-br from-[#0065FF] to-[#0052CC] rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+                                <div className="bg-gradient-to-br from-red-900 to-red-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
                                     <div className="absolute -right-4 -bottom-4 opacity-20">
                                         <Heart className="w-24 h-24 fill-current" />
                                     </div>
@@ -411,7 +411,7 @@ export default function DonatePage() {
                                     <p className="text-sm text-red-100 mb-4 tracking-wide">
                                         Quyên góp trên 10 triệu đồng để nhận huy hiệu Đại sứ Nhân ái và quyền lợi đặc biệt.
                                     </p>
-                                    <button className="bg-white text-blue-600 font-bold py-2 px-4 rounded-lg text-sm w-full hover:bg-blue-50 transition-colors">
+                                    <button className="bg-white text-red-600 font-bold py-2 px-4 rounded-lg text-sm w-full hover:bg-red-50 transition-colors">
                                         Tìm hiểu thêm
                                     </button>
                                 </div>
@@ -476,7 +476,7 @@ export default function DonatePage() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
                     <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowCardModal(false)}></div>
                     <div className="bg-white dark:bg-[#1c162e] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300">
-                        <div className="bg-blue-600 p-6 text-center text-white relative">
+                        <div className="bg-red-600 p-6 text-center text-white relative">
                             <button onClick={() => setShowCardModal(false)} className="absolute right-4 top-4 hover:bg-black/10 p-1 rounded-full transition-colors">
                                 <X className="w-6 h-6" />
                             </button>
@@ -486,11 +486,11 @@ export default function DonatePage() {
                         </div>
                         <div className="p-8">
                             <div className="space-y-4 mb-8">
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/30">
-                                    <p className="text-[10px] uppercase font-black text-blue-400 mb-1 tracking-widest">Số tài khoản</p>
+                                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-100 dark:border-red-900/30">
+                                    <p className="text-[10px] uppercase font-black text-red-400 mb-1 tracking-widest">Số tài khoản</p>
                                     <div className="flex justify-between items-center">
-                                        <p className="text-xl font-black text-blue-900 dark:text-blue-200 tracking-wider">1234 5678 9012</p>
-                                        <button className="text-blue-600 p-2 hover:bg-blue-100 rounded-lg transition-colors"><Copy className="w-4 h-4" /></button>
+                                        <p className="text-xl font-black text-red-900 dark:text-red-200 tracking-wider">1234 5678 9012</p>
+                                        <button className="text-red-600 p-2 hover:bg-red-100 rounded-lg transition-colors"><Copy className="w-4 h-4" /></button>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -512,7 +512,7 @@ export default function DonatePage() {
                             </div>
                             <button
                                 onClick={handlePaymentComplete}
-                                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-all shadow-lg shadow-blue-600/20"
+                                className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl transition-all shadow-lg shadow-red-600/20"
                             >
                                 Hoàn tất chuyển khoản
                             </button>

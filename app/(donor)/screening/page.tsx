@@ -351,20 +351,20 @@ export default function ScreeningPage() {
 
                         {/* Pro Max Stepper */}
                         <div className="mb-12 relative">
-                            <div className="flex justify-between items-center relative z-10 px-4 md:px-20">
+                            <div className="flex justify-between items-center relative z-10 px-0 md:px-20">
                                 {[
                                     { id: 'survey', label: 'Khảo sát', icon: ClipboardCheck },
-                                    { id: 'analyzing', label: 'Phân tích AI', icon: BrainCircuit },
+                                    { id: 'analyzing', label: 'Phân tích', icon: BrainCircuit },
                                     { id: 'result', label: 'Kết luận', icon: HeartPulse }
                                 ].map((s, i) => (
                                     <div key={s.id} className="flex flex-col items-center group">
-                                        <div className={`size-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm ${step === s.id
+                                        <div className={`size-10 md:size-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm ${step === s.id
                                             ? 'bg-[#0065FF] text-white scale-110 shadow-blue-500/25 ring-4 ring-blue-500/10'
                                             : 'bg-white dark:bg-slate-800 text-slate-400 opacity-60'
                                             }`}>
-                                            <s.icon className="size-6" />
+                                            <s.icon className="size-5 md:size-6" />
                                         </div>
-                                        <span className={`mt-3 text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${step === s.id ? 'text-[#0065FF]' : 'text-slate-400'
+                                        <span className={`mt-2 md:mt-3 text-[10px] md:text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${step === s.id ? 'text-[#0065FF]' : 'text-slate-400'
                                             }`}>
                                             {s.label}
                                         </span>
@@ -378,25 +378,25 @@ export default function ScreeningPage() {
                         {step === "survey" && (
                             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-10">
                                 {/* PHẦN 1: KIỂM TRA NHANH CHỈ SỐ SỨC KHỎE */}
-                                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-200/60 dark:border-slate-800 p-8 md:p-14">
-                                    <div className="mb-14 flex items-center gap-6 border-b border-slate-100 dark:border-slate-800 pb-10">
-                                        <div className="size-16 rounded-[1.5rem] bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[#0065FF]">
-                                            <Activity className="size-8" />
+                                <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm border border-slate-200/60 dark:border-slate-800 p-6 md:p-14">
+                                    <div className="mb-8 md:mb-14 flex items-center gap-4 md:gap-6 border-b border-slate-100 dark:border-slate-800 pb-6 md:pb-10">
+                                        <div className="size-12 md:size-16 rounded-xl md:rounded-[1.5rem] bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[#0065FF]">
+                                            <Activity className="size-6 md:size-8" />
                                         </div>
                                         <div>
-                                            <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Chỉ số Sức khỏe Nhanh</h3>
-                                            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1">Cung cấp thông tin chính xác để AI đánh giá điều kiện hiến máu</p>
+                                            <h3 className="text-xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Chỉ số Sức khỏe Nhanh</h3>
+                                            <p className="text-slate-500 dark:text-slate-400 font-medium text-xs md:text-sm mt-1">Cung cấp thông tin chính xác để AI đánh giá điều kiện hiến máu</p>
                                         </div>
                                     </div>
 
                                     <div className="space-y-16">
                                         {SCREENING_QUESTIONS.filter(q => q.type === "choice").map((q, idx) => (
                                             <div key={q.id} className="relative">
-                                                <div className="flex items-start gap-6 mb-8">
-                                                    <span className="flex-none size-8 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-xs font-black shadow-lg">
+                                                <div className="flex items-start gap-4 md:gap-6 mb-6 md:mb-8">
+                                                    <span className="flex-none size-6 md:size-8 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[10px] md:text-xs font-black shadow-lg">
                                                         {idx + 1}
                                                     </span>
-                                                    <h4 className="text-xl font-semibold text-slate-800 dark:text-slate-100 leading-tight pt-0.5">{q.text}</h4>
+                                                    <h4 className="text-lg md:text-xl font-semibold text-slate-800 dark:text-slate-100 leading-tight pt-0.5">{q.text}</h4>
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-0 md:ml-14">
                                                     {q.options?.map((opt) => (
@@ -429,14 +429,14 @@ export default function ScreeningPage() {
                                 </div>
 
                                 {/* PHẦN 2: THÔNG TIN SỨC KHỎE CHI TIẾT */}
-                                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-200/60 dark:border-slate-800 p-8 md:p-14">
-                                    <div className="mb-14 flex items-center gap-6 border-b border-slate-100 dark:border-slate-800 pb-10">
-                                        <div className="size-16 rounded-[1.5rem] bg-pink-50 dark:bg-pink-500/10 flex items-center justify-center text-pink-500">
-                                            <HeartPulse className="size-8" />
+                                <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm border border-slate-200/60 dark:border-slate-800 p-6 md:p-14">
+                                    <div className="mb-8 md:mb-14 flex items-center gap-4 md:gap-6 border-b border-slate-100 dark:border-slate-800 pb-6 md:pb-10">
+                                        <div className="size-12 md:size-16 rounded-xl md:rounded-[1.5rem] bg-pink-50 dark:bg-pink-500/10 flex items-center justify-center text-pink-500">
+                                            <HeartPulse className="size-6 md:size-8" />
                                         </div>
                                         <div>
-                                            <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Thông tin Chi tiết</h3>
-                                            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1">Cung cấp mô tả cụ thể về tiền sử bệnh lý và sức khỏe hiện tại</p>
+                                            <h3 className="text-xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Thông tin Chi tiết</h3>
+                                            <p className="text-slate-500 dark:text-slate-400 font-medium text-xs md:text-sm mt-1">Cung cấp mô tả cụ thể về tiền sử bệnh lý và sức khỏe hiện tại</p>
                                         </div>
                                     </div>
 
@@ -451,7 +451,7 @@ export default function ScreeningPage() {
                                                 </div>
                                                 <div className="ml-0 md:ml-14">
                                                     <textarea
-                                                        className="w-full h-44 p-8 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-800 dark:text-white focus:border-[#0065FF] focus:ring-8 focus:ring-blue-500/5 transition-all outline-none font-medium resize-none text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-inner"
+                                                        className="w-full h-44 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-800 dark:text-white focus:border-[#0065FF] focus:ring-8 focus:ring-blue-500/5 transition-all outline-none font-medium resize-none text-base md:text-lg placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-inner"
                                                         placeholder={q.placeholder}
                                                         value={answers[q.id]?.value || ""}
                                                         onChange={(e) => handleAnswer(q.id, e.target.value)}
@@ -474,15 +474,15 @@ export default function ScreeningPage() {
                                     <Button
                                         disabled={!isAllAnswered}
                                         onClick={() => setStep("analyzing")}
-                                        className="h-24 px-14 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-2xl shadow-slate-900/20 dark:shadow-white/10 disabled:opacity-30 disabled:grayscale group"
+                                        className="h-20 md:h-24 px-8 md:px-14 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-2xl shadow-slate-900/20 dark:shadow-white/10 disabled:opacity-30 disabled:grayscale group"
                                     >
-                                        <div className="flex items-center gap-6">
+                                        <div className="flex items-center gap-4 md:gap-6">
                                             <div className="text-left">
-                                                <p className="text-xl font-black uppercase tracking-tighter">Xác nhận & Phân tích AI</p>
+                                                <p className="text-lg md:text-xl font-black uppercase tracking-tighter">Xác nhận & Phân tích AI</p>
                                                 <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Neural Engine 4.2</p>
                                             </div>
-                                            <div className="size-12 rounded-full bg-[#0065FF] flex items-center justify-center text-white group-hover:rotate-12 transition-transform">
-                                                <BrainCircuit className="size-6" />
+                                            <div className="size-10 md:size-12 rounded-full bg-[#0065FF] flex items-center justify-center text-white group-hover:rotate-12 transition-transform">
+                                                <BrainCircuit className="size-5 md:size-6" />
                                             </div>
                                         </div>
                                     </Button>
@@ -491,21 +491,21 @@ export default function ScreeningPage() {
                         )}
 
                         {step === "analyzing" && (
-                            <div className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border border-slate-200/60 dark:border-slate-800 p-16 md:p-24 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in-95 duration-700 relative overflow-hidden">
+                            <div className="bg-white dark:bg-slate-900 rounded-[2rem] md:rounded-[3rem] shadow-sm border border-slate-200/60 dark:border-slate-800 p-8 md:p-24 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in-95 duration-700 relative overflow-hidden">
                                 {/* Scanline Effect */}
                                 <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
                                     <div className="w-full h-1 bg-[#0065FF] absolute left-0 animate-scan pointer-events-none shadow-[0_0_20px_#0065FF]"></div>
                                 </div>
 
-                                <div className="relative size-72 mb-16">
+                                <div className="relative size-60 md:size-72 mb-10 md:size-16">
                                     {/* Outer Ring */}
                                     <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-slate-800 animate-[spin_10s_linear_infinite]" />
                                     <div className="absolute inset-0 rounded-full border-t-2 border-[#0065FF] animate-spin shadow-[0_0_15px_rgba(0,101,255,0.3)]" />
 
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="size-48 rounded-[2.5rem] bg-slate-50 dark:bg-slate-800 shadow-xl border border-white dark:border-slate-700 flex flex-col items-center justify-center backdrop-blur-md">
-                                            <BrainCircuit className="size-20 text-[#0065FF] animate-pulse" />
-                                            <span className="text-xl font-bold text-slate-900 dark:text-white mt-2 tracking-tighter">{progress}%</span>
+                                        <div className="size-40 md:size-48 rounded-[2rem] md:rounded-[2.5rem] bg-slate-50 dark:bg-slate-800 shadow-xl border border-white dark:border-slate-700 flex flex-col items-center justify-center backdrop-blur-md">
+                                            <BrainCircuit className="size-14 md:size-20 text-[#0065FF] animate-pulse" />
+                                            <span className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mt-2 tracking-tighter">{progress}%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -533,11 +533,11 @@ export default function ScreeningPage() {
 
                         {step === "result" && aiResult && (
                             <div className="animate-in fade-in slide-in-from-top-12 duration-1000 ease-out space-y-8">
-                                <div className={`bg-white dark:bg-slate-900 rounded-[3rem] shadow-sm border-2 overflow-hidden relative p-8 md:p-16 ${aiResult.status === 'eligible' ? 'border-emerald-500/20' :
+                                <div className={`bg-white dark:bg-slate-900 rounded-[2rem] md:rounded-[3rem] shadow-sm border-2 overflow-hidden relative p-6 md:p-16 ${aiResult.status === 'eligible' ? 'border-emerald-500/20' :
                                     aiResult.status === 'warning' ? 'border-amber-500/20' :
                                         'border-red-500/20'
                                     }`}>
-                                    <div className="flex flex-col md:flex-row justify-between items-start gap-10 mb-16 border-b border-slate-100 dark:border-slate-800 pb-16">
+                                    <div className="flex flex-col md:flex-row justify-between items-start gap-8 md:gap-10 mb-8 md:mb-16 border-b border-slate-100 dark:border-slate-800 pb-8 md:pb-16">
                                         <div className="space-y-6 flex-1">
                                             <div className="flex items-center gap-4">
                                                 <div className={`size-14 rounded-2xl flex items-center justify-center text-white shadow-lg ${aiResult.status === 'eligible' ? 'bg-emerald-500 shadow-emerald-500/20' :
@@ -550,7 +550,7 @@ export default function ScreeningPage() {
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Diagnostic Result</p>
-                                                    <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
+                                                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
                                                         {aiResult.status === 'eligible' ? 'Đủ điều kiện' :
                                                             aiResult.status === 'warning' ? 'Lưu ý Y tế' :
                                                                 'Chưa đủ điều kiện'}
@@ -606,7 +606,7 @@ export default function ScreeningPage() {
                                         {aiResult.status === 'eligible' ? (
                                             <>
                                                 {/* Thông báo đã lưu hồ sơ */}
-                                                <div className="p-6 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center gap-4">
+                                                <div className="p-5 md:p-6 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center gap-4">
                                                     <div className="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
                                                         <CheckCircle className="w-6 h-6 text-white" />
                                                     </div>
@@ -641,7 +641,7 @@ export default function ScreeningPage() {
                                         ) : (
                                             <>
                                                 {/* Thông báo không đủ điều kiện */}
-                                                <div className="p-6 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-2xl flex items-center gap-4">
+                                                <div className="p-5 md:p-6 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-2xl flex items-center gap-4">
                                                     <div className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center shrink-0">
                                                         <XCircle className="w-6 h-6 text-white" />
                                                     </div>
@@ -698,7 +698,7 @@ export default function ScreeningPage() {
                     </div>
                 </main>
                 <MiniFooter />
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

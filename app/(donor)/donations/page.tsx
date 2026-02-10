@@ -98,89 +98,90 @@ export default function DonationsPage() {
                 <TopNav title="" />
                 <main className="flex-1 flex justify-center py-10">
                     <div className="max-w-[1400px] w-full px-6 md:px-12 text-left">
-                        <div className="mb-10">
-                            <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-3">
+                        <div className="mb-6 md:mb-10">
+                            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2 md:mb-3">
                                 Lịch sử hiến máu
                             </h1>
-                            <p className="text-slate-500 dark:text-slate-400 text-lg max-w-3xl leading-relaxed">
+                            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-lg max-w-3xl leading-relaxed">
                                 Theo dõi những đóng góp cứu người, điểm thưởng đã đạt được và trạng thái xác minh của các lần hiến máu.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 text-left">
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-5">
-                                <div className="h-12 w-12 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
-                                    <Activity className="w-6 h-6" />
+                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8 text-left">
+                            <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center md:items-center gap-3 md:gap-5">
+                                <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 shrink-0">
+                                    <Activity className="w-5 h-5 md:w-6 md:h-6" />
                                 </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tổng lần hiến</p>
-                                    {loading ? <Skeleton className="h-8 w-12" /> : <p className="text-2xl font-bold text-slate-900 dark:text-white">{totalUnits}</p>}
-                                </div>
-                            </div>
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-5">
-                                <div className="h-12 w-12 rounded-lg bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center text-rose-600">
-                                    <Droplet className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tổng lượng máu</p>
-                                    {loading ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold text-slate-900 dark:text-white">{totalVolume.toFixed(1)} <span className="text-sm font-medium text-slate-400 ml-1">Lít</span></p>}
+                                <div className="text-center md:text-left">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5 md:mb-1">Tổng lần</p>
+                                    {loading ? <Skeleton className="h-6 w-10 mx-auto md:mx-0" /> : <p className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white">{totalUnits}</p>}
                                 </div>
                             </div>
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-5">
-                                <div className="h-12 w-12 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600">
-                                    <Award className="w-6 h-6" />
+                            <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center md:items-center gap-3 md:gap-5">
+                                <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center text-rose-600 shrink-0">
+                                    <Droplet className="w-5 h-5 md:w-6 md:h-6" />
                                 </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Điểm đã nhận</p>
-                                    {loading ? <Skeleton className="h-8 w-20" /> : <p className="text-2xl font-bold text-slate-900 dark:text-white">+{currentPoints.toLocaleString()}</p>}
+                                <div className="text-center md:text-left">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5 md:mb-1">Lượng máu</p>
+                                    {loading ? <Skeleton className="h-6 w-14 mx-auto md:mx-0" /> : <p className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white">{totalVolume.toFixed(1)} <span className="text-[10px] md:text-sm font-medium text-slate-400">L</span></p>}
                                 </div>
                             </div>
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-5">
-                                <div className="h-12 w-12 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
-                                    <Users className="w-6 h-6" />
+                            <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center md:items-center gap-3 md:gap-5">
+                                <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 shrink-0">
+                                    <Award className="w-5 h-5 md:w-6 md:h-6" />
                                 </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Người đã cứu</p>
-                                    {loading ? <Skeleton className="h-8 w-12" /> : <p className="text-2xl font-bold text-slate-900 dark:text-white">{livesSaved}</p>}
+                                <div className="text-center md:text-left">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5 md:mb-1">Điểm nhận</p>
+                                    {loading ? <Skeleton className="h-6 w-16 mx-auto md:mx-0" /> : <p className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white">+{currentPoints.toLocaleString()}</p>}
+                                </div>
+                            </div>
+                            <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center md:items-center gap-3 md:gap-5">
+                                <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 shrink-0">
+                                    <Users className="w-5 h-5 md:w-6 md:h-6" />
+                                </div>
+                                <div className="text-center md:text-left">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5 md:mb-1">Đã cứu</p>
+                                    {loading ? <Skeleton className="h-6 w-10 mx-auto md:mx-0" /> : <p className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white">{livesSaved}</p>}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-col lg:flex-row gap-4 mb-6">
+                        <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-6">
                             <div className="relative flex-1">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors w-5 h-5" />
                                 <input
                                     type="text"
-                                    placeholder="Tìm kiếm bệnh viện, địa điểm..."
-                                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
+                                    placeholder="Tìm kiếm..."
+                                    className="w-full pl-12 pr-4 py-3 md:py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <div className="flex gap-4">
+                            <div className="grid grid-cols-2 md:flex gap-3 md:gap-4">
                                 <div className="relative">
-                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 w-4 h-4 pointer-events-none" />
+                                    <Calendar className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-blue-600 w-4 h-4 pointer-events-none" />
                                     <input
                                         type="date"
-                                        className="pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none text-sm font-semibold [color-scheme:light] dark:[color-scheme:dark]"
+                                        className="w-full pl-9 md:pl-11 pr-3 md:pr-4 py-3 md:py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none text-[13px] md:text-sm font-semibold [color-scheme:light] dark:[color-scheme:dark]"
                                         value={dateFilter}
                                         onChange={(e) => setDateFilter(e.target.value)}
                                     />
                                 </div>
-                                <div className="relative min-w-[180px]">
+                                <div className="relative">
                                     <select
-                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none text-sm font-semibold appearance-none cursor-pointer"
+                                        className="w-full px-4 py-3 md:py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none text-[13px] md:text-sm font-semibold appearance-none cursor-pointer"
                                         value={statusFilter}
                                         onChange={(e) => setStatusFilter(e.target.value)}
                                     >
-                                        <option value="Tất cả">Tất cả trạng thái</option>
-                                        <option value="Đã xác minh">Đã xác minh</option>
+                                        <option value="Tất cả">Trạng thái</option>
+                                        <option value="Đã xác minh">Xác minh</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden mb-10 overflow-x-auto">
+                        {/* Mobile view cards / Desktop view table */}
+                        <div className="hidden md:block bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden mb-10">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
@@ -252,6 +253,53 @@ export default function DonationsPage() {
                                     )}
                                 </TableBody>
                             </Table>
+                        </div>
+
+                        {/* Mobile Grid */}
+                        <div className="md:hidden space-y-4 mb-10">
+                            {loading ? (
+                                [1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+                            ) : paginatedDonations.length > 0 ? (
+                                paginatedDonations.map((item) => (
+                                    <div key={item.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-red-50 dark:bg-red-900/20 h-10 w-10 rounded-xl flex items-center justify-center text-red-600 shrink-0">
+                                                    <Hospital className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-slate-900 dark:text-white leading-tight">{item.hospital?.hospital_name}</h3>
+                                                    <p className="text-[10px] text-slate-500 uppercase mt-0.5">{item.hospital?.district}, {item.hospital?.city}</p>
+                                                </div>
+                                            </div>
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter bg-emerald-50 text-emerald-600">
+                                                VERIFIED
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4 py-3 border-y border-slate-50 dark:border-slate-800/50">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Thời gian</p>
+                                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                                    {new Date(item.verified_at).toLocaleDateString('vi-VN')}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Khối lượng</p>
+                                                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.volume_ml} ML</p>
+                                            </div>
+                                        </div>
+                                        <button className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
+                                            <FileText className="w-4 h-4" />
+                                            Tải chứng nhận
+                                        </button>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="py-20 text-center opacity-30">
+                                    <Search className="w-12 h-12 mx-auto mb-4" />
+                                    <p className="font-bold">Không có dữ liệu</p>
+                                </div>
+                            )}
                         </div>
 
                         {totalPages > 1 && (

@@ -11,7 +11,8 @@ import {
   CheckCheck,
   CheckCircle,
   AlertTriangle,
-  Info
+  Info,
+  Menu
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -229,8 +230,18 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
 
   return (
     <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-6 py-3 sticky top-0 z-20 w-full shrink-0">
-      <div className="flex items-center gap-8 flex-1">
-        {/* Title and Search removed per user request */}
+      <div className="flex items-center gap-4 md:gap-8 flex-1">
+        {/* Mobile Menu Trigger */}
+        <button
+          onClick={() => {
+            const event = new CustomEvent('open-mobile-menu');
+            window.dispatchEvent(event);
+          }}
+          className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 md:hidden"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <h2 className="text-slate-900 dark:text-white text-lg md:text-xl font-bold truncate">{title}</h2>
       </div>
 
       <div className="flex items-center gap-4">

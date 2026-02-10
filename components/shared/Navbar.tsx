@@ -1,6 +1,8 @@
-import React from 'react';
-import { RedHopeLogo } from './icons';
-import { NameRedHope } from './icons';
+"use client";
+
+import { RedHopeLogo, NameRedHope } from './icons';
+import { Menu } from 'lucide-react';
+import Link from 'next/link';
 
 const Navbar = () => {
     return (
@@ -15,13 +17,19 @@ const Navbar = () => {
 
 
 
-                    <div className="flex items-center gap-4">
-                        <a href="/login" className="hidden md:block text-gray-900 font-medium px-4 py-2 hover:bg-gray-50 rounded-full transition-colors">
+                    <div className="flex items-center gap-2">
+                        <Link href="/login" className="hidden sm:block text-gray-900 font-medium px-4 py-2 hover:bg-gray-50 rounded-full transition-colors text-sm md:text-base">
                             Đăng nhập
-                        </a>
-                        <a href="/register" className="bg-primary text-white px-6 py-2.5 rounded-full font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40">
+                        </Link>
+                        <Link href="/register" className="bg-primary text-white px-4 md:px-6 py-2 md:py-2.5 rounded-full font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40 text-sm md:text-base">
                             Đăng ký
-                        </a>
+                        </Link>
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('open-mobile-menu'))}
+                            className="p-2 rounded-lg bg-gray-100 text-gray-600 md:hidden ml-1"
+                        >
+                            <Menu className="w-5 h-5" />
+                        </button>
                     </div>
                 </div>
             </div>

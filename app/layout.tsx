@@ -46,6 +46,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "@/context/AuthContext";
+import { MobileSidebar } from "@/components/shared/MobileSidebar";
 
 export default function RootLayout({
   children,
@@ -60,6 +61,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
         <AuthProvider>
           {children}
+          <MobileSidebar />
           <Toaster position="top-center" richColors />
         </AuthProvider>
       </body>

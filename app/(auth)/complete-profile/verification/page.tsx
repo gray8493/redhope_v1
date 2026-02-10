@@ -146,11 +146,11 @@ export default function VerificationProfilePage() {
                     <div className="bg-white dark:bg-[#151c2c] rounded-xl shadow-sm border border-[#cfd7e7] dark:border-gray-800 overflow-hidden">
 
                         {/* Progress Header */}
-                        <div className="p-8 border-b border-[#cfd7e7] dark:border-gray-800">
+                        <div className="p-6 md:p-8 border-b border-[#cfd7e7] dark:border-gray-800">
                             <div className="flex flex-col gap-3">
                                 <div className="flex justify-between items-center flex-wrap gap-4">
-                                    <h1 className="text-2xl font-bold">Lịch sử hiến máu & Sức khỏe</h1>
-                                    <span className="text-[#0065FF] text-sm font-semibold bg-[#0065FF]/10 px-3 py-1 rounded-full whitespace-nowrap">
+                                    <h1 className="text-xl md:text-2xl font-bold">Lịch sử hiến máu & Sức khỏe</h1>
+                                    <span className="text-[#0065FF] text-xs md:text-sm font-semibold bg-[#0065FF]/10 px-3 py-1 rounded-full whitespace-nowrap">
                                         Bước 2 / 2
                                     </span>
                                 </div>
@@ -172,7 +172,7 @@ export default function VerificationProfilePage() {
                         </div>
 
                         {/* Form Body */}
-                        <div className="p-8">
+                        <div className="p-6 md:p-8">
                             <form onSubmit={handleSubmit} className="flex flex-col gap-8">
                                 {error && (
                                     <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-100">
@@ -292,7 +292,7 @@ export default function VerificationProfilePage() {
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="flex items-center gap-2 px-8 py-3 rounded-lg bg-[#0065FF] hover:bg-[#0065FF]/90 text-white font-bold text-sm shadow-lg shadow-[#0065FF]/30 transition-transform active:scale-95 disabled:opacity-50"
+                                        className="w-full md:w-auto flex items-center justify-center gap-2 px-8 py-3.5 md:py-3 rounded-lg bg-[#0065FF] hover:bg-[#0065FF]/90 text-white font-bold text-sm shadow-lg shadow-[#0065FF]/30 transition-transform active:scale-95 disabled:opacity-50"
                                     >
                                         {submitting ? "Đang xử lý..." : "Hoàn tất đăng ký"}
                                         <CheckCircle className="w-4 h-4" />

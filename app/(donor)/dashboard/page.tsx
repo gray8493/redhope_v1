@@ -79,11 +79,11 @@ export default function DashboardPage() {
             <Sidebar />
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto relative">
                 <TopNav title="Tổng quan" />
-                <div className="p-8 flex flex-col gap-8 max-w-7xl mx-auto w-full">
-                    <div className="flex flex-col gap-6 text-left">
+                <div className="p-4 md:p-8 flex flex-col gap-6 md:gap-8 max-w-7xl mx-auto w-full">
+                    <div className="flex flex-col gap-4 md:gap-6 text-left">
                         <div className="flex flex-wrap justify-between items-end gap-4">
                             <div className="flex flex-col gap-1">
-                                <h1 className="text-slate-900 dark:text-white text-4xl font-black tracking-tight">Chào {firstName}!</h1>
+                                <h1 className="text-slate-900 dark:text-white text-3xl md:text-4xl font-black tracking-tight">Chào {firstName}!</h1>
                                 <p className="text-slate-500 text-sm font-medium">Hôm nay là một ngày tuyệt vời để chia sẻ sự sống.</p>
                             </div>
                             <div className="flex items-center gap-3">
@@ -202,14 +202,14 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-4 text-left">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Chiến dịch hiến máu đang diễn ra</h3>
-                            <Link href="/campaigns" className="text-[#0065FF] text-sm font-bold hover:underline">Xem tất cả</Link>
+                            <Link href="/requests?filter=campaign" className="text-[#0065FF] text-sm font-bold hover:underline">Xem tất cả</Link>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {loading ? (
                                 [1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
                             ) : campaigns.length > 0 ? (
                                 campaigns.map(camp => (
-                                    <Link href={`/campaigns/${camp.id}`} key={camp.id}>
+                                    <Link href={`/requests?id=${camp.id}`} key={camp.id}>
                                         <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] hover:border-[#0065FF]/50 transition-all cursor-pointer group h-full">
                                             <CardContent className="p-4 flex flex-col h-full gap-3">
                                                 <div className="flex justify-between items-start">

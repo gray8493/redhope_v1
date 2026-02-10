@@ -302,84 +302,142 @@ export default function VoucherManagementPage() {
             </div>
 
             {/* Voucher List */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Chi tiết Mã ưu đãi</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Chi phí (Điểm)</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Kho</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Hết hạn</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {loading ? (
-                            <tr><td colSpan={6} className="text-center py-10"><Loader2 className="animate-spin w-6 h-6 mx-auto" /></td></tr>
-                        ) : filteredVouchers.map((voucher) => (
-                            <tr key={voucher.id} className="hover:bg-gray-50 transition-colors group">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="size-12 rounded-lg bg-gray-100 overflow-hidden relative border border-gray-200">
-                                            <img src={voucher.image} alt={voucher.name} className="w-full h-full object-cover" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-[#1f1f1f] text-sm">{voucher.name}</p>
-                                            <p className="text-xs text-gray-500">{voucher.category}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-1 text-[#0065FF] font-bold">
-                                        <span className="material-symbols-outlined text-sm">stars</span>
-                                        {(voucher.points || 0).toLocaleString()}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-20 bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${(voucher.stock || 0) < 20 ? 'bg-red-500' : 'bg-green-500'}`}
-                                                style={{ width: `${Math.min(((voucher.stock || 0) / 100) * 100, 100)}%` }}
-                                            ></div>
-                                        </div>
-                                        <span className={`text-xs font-bold ${(voucher.stock || 0) < 20 ? 'text-red-500' : 'text-gray-600'}`}>{voucher.stock} còn lại</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${voucher.status === 'Active'
-                                        ? 'bg-green-50 text-green-700 border-green-100'
-                                        : 'bg-gray-50 text-gray-600 border-gray-200'
-                                        }`}>
-                                        {voucher.status === 'Active' ? 'Hoạt động' : 'Không hoạt động'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-600 font-medium">
-                                    {voucher.expiryDate}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            onClick={() => handleEdit(voucher)}
-                                            aria-label={`Chỉnh sửa ${voucher.name}`}
-                                            className="p-2 text-gray-500 hover:text-[#0065FF] hover:bg-[#0065FF]/5 rounded-lg transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-xl">edit</span>
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(voucher.id)}
-                                            aria-label={`Xóa ${voucher.name}`}
-                                            className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-xl">delete</span>
-                                        </button>
-                                    </div>
-                                </td>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                {/* Desktop View Table */}
+                <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                            <tr>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Chi tiết Mã ưu đãi</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Chi phí (Điểm)</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kho</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Trạng thái</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hết hạn</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Hành động</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                            {loading ? (
+                                <tr><td colSpan={6} className="text-center py-10"><Loader2 className="animate-spin w-6 h-6 mx-auto text-[#0065FF]" /></td></tr>
+                            ) : filteredVouchers.map((voucher) => (
+                                <tr key={voucher.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="size-12 rounded-lg bg-gray-100 dark:bg-slate-800 overflow-hidden relative border border-gray-200 dark:border-slate-700">
+                                                <img src={voucher.image} alt={voucher.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-[#1f1f1f] dark:text-white text-sm">{voucher.name}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{voucher.category}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-1 text-[#0065FF] font-bold">
+                                            <span className="material-symbols-outlined text-sm">stars</span>
+                                            {(voucher.points || 0).toLocaleString()}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-20 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full ${(voucher.stock || 0) < 20 ? 'bg-red-500' : 'bg-green-500'}`}
+                                                    style={{ width: `${Math.min(((voucher.stock || 0) / 100) * 100, 100)}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className={`text-xs font-bold ${(voucher.stock || 0) < 20 ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`}>{voucher.stock} còn lại</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${voucher.status === 'Active'
+                                            ? 'bg-green-50 text-green-700 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800'
+                                            : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                                            }`}>
+                                            {voucher.status === 'Active' ? 'Hoạt động' : 'Không hoạt động'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">
+                                        {voucher.expiryDate}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => handleEdit(voucher)}
+                                                className="p-2 text-gray-500 hover:text-[#0065FF] hover:bg-[#0065FF]/5 rounded-lg transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-xl">edit</span>
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(voucher.id)}
+                                                className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-xl">delete</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Mobile View Cards */}
+                <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-800">
+                    {loading ? (
+                        <div className="p-10 text-center"><Loader2 className="animate-spin w-6 h-6 mx-auto text-[#0065FF]" /></div>
+                    ) : filteredVouchers.map((voucher) => (
+                        <div key={voucher.id} className="p-4 flex flex-col gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="size-14 rounded-lg bg-gray-100 dark:bg-slate-800 overflow-hidden border border-gray-200 dark:border-slate-700">
+                                    <img src={voucher.image} alt={voucher.name} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-bold text-[#1f1f1f] dark:text-white text-sm">{voucher.name}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${voucher.status === 'Active'
+                                            ? 'bg-green-50 text-green-700 border-green-100'
+                                            : 'bg-gray-50 text-gray-600 border-gray-200'
+                                            }`}>
+                                            {voucher.status === 'Active' ? 'Active' : 'Inactive'}
+                                        </span>
+                                        <span className="text-[10px] text-gray-400">{voucher.category}</span>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[#0065FF] font-black text-sm">{voucher.points?.toLocaleString()} pts</p>
+                                    <p className="text-[9px] text-gray-400 mt-1">Hết hạn: {voucher.expiryDate}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 flex-1">
+                                    <div className="flex-1 bg-gray-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden max-w-[100px]">
+                                        <div
+                                            className={`h-full ${(voucher.stock || 0) < 20 ? 'bg-red-500' : 'bg-green-500'}`}
+                                            style={{ width: `${Math.min(((voucher.stock || 0) / 100) * 100, 100)}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-500">{voucher.stock} đv</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleEdit(voucher)}
+                                        className="p-2 text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-lg"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">edit</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(voucher.id)}
+                                        className="p-2 text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-lg"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
                 {!loading && filteredVouchers.length === 0 && (
                     <div className="p-12 text-center text-gray-500">
                         <span className="material-symbols-outlined text-4xl block mb-2 opacity-50">search_off</span>

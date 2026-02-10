@@ -20,6 +20,7 @@ import {
     TrendingUp,
     LayoutGrid,
     Droplet,
+    Menu,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -358,9 +359,19 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
     };
 
     return (
-        <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-4 sticky top-0 z-20 w-full">
-            <div className="flex items-center gap-8 flex-1">
-                <h2 className="text-slate-900 dark:text-white text-xl font-bold">{title}</h2>
+        <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-8 py-4 sticky top-0 z-20 w-full">
+            <div className="flex items-center gap-4 md:gap-8 flex-1">
+                {/* Mobile Menu Trigger */}
+                <button
+                    onClick={() => {
+                        const event = new CustomEvent('open-mobile-menu');
+                        window.dispatchEvent(event);
+                    }}
+                    className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 md:hidden"
+                >
+                    <Menu className="w-5 h-5" />
+                </button>
+                <h2 className="text-slate-900 dark:text-white text-lg md:text-xl font-bold truncate">{title}</h2>
             </div>
             <div className="flex items-center gap-4">
 

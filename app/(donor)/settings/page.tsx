@@ -283,24 +283,24 @@ export default function SettingsPage() {
                     <div className="max-w-5xl mx-auto px-6 py-8 w-full">
 
                         {/* Tab Navigation */}
-                        <div className="flex items-center space-x-8 mb-8 border-b border-slate-300 dark:border-slate-800">
+                        <div className="flex items-center space-x-6 md:space-x-8 mb-8 border-b border-slate-300 dark:border-slate-800 overflow-x-auto no-scrollbar whitespace-nowrap px-1">
                             <button
                                 onClick={() => setActiveTab('profile')}
-                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'profile' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-[#0052CC]'}`}
+                                className={`pb-4 text-[13px] md:text-sm font-bold transition-all relative shrink-0 ${activeTab === 'profile' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-[#0052CC]'}`}
                             >
                                 Hồ sơ Cá nhân
                                 {activeTab === 'profile' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0065FF] rounded-full" />}
                             </button>
                             <button
                                 onClick={() => setActiveTab('notifications')}
-                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'notifications' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-[#0052CC]'}`}
+                                className={`pb-4 text-[13px] md:text-sm font-bold transition-all relative shrink-0 ${activeTab === 'notifications' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-[#0052CC]'}`}
                             >
                                 Thông báo
                                 {activeTab === 'notifications' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0065FF] rounded-full" />}
                             </button>
                             <button
                                 onClick={() => setActiveTab('security')}
-                                className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'security' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-[#0052CC]'}`}
+                                className={`pb-4 text-[13px] md:text-sm font-bold transition-all relative shrink-0 ${activeTab === 'security' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-[#0052CC]'}`}
                             >
                                 Bảo mật
                                 {activeTab === 'security' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#0065FF] rounded-full" />}
@@ -359,7 +359,7 @@ export default function SettingsPage() {
                                 {/* Forms */}
                                 <div className="space-y-6">
                                     {/* Personal Info */}
-                                    <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                                    <div className="bg-white dark:bg-[#1c162e] p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                                         <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
                                             <User className="text-[#0065FF] mr-2 size-5" />
                                             Thông tin cá nhân
@@ -410,7 +410,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     {/* Contact Info */}
-                                    <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                                    <div className="bg-white dark:bg-[#1c162e] p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                                         <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
                                             <Smartphone className="text-[#0065FF] mr-2 size-5" />
                                             Liên hệ & Sức khỏe
@@ -483,7 +483,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     {/* Address */}
-                                    <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                                    <div className="bg-white dark:bg-[#1c162e] p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                                         <h3 className="text-lg font-black mb-6 flex items-center text-slate-800 dark:text-white">
                                             <MapPin className="text-[#0065FF] mr-2 size-5" />
                                             Địa chỉ liên lạc
@@ -513,7 +513,7 @@ export default function SettingsPage() {
                                         <button
                                             onClick={handleSave}
                                             disabled={isSaving || isUploading}
-                                            className={`bg-gradient-to-r from-[#0065FF] to-blue-600 text-white px-12 py-4 rounded-full font-black text-base flex items-center space-x-3 transition-all shadow-2xl shadow-blue-500/30 active:scale-95 ${isSaving || isUploading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
+                                            className={`w-full md:w-auto bg-gradient-to-r from-[#0065FF] to-blue-600 text-white px-8 md:px-12 py-3.5 md:py-4 rounded-full font-black text-sm md:text-base flex items-center justify-center space-x-3 transition-all shadow-xl shadow-blue-500/20 active:scale-95 ${isSaving || isUploading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
                                         >
                                             <Save className={`size-5 ${isSaving || isUploading ? 'animate-spin' : ''}`} />
                                             <span>{isUploading ? "Đang tải ảnh..." : (isSaving ? "Đang lưu..." : "Lưu thay đổi hồ sơ")}</span>
@@ -533,7 +533,7 @@ export default function SettingsPage() {
                                     <h2 className="text-2xl font-bold tracking-tight">Cấu hình Thông báo</h2>
                                 </div>
 
-                                <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm space-y-6">
+                                <div className="bg-white dark:bg-[#1c162e] p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm space-y-6">
                                     {/* Push Notification Section */}
                                     <div className="mb-6">
                                         <h3 className="text-lg font-black mb-4 flex items-center text-slate-800 dark:text-white">
@@ -550,7 +550,7 @@ export default function SettingsPage() {
                                         Cài đặt Email & SMS
                                     </h3>
 
-                                    <div className="p-8 bg-slate-50 dark:bg-slate-800/20 rounded-3xl border border-slate-300 dark:border-slate-800">
+                                    <div className="p-6 md:p-8 bg-slate-50 dark:bg-slate-800/20 rounded-2xl md:rounded-3xl border border-slate-300 dark:border-slate-800">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-start gap-5">
                                                 <div className="size-12 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-[#0065FF] shrink-0">
@@ -568,7 +568,7 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="p-8 bg-slate-50 dark:bg-slate-800/20 rounded-3xl border border-slate-300 dark:border-slate-800 group hover:border-amber-200 transition-colors">
+                                    <div className="p-6 md:p-8 bg-slate-50 dark:bg-slate-800/20 rounded-2xl md:rounded-3xl border border-slate-300 dark:border-slate-800 group hover:border-amber-200 transition-colors">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-start gap-5">
                                                 <div className="size-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 shrink-0">
@@ -587,7 +587,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="flex justify-end pt-4">
-                                        <button className="bg-[#0065FF] text-white px-10 py-4 rounded-full font-black text-base shadow-2xl shadow-[#0065FF]/20 active:scale-95 transition-all hover:-translate-y-1">
+                                        <button className="w-full md:w-auto bg-[#0065FF] text-white px-8 md:px-10 py-3.5 md:py-4 rounded-full font-black text-sm md:text-base shadow-2xl shadow-[#0065FF]/20 active:scale-95 transition-all hover:-translate-y-1">
                                             Lưu cấu hình
                                         </button>
                                     </div>
@@ -605,7 +605,7 @@ export default function SettingsPage() {
                                     <h2 className="text-2xl font-bold tracking-tight">Bảo mật tài khoản</h2>
                                 </div>
 
-                                <div className="bg-white dark:bg-[#1c162e] p-8 rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm space-y-8">
+                                <div className="bg-white dark:bg-[#1c162e] p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-300 dark:border-slate-800 shadow-sm space-y-8">
                                     <div className="grid grid-cols-1 gap-8 max-w-md">
                                         <div className="space-y-2">
                                             <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Mật khẩu Hiện tại</label>
@@ -652,7 +652,7 @@ export default function SettingsPage() {
                                     <div className="flex justify-end pt-6 border-t border-slate-100 dark:border-slate-800">
                                         <button
                                             onClick={handleChangePassword}
-                                            className="bg-emerald-600 text-white px-10 py-4 rounded-full font-black text-base shadow-xl shadow-emerald-500/20 active:scale-95 transition-all hover:bg-emerald-700"
+                                            className="w-full md:w-auto bg-emerald-600 text-white px-8 md:px-10 py-3.5 md:py-4 rounded-full font-black text-sm md:text-base shadow-xl shadow-emerald-500/20 active:scale-95 transition-all hover:bg-emerald-700"
                                         >
                                             Cập nhật bảo mật
                                         </button>
@@ -660,22 +660,22 @@ export default function SettingsPage() {
                                 </div>
 
                                 {/* Danger Zone */}
-                                <div className="bg-rose-50 dark:bg-rose-900/10 p-8 rounded-[2rem] border border-rose-100 dark:border-rose-900/20">
+                                <div className="bg-rose-50 dark:bg-rose-900/10 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-rose-100 dark:border-rose-900/20">
                                     <div className="flex items-center gap-3 mb-4">
                                         <AlertTriangle className="text-rose-600 size-6" />
                                         <h3 className="text-lg font-black text-rose-700 dark:text-rose-400">Vùng nguy hiểm</h3>
                                     </div>
-                                    <p className="text-sm text-rose-600/80 mb-6 font-medium">
+                                    <p className="text-sm text-rose-600/80 mb-6 font-medium leading-relaxed">
                                         Nếu bạn xóa tài khoản, toàn bộ dữ liệu hiến máu và lịch sử hoạt động sẽ bị xóa vĩnh viễn và không thể khôi phục.
                                     </p>
-                                    <div className="flex gap-4">
+                                    <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                                         <button
                                             onClick={handleLogout}
-                                            className="px-6 py-3 bg-white border border-rose-200 text-rose-600 font-bold rounded-full hover:bg-rose-50 transition-colors shadow-sm"
+                                            className="w-full sm:w-auto px-6 py-3 bg-white dark:bg-slate-900 border border-rose-200 text-rose-600 font-bold rounded-full hover:bg-rose-50 transition-colors shadow-sm"
                                         >
                                             Đăng xuất
                                         </button>
-                                        <button className="px-6 py-3 bg-rose-600 text-white font-bold rounded-full hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/20">
+                                        <button className="w-full sm:w-auto px-6 py-3 bg-rose-600 text-white font-bold rounded-full hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/20">
                                             Xóa tài khoản
                                         </button>
                                     </div>
