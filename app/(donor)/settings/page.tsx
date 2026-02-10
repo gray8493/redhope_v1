@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { userService } from "@/services/user.service";
 import { authService } from "@/services/auth.service";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { BLOOD_GROUPS } from "@/lib/database.types";
 import { LocationSelector } from "@/components/shared/LocationSelector";
 import { PushNotificationToggle } from "@/components/shared/PushNotificationToggle";
@@ -68,6 +69,8 @@ export default function SettingsPage() {
     const [weight, setWeight] = useState("");
     const [lastDonationDate, setLastDonationDate] = useState("");
     const [healthHistory, setHealthHistory] = useState("");
+    const [emailAlert, setEmailAlert] = useState(true);
+    const [emergencyAlert, setEmergencyAlert] = useState(true);
 
     // Images
     const [avatar, setAvatar] = useState<string | null>(null);
@@ -119,12 +122,26 @@ export default function SettingsPage() {
         };
 
         fetchProfileData();
+
+        // Load notification preferences
+        const savedPrefs = localStorage.getItem(`donor_notifications_${user?.id}`);
+        if (savedPrefs) {
+            try {
+                const { email, emergency } = JSON.parse(savedPrefs);
+                setEmailAlert(email);
+                setEmergencyAlert(emergency);
+            } catch (e) {
+                console.error("Error parsing notification preferences", e);
+            }
+        }
     }, [user?.id]);
 
     // Password State
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Handlers
     const handleSave = async () => {
@@ -217,6 +234,33 @@ export default function SettingsPage() {
         }
     };
 
+    const handleSaveNotifications = async () => {
+        setIsSaving(true);
+        const loadingToast = toast.loading("Đang lưu cấu hình thông báo...");
+
+        try {
+            // Save to localStorage
+            localStorage.setItem(`donor_notifications_${user?.id}`, JSON.stringify({
+                email: emailAlert,
+                emergency: emergencyAlert
+            }));
+
+            await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API call
+
+            toast.success("Thành công!", {
+                id: loadingToast,
+                description: "Cấu hình thông báo đã được cập nhật."
+            });
+        } catch (error) {
+            toast.error("Lỗi", {
+                id: loadingToast,
+                description: "Không thể lưu cấu hình thông báo."
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -269,6 +313,32 @@ export default function SettingsPage() {
             router.push("/login");
         } catch (error) {
             console.error("Logout failed", error);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!user) return;
+
+        const loadingToast = toast.loading("Đang xóa tài khoản...");
+        setIsDeleting(true);
+
+        try {
+            // 1. Delete user profile data from DB
+            await userService.delete(user.id);
+
+            // 2. Sign out
+            await authService.signOut();
+
+            toast.success("Đã xóa tài khoản", { id: loadingToast });
+            router.push("/login");
+        } catch (error: any) {
+            toast.error("Lỗi xóa tài khoản", {
+                id: loadingToast,
+                description: error.message || "Đã xảy ra lỗi không xác định."
+            });
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
         }
     };
 
@@ -562,7 +632,12 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" className="sr-only peer" defaultChecked />
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={emailAlert}
+                                                    onChange={(e) => setEmailAlert(e.target.checked)}
+                                                />
                                                 <div className="w-14 h-8 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-[#0065FF]"></div>
                                             </label>
                                         </div>
@@ -580,15 +655,24 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" className="sr-only peer" defaultChecked />
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={emergencyAlert}
+                                                    onChange={(e) => setEmergencyAlert(e.target.checked)}
+                                                />
                                                 <div className="w-14 h-8 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-[#0065FF]"></div>
                                             </label>
                                         </div>
                                     </div>
 
                                     <div className="flex justify-end pt-4">
-                                        <button className="w-full md:w-auto bg-[#0065FF] text-white px-8 md:px-10 py-3.5 md:py-4 rounded-full font-black text-sm md:text-base shadow-2xl shadow-[#0065FF]/20 active:scale-95 transition-all hover:-translate-y-1">
-                                            Lưu cấu hình
+                                        <button
+                                            onClick={handleSaveNotifications}
+                                            disabled={isSaving}
+                                            className="w-full md:w-auto bg-[#0065FF] text-white px-8 md:px-10 py-3.5 md:py-4 rounded-full font-black text-sm md:text-base shadow-2xl shadow-[#0065FF]/20 active:scale-95 transition-all hover:-translate-y-1"
+                                        >
+                                            {isSaving ? "Đang lưu..." : "Lưu cấu hình"}
                                         </button>
                                     </div>
                                 </div>
@@ -675,7 +759,10 @@ export default function SettingsPage() {
                                         >
                                             Đăng xuất
                                         </button>
-                                        <button className="w-full sm:w-auto px-6 py-3 bg-rose-600 text-white font-bold rounded-full hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/20">
+                                        <button
+                                            onClick={() => setShowDeleteConfirm(true)}
+                                            className="w-full sm:w-auto px-6 py-3 bg-rose-600 text-white font-bold rounded-full hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/20"
+                                        >
                                             Xóa tài khoản
                                         </button>
                                     </div>
@@ -684,8 +771,18 @@ export default function SettingsPage() {
                         )}
                     </div>
                 </main>
+
+                <ConfirmDialog
+                    isOpen={showDeleteConfirm}
+                    onOpenChange={setShowDeleteConfirm}
+                    title="Xóa tài khoản vĩnh viễn?"
+                    description="CẢNH BÁO: Hành động này sẽ xóa toàn bộ dữ liệu hiến máu và hồ sơ của bạn. Bạn sẽ không thể khôi phục lại dữ liệu này."
+                    onConfirm={handleDeleteAccount}
+                    confirmText={isDeleting ? "Đang xử lý..." : "Xóa tài khoản"}
+                    cancelText="Hủy bỏ"
+                    variant="destructive"
+                />
             </div>
         </div>
     );
 }
-

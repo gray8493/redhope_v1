@@ -130,7 +130,7 @@ export default function LoginPage() {
 
       <main className="flex-grow flex items-stretch overflow-hidden">
         {/* Left Side: Visual/Mission (Hidden on mobile) */}
-        <div className="hidden lg:flex lg:w-1/2 relative bg-[#800000] items-center justify-center p-20 overflow-hidden">
+        <div className="hidden lg:flex lg:w-1/2 relative bg-[#700000] items-center justify-center p-20 overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
             <svg width="100%" height="100%">

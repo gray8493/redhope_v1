@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { userService } from "@/services/user.service";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 function SettingsContent() {
     const { user, profile, refreshUser } = useAuth();
@@ -134,6 +135,47 @@ function SettingsContent() {
     const [newDonorAlert, setNewDonorAlert] = useState(false);
     const [shortfallThreshold, setShortfallThreshold] = useState(20);
     const [showPassword, setShowPassword] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    // Password states
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+
+    const handleChangePassword = async () => {
+        if (!newPassword || !confirmPassword) {
+            toast.error("Thiếu thông tin", { description: "Vui lòng nhập mật khẩu mới và xác nhận." });
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            toast.error("Mật khẩu không khớp", { description: "Vui lòng kiểm tra lại xác nhận mật khẩu." });
+            return;
+        }
+        if (newPassword.length < 6) {
+            toast.error("Mật khẩu yếu", { description: "Mật khẩu phải có ít nhất 6 ký tự." });
+            return;
+        }
+
+        setIsSaving(true);
+        const loadingToast = toast.loading("Đang cập nhật mật khẩu...");
+        try {
+            // Need to import authService or use the logic directly
+            // For hospital, we'll assume authService is available or use the logic from donor settings
+            const { authService } = await import("@/services/auth.service");
+            const { error } = await authService.updatePassword(newPassword);
+            if (error) throw error;
+
+            toast.success("Thành công!", { id: loadingToast, description: "Đổi mật khẩu thành công." });
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+        } catch (error: any) {
+            toast.error("Lỗi", { id: loadingToast, description: error.message });
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const handleSaveNotifications = async () => {
         setIsSaving(true);
@@ -155,7 +197,7 @@ function SettingsContent() {
 
             toast.success("Thành công", {
                 id: loadingToast,
-                description: "Cấu hình thông báo đã được lưu.",
+                description: "Cấu hình thông báo đã được cập nhật.",
             });
         } catch (error) {
             toast.error("Lỗi", {
@@ -164,6 +206,45 @@ function SettingsContent() {
             });
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            const { authService } = await import("@/services/auth.service");
+            await authService.signOut();
+            window.location.href = "/login";
+        } catch (error) {
+            console.error("Logout failed", error);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!user) return;
+
+        const loadingToast = toast.loading("Đang xóa tài khoản...");
+        setIsSaving(true);
+        setIsDeleting(true);
+
+        try {
+            // 1. Delete user profile from DB
+            await userService.delete(user.id);
+
+            // 2. Sign out
+            const { authService } = await import("@/services/auth.service");
+            await authService.signOut();
+
+            toast.success("Đã xóa tài khoản", { id: loadingToast });
+            window.location.href = "/login";
+        } catch (error: any) {
+            toast.error("Lỗi xóa tài khoản", {
+                id: loadingToast,
+                description: error.message || "Đã xảy ra lỗi không xác định."
+            });
+        } finally {
+            setIsSaving(false);
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
         }
     };
 
@@ -532,6 +613,8 @@ function SettingsContent() {
                                     <div className="relative">
                                         <input
                                             type={showPassword ? "text" : "password"}
+                                            value={currentPassword}
+                                            onChange={(e) => setCurrentPassword(e.target.value)}
                                             className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-blue-500/5 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                             placeholder="••••••••"
                                         />
@@ -548,6 +631,8 @@ function SettingsContent() {
                                     <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Mật khẩu mới</label>
                                     <input
                                         type="password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
                                         className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-blue-500/5 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                         placeholder="Ít nhất 8 ký tự"
                                     />
@@ -557,6 +642,8 @@ function SettingsContent() {
                                     <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1 ml-4">Xác nhận mật khẩu</label>
                                     <input
                                         type="password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
                                         className="w-full px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-4 focus:ring-blue-500/5 focus:border-[#0065FF] outline-none transition-all font-bold text-sm"
                                         placeholder="Gõ lại mật khẩu mới"
                                     />
@@ -571,13 +658,53 @@ function SettingsContent() {
                             </div>
 
                             <div className="flex justify-end pt-6 border-t border-slate-200 dark:border-slate-800">
-                                <button className="bg-emerald-600 text-white px-10 py-4 rounded-full font-black text-base shadow-xl shadow-emerald-500/20 active:scale-95 transition-all">
-                                    Cập nhật bảo mật
+                                <button
+                                    onClick={handleChangePassword}
+                                    disabled={isSaving}
+                                    className="bg-emerald-600 text-white px-10 py-4 rounded-full font-black text-base shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
+                                >
+                                    {isSaving ? "Đang lưu..." : "Cập nhật bảo mật"}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="bg-rose-50 dark:bg-rose-900/10 p-8 rounded-[2rem] border border-rose-100 dark:border-rose-900/20">
+                            <div className="flex items-center gap-3 mb-4">
+                                <MaterialIcon name="warning" className="text-rose-600 text-2xl fill-1" />
+                                <h3 className="text-lg font-black text-rose-700 dark:text-rose-400">Vùng nguy hiểm</h3>
+                            </div>
+                            <p className="text-sm text-rose-600/80 mb-6 font-medium leading-relaxed">
+                                Nếu bạn xóa tài khoản bệnh viện, toàn bộ dữ liệu chiến dịch, yêu cầu máu và lịch sử hoạt động sẽ bị xóa vĩnh viễn và không thể khôi phục.
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full sm:w-auto px-8 py-3.5 bg-white dark:bg-slate-900 border border-rose-200 text-rose-600 font-bold rounded-full hover:bg-rose-50 transition-colors shadow-sm"
+                                >
+                                    Đăng xuất
+                                </button>
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="w-full sm:w-auto px-8 py-3.5 bg-rose-600 text-white font-bold rounded-full hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/20"
+                                >
+                                    Xóa tài khoản bệnh viện
                                 </button>
                             </div>
                         </div>
                     </div>
                 )}
+
+                <ConfirmDialog
+                    isOpen={showDeleteConfirm}
+                    onOpenChange={setShowDeleteConfirm}
+                    title="Xóa tài khoản bệnh viện?"
+                    description="CẢNH BÁO: Hành động này sẽ xóa vĩnh viễn toàn bộ chiến dịch, hồ sơ và dữ liệu liên quan. Bạn không thể khôi phục sau khi xóa."
+                    onConfirm={handleDeleteAccount}
+                    confirmText={isDeleting ? "Đang xử lý..." : "Xóa vĩnh viễn"}
+                    cancelText="Hủy bỏ"
+                    variant="destructive"
+                />
+
                 <MiniFooter />
             </main>
 
