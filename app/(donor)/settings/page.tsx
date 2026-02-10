@@ -65,7 +65,7 @@ export default function SettingsPage() {
     const [bloodGroup, setBloodGroup] = useState("");
     const [citizenId, setCitizenId] = useState("");
     const [dob, setDob] = useState("");
-    const [gender, setGender] = useState("Nam");
+    const [gender, setGender] = useState("");
     const [weight, setWeight] = useState("");
     const [lastDonationDate, setLastDonationDate] = useState("");
     const [healthHistory, setHealthHistory] = useState("");
@@ -74,7 +74,7 @@ export default function SettingsPage() {
 
     // Images
     const [avatar, setAvatar] = useState<string | null>(null);
-    const [cover, setCover] = useState<string | null>("https://images.unsplash.com/photo-1615461168078-83e35f76d540?q=80&w=2669&auto=format&fit=crop");
+    const [cover, setCover] = useState<string | null>(null);
 
     // Fetch real data from database on mount
     useEffect(() => {
@@ -99,11 +99,14 @@ export default function SettingsPage() {
                     setBloodGroup(profile.blood_group || "");
                     setCitizenId(profile.citizen_id || "");
                     setDob(profile.dob || "");
-                    setGender(profile.gender || "Nam");
+                    setGender(profile.gender || "");
                     setWeight(profile.weight ? profile.weight.toString() : "");
                     setHealthHistory(profile.health_history || "");
                     setAvatar(profile.avatar_url || user.user_metadata?.avatar_url || null);
                     setCover(profile.cover_image || null);
+                    // Load notification preferences from profile
+                    if (profile.email_notifications !== undefined) setEmailAlert(!!profile.email_notifications);
+                    if (profile.emergency_notifications !== undefined) setEmergencyAlert(!!profile.emergency_notifications);
                 } else {
                     // Fallback to auth user data details
                     setName(user.user_metadata?.full_name || "");
@@ -122,18 +125,6 @@ export default function SettingsPage() {
         };
 
         fetchProfileData();
-
-        // Load notification preferences
-        const savedPrefs = localStorage.getItem(`donor_notifications_${user?.id}`);
-        if (savedPrefs) {
-            try {
-                const { email, emergency } = JSON.parse(savedPrefs);
-                setEmailAlert(email);
-                setEmergencyAlert(emergency);
-            } catch (e) {
-                console.error("Error parsing notification preferences", e);
-            }
-        }
     }, [user?.id]);
 
     // Password State
@@ -182,6 +173,8 @@ export default function SettingsPage() {
                 health_history: healthHistory || null,
                 avatar_url: avatar || null,
                 cover_image: cover || null,
+                email_notifications: emailAlert,
+                emergency_notifications: emergencyAlert,
             };
 
             // Clean undefined

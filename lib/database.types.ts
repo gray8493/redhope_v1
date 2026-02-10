@@ -46,7 +46,8 @@ export interface User {
     health_history: string | null;
     avatar_url?: string | null;
     cover_image?: string | null;
-
+    email_notifications?: boolean | null;
+    emergency_notifications?: boolean | null;
     created_at: string;            // timestamp
 }
 
@@ -78,6 +79,8 @@ export interface InsertUser {
     health_history?: string | null;
     avatar_url?: string | null;
     cover_image?: string | null;
+    email_notifications?: boolean | null;
+    emergency_notifications?: boolean | null;
 }
 
 // Type for updating user
@@ -107,6 +110,8 @@ export interface UpdateUser {
     health_history?: string | null;
     avatar_url?: string | null;
     cover_image?: string | null;
+    email_notifications?: boolean | null;
+    emergency_notifications?: boolean | null;
 }
 
 // Blood group options

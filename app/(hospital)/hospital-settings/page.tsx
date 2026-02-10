@@ -27,25 +27,28 @@ function SettingsContent() {
 
     // Profile State
     const [hospitalName, setHospitalName] = useState("");
-    const [hospitalDesc, setHospitalDesc] = useState("Hệ thống y tế tuyến đầu chuyên sâu về cấp cứu, phẫu thuật và chăm sóc sức khỏe cộng đồng.");
+    const [hospitalDesc, setHospitalDesc] = useState("");
     const [phone, setPhone] = useState("");
     const [address, setAddress] = useState("");
     const [license, setLicense] = useState("");
     const [email, setEmail] = useState("");
     const [logo, setLogo] = useState<string | null>(null);
-    const [cover, setCover] = useState<string | null>("https://lh3.googleusercontent.com/aida-public/AB6AXuB-pYSYh0nrFR9EHffBQeBIH5xosCZYGDX5BCz4F8coCgtRu4kG6rneHOzMavlAEAhCLLhsIPW4Zr8d-mdT7zRz_7_dZGzo7RaaOIAlwIsRmwLyIhmuf5Gr9OTUNGMtpvXLtejG42cMiJASTDeWyxZ6RdUzdu0e3CY05W1RGUjdSrabS7GoI882qtaXJ6lK-Jbn-GMBpayfdILyfA7_guOESZWU91gqgzwwV-DMnVMLbupel25a7M96j3ZIjVpp7eoO77BkS2pK5A");
+    const [cover, setCover] = useState<string | null>(null);
 
     // Load data from Profile (DB Source of Truth)
     useEffect(() => {
         if (profile) {
             setHospitalName(profile.hospital_name || profile.full_name || "");
-            setHospitalDesc(profile.health_history || "Hệ thống y tế tuyến đầu chuyên sâu về cấp cứu, phẫu thuật và chăm sóc sức khỏe cộng đồng.");
+            setHospitalDesc(profile.health_history || "");
             setPhone(profile.phone || "");
             setAddress(profile.hospital_address || profile.address || "");
             setLicense(profile.license_number || "");
             setEmail(profile.email || "");
             setLogo(profile.avatar_url || null);
             setCover(profile.cover_image || null);
+            // Load DB settings
+            if (profile.email_notifications !== undefined) setEmailAlert(!!profile.email_notifications);
+            if (profile.emergency_notifications !== undefined) setNewDonorAlert(!!profile.emergency_notifications);
         } else {
             // Fallback to local storage if profile is not yet loaded (rare case or disconnected)
             const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -178,22 +181,17 @@ function SettingsContent() {
     };
 
     const handleSaveNotifications = async () => {
+        if (!user) return;
         setIsSaving(true);
         const loadingToast = toast.loading("Đang lưu cấu hình...");
 
         try {
-            const currentData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "{}");
-            const updatedData = {
-                ...currentData,
-                notifications: {
-                    emailAlert,
-                    newDonorAlert,
-                    shortfallThreshold
-                }
-            };
-
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedData));
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // 1. Save to Database
+            await userService.upsert(user.id, {
+                email_notifications: emailAlert,
+                emergency_notifications: newDonorAlert
+                // shortfallThreshold could be added as well if we add the column
+            } as any);
 
             toast.success("Thành công", {
                 id: loadingToast,
@@ -402,7 +400,7 @@ function SettingsContent() {
                                                 className="w-full pl-12 pr-6 py-3.5 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/80 text-slate-500 cursor-not-allowed font-mono text-sm"
                                                 readOnly
                                                 type="text"
-                                                value="HOS-8821-XC"
+                                                value={`HOS-${user?.id?.slice(0, 8).toUpperCase() || "PENDING"}`}
                                             />
                                         </div>
                                     </div>
@@ -466,7 +464,7 @@ function SettingsContent() {
 
                                 {/* Map Preview */}
                                 <div className="relative rounded-[2rem] overflow-hidden h-80 border border-slate-300 dark:border-slate-700 shadow-inner group/map">
-                                    <img alt="Map Preview" className="w-full h-full object-cover grayscale opacity-50 dark:opacity-30 group-hover/map:scale-105 transition-transform duration-1000" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHmSY9vfRml7HHti-HeQSDGGSKqDVpN2NmW4IV6HsJJbMULsRGeKa56XvKtECTlJqFjuL7gxl3mTpCoa-hebF584-rkJ8es8ddM3OFv5oiG2y-dQyI5Qxei0gUF4-e4VM1dA1ADZhKNRRb6LvgcYo2dbbDlbnSIJpUTbIPrbnAhJkKTxNS3tm5Nv0erjFx8c2Hb8mLPHz3JmUe_trIjUVdgp_aZiVE35dqMDjJW-DBLjwiHCrGbRGa81oKpvxnkpgVa-mY2Ctp8pw" />
+                                    <img alt="Map Preview" className="w-full h-full object-cover grayscale opacity-50 dark:opacity-30 group-hover/map:scale-105 transition-transform duration-1000" src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1200&auto=format&fit=crop" />
                                     <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                                         <div className="w-14 h-14 bg-[#0065FF] rounded-full flex items-center justify-center text-white shadow-2xl animate-bounce border-4 border-white/20">
                                             <MaterialIcon name="location_on" className="text-3xl fill-1" />

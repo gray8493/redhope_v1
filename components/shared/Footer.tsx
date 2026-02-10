@@ -41,13 +41,13 @@ const Footer = () => {
                         <ul className="space-y-4 text-sm text-gray-500">
                             <li><a href="#" className="hover:text-primary transition-colors">Chính sách bảo mật</a></li>
                             <li><a href="#" className="hover:text-primary transition-colors">Điều khoản dịch vụ</a></li>
-                            <li><a href="#" className="hover:text-primary transition-colors">Tuân thủ HIPAA</a></li>
+                            <li><a href="#" className="hover:text-primary transition-colors">Quy định Bảo mật Y tế</a></li>
                         </ul>
                     </div>
                 </div>
 
                 <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400">
-                    <p>© 2026 Smart Blood Donation Network. All rights reserved.</p>
+                    <p>© 2026 Mạng lưới Hiến máu Thông minh REDHOPE. Bảo lưu mọi quyền.</p>
                     <div className="flex gap-6 mt-4 md:mt-0">
                         <a href="#" className="hover:text-gray-600">Twitter</a>
                         <a href="#" className="hover:text-gray-600">LinkedIn</a>

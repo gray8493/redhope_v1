@@ -26,6 +26,8 @@ import { settingService } from "@/services/setting.service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, addMonths, isAfter } from "date-fns";
 import { vi } from "date-fns/locale";
+import { QRCodeModal } from "@/components/shared/QRCodeModal";
+import { QrCode } from "lucide-react";
 
 export default function DashboardPage() {
     const { user, profile } = useAuth();
@@ -34,6 +36,7 @@ export default function DashboardPage() {
     const [donorStats, setDonorStats] = useState<any[]>([]);
     const [nextDonationDate, setNextDonationDate] = useState<Date | null>(null);
     const [loading, setLoading] = useState(true);
+    const [showQR, setShowQR] = useState(false);
 
     const firstName = user?.user_metadata?.full_name?.split(' ').pop() || user?.email?.split('@')[0] || "người bạn";
     const isVerified = profile?.is_verified || false;
@@ -95,15 +98,25 @@ export default function DashboardPage() {
                                         </Button>
                                     </Link>
                                 ) : (
-                                    <div
-                                        onClick={() => toast.success("Hồ sơ của bạn đã được xác minh thành công!")}
-                                        className="flex flex-col items-end px-4 py-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900 rounded-lg cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
-                                    >
-                                        <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Trạng thái</p>
-                                        <div className="flex items-center gap-2">
-                                            <span className="size-2 bg-emerald-500 rounded-full"></span>
-                                            <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">Hồ sơ đã xác minh</p>
+                                    <div className="flex flex-col items-end gap-2">
+                                        <div
+                                            onClick={() => toast.success("Hồ sơ của bạn đã được xác minh thành công!")}
+                                            className="flex flex-col items-end px-4 py-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900 rounded-xl cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+                                        >
+                                            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Trạng thái</p>
+                                            <div className="flex items-center gap-2">
+                                                <span className="size-2 bg-emerald-500 rounded-full"></span>
+                                                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">Hồ sơ đã xác minh</p>
+                                            </div>
                                         </div>
+                                        <Button
+                                            onClick={() => setShowQR(true)}
+                                            variant="outline"
+                                            className="h-auto py-2 rounded-xl border-red-100 dark:border-red-900 text-red-600 dark:text-red-400 font-bold text-xs gap-2 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-sm"
+                                        >
+                                            <QrCode className="w-4 h-4" />
+                                            Mã QR định danh
+                                        </Button>
                                     </div>
                                 )}
                             </div>
@@ -223,7 +236,7 @@ export default function DashboardPage() {
                                                         </div>
                                                     </div>
                                                     <Badge variant="outline" className="border-blue-100 text-blue-600 dark:border-blue-900 dark:text-blue-400 text-[10px] uppercase font-bold px-2">
-                                                        Active
+                                                        Đang diễn ra
                                                     </Badge>
                                                 </div>
 
@@ -254,6 +267,17 @@ export default function DashboardPage() {
                 </div>
             </div>
             <BloodDropChatbot />
+            <QRCodeModal
+                isOpen={showQR}
+                onOpenChange={setShowQR}
+                userData={user ? {
+                    id: user.id,
+                    fullName: profile?.full_name || user?.user_metadata?.full_name || "Chưa cập nhật",
+                    bloodGroup: profile?.blood_group || "??",
+                    city: profile?.city || "Việt Nam",
+                    dob: profile?.dob || ""
+                } : null}
+            />
         </div>
     );
 }
