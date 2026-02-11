@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import MiniFooter from "@/components/shared/MiniFooter";
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
 import { toast } from "sonner";
-import { TrendingUp, Search, UserPlus, Users, Droplet, Zap } from "lucide-react";
+import { TrendingUp, Search, UserPlus, Users, Droplet, Zap, QrCode } from "lucide-react";
+import { QRScannerModal } from "@/components/shared/QRScannerModal";
 
 export default function HospitalDashboard() {
     const { user } = useAuth();
@@ -18,6 +19,7 @@ export default function HospitalDashboard() {
     const [activeTab, setActiveTab] = useState<"active" | "finished">("active");
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
+    const [showScanner, setShowScanner] = useState(false);
 
     useEffect(() => {
         if (!user?.id) return;
@@ -95,13 +97,20 @@ export default function HospitalDashboard() {
                     <div className="relative hidden lg:block">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
-                            className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-[#0065FF] w-[400px] shadow-sm transition-all focus:shadow-md outline-none"
-                            placeholder="Tìm kiếm theo tên chiến dịch hoặc địa điểm..."
+                            className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-[#0065FF] w-[300px] shadow-sm transition-all focus:shadow-md outline-none"
+                            placeholder="Tìm kiếm chiến dịch..."
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
+                    <button
+                        onClick={() => setShowScanner(true)}
+                        className="flex items-center gap-2.5 px-6 py-2.5 bg-[#0065FF] text-white rounded-xl font-black italic tracking-tight hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                    >
+                        <QrCode className="w-5 h-5" />
+                        QUÉT CHECK-IN
+                    </button>
                 </div>
             </header>
 
@@ -335,6 +344,14 @@ export default function HospitalDashboard() {
             </div>
 
             <MiniFooter />
+            <QRScannerModal
+                isOpen={showScanner}
+                onOpenChange={setShowScanner}
+                onSuccess={(donorId) => {
+                    console.log("Check-in successful for donor:", donorId);
+                    // Here you would typically trigger a data refresh or call another service
+                }}
+            />
         </main>
     );
 }

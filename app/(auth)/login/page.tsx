@@ -45,11 +45,17 @@ export default function LoginPage() {
       if (signInError) throw signInError;
 
       if (data.user) {
+        interface HospitalProfile {
+          role: string;
+          hospital_address?: string;
+          phone?: string;
+        }
+
         const { data: profile, error: profileError } = await supabase
           .from('users')
-          .select('role')
+          .select('role, hospital_address, phone')
           .eq('id', data.user.id)
-          .maybeSingle();
+          .maybeSingle() as { data: HospitalProfile | null, error: any };
 
         // Ưu tiên lấy role từ metadata (vì nó có sẵn ngay sau khi signIn)
         // Sau đó mới lấy từ DB (có thể bị chặn bởi RLS lúc mới login)
@@ -75,22 +81,23 @@ export default function LoginPage() {
             break;
           case 'hospital':
             // Check if profile is complete (needs address and phone)
-            // Cast to any to access custom fields if TS is strict
-            const profileData = profile as any;
-            const isComplete = profileData?.hospital_address && profileData?.phone;
-            if (isComplete) {
-              router.push('/hospital-dashboard');
-            } else {
-              router.push('/complete-hospital-profile');
+            {
+              const isComplete = profile?.hospital_address && profile?.phone;
+              if (isComplete) {
+                router.push('/hospital-dashboard');
+              } else {
+                router.push('/complete-hospital-profile');
+              }
             }
             break;
           default:
             router.push('/requests');
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Login error:", err);
-      const msg = err.message === 'Invalid login credentials' ? 'Email hoặc mật khẩu không đúng.' : 'Đăng nhập thất bại. Vui lòng kiểm tra lại.';
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      const msg = errorMessage === 'Invalid login credentials' ? 'Email hoặc mật khẩu không đúng.' : 'Đăng nhập thất bại. Vui lòng kiểm tra lại.';
       setError(msg);
       toast.error(msg);
     } finally {
@@ -102,15 +109,16 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/api/auth/callback`,
         },
       });
-      if (error) throw error;
-    } catch (err: any) {
-      setError(err.message || "Đăng nhập bằng Google thất bại.");
+      if (oauthError) throw oauthError;
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Đăng nhập bằng Google thất bại.";
+      setError(errorMessage);
       setLoading(false);
     }
   };
