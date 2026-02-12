@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { HospitalSidebar } from '@/components/shared/HospitalSidebar';
 import AdminHeader from '@/components/shared/AdminHeader';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function HospitalLayout({
     children,
@@ -13,15 +13,32 @@ export default function HospitalLayout({
 }) {
     const { profile, loading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         if (!loading && profile) {
+            // Check if hospital has completed basic profile
             const isComplete = profile.hospital_address && profile.phone;
             if (!isComplete) {
                 router.push('/complete-hospital-profile');
+                return;
+            }
+
+            // Check verification status - allow pending-verification page itself
+            const verificationStatus = profile.verification_status;
+            const isPendingPage = pathname === '/pending-verification';
+
+            if (verificationStatus !== 'approved' && !isPendingPage) {
+                router.push('/pending-verification');
+                return;
             }
         }
-    }, [profile, loading, router]);
+    }, [profile, loading, router, pathname]);
+
+    // If on pending-verification page, render without sidebar/header
+    if (pathname === '/pending-verification') {
+        return <>{children}</>;
+    }
 
     return (
         <div className="flex h-screen bg-[#f6f6f8] dark:bg-[#161121] overflow-hidden">

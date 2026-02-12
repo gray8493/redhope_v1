@@ -50,6 +50,7 @@ jest.mock('@/context/AuthContext', () => ({
 jest.mock('js-cookie', () => ({
     set: jest.fn(),
     get: jest.fn(),
+    remove: jest.fn(),
 }));
 
 jest.mock('sonner', () => ({
@@ -102,6 +103,21 @@ jest.mock('@/components/ui/card', () => ({
     CardFooter: ({ children }: any) => <footer>{children}</footer>,
 }));
 
+// Polyfill requestSubmit for jsdom (not natively supported)
+// Must be defined before any tests run
+if (typeof HTMLFormElement.prototype.requestSubmit === 'undefined' || true) {
+    HTMLFormElement.prototype.requestSubmit = function (submitter?: HTMLElement) {
+        if (submitter) {
+            // Validate submitter is associated with this form
+            if ((submitter as any).form !== this) {
+                // just dispatch submit event
+            }
+        }
+        const event = new Event('submit', { bubbles: true, cancelable: true });
+        this.dispatchEvent(event);
+    };
+}
+
 describe('LoginPage', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -149,7 +165,7 @@ describe('LoginPage', () => {
     it('nên hiển thị thông báo lỗi khi đăng nhập thất bại', async () => {
         mockSignInWithPassword.mockResolvedValue({
             data: { user: null, session: null },
-            error: { message: 'Invalid login credentials' },
+            error: new Error('Invalid login credentials'),
         });
 
         render(<LoginPage />);

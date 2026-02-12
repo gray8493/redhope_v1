@@ -2,6 +2,7 @@
 // Auto-generated based on database schema (Unified Tables - Comprehensive)
 
 export type UserRole = 'donor' | 'hospital' | 'admin';
+export type VerificationStatus = 'pending' | 'in_review' | 'approved' | 'rejected';
 
 export interface Hospital {
     id: string;
@@ -48,6 +49,13 @@ export interface User {
     cover_image?: string | null;
     email_notifications?: boolean | null;
     emergency_notifications?: boolean | null;
+
+    // Hospital verification workflow
+    verification_status: VerificationStatus | null;
+    verification_note: string | null;
+    verified_at: string | null;
+    verified_by: string | null;
+
     created_at: string;            // timestamp
 }
 
@@ -81,6 +89,10 @@ export interface InsertUser {
     cover_image?: string | null;
     email_notifications?: boolean | null;
     emergency_notifications?: boolean | null;
+    verification_status?: VerificationStatus | null;
+    verification_note?: string | null;
+    verified_at?: string | null;
+    verified_by?: string | null;
 }
 
 // Type for updating user
@@ -112,6 +124,10 @@ export interface UpdateUser {
     cover_image?: string | null;
     email_notifications?: boolean | null;
     emergency_notifications?: boolean | null;
+    verification_status?: VerificationStatus | null;
+    verification_note?: string | null;
+    verified_at?: string | null;
+    verified_by?: string | null;
 }
 
 // Blood group options
