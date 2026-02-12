@@ -47,6 +47,7 @@ import { campaignService } from "@/services/campaign.service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { BloodDropChatbot } from "@/components/shared/BloodDropChatbot";
 
 // Helper to parse blood groups from various formats (Array, CSV string, JSON string)
 const parseBloodGroups = (data: any): string[] => {
@@ -856,6 +857,7 @@ export default function RequestsPage() {
                 confirmText="Xác nhận hủy"
                 variant="destructive"
             />
+            <BloodDropChatbot />
         </div>
     );
 }

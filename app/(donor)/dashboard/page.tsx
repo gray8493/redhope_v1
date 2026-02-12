@@ -14,7 +14,7 @@ import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardCarousel } from "@/components/shared/DashboardCarousel";
-import { BloodDropChatbot } from "@/components/shared/BloodDropChatbot";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -266,7 +266,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
-            <BloodDropChatbot />
+
             <QRCodeModal
                 isOpen={showQR}
                 onOpenChange={setShowQR}
