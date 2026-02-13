@@ -282,11 +282,44 @@ export default function ScreeningPage() {
 
     /* ── Auth Guard ── */
     useEffect(() => {
-        if (!authLoading && profile && profile.is_verified !== true) {
-            toast.error("Vui lòng hoàn thành xác minh hồ sơ trước.");
-            router.push("/complete-profile/verification");
+        if (!authLoading) {
+            if (!user) {
+                router.push("/login"); // Not logged in -> Login
+            } else if (!profile) {
+                router.push("/complete-profile"); // Logged in but no profile -> Complete Profile
+            }
         }
-    }, [profile, authLoading, router]);
+    }, [user, profile, authLoading, router]);
+
+    if (!authLoading && profile && profile.is_verified !== true) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-[#0b1120] p-4">
+                <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-6">
+                    <div className="size-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto">
+                        <Shield className="size-10 text-red-500" />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Chưa xác minh hồ sơ</h2>
+                        <p className="text-slate-500 dark:text-slate-400">
+                            Vui lòng hoàn thành xác minh hồ sơ y tế trước khi thực hiện sàng lọc AI.
+                        </p>
+                    </div>
+                    <Button
+                        onClick={() => router.push("/complete-profile/verification")}
+                        className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                    >
+                        Đến trang xác minh
+                    </Button>
+                    <button
+                        onClick={() => router.push("/requests")}
+                        className="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium"
+                    >
+                        Quay lại trang chủ
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     /* ── Load screening status from DB ── */
     useEffect(() => {
@@ -334,7 +367,8 @@ export default function ScreeningPage() {
     /* ── AI Analysis ── */
     const generateAiAnalysis = async () => {
         try {
-            const result = await aiService.analyzeScreening(answers);
+            if (!user?.id) return;
+            const result = await aiService.analyzeScreening(answers, user.id);
             setAiResult(result);
             if (user?.id) {
                 const dbStatus = result.status === 'eligible' ? 'passed' : 'failed';

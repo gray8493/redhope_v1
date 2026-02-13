@@ -4,9 +4,33 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { answers } = body;
+        const { answers, userId } = body;
 
         console.log("Answers received for analysis:", JSON.stringify(answers).substring(0, 100) + "...");
+
+        if (!userId) {
+            return NextResponse.json({ error: "Yêu cầu đăng nhập để thực hiện tính năng này" }, { status: 401 });
+        }
+
+        // Check user profile verification status
+        const { supabaseAdmin } = await import('@/lib/supabase-admin');
+        const { data: userProfile, error: profileError } = await supabaseAdmin
+            .from('users')
+            .select('is_verified, role')
+            .eq('id', userId)
+            .single();
+
+        if (profileError || !userProfile) {
+            return NextResponse.json({ error: "Không tìm thấy thông tin người dùng" }, { status: 404 });
+        }
+
+        if (userProfile.role === 'donor' && !userProfile.is_verified) {
+            return NextResponse.json({
+                error: "Vui lòng hoàn thành hồ sơ cá nhân trước khi thực hiện sàng lọc AI",
+                code: "PROFILE_INCOMPLETE",
+                redirect: "/complete-profile"
+            }, { status: 403 });
+        }
 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {

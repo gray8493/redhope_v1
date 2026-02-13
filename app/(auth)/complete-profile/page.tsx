@@ -138,8 +138,32 @@ function DonorProfileContent() {
                 return;
             }
 
-            // 1. Lưu dữ liệu
-            await userService.upsert(user.id, cleanData);
+            // 1. Lưu dữ liệu qua API
+            const response = await fetch('/api/auth/register-profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: user.id,
+                    email: user.email || user.user_metadata?.email || formData.full_name, // fallback as email might be used for identification
+                    fullName: cleanData.full_name,
+                    role: cleanData.role,
+                    phone: cleanData.phone,
+                    dob: cleanData.dob,
+                    gender: cleanData.gender,
+                    bloodGroup: cleanData.blood_group,
+                    city: cleanData.city,
+                    district: cleanData.district,
+                    address: cleanData.address
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to update profile');
+            }
 
             // 2. Refresh dữ liệu trong AuthContext
             if (refreshUser) await refreshUser();

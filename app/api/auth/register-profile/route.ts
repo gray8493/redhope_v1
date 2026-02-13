@@ -3,7 +3,19 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(request: Request) {
     try {
-        const { userId, email, fullName, role } = await request.json();
+        const {
+            userId,
+            email,
+            fullName,
+            role,
+            phone,
+            dob,
+            gender,
+            bloodGroup,
+            city,
+            district,
+            address
+        } = await request.json();
 
         if (!userId || !email) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -19,8 +31,15 @@ export async function POST(request: Request) {
                 email,
                 full_name: fullName,
                 role: role || 'donor',
+                phone: phone || null,
+                dob: dob || null,
+                gender: gender || null,
+                blood_group: bloodGroup || null,
+                city: city || null,
+                district: district || null,
+                address: address || null,
                 current_points: role === 'donor' ? 0 : null,
-                created_at: new Date().toISOString()
+                updated_at: new Date().toISOString()
             }, { onConflict: 'id' })
             .select()
             .single();
