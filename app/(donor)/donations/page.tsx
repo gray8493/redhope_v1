@@ -10,7 +10,8 @@ import {
     Activity,
     FileText,
     Search,
-    Calendar
+    Calendar as CalendarIcon,
+    X
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
@@ -29,10 +30,28 @@ import {
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
+    PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { bloodService } from "@/services/blood.service";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, parse, isValid } from "date-fns";
+import { vi } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 export default function DonationsPage() {
     const { user, profile } = useAuth();
@@ -40,7 +59,40 @@ export default function DonationsPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("Tất cả");
-    const [dateFilter, setDateFilter] = useState("");
+    const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+    const [dateInput, setDateInput] = useState("");
+
+    // Sync input with date filter
+    useEffect(() => {
+        if (dateFilter) {
+            setDateInput(format(dateFilter, "dd/MM/yyyy"));
+        } else {
+            setDateInput("");
+        }
+    }, [dateFilter]);
+
+    const handleDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setDateInput(val);
+
+        if (val.trim() === "") {
+            setDateFilter(undefined);
+            return;
+        }
+
+        // Try to parse dd/MM/yyyy
+        const parsedDate = parse(val, "dd/MM/yyyy", new Date());
+        if (isValid(parsedDate)) {
+            setDateFilter(parsedDate);
+        } else {
+            // Keep the filter as undefined if invalid date while typing?
+            // Or keep the previous filter?
+            // Safer to clear filter while typing invalid date to avoid confusion
+            if (val.length >= 8) { // Only clear if user typed enough
+                setDateFilter(undefined);
+            }
+        }
+    };
 
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
@@ -65,7 +117,8 @@ export default function DonationsPage() {
         const hospitalName = item.hospital?.hospital_name || "";
         const matchesSearch = hospitalName.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === "Tất cả" || (statusFilter === "Đã xác minh" && item.verified_at);
-        const matchesDate = !dateFilter || item.verified_at?.startsWith(dateFilter);
+
+        const matchesDate = !dateFilter || (item.verified_at && new Date(item.verified_at).toDateString() === dateFilter.toDateString());
         return matchesSearch && matchesStatus && matchesDate;
     });
 
@@ -94,12 +147,12 @@ export default function DonationsPage() {
     return (
         <div className="flex h-screen w-full flex-row overflow-hidden bg-[#f8fafc] dark:bg-[#0f111a] font-sans text-[#1e1b4b] dark:text-white">
             <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto relative">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="" />
-                <main className="flex-1 flex justify-center py-10">
-                    <div className="max-w-[1400px] w-full px-6 md:px-12 text-left">
+                <main className="flex-1 py-4 md:py-10">
+                    <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 md:px-12 text-left">
                         <div className="mb-6 md:mb-10">
-                            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2 md:mb-3">
+                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2 md:mb-3">
                                 Lịch sử hiến máu
                             </h1>
                             <p className="text-slate-500 dark:text-slate-400 text-sm md:text-lg max-w-3xl leading-relaxed">
@@ -157,25 +210,57 @@ export default function DonationsPage() {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 md:flex gap-3 md:gap-4">
-                                <div className="relative">
-                                    <Calendar className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-blue-600 w-4 h-4 pointer-events-none" />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:flex gap-3 md:gap-4">
+                                <div className="relative w-full">
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <button className="absolute left-0 top-0 bottom-0 pl-3 md:pl-4 pr-2 flex items-center group z-10 w-10 outline-none">
+                                                <CalendarIcon className="w-4 h-4 text-blue-600 group-hover:text-blue-800 transition-colors" />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={dateFilter}
+                                                onSelect={setDateFilter}
+                                                initialFocus
+                                                locale={vi}
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
                                     <input
-                                        type="date"
-                                        className="w-full pl-9 md:pl-11 pr-3 md:pr-4 py-3 md:py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none text-[13px] md:text-sm font-semibold [color-scheme:light] dark:[color-scheme:dark]"
-                                        value={dateFilter}
-                                        onChange={(e) => setDateFilter(e.target.value)}
+                                        type="text"
+                                        placeholder="dd/MM/yyyy"
+                                        className={cn(
+                                            "w-full pl-9 md:pl-11 pr-8 h-[46px] md:h-[50px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none text-[13px] md:text-sm font-semibold",
+                                            !dateInput && "text-slate-500 font-normal"
+                                        )}
+                                        value={dateInput}
+                                        onChange={handleDateInputChange}
+                                        maxLength={10}
                                     />
+                                    {(dateFilter || dateInput) && (
+                                        <button
+                                            onClick={() => {
+                                                setDateFilter(undefined);
+                                                setDateInput("");
+                                            }}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 hover:bg-slate-100 p-1 rounded-full text-slate-400 hover:text-red-500 transition-colors z-10"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    )}
                                 </div>
-                                <div className="relative">
-                                    <select
-                                        className="w-full px-4 py-3 md:py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] outline-none text-[13px] md:text-sm font-semibold appearance-none cursor-pointer"
-                                        value={statusFilter}
-                                        onChange={(e) => setStatusFilter(e.target.value)}
-                                    >
-                                        <option value="Tất cả">Trạng thái</option>
-                                        <option value="Đã xác minh">Xác minh</option>
-                                    </select>
+                                <div className="relative min-w-[140px]">
+                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                        <SelectTrigger className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl h-[46px] md:h-[50px] px-4 text-[13px] md:text-sm font-semibold focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF]">
+                                            <SelectValue placeholder="Trạng thái" />
+                                        </SelectTrigger>
+                                        <SelectContent align="end">
+                                            <SelectItem value="Tất cả">Tất cả</SelectItem>
+                                            <SelectItem value="Đã xác minh" className="font-medium text-emerald-600">Đã xác minh</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                         </div>
@@ -309,26 +394,89 @@ export default function DonationsPage() {
                                         <PaginationItem>
                                             <PaginationPrevious
                                                 onClick={() => handlePageChange(currentPage - 1)}
-                                                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"}
                                             />
                                         </PaginationItem>
 
-                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                            <PaginationItem key={page}>
-                                                <PaginationLink
-                                                    onClick={() => handlePageChange(page)}
-                                                    isActive={currentPage === page}
-                                                    className="cursor-pointer"
-                                                >
-                                                    {page}
-                                                </PaginationLink>
-                                            </PaginationItem>
-                                        ))}
+                                        {totalPages <= 5 ? (
+                                            Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                                <PaginationItem key={page}>
+                                                    <PaginationLink
+                                                        onClick={() => handlePageChange(page)}
+                                                        isActive={currentPage === page}
+                                                        className={cn(
+                                                            "cursor-pointer rounded-lg transition-all",
+                                                            currentPage === page
+                                                                ? "bg-[#0065FF] text-white hover:bg-[#0052CC] hover:text-white border-transparent shadow-md shadow-blue-500/20"
+                                                                : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                                        )}
+                                                    >
+                                                        {page}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <PaginationItem>
+                                                    <PaginationLink
+                                                        onClick={() => handlePageChange(1)}
+                                                        isActive={currentPage === 1}
+                                                        className={cn(
+                                                            "cursor-pointer rounded-lg transition-all",
+                                                            currentPage === 1
+                                                                ? "bg-[#0065FF] text-white hover:bg-[#0052CC] hover:text-white border-transparent shadow-md shadow-blue-500/20"
+                                                                : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                                        )}
+                                                    >
+                                                        1
+                                                    </PaginationLink>
+                                                </PaginationItem>
+
+                                                {currentPage > 3 && (
+                                                    <PaginationItem>
+                                                        <PaginationEllipsis className="text-slate-400" />
+                                                    </PaginationItem>
+                                                )}
+
+                                                {currentPage > 2 && currentPage < totalPages - 1 && (
+                                                    <PaginationItem>
+                                                        <PaginationLink
+                                                            onClick={() => handlePageChange(currentPage)}
+                                                            isActive={true}
+                                                            className="cursor-pointer rounded-lg bg-[#0065FF] text-white hover:bg-[#0052CC] hover:text-white border-transparent shadow-md shadow-blue-500/20 transition-all"
+                                                        >
+                                                            {currentPage}
+                                                        </PaginationLink>
+                                                    </PaginationItem>
+                                                )}
+
+                                                {currentPage < totalPages - 2 && (
+                                                    <PaginationItem>
+                                                        <PaginationEllipsis className="text-slate-400" />
+                                                    </PaginationItem>
+                                                )}
+
+                                                <PaginationItem>
+                                                    <PaginationLink
+                                                        onClick={() => handlePageChange(totalPages)}
+                                                        isActive={currentPage === totalPages}
+                                                        className={cn(
+                                                            "cursor-pointer rounded-lg transition-all",
+                                                            currentPage === totalPages
+                                                                ? "bg-[#0065FF] text-white hover:bg-[#0052CC] hover:text-white border-transparent shadow-md shadow-blue-500/20"
+                                                                : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+                                                        )}
+                                                    >
+                                                        {totalPages}
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            </>
+                                        )}
 
                                         <PaginationItem>
                                             <PaginationNext
                                                 onClick={() => handlePageChange(currentPage + 1)}
-                                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"}
                                             />
                                         </PaginationItem>
                                     </PaginationContent>

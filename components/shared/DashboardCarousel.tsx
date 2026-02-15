@@ -111,14 +111,14 @@ export function DashboardCarousel() {
     return (
         <Carousel
             plugins={[plugin.current]}
-            className="w-full h-[300px] rounded-2xl overflow-hidden shadow-xl group bg-[#0f1221] relative"
+            className="w-full h-[200px] sm:h-[250px] md:h-[300px] rounded-xl sm:rounded-2xl overflow-hidden shadow-xl group bg-[#0f1221] relative"
             onMouseEnter={plugin.current.stop}
             onMouseLeave={plugin.current.reset}
         >
             <CarouselContent>
                 {slides.map((slide) => (
                     <CarouselItem key={slide.id}>
-                        <div className="w-full flex-shrink-0 h-[300px] relative p-8 md:p-10 flex items-center justify-between text-white">
+                        <div className="w-full flex-shrink-0 h-[200px] sm:h-[250px] md:h-[300px] relative p-4 sm:p-6 md:p-10 flex items-center justify-between text-white">
                             {/* Background Effect */}
                             <div className="absolute top-0 right-0 w-48 h-48 bg-slate-800 rounded-full filter blur-[100px] opacity-20 translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
 
@@ -132,19 +132,19 @@ export function DashboardCarousel() {
                                 </div>
 
                                 <div>
-                                    <h2 className="text-xl md:text-2xl font-black tracking-tight mb-1 leading-tight line-clamp-1">{slide.title}</h2>
-                                    <p className="text-slate-300 text-xs md:text-sm font-medium leading-relaxed line-clamp-2">{slide.description}</p>
+                                    <h2 className="text-base sm:text-xl md:text-2xl font-black tracking-tight mb-1 leading-tight line-clamp-1">{slide.title}</h2>
+                                    <p className="text-slate-300 text-[11px] sm:text-xs md:text-sm font-medium leading-relaxed line-clamp-2">{slide.description}</p>
                                 </div>
 
                                 {slide.buttonLink ? (
                                     <Link href={slide.buttonLink}>
-                                        <button className="mt-1 w-fit bg-[#6324eb] hover:bg-[#501ac2] text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-[#6324eb]/25 group-hover:translate-x-1">
+                                        <button className="mt-1 w-fit bg-[#6324eb] hover:bg-[#501ac2] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2 transition-all shadow-lg shadow-[#6324eb]/25 group-hover:translate-x-1">
                                             <slide.icon className="w-3 h-3" />
                                             {slide.buttonText}
                                         </button>
                                     </Link>
                                 ) : (
-                                    <button className="mt-1 w-fit bg-[#6324eb] hover:bg-[#501ac2] text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-[#6324eb]/25 group-hover:translate-x-1">
+                                    <button className="mt-1 w-fit bg-[#6324eb] hover:bg-[#501ac2] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2 transition-all shadow-lg shadow-[#6324eb]/25 group-hover:translate-x-1">
                                         <slide.icon className="w-3 h-3" />
                                         {slide.buttonText}
                                     </button>

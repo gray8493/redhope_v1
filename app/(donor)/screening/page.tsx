@@ -321,10 +321,10 @@ export default function ScreeningPage() {
     return (
         <div className="flex h-screen w-full flex-row overflow-hidden bg-[#f8fafc] dark:bg-[#0f172a] font-sans text-[#1e293b] dark:text-slate-200 transition-colors duration-500">
             <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto relative">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="Sàng lọc Sức khỏe AI" />
-                <main className="flex flex-1 justify-center py-6 md:py-10">
-                    <div className="flex flex-col max-w-[1000px] flex-1 px-4 md:px-8">
+                <main className="flex-1 py-6 md:py-10">
+                    <div className="flex flex-col max-w-[1000px] mx-auto w-full px-4 md:px-8">
 
                         {/* Nút quay về trang yêu cầu hiến máu */}
                         <button
@@ -557,9 +557,13 @@ export default function ScreeningPage() {
                                                     </h2>
                                                 </div>
                                             </div>
-                                            <p className="text-slate-500 dark:text-slate-400 text-lg font-medium leading-relaxed">
-                                                {aiResult.analysis}
-                                            </p>
+                                            <div className="relative pl-1">
+                                                <div className="max-h-[160px] md:max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
+                                                    <p className="text-slate-500 dark:text-slate-400 text-base font-medium leading-relaxed text-justify">
+                                                        {aiResult.analysis}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div className="flex flex-col items-center gap-2 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800 min-w-[200px]">

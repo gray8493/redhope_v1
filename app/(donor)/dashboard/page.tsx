@@ -80,42 +80,44 @@ export default function DashboardPage() {
     return (
         <div className="flex h-screen w-full flex-row overflow-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-slate-900 dark:text-slate-100">
             <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto relative">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="Tổng quan" />
-                <div className="p-4 md:p-8 flex flex-col gap-6 md:gap-8 max-w-7xl mx-auto w-full">
-                    <div className="flex flex-col gap-4 md:gap-6 text-left">
-                        <div className="flex flex-wrap justify-between items-end gap-4">
+                <div className="p-4 sm:p-5 md:p-8 flex flex-col gap-4 md:gap-8 max-w-7xl mx-auto w-full">
+                    <div className="flex flex-col gap-3 md:gap-6 text-left">
+                        <div className="flex flex-col sm:flex-row sm:flex-wrap justify-between items-start sm:items-end gap-3 md:gap-4">
                             <div className="flex flex-col gap-1">
-                                <h1 className="text-slate-900 dark:text-white text-3xl md:text-4xl font-black tracking-tight">Chào {firstName}!</h1>
-                                <p className="text-slate-500 text-sm font-medium">Hôm nay là một ngày tuyệt vời để chia sẻ sự sống.</p>
+                                <h1 className="text-slate-900 dark:text-white text-xl sm:text-3xl md:text-4xl font-black tracking-tight">Chào {firstName}!</h1>
+                                <p className="text-slate-500 text-xs sm:text-sm font-medium">Hôm nay là một ngày tuyệt vời để chia sẻ sự sống.</p>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
                                 {!isVerified ? (
                                     <Link href="/complete-profile">
-                                        <Button className="h-auto py-2.5 rounded-xl bg-[#0065FF] hover:bg-[#0052CC] shadow-lg shadow-blue-500/20 font-bold text-sm gap-2">
+                                        <Button className="h-auto py-2 sm:py-2.5 rounded-xl bg-[#0065FF] hover:bg-[#0052CC] shadow-lg shadow-blue-500/20 font-bold text-xs sm:text-sm gap-2">
                                             <span className="size-2 bg-white rounded-full animate-ping"></span>
                                             Hoàn thành hồ sơ
                                         </Button>
                                     </Link>
                                 ) : (
-                                    <div className="flex flex-col items-end gap-2">
+                                    <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2">
                                         <div
                                             onClick={() => toast.success("Hồ sơ của bạn đã được xác minh thành công!")}
-                                            className="flex flex-col items-end px-4 py-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900 rounded-xl cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+                                            className="flex items-center sm:flex-col sm:items-end gap-1.5 sm:gap-0 px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900 rounded-lg sm:rounded-xl cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
                                         >
-                                            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Trạng thái</p>
-                                            <div className="flex items-center gap-2">
-                                                <span className="size-2 bg-emerald-500 rounded-full"></span>
-                                                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">Hồ sơ đã xác minh</p>
+                                            <span className="size-2 bg-emerald-500 rounded-full sm:hidden"></span>
+                                            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase hidden sm:block">Trạng thái</p>
+                                            <div className="flex items-center gap-1.5 sm:gap-2">
+                                                <span className="size-2 bg-emerald-500 rounded-full hidden sm:block"></span>
+                                                <p className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-300">Đã xác minh</p>
                                             </div>
                                         </div>
                                         <Button
                                             onClick={() => setShowQR(true)}
                                             variant="outline"
-                                            className="h-auto py-2 rounded-xl border-red-100 dark:border-red-900 text-red-600 dark:text-red-400 font-bold text-xs gap-2 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-sm"
+                                            className="h-auto py-1.5 sm:py-2 rounded-lg sm:rounded-xl border-red-100 dark:border-red-900 text-red-600 dark:text-red-400 font-bold text-[11px] sm:text-xs gap-1.5 sm:gap-2 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-sm"
                                         >
-                                            <QrCode className="w-4 h-4" />
-                                            Mã QR định danh
+                                            <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                            <span className="hidden sm:inline">Mã QR định danh</span>
+                                            <span className="sm:hidden">QR</span>
                                         </Button>
                                     </div>
                                 )}
@@ -123,38 +125,38 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 text-left">
                         <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d]">
-                            <CardContent className="p-6 flex flex-col gap-2">
+                            <CardContent className="p-4 md:p-6 flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-slate-500 text-sm font-semibold uppercase tracking-wider">Điểm tích lũy</p>
-                                    <Award className="text-[#0065FF] w-6 h-6" />
+                                    <p className="text-slate-500 text-[10px] md:text-sm font-semibold uppercase tracking-wider">Điểm tích lũy</p>
+                                    <Award className="text-[#0065FF] w-5 h-5 md:w-6 md:h-6" />
                                 </div>
-                                <div className="flex items-baseline gap-3">
-                                    <p className="text-slate-900 dark:text-white text-3xl font-black">{currentPoints.toLocaleString()}</p>
-                                    <p className="text-emerald-600 text-sm font-bold">PTS</p>
+                                <div className="flex items-baseline gap-2 md:gap-3">
+                                    <p className="text-slate-900 dark:text-white text-2xl md:text-3xl font-black">{currentPoints.toLocaleString()}</p>
+                                    <p className="text-emerald-600 text-xs md:text-sm font-bold">PTS</p>
                                 </div>
                                 <p className="text-slate-400 text-xs mt-2">Dùng để đổi những phần quà hấp dẫn</p>
                             </CardContent>
                         </Card>
                         <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d]">
-                            <CardContent className="p-6 flex flex-col gap-2">
+                            <CardContent className="p-4 md:p-6 flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-slate-500 text-sm font-semibold uppercase tracking-wider">Nhóm máu</p>
-                                    <Droplet className="text-red-500 w-6 h-6" />
+                                    <p className="text-slate-500 text-[10px] md:text-sm font-semibold uppercase tracking-wider">Nhóm máu</p>
+                                    <Droplet className="text-red-500 w-5 h-5 md:w-6 md:h-6" />
                                 </div>
-                                <div className="flex items-baseline gap-3">
-                                    <p className="text-slate-900 dark:text-white text-3xl font-black">{profile?.blood_group || "??"}</p>
-                                    <p className="text-slate-500 text-sm font-bold">{profile?.city || "Chưa cập nhật"}</p>
+                                <div className="flex items-baseline gap-2 md:gap-3">
+                                    <p className="text-slate-900 dark:text-white text-2xl md:text-3xl font-black">{profile?.blood_group || "??"}</p>
+                                    <p className="text-slate-500 text-xs md:text-sm font-bold truncate">{profile?.city || "Chưa cập nhật"}</p>
                                 </div>
-                                <p className="text-slate-400 text-xs mt-2">Thông tin sức khỏe cá nhân</p>
+                                <p className="text-slate-400 text-[10px] md:text-xs mt-1 md:mt-2 hidden sm:block">Thông tin sức khỏe cá nhân</p>
                             </CardContent>
                         </Card>
-                        <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d]">
-                            <CardContent className="p-6 flex flex-col gap-2">
+                        <Card className="col-span-2 md:col-span-1 bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d]">
+                            <CardContent className="p-4 md:p-6 flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-slate-500 text-sm font-semibold uppercase tracking-wider">Ngày hiến tiếp theo</p>
-                                    <Clock className="text-blue-500 w-6 h-6" />
+                                    <p className="text-slate-500 text-[10px] md:text-sm font-semibold uppercase tracking-wider">Ngày hiến tiếp theo</p>
+                                    <Clock className="text-blue-500 w-5 h-5 md:w-6 md:h-6" />
                                 </div>
                                 <div className="flex items-baseline gap-3">
                                     {loading ? (
@@ -176,7 +178,7 @@ export default function DashboardPage() {
                         </Card>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 text-left">
                         <div className="lg:col-span-2">
                             <DashboardCarousel />
                         </div>
@@ -214,45 +216,45 @@ export default function DashboardPage() {
 
                     <div className="flex flex-col gap-4 text-left">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Chiến dịch hiến máu đang diễn ra</h3>
-                            <Link href="/requests?filter=campaign" className="text-[#0065FF] text-sm font-bold hover:underline">Xem tất cả</Link>
+                            <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white">Chiến dịch đang diễn ra</h3>
+                            <Link href="/requests?filter=campaign" className="text-[#0065FF] text-xs md:text-sm font-bold hover:underline whitespace-nowrap">Xem tất cả</Link>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                             {loading ? (
-                                [1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+                                [1, 2, 3].map(i => <Skeleton key={i} className="h-28 sm:h-32 w-full rounded-xl" />)
                             ) : campaigns.length > 0 ? (
                                 campaigns.map(camp => (
                                     <Link href={`/requests?id=${camp.id}`} key={camp.id}>
                                         <Card className="bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] hover:border-[#0065FF]/50 transition-all cursor-pointer group h-full">
-                                            <CardContent className="p-4 flex flex-col h-full gap-3">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-10 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center text-[#0065FF] group-hover:bg-[#0065FF] group-hover:text-white transition-all">
-                                                            <Award className="w-5 h-5" />
+                                            <CardContent className="p-3 sm:p-4 flex flex-col h-full gap-2 sm:gap-3">
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                                                        <div className="size-8 sm:size-10 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center text-[#0065FF] group-hover:bg-[#0065FF] group-hover:text-white transition-all flex-shrink-0">
+                                                            <Award className="w-4 h-4 sm:w-5 sm:h-5" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-group-hover:text-[#0065FF] transition-colors">{camp.name}</p>
-                                                            <p className="text-xs text-slate-500 line-clamp-1">{camp.hospital?.hospital_name || "Bệnh viện tổ chức"}</p>
+                                                            <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-[#0065FF] transition-colors">{camp.name}</p>
+                                                            <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1">{camp.hospital?.hospital_name || "Bệnh viện tổ chức"}</p>
                                                         </div>
                                                     </div>
-                                                    <Badge variant="outline" className="border-blue-100 text-blue-600 dark:border-blue-900 dark:text-blue-400 text-[10px] uppercase font-bold px-2">
-                                                        Đang diễn ra
+                                                    <Badge variant="outline" className="border-blue-100 text-blue-600 dark:border-blue-900 dark:text-blue-400 text-[9px] sm:text-[10px] uppercase font-bold px-1.5 sm:px-2 flex-shrink-0 whitespace-nowrap">
+                                                        Đang mở
                                                     </Badge>
                                                 </div>
 
-                                                <div className="mt-auto space-y-2">
-                                                    <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-                                                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                                                        <span className="line-clamp-1">{camp.location_name || camp.hospital?.hospital_address} ({camp.hospital?.city})</span>
+                                                <div className="mt-auto space-y-1.5 sm:space-y-2">
+                                                    <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">
+                                                        <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 flex-shrink-0" />
+                                                        <span className="line-clamp-1">{camp.location_name || camp.hospital?.hospital_address}{camp.hospital?.city ? ` (${camp.hospital.city})` : ''}</span>
                                                     </div>
-                                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-1.5 sm:p-2 rounded-lg">
+                                                        <div className="flex items-center gap-1.5 sm:gap-2">
+                                                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                                            <p className="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-300">
                                                                 {new Date(camp.start_time).toLocaleDateString('vi-VN')}
                                                             </p>
                                                         </div>
-                                                        <p className="text-xs font-medium text-slate-500">Mục tiêu: {camp.target_units} đv</p>
+                                                        <p className="text-[11px] sm:text-xs font-medium text-slate-500">Mục tiêu: {camp.target_units} đv</p>
                                                     </div>
                                                 </div>
                                             </CardContent>

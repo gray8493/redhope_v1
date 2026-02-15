@@ -359,21 +359,21 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
     };
 
     return (
-        <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-8 py-4 sticky top-0 z-20 w-full">
-            <div className="flex items-center gap-4 md:gap-8 flex-1">
+        <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 sm:px-4 md:px-8 py-3 md:py-4 sticky top-0 z-20 w-full">
+            <div className="flex items-center gap-3 md:gap-8 flex-1 min-w-0">
                 {/* Mobile Menu Trigger */}
                 <button
                     onClick={() => {
                         const event = new CustomEvent('open-mobile-menu');
                         window.dispatchEvent(event);
                     }}
-                    className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 md:hidden"
+                    className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 md:hidden flex-shrink-0"
                 >
                     <Menu className="w-5 h-5" />
                 </button>
-                <h2 className="text-slate-900 dark:text-white text-lg md:text-xl font-bold truncate">{title}</h2>
+                <h2 className="text-slate-900 dark:text-white text-base md:text-xl font-bold truncate">{title}</h2>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
 
                 {/* Notifications */}
                 <div className="relative" ref={notiRef}>
@@ -389,38 +389,38 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
 
                     {/* Notification Dropdown */}
                     {showNotifications && (
-                        <div className="absolute right-0 top-full mt-4 w-80 sm:w-96 bg-white dark:bg-[#1c162e] rounded-xl shadow-2xl border border-[#ebe7f3] dark:border-[#2d263d] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right">
-                            <div className="p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] flex justify-between items-center bg-slate-50/50 dark:bg-[#251e36]/50">
-                                <h3 className="font-bold text-[#120e1b] dark:text-white">Thông báo</h3>
+                        <div className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-[60px] sm:top-full sm:mt-4 sm:w-96 bg-white dark:bg-[#1c162e] rounded-xl shadow-2xl border border-[#ebe7f3] dark:border-[#2d263d] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right z-[60]">
+                            <div className="p-3 sm:p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] flex justify-between items-center bg-slate-50/50 dark:bg-[#251e36]/50">
+                                <h3 className="font-bold text-sm sm:text-base text-[#120e1b] dark:text-white">Thông báo</h3>
                                 <button onClick={markAllAsRead} className="text-xs font-bold text-[#0065FF] hover:underline">Đánh dấu đã đọc</button>
                             </div>
-                            <div className="max-h-[400px] overflow-y-auto">
+                            <div className="max-h-[50vh] sm:max-h-[400px] overflow-y-auto">
                                 {notifications.length > 0 ? (
                                     notifications.map((item) => (
                                         <div
                                             key={item.id}
                                             onClick={() => handleNotificationClick(item)}
-                                            className={`p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors cursor-pointer flex gap-3 ${item.unread ? 'bg-[#0065FF]/5' : ''}`}
+                                            className={`p-3 sm:p-4 border-b border-[#ebe7f3] dark:border-[#2d263d] hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors cursor-pointer flex gap-3 ${item.unread ? 'bg-[#0065FF]/5' : ''}`}
                                         >
-                                            <div className={`size-10 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0`}>
-                                                <item.icon className={`w-5 h-5 ${item.color}`} />
+                                            <div className={`size-9 sm:size-10 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0`}>
+                                                <item.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${item.color}`} />
                                             </div>
-                                            <div className="flex-1">
-                                                <p className="text-sm font-bold text-[#120e1b] dark:text-white mb-1">{item.title}</p>
-                                                <p className="text-xs text-[#654d99] dark:text-[#a594c9] leading-relaxed mb-1">{item.desc}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-[#120e1b] dark:text-white mb-0.5 sm:mb-1 line-clamp-1">{item.title}</p>
+                                                <p className="text-xs text-[#654d99] dark:text-[#a594c9] leading-relaxed mb-0.5 sm:mb-1 line-clamp-2">{item.desc}</p>
                                                 <p className="text-[10px] text-slate-400 font-medium">{item.time}</p>
                                             </div>
-                                            {item.unread && <div className={`size-2 rounded-full mt-1.5 ${userRole === 'hospital' ? 'bg-[#0065FF]' : 'bg-[#0065FF]'}`}></div>}
+                                            {item.unread && <div className="size-2 rounded-full mt-1.5 bg-[#0065FF] flex-shrink-0"></div>}
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="p-8 text-center text-slate-500">
-                                        <Bell className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                                    <div className="p-6 sm:p-8 text-center text-slate-500">
+                                        <Bell className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-30" />
                                         <p className="text-sm">Không có thông báo</p>
                                     </div>
                                 )}
                             </div>
-                            <div className="p-3 text-center border-t border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36]">
+                            <div className="p-2.5 sm:p-3 text-center border-t border-[#ebe7f3] dark:border-[#2d263d] bg-slate-50 dark:bg-[#251e36]">
                                 <Link
                                     href={userRole === 'admin' ? "/admin-notifications" : userRole === 'hospital' ? "/hospital-notifications" : "/notifications"}
                                     className="text-sm font-bold text-[#0065FF] hover:underline block w-full"
@@ -432,20 +432,20 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                     )}
                 </div>
 
-                <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
 
                 {/* User Menu */}
                 <div className="relative" ref={userRef}>
                     <button
                         onClick={toggleUser}
-                        className="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 p-1.5 rounded-full pl-3 transition-colors text-left"
+                        className="flex items-center gap-2 sm:gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 p-1 sm:p-1.5 rounded-full sm:pl-3 transition-colors text-left"
                     >
-                        <div className="text-right hidden sm:block">
+                        <div className="text-right hidden md:block">
                             <p className="text-sm font-bold text-slate-900 dark:text-white">{displayName}</p>
                             <p className="text-xs text-slate-500">{displayRole}</p>
                         </div>
 
-                        <Avatar className={`size-10 border-2 transition-colors ${showUserMenu ? 'border-[#0065FF]' : 'border-emerald-500/20'}`}>
+                        <Avatar className={`size-9 sm:size-10 border-2 transition-colors ${showUserMenu ? 'border-[#0065FF]' : 'border-emerald-500/20'}`}>
                             {avatarUrl ? (
                                 <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />
                             ) : null}

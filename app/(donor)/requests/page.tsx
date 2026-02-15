@@ -128,9 +128,8 @@ export default function RequestsPage() {
         }
     }, [searchParams]);
 
-    // Handle deep linking to a specific request/campaign
     useEffect(() => {
-        const requestId = searchParams.get('requestId') || searchParams.get('id');
+        const requestId = searchParams.get('requestId') || searchParams.get('id') || searchParams.get('campaignId'); // Added campaignId support
         if (requestId && requests.length > 0) {
             const item = requests.find(r => r.id === requestId);
             if (item) {
@@ -138,6 +137,101 @@ export default function RequestsPage() {
             }
         }
     }, [searchParams, requests]);
+
+    // Auto Check-in Logic
+    // Auto Check-in Logic
+    useEffect(() => {
+        const campaignId = searchParams.get('campaignId');
+
+        // Ensure data is loaded completely before running logic
+        if (campaignId && user && !requestsLoading && userAppointments !== undefined) {
+            const campaign = requests.find(r => r.id === campaignId);
+
+            // If campaign not found (maybe ended or invalid ID), return
+            if (!campaign) return;
+
+            const appt = userAppointments.find(a => a.campaign_id === campaignId);
+
+            // CASE 1: Not Registered
+            if (!appt) {
+                // Prevent duplicate toasts if we already opened the modal
+                if (selectedRequest?.id !== campaignId) {
+                    toast.error("Bạn chưa đăng ký tham gia chiến dịch này!", {
+                        description: "Hệ thống không tìm thấy lịch hẹn của bạn. Vui lòng đăng ký mới.",
+                        duration: 5000
+                    });
+                    setSelectedRequest(campaign); // Auto-open modal for registration
+                }
+                return;
+            }
+
+            // CASE 2: Registered - Check Date Validity
+            // Simple check: Is today the start date? Or is today within start/end?
+            // User requested: "đúng là hôm nay... mới sinh stt"
+            const todayStr = new Date().toDateString();
+            const campaignDateStr = new Date(campaign.start_time).toDateString();
+
+            // Allow check-in if it's the same day OR if campaign is currently active status (running)
+            // But strict date check is requested.
+            const isDateValid = todayStr === campaignDateStr;
+
+            if (!isDateValid) {
+                // If not today, maybe warn but don't block? Or block?
+                // User said: "kiểm tra đúng là hôm nay" -> Implies Blocking or Warning.
+                // Let's Warn strongly but maybe don't check-in automatically?
+                // Actually, blocking auto-checkin is safer.
+                if (appt.status === 'Booked' && selectedRequest?.id !== campaignId) {
+                    toast.warning("Chưa đến ngày diễn ra chiến dịch!", {
+                        description: `Lịch hẹn của bạn vào ngày ${new Date(campaign.start_time).toLocaleDateString('vi-VN')}. Hôm nay là ${new Date().toLocaleDateString('vi-VN')}.`,
+                        duration: 8000
+                    });
+                    setSelectedRequest(campaign);
+                }
+                return;
+            }
+
+            // CASE 3: Perform Check-in
+            if (appt.status === 'Booked' && !isSubmitting) {
+                const performCheckIn = async () => {
+                    setIsSubmitting(true); // Lock
+                    try {
+                        const loadingToast = toast.loading("Đang thực hiện check-in...");
+                        await campaignService.checkInRegistration(appt.id, campaignId);
+                        toast.dismiss(loadingToast);
+
+                        toast.success("Check-in thành công!", {
+                            description: "Bạn đã được xếp hàng. Số thứ tự sẽ hiện trên màn hình.",
+                            duration: 5000
+                        });
+
+                        // Refresh appointments to update UI
+                        if (profile?.id) {
+                            const updatedAppts = await campaignService.getUserAppointments(profile.id);
+                            setUserAppointments(updatedAppts || []);
+                        }
+
+                        // Open modal to show STT
+                        setSelectedRequest(campaign);
+
+                    } catch (error: any) {
+                        toast.dismiss();
+                        toast.error("Check-in thất bại: " + (error.message || "Lỗi hệ thống"));
+                    } finally {
+                        setIsSubmitting(false); // Unlock
+                    }
+                };
+                performCheckIn();
+            } else if (appt.status === 'Checked-in') {
+                if (selectedRequest?.id !== campaignId) {
+                    toast.info("Bạn đã check-in rồi!", {
+                        description: `Số thứ tự của bạn: #${appt.queue_number || '?'}`,
+                        duration: 5000
+                    });
+                    setSelectedRequest(campaign);
+                }
+            }
+        }
+    }, [searchParams, user, userAppointments, requests, requestsLoading, isSubmitting, selectedRequest, profile?.id]);
 
     // Check screening status on mount and periodically
     useEffect(() => {
@@ -179,7 +273,9 @@ export default function RequestsPage() {
                     type: 'request',
                     title: `Cần máu ${r.required_blood_group}`,
                     displayUnits: r.required_units,
-                    description: stripHtml(r.description || "")
+                    description: stripHtml(r.description || ""),
+                    urgency_level: r.urgency_level || 'High', // Default to High for requests
+                    filter_blood_groups: [r.required_blood_group]
                 }));
 
                 // Normalize campaigns
@@ -205,7 +301,8 @@ export default function RequestsPage() {
                         title: c.name,
                         displayUnits: c.target_units,
                         description: stripHtml(c.description),
-                        imageUrl: img
+                        imageUrl: img,
+                        filter_blood_groups: groups // Preserve raw groups for filtering
                     };
                 });
 
@@ -250,10 +347,23 @@ export default function RequestsPage() {
         if (activeFilter === "Tất cả") return true;
 
         // Basic filters
-        if (activeFilter === "Nhóm của tôi") return item.required_blood_group === profile?.blood_group || item.required_blood_group === 'Tất cả';
-        if (activeFilter === "Khẩn cấp") return item.urgency_level === "Emergency" || item.urgency_level === "High" || item.urgency_level === "Urgent";
+        if (activeFilter === "Nhóm của tôi") {
+            if (!profile?.blood_group) return false;
+            // Handle both campaigns (array) and requests (single string in array)
+            const groups = item.filter_blood_groups || [];
 
-        // Location filter (Enhanced)
+            // If groups is empty or denotes all (length 8 for O+, O-, A+, A-...), match all
+            // Also match if explicit 'Tất cả' string exists (rare but possible)
+            if (groups.length === 0 || groups.length === 8 || groups.includes('Tất cả')) return true;
+
+            return groups.includes(profile.blood_group);
+        }
+
+        if (activeFilter === "Khẩn cấp") {
+            return ["Emergency", "High", "Urgent"].includes(item.urgency_level);
+        }
+
+        // Location filter (Enhanced from dev1)
         if (activeFilter === "Gần tôi") {
             const cityMatch = !selectedCity || item.hospital?.city === selectedCity;
             const districtMatch = !selectedDistrict || item.hospital?.district === selectedDistrict;
@@ -438,62 +548,62 @@ export default function RequestsPage() {
     return (
         <div className="flex h-screen w-full flex-row overflow-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto relative">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="Yêu cầu hiến máu" />
-                <main className="flex flex-1 justify-center py-8">
-                    <div className="flex flex-col max-w-[1440px] flex-1 px-4 md:px-10">
+                <main className="flex-1 py-4 md:py-8">
+                    <div className="flex flex-col w-full max-w-[1440px] mx-auto flex-1 px-4 sm:px-5 md:px-10 min-w-0">
                         {/* Page Heading */}
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
-                            <div className="flex flex-col gap-1 md:gap-2">
-                                <h1 className="text-[#120e1b] dark:text-white text-3xl md:text-4xl font-black tracking-tight">Yêu cầu hiến máu</h1>
-                                <p className="text-[#654d99] dark:text-[#a594c9] text-sm md:text-base font-normal leading-normal max-w-2xl">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-4 mb-4 md:mb-6 min-w-0">
+                            <div className="flex flex-col gap-1 md:gap-2 min-w-0">
+                                <h1 className="text-[#120e1b] dark:text-white text-lg sm:text-2xl md:text-4xl font-black tracking-tight">Yêu cầu hiến máu</h1>
+                                <p className="text-[#654d99] dark:text-[#a594c9] text-xs sm:text-sm md:text-base font-normal leading-normal max-w-2xl">
                                     Nhu cầu khẩn cấp từ các cơ sở y tế trong khu vực của bạn.
                                 </p>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto min-w-0">
                                 {/* Nút trạng thái Sàng lọc Sức khỏe AI */}
                                 {screeningStatus === 'passed' ? (
                                     <button
                                         onClick={() => router.push('/screening')}
-                                        className="flex items-center gap-2 bg-emerald-500/10 text-emerald-600 px-4 py-2.5 rounded-xl border border-emerald-500/20 hover:bg-emerald-500/20 transition-all cursor-pointer"
+                                        className="flex items-center gap-1.5 sm:gap-2 bg-emerald-500/10 text-emerald-600 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-emerald-500/20 hover:bg-emerald-500/20 transition-all cursor-pointer"
                                     >
-                                        <HeartPulse className="w-5 h-5" />
-                                        <span className="text-sm font-bold">Đủ điều kiện sức khỏe</span>
+                                        <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                                        <span className="text-xs sm:text-sm font-bold truncate">Đủ điều kiện</span>
                                     </button>
                                 ) : screeningStatus === 'failed' ? (
                                     <button
                                         onClick={() => router.push('/screening')}
-                                        className="flex items-center gap-2 bg-red-500/10 text-red-600 px-4 py-2.5 rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-all cursor-pointer"
+                                        className="flex items-center gap-1.5 sm:gap-2 bg-red-500/10 text-red-600 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-all cursor-pointer"
                                     >
-                                        <XCircle className="w-5 h-5" />
-                                        <span className="text-sm font-bold">Không đủ điều kiện</span>
+                                        <XCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                                        <span className="text-xs sm:text-sm font-bold truncate">Không đủ điều kiện</span>
                                     </button>
                                 ) : (
                                     <button
                                         onClick={() => router.push('/screening')}
-                                        className="flex items-center gap-2 bg-amber-500/10 text-amber-600 px-4 py-2.5 rounded-xl border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer animate-pulse"
+                                        className="flex items-center gap-1.5 sm:gap-2 bg-amber-500/10 text-amber-600 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer animate-pulse"
                                     >
-                                        <HeartPulse className="w-5 h-5" />
-                                        <span className="text-sm font-bold">Kiểm tra sức khỏe AI</span>
+                                        <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                                        <span className="text-xs sm:text-sm font-bold truncate">Kiểm tra sức khỏe AI</span>
                                     </button>
                                 )}
                             </div>
                         </div>
 
                         {/* Filter Chips & Location Selector */}
-                        <div className="space-y-4 mb-8">
-                            <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
+                        <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-8 min-w-0">
+                            <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
                                 {["Tất cả", "Chiến dịch", "Nhóm của tôi", "Gần tôi", "Khẩn cấp"].map(f => (
                                     <Button
                                         key={f}
                                         onClick={() => handleFilterChange(f)}
                                         variant={activeFilter === f ? "default" : "outline"}
-                                        className={`rounded-xl h-11 font-bold ${activeFilter === f ? "bg-[#0065FF] hover:bg-[#0052CC]" : "bg-white dark:bg-[#1c162e] border-slate-200 dark:border-slate-800"}`}
+                                        className={`rounded-xl h-9 md:h-11 text-xs md:text-sm font-bold whitespace-nowrap ${activeFilter === f ? "bg-[#0065FF] hover:bg-[#0052CC]" : "bg-white dark:bg-[#1c162e] border-slate-200 dark:border-slate-800"}`}
                                     >
                                         {f}
                                     </Button>
                                 ))}
-                                <Button variant="outline" className="h-11 gap-2 rounded-xl bg-white dark:bg-[#1c162d] border-slate-200 dark:border-slate-800">
+                                <Button variant="outline" className="h-9 md:h-11 gap-2 rounded-xl bg-white dark:bg-[#1c162d] border-slate-200 dark:border-slate-800 whitespace-nowrap">
                                     <span className="text-sm font-bold">Lọc thêm</span>
                                     <SlidersHorizontal className="w-4 h-4" />
                                 </Button>
@@ -528,7 +638,7 @@ export default function RequestsPage() {
                         </div>
 
                         {/* Grid of Requests */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 min-w-0">
                             {requestsLoading ? (
                                 [1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-80 rounded-2xl" />)
                             ) : paginatedData.length > 0 ? (
@@ -554,7 +664,7 @@ export default function RequestsPage() {
                                         >
                                             {/* Header Image Section */}
                                             <div
-                                                className="h-48 bg-center bg-no-repeat bg-cover relative bg-slate-200"
+                                                className="h-32 sm:h-48 bg-center bg-no-repeat bg-cover relative bg-slate-200"
                                                 style={{ backgroundImage: `url("${request.imageUrl || request.image || "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600"}")` }}
                                             >
                                                 {/* Gradient Overlay */}
@@ -576,9 +686,9 @@ export default function RequestsPage() {
                                             </div>
 
                                             {/* Body Content */}
-                                            <div className="flex flex-col flex-1 p-5">
+                                            <div className="flex flex-col flex-1 p-3 sm:p-5">
                                                 <div className="flex justify-between items-start mb-3 gap-2">
-                                                    <h3 className="text-[#120e1b] dark:text-white text-lg font-black tracking-tight leading-tight">
+                                                    <h3 className="text-[#120e1b] dark:text-white text-sm sm:text-lg font-black tracking-tight leading-tight">
                                                         {request.title}
                                                     </h3>
                                                     <span className={`shrink-0 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${statusInfo.color}`}>
@@ -663,7 +773,7 @@ export default function RequestsPage() {
 
             {/* Detail Modal */}
             <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
-                <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-[#1c162e] border-0 gap-0">
+                <DialogContent className="sm:max-w-lg max-h-[90vh] sm:max-h-[90vh] h-[100dvh] sm:h-auto flex flex-col p-0 overflow-hidden bg-white dark:bg-[#1c162e] border-0 gap-0 sm:rounded-xl rounded-none">
                     <VisuallyHidden>
                         <DialogTitle>Chi tiết yêu cầu hiến máu</DialogTitle>
                     </VisuallyHidden>
@@ -671,7 +781,7 @@ export default function RequestsPage() {
                         <>
                             <div className="relative shrink-0">
                                 <div
-                                    className="h-52 bg-cover bg-center relative bg-slate-200"
+                                    className="h-36 sm:h-52 bg-cover bg-center relative bg-slate-200"
                                     style={{ backgroundImage: `url("${selectedRequest.imageUrl || selectedRequest.image || "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600"}")` }}
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
@@ -688,12 +798,12 @@ export default function RequestsPage() {
                                                 {selectedRequest.urgency_level === 'Emergency' ? 'Cấp cứu' : selectedRequest.urgency_level === 'Urgent' ? 'Khẩn cấp' : 'Tiêu chuẩn'}
                                             </span>
                                         </div>
-                                        <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight mb-2 line-clamp-2 capitalize">
+                                        <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight leading-tight mb-2 line-clamp-2 capitalize">
                                             {selectedRequest.title}
                                         </h2>
-                                        <p className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                                            <Building2 className="w-4 h-4 text-emerald-400" />
-                                            <span className="truncate max-w-[300px]">
+                                        <p className="text-xs sm:text-sm font-medium text-slate-300 flex items-center gap-1.5 sm:gap-2">
+                                            <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0" />
+                                            <span className="truncate">
                                                 {selectedRequest.hospital?.hospital_name || "Bệnh viện"}
                                                 {selectedRequest.hospital?.district ? ` • ${selectedRequest.hospital.district}` : ""}
                                                 {selectedRequest.hospital?.city ? ` • ${selectedRequest.hospital.city}` : ""}
@@ -703,10 +813,10 @@ export default function RequestsPage() {
                                 </div>
                             </div>
 
-                            <div className="p-5 md:p-8 flex flex-col gap-6 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="p-4 sm:p-5 md:p-8 flex flex-col gap-3 sm:gap-6 overflow-y-auto custom-scrollbar flex-1 min-w-0">
                                 {/* Key Info Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-start gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
+                                    <div className="p-3 sm:p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl sm:rounded-2xl flex items-start gap-2.5 sm:gap-3">
                                         <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-blue-500">
                                             <Clock className="w-5 h-5" />
                                         </div>
@@ -723,7 +833,7 @@ export default function RequestsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-start gap-3">
+                                    <div className="p-3 sm:p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl sm:rounded-2xl flex items-start gap-2.5 sm:gap-3">
                                         <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-rose-500">
                                             <MapPin className="w-5 h-5" />
                                         </div>
@@ -740,7 +850,7 @@ export default function RequestsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-start gap-3">
+                                    <div className="p-3 sm:p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl sm:rounded-2xl flex items-start gap-2.5 sm:gap-3">
                                         <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-emerald-500">
                                             <ShieldCheck className="w-5 h-5" />
                                         </div>
@@ -755,7 +865,7 @@ export default function RequestsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-start gap-3">
+                                    <div className="p-3 sm:p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl sm:rounded-2xl flex items-start gap-2.5 sm:gap-3">
                                         <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-amber-500">
                                             <Building2 className="w-5 h-5" />
                                         </div>
@@ -786,61 +896,107 @@ export default function RequestsPage() {
                             </div>
 
                             {/* Footer Actions */}
-                            <div className="p-5 md:p-8 pt-0 mt-auto shrink-0 flex flex-col sm:flex-row gap-3 sm:gap-4 bg-white dark:bg-[#1c162e]">
-                                {(() => {
-                                    const status = getAppointmentStatus(selectedRequest);
-                                    if (status === 'Booked') {
-                                        return (
-                                            <Button
-                                                onClick={() => handleCancelRegistration(selectedRequest)}
-                                                disabled={isSubmitting}
-                                                className="flex-1 h-14 bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-black rounded-xl hover:bg-red-200 dark:hover:bg-red-900/30 shadow-none uppercase tracking-widest text-sm border-2 border-transparent hover:border-red-200 dark:hover:border-red-800 transition-all"
-                                            >
-                                                {isSubmitting ? "Đang xử lý..." : "Hủy đăng ký"}
-                                            </Button>
+                            <div className="p-4 sm:p-5 md:p-8 pt-0 mt-auto shrink-0 bg-white dark:bg-[#1c162e]">
+                                <div className="flex flex-col gap-2.5 sm:gap-3">
+                                    {(() => {
+                                        const status = getAppointmentStatus(selectedRequest);
+                                        const appointment = userAppointments.find(appt =>
+                                            (selectedRequest.type === 'campaign' && appt.campaign_id === selectedRequest.id) ||
+                                            (selectedRequest.type === 'request' && appt.blood_request_id === selectedRequest.id)
                                         );
-                                    } else if (status === 'Completed') {
-                                        return (
-                                            <Button
-                                                disabled
-                                                className="flex-1 h-14 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 font-black rounded-xl shadow-none uppercase tracking-widest text-sm border-2 border-emerald-200"
-                                            >
-                                                <ShieldCheck className="w-5 h-5 mr-2" />
-                                                Đã hoàn thành hiến máu
-                                            </Button>
-                                        );
-                                    } else if (status === 'Rejected') {
-                                        return (
-                                            <Button
-                                                disabled
-                                                className="flex-1 h-14 bg-slate-100 text-slate-500 font-black rounded-xl shadow-none uppercase tracking-widest text-sm"
-                                            >
-                                                Đăng ký bị từ chối
-                                            </Button>
-                                        );
-                                    } else {
-                                        return (
-                                            <Button
-                                                onClick={() => handleRegister(selectedRequest)}
-                                                disabled={isSubmitting}
-                                                className="flex-1 h-14 bg-[#0065FF] text-white font-black rounded-xl hover:bg-[#0052CC] shadow-xl shadow-blue-500/20 active:scale-[0.98] uppercase tracking-widest text-sm"
-                                            >
-                                                {isSubmitting ? "Đang xử lý..." : "Đăng ký tham gia ngay"}
-                                            </Button>
-                                        );
-                                    }
-                                })()}
-                                <Button
-                                    variant="outline"
-                                    title="Chỉ đường"
-                                    onClick={() => handleGetDirections(selectedRequest)}
-                                    className="h-14 w-14 p-0 rounded-xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 group"
-                                >
-                                    <Navigation className="w-5 h-5 text-[#0065FF] group-hover:scale-110 transition-transform" />
-                                </Button>
-                                <Button variant="outline" className="h-14 w-14 p-0 rounded-xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
-                                    <Phone className="w-5 h-5 text-slate-500" />
-                                </Button>
+
+                                        if (status === 'Booked') {
+                                            return (
+                                                <div className="flex flex-col gap-2">
+                                                    <Button
+                                                        onClick={async () => {
+                                                            if (!appointment) return;
+                                                            setIsSubmitting(true);
+                                                            try {
+                                                                await campaignService.checkInRegistration(appointment.id, selectedRequest.id);
+                                                                toast.success("Check-in thành công!");
+                                                                if (profile?.id) {
+                                                                    const updated = await campaignService.getUserAppointments(profile.id);
+                                                                    setUserAppointments(updated || []);
+                                                                }
+                                                            } catch (e: any) {
+                                                                toast.error(e.message);
+                                                            } finally {
+                                                                setIsSubmitting(false);
+                                                            }
+                                                        }}
+                                                        disabled={isSubmitting}
+                                                        className="w-full h-12 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 shadow-xl shadow-blue-500/20 active:scale-[0.98] uppercase tracking-widest text-xs sm:text-sm"
+                                                    >
+                                                        {isSubmitting ? "Đang xử lý..." : "CHECK-IN NGAY (Demo)"}
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => handleCancelRegistration(selectedRequest)}
+                                                        disabled={isSubmitting}
+                                                        className="w-full h-10 bg-red-50 text-red-600 dark:bg-red-900/10 dark:text-red-400 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-red-900/20 shadow-none text-xs border border-red-100 dark:border-red-900/30"
+                                                    >
+                                                        Hủy đăng ký
+                                                    </Button>
+                                                </div>
+                                            );
+                                        } else if (status === 'Checked-in') {
+                                            return (
+                                                <div className="w-full p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl flex flex-col items-center justify-center gap-1">
+                                                    <ShieldCheck className="w-8 h-8 text-emerald-500 mb-1" />
+                                                    <p className="text-emerald-700 dark:text-emerald-400 font-black text-lg uppercase">Đã Check-in Thành Công</p>
+                                                    <p className="text-emerald-600 dark:text-emerald-500 text-sm font-medium">
+                                                        Số thứ tự của bạn: <span className="font-black text-2xl ml-1">#{appointment?.queue_number || '--'}</span>
+                                                    </p>
+                                                    <p className="text-xs text-emerald-500/80 mt-1">Vui lòng đợi đến lượt gọi tên.</p>
+                                                </div>
+                                            );
+                                        } else if (status === 'Completed') {
+                                            return (
+                                                <Button
+                                                    disabled
+                                                    className="w-full h-12 sm:h-14 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 font-black rounded-xl shadow-none uppercase tracking-widest text-xs sm:text-sm border-2 border-emerald-200"
+                                                >
+                                                    <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                                                    Đã hoàn thành
+                                                </Button>
+                                            );
+                                        } else if (status === 'Rejected' || status === 'Cancelled') {
+                                            return (
+                                                <Button
+                                                    disabled
+                                                    className="w-full h-12 sm:h-14 bg-slate-100 text-slate-500 font-black rounded-xl shadow-none uppercase tracking-widest text-xs sm:text-sm"
+                                                >
+                                                    {status === 'Cancelled' ? 'Đã hủy đăng ký' : 'Đăng ký bị từ chối'}
+                                                </Button>
+                                            );
+                                        } else {
+                                            return (
+                                                <Button
+                                                    onClick={() => handleRegister(selectedRequest)}
+                                                    disabled={isSubmitting}
+                                                    className="w-full h-12 sm:h-14 bg-[#0065FF] text-white font-black rounded-xl hover:bg-[#0052CC] shadow-xl shadow-blue-500/20 active:scale-[0.98] uppercase tracking-widest text-xs sm:text-sm"
+                                                >
+                                                    {isSubmitting ? "Đang xử lý..." : "Đăng ký tham gia ngay"}
+                                                </Button>
+                                            );
+                                        }
+                                    })()}
+                                    <div className="flex gap-2.5 sm:gap-3">
+                                        <Button
+                                            variant="outline"
+                                            title="Chỉ đường"
+                                            onClick={() => handleGetDirections(selectedRequest)}
+                                            className="flex-1 h-11 sm:h-14 p-0 rounded-xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 group gap-2"
+                                        >
+                                            <Navigation className="w-4 h-4 sm:w-5 sm:h-5 text-[#0065FF] group-hover:scale-110 transition-transform" />
+                                            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 sm:hidden">Chỉ đường</span>
+                                        </Button>
+                                        <Button variant="outline" className="flex-1 h-11 sm:h-14 p-0 rounded-xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 gap-2">
+                                            <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500" />
+                                            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 sm:hidden">Gọi điện</span>
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         </>
                     )}

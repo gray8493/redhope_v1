@@ -171,22 +171,22 @@ export default function DonatePage() {
         <div className="flex h-screen w-full flex-row overflow-hidden bg-slate-50 dark:bg-[#0f0a19] font-sans text-slate-900 dark:text-blue-50">
             <Sidebar />
 
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto relative">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="" />
 
-                <main className="flex flex-1 justify-center py-8">
-                    <div className="flex flex-col max-w-[1200px] flex-1 px-4 md:px-10">
+                <main className="flex-1 py-4 md:py-8">
+                    <div className="flex flex-col max-w-[1200px] mx-auto w-full px-4 sm:px-5 md:px-10">
 
                         {/* Hero Section */}
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-10 bg-gradient-to-r from-red-900 via-red-800 to-red-500 rounded-2xl p-8 text-white shadow-xl shadow-red-500/30 relative overflow-hidden">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8 mb-6 md:mb-10 bg-gradient-to-r from-red-900 via-red-800 to-red-500 rounded-xl md:rounded-2xl p-4 sm:p-6 md:p-8 text-white shadow-xl shadow-red-500/30 relative overflow-hidden">
                             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                            <div className="flex flex-col gap-4 max-w-2xl relative z-10">
-                                <h1 className="text-3xl md:text-5xl font-black leading-tight">Chung tay vì cộng đồng</h1>
-                                <p className="text-white/90 text-lg font-medium">
+                            <div className="flex flex-col gap-2 md:gap-4 max-w-2xl relative z-10">
+                                <h1 className="text-xl sm:text-2xl md:text-5xl font-black leading-tight">Chung tay vì cộng đồng</h1>
+                                <p className="text-white/90 text-sm md:text-lg font-medium hidden sm:block">
                                     Mỗi đóng góp của bạn, dù nhỏ nhất, cũng góp phần duy trì hoạt động hiến máu tình nguyện và cứu sống hàng ngàn bệnh nhân mỗi năm.
                                 </p>
-                                <div className="flex flex-wrap gap-4 mt-2">
-                                    <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors border border-white/10">
+                                <div className="flex flex-wrap gap-2 md:gap-4 mt-1 md:mt-2">
+                                    <div className="flex items-center gap-1.5 md:gap-2 bg-white/10 px-3 md:px-4 py-1.5 md:py-2 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors border border-white/10">
                                         <Users className="w-5 h-5" />
                                         {loading ? (
                                             <Skeleton className="h-5 w-24 bg-white/20" />
@@ -194,7 +194,7 @@ export default function DonatePage() {
                                             <span className="font-bold">{stats.totalDonors.toLocaleString('vi-VN')}+ Nhà hảo tâm</span>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors border border-white/10">
+                                    <div className="flex items-center gap-1.5 md:gap-2 bg-white/10 px-3 md:px-4 py-1.5 md:py-2 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors border border-white/10">
                                         <TrendingUp className="w-5 h-5" />
                                         {loading ? (
                                             <Skeleton className="h-5 w-32 bg-white/20" />
@@ -209,7 +209,7 @@ export default function DonatePage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
                             {/* Left Column: Donation Form */}
                             <div className="lg:col-span-2 flex flex-col gap-6">
                                 <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
@@ -428,7 +428,7 @@ export default function DonatePage() {
             {showQRModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
                     <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowQRModal(false)}></div>
-                    <div className="bg-white dark:bg-[#1c162e] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300">
+                    <div className="bg-white dark:bg-[#1c162e] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
                         <div className="bg-pink-600 p-6 text-center text-white relative">
                             <button onClick={() => setShowQRModal(false)} className="absolute right-4 top-4 hover:bg-black/10 p-1 rounded-full transition-colors">
                                 <X className="w-6 h-6" />
@@ -437,7 +437,7 @@ export default function DonatePage() {
                             <h3 className="text-xl font-black">Thanh toán qua MoMo</h3>
                             <p className="text-white/80 text-sm">Quét mã để quyên góp {formatAmount(amount)}đ</p>
                         </div>
-                        <div className="p-8 text-center flex flex-col items-center">
+                        <div className="p-5 sm:p-8 text-center flex flex-col items-center">
                             <div className="bg-white p-4 rounded-2xl shadow-inner border-4 border-pink-50 mb-6">
                                 <div className="size-48 bg-[#fdf2f8] rounded-xl flex items-center justify-center relative overflow-hidden ring-1 ring-pink-100">
                                     <div className="grid grid-cols-4 gap-2 opacity-20">
@@ -475,7 +475,7 @@ export default function DonatePage() {
             {showCardModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
                     <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowCardModal(false)}></div>
-                    <div className="bg-white dark:bg-[#1c162e] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300">
+                    <div className="bg-white dark:bg-[#1c162e] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
                         <div className="bg-red-600 p-6 text-center text-white relative">
                             <button onClick={() => setShowCardModal(false)} className="absolute right-4 top-4 hover:bg-black/10 p-1 rounded-full transition-colors">
                                 <X className="w-6 h-6" />
@@ -484,7 +484,7 @@ export default function DonatePage() {
                             <h3 className="text-xl font-black">Chuyển khoản Ngân hàng</h3>
                             <p className="text-white/80 text-sm">Vui lòng chuyển chính xác {formatAmount(amount)}đ</p>
                         </div>
-                        <div className="p-8">
+                        <div className="p-5 sm:p-8">
                             <div className="space-y-4 mb-8">
                                 <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-100 dark:border-red-900/30">
                                     <p className="text-[10px] uppercase font-black text-red-400 mb-1 tracking-widest">Số tài khoản</p>

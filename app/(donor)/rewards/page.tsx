@@ -227,11 +227,11 @@ export default function RewardsPage() {
     return (
         <div className="flex h-screen w-full flex-row overflow-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
             <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto relative">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="Phần thưởng" />
 
-                <main className="flex flex-1 justify-center py-8">
-                    <div className="flex flex-col max-w-[1200px] flex-1 px-4 md:px-10">
+                <main className="flex-1 py-4 md:py-8">
+                    <div className="flex flex-col max-w-[1200px] mx-auto w-full px-4 sm:px-5 md:px-10">
 
                         {alertMessage && (
                             <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -245,50 +245,50 @@ export default function RewardsPage() {
                             </div>
                         )}
 
-                        <div className="flex flex-wrap justify-between items-end gap-3 mb-6 text-left">
-                            <div className="flex min-w-72 flex-col gap-3">
-                                <h1 className="text-[#120e1b] dark:text-white text-3xl md:text-4xl font-black tracking-tight">Đổi quà tri ân</h1>
-                                <p className="text-blue-600/80 dark:text-blue-400/80 text-base font-normal leading-normal max-w-2xl">
+                        <div className="flex flex-wrap justify-between items-end gap-3 mb-4 md:mb-6 text-left">
+                            <div className="flex flex-col gap-2 md:gap-3 min-w-0">
+                                <h1 className="text-[#120e1b] dark:text-white text-2xl sm:text-3xl md:text-4xl font-black tracking-tight">Đổi quà tri ân</h1>
+                                <p className="text-blue-600/80 dark:text-blue-400/80 text-sm md:text-base font-normal leading-normal max-w-2xl">
                                     Bạn có <span className="font-bold text-[#0065FF]">{userPoints.toLocaleString()} điểm</span> khả dụng. Cảm ơn bạn đã chung tay cứu người!
                                 </p>
                             </div>
-                            <button className="flex min-w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-6 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-bold leading-normal hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all">
+                            <button className="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 md:h-10 px-4 md:px-6 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs md:text-sm font-bold leading-normal hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all">
                                 <span className="truncate">Cách tích điểm</span>
                             </button>
                         </div>
 
-                        <div className="flex flex-wrap gap-4 mb-8 text-left">
-                            <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
-                                <div className="flex items-center gap-2 text-[#0065FF]">
-                                    <Wallet className="w-5 h-5" />
-                                    <p className="text-[#120e1b] dark:text-white text-base font-medium">Điểm hiện có</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-4 md:mb-8 text-left">
+                            <div className="flex flex-col min-w-0 gap-1 md:gap-2 rounded-xl p-3 md:p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
+                                <div className="flex items-center gap-1.5 md:gap-2 text-[#0065FF]">
+                                    <Wallet className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                                    <p className="text-[#120e1b] dark:text-white text-[10px] sm:text-xs md:text-base font-medium truncate">Điểm hiện có</p>
                                 </div>
-                                <p className="text-[#120e1b] dark:text-white tracking-light text-3xl font-black leading-tight">{userPoints.toLocaleString()}</p>
+                                <p className="text-[#120e1b] dark:text-white tracking-light text-xl sm:text-2xl md:text-3xl font-black leading-tight truncate">{userPoints.toLocaleString()}</p>
                             </div>
-                            <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
-                                <div className="flex items-center gap-2 text-[#0065FF]">
-                                    <Heart className="w-5 h-5" />
-                                    <p className="text-[#120e1b] dark:text-white text-base font-medium">Lần hiến máu</p>
+                            <div className="flex flex-col min-w-0 gap-1 md:gap-2 rounded-xl p-3 md:p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
+                                <div className="flex items-center gap-1.5 md:gap-2 text-[#0065FF]">
+                                    <Heart className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                                    <p className="text-[#120e1b] dark:text-white text-[10px] sm:text-xs md:text-base font-medium truncate">Lần hiến máu</p>
                                 </div>
-                                <p className="text-[#120e1b] dark:text-white tracking-light text-3xl font-black leading-tight">2</p>
+                                <p className="text-[#120e1b] dark:text-white tracking-light text-xl sm:text-2xl md:text-3xl font-black leading-tight truncate">2</p>
                             </div>
-                            <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
-                                <div className="flex items-center gap-2 text-[#0065FF]">
-                                    <Users className="w-5 h-5" />
-                                    <p className="text-[#120e1b] dark:text-white text-base font-medium">Người được cứu</p>
+                            <div className="flex flex-col min-w-0 gap-1 md:gap-2 rounded-xl p-3 md:p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm col-span-2 sm:col-span-1">
+                                <div className="flex items-center gap-1.5 md:gap-2 text-[#0065FF]">
+                                    <Users className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                                    <p className="text-[#120e1b] dark:text-white text-[10px] sm:text-xs md:text-base font-medium truncate">Người được cứu</p>
                                 </div>
-                                <p className="text-[#120e1b] dark:text-white tracking-light text-3xl font-black leading-tight">6</p>
+                                <p className="text-[#120e1b] dark:text-white tracking-light text-xl sm:text-2xl md:text-3xl font-black leading-tight truncate">6</p>
                             </div>
                         </div>
 
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 mb-8 pb-1">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 border-b border-slate-200 dark:border-slate-800 mb-4 md:mb-8 pb-1">
                             <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as Category)} className="w-full md:w-auto">
-                                <TabsList className="bg-transparent p-0 h-auto gap-2 overflow-x-auto no-scrollbar justify-start">
+                                <TabsList className="bg-transparent p-0 h-auto gap-2 overflow-x-auto no-scrollbar justify-start flex-nowrap w-full">
                                     {tabs.map((tab) => (
                                         <TabsTrigger
                                             key={tab.key}
                                             value={tab.key}
-                                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-[#0065FF] data-[state=active]:text-[#120e1b] dark:data-[state=active]:text-white rounded-none border-b-[3px] border-transparent pb-[13px] pt-4 px-2 text-slate-500 dark:text-slate-400 text-sm font-bold leading-normal tracking-[0.015em] transition-all appearance-none select-none"
+                                            className="whitespace-nowrap flex-shrink-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-[#0065FF] data-[state=active]:text-[#120e1b] dark:data-[state=active]:text-white rounded-none border-b-[3px] border-transparent pb-[13px] pt-4 px-2 text-slate-500 dark:text-slate-400 text-sm font-bold leading-normal tracking-[0.015em] transition-all appearance-none select-none"
                                         >
                                             {tab.label}
                                         </TabsTrigger>
@@ -412,41 +412,41 @@ export default function RewardsPage() {
                                         <Loader2 className="w-10 h-10 text-[#0065FF] animate-spin" />
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 text-left">
+                                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 text-left">
                                         {filteredRewards.map((reward) => (
                                             <div
                                                 key={reward.id}
                                                 className={`flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] transition-all group ${userPoints < reward.points ? "opacity-90" : "hover:shadow-lg"}`}
                                             >
-                                                <div className={`aspect-[4/3] w-full bg-[#f6f6f8] dark:bg-[#251e36] flex items-center justify-center p-8 relative overflow-hidden ${userPoints < reward.points ? "grayscale" : ""}`}>
+                                                <div className={`aspect-[3/2] sm:aspect-[4/3] w-full bg-[#f6f6f8] dark:bg-[#251e36] flex items-center justify-center p-4 md:p-8 relative overflow-hidden ${userPoints < reward.points ? "grayscale" : ""}`}>
                                                     <div className={`absolute inset-0 bg-gradient-to-br ${reward.gradientColor} to-transparent ${userPoints < reward.points ? "opacity-30" : "opacity-50"}`}></div>
-                                                    <div className="z-10 bg-white dark:bg-[#1c162e] p-4 rounded-full shadow-md">
+                                                    <div className="z-10 bg-white dark:bg-[#1c162e] p-3 md:p-4 rounded-full shadow-md">
                                                         {reward.icon}
                                                     </div>
                                                     {reward.badge && (
-                                                        <Badge variant="secondary" className="absolute top-3 right-3 bg-white/90 dark:bg-[#1c162e]/90 text-[#0065FF] border border-[#0065FF]/20 text-[10px] font-bold px-2 py-1">
+                                                        <Badge variant="secondary" className="absolute top-2 right-2 md:top-3 md:right-3 bg-white/90 dark:bg-[#1c162e]/90 text-[#0065FF] border border-[#0065FF]/20 text-[9px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 md:py-1">
                                                             {reward.badge}
                                                         </Badge>
                                                     )}
                                                 </div>
-                                                <div className="p-5 flex flex-col grow">
-                                                    <h3 className="text-[#120e1b] dark:text-white text-lg font-bold">{reward.name}</h3>
-                                                    <p className="text-sm text-[#654d99] dark:text-[#a594c9] mt-1 mb-4 grow line-clamp-2">{reward.description}</p>
-                                                    <div className="flex items-center justify-between pt-4 border-t border-[#ebe7f3] dark:border-[#2d263d]">
+                                                <div className="p-3 md:p-5 flex flex-col grow">
+                                                    <h3 className="text-[#120e1b] dark:text-white text-sm md:text-lg font-bold line-clamp-1">{reward.name}</h3>
+                                                    <p className="text-xs md:text-sm text-[#654d99] dark:text-[#a594c9] mt-1 mb-2 md:mb-4 grow line-clamp-2 hidden sm:block">{reward.description}</p>
+                                                    <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-[#ebe7f3] dark:border-[#2d263d]">
                                                         <div className="flex flex-col">
-                                                            <span className="text-[10px] font-bold text-[#654d99] dark:text-gray-500 uppercase">Giá đổi</span>
-                                                            <span className={`font-black text-xl ${userPoints < reward.points ? "text-gray-400" : "text-[#0065FF]"}`}>
+                                                            <span className="text-[9px] md:text-[10px] font-bold text-[#654d99] dark:text-gray-500 uppercase">Giá đổi</span>
+                                                            <span className={`font-black text-base md:text-xl ${userPoints < reward.points ? "text-gray-400" : "text-[#0065FF]"}`}>
                                                                 {reward.points.toLocaleString()} pts
                                                             </span>
                                                         </div>
                                                         {userPoints < reward.points ? (
-                                                            <button disabled className="bg-gray-200 dark:bg-[#3d335a] text-gray-400 font-bold py-2 px-4 rounded-lg text-xs cursor-not-allowed">
-                                                                Thiếu {(reward.points - userPoints).toLocaleString()} pts
+                                                            <button disabled className="bg-gray-200 dark:bg-[#3d335a] text-gray-400 font-bold py-1.5 md:py-2 px-2 md:px-4 rounded-lg text-[10px] md:text-xs cursor-not-allowed">
+                                                                Thiếu {(reward.points - userPoints).toLocaleString()}
                                                             </button>
                                                         ) : (
                                                             <button
                                                                 onClick={() => handleRedeemClick(reward)}
-                                                                className="bg-[#0065FF] hover:bg-[#0065FF]/90 text-white font-bold py-2 px-6 rounded-lg text-sm transition-transform active:scale-95"
+                                                                className="bg-[#0065FF] hover:bg-[#0065FF]/90 text-white font-bold py-1.5 md:py-2 px-3 md:px-6 rounded-lg text-xs md:text-sm transition-transform active:scale-95"
                                                             >
                                                                 Đổi ngay
                                                             </button>
