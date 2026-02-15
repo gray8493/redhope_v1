@@ -159,10 +159,19 @@ function DonorProfileContent() {
                 }),
             });
 
-            const result = await response.json();
+            let result;
+            try {
+                result = await response.json();
+            } catch (jsonError) {
+                console.error("Failed to parse JSON response", jsonError);
+                // If JSON parsing fails, try to get text for debugging
+                /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+                const text = await response.text().catch(() => null);
+                throw new Error(`Server returned non-JSON response (${response.status}). Check server logs.`);
+            }
 
             if (!response.ok) {
-                throw new Error(result.error || 'Failed to update profile');
+                throw new Error(result.error || `Server error: ${response.status} ${response.statusText}`);
             }
 
             // 2. Refresh dữ liệu trong AuthContext
@@ -172,12 +181,15 @@ function DonorProfileContent() {
             router.push("/complete-profile/verification");
         } catch (err: any) {
             // Log full error internally for diagnostics
-            console.error("Update failed detailed:", {
-                message: err.message,
-                details: err.details,
-                hint: err.hint,
-                code: err.code,
-                error: err
+            console.error("Profile update failed (raw):", err);
+            console.error("Profile update failed (details):", {
+                name: err?.name,
+                message: err?.message,
+                stack: err?.stack,
+                details: err?.details,
+                hint: err?.hint,
+                code: err?.code,
+                json: JSON.stringify(err, Object.getOwnPropertyNames(err))
             });
 
             // Return a user-safe message

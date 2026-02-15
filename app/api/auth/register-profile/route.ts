@@ -38,15 +38,14 @@ export async function POST(request: Request) {
                 city: city || null,
                 district: district || null,
                 address: address || null,
-                current_points: role === 'donor' ? 0 : null,
-                updated_at: new Date().toISOString()
+                current_points: role === 'donor' ? 0 : null
             }, { onConflict: 'id' })
             .select()
             .single();
 
         if (error) {
-            console.error('[API] Error creating user profile:', error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error('[API] Error creating user profile:', JSON.stringify(error, null, 2));
+            return NextResponse.json({ error: error.message || 'Database error' }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, user: data });
