@@ -53,7 +53,7 @@ export const campaignService = {
                 .from('campaigns')
                 .select('*, hospital:users(full_name, hospital_name, city, district), appointments(*)')
                 .eq('id', id)
-                .single();
+                .maybeSingle();
 
             if (error) throw error;
             return data;
@@ -522,6 +522,43 @@ export const campaignService = {
             return true;
         } catch (error: any) {
             console.error('[CampaignService] Error in deleteCampaign:', error.message || error);
+            throw error;
+        }
+    },
+
+    async checkInRegistration(registrationId: string, campaignId: string) {
+        try {
+            // 1. Get current max queue number for this campaign
+            const { data: maxQueue, error: countError } = await supabase
+                .from('appointments')
+                .select('queue_number')
+                .eq('campaign_id', campaignId)
+                .not('queue_number', 'is', null)
+                .order('queue_number', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            let nextSTT = 1;
+            if (maxQueue && maxQueue.queue_number) {
+                nextSTT = maxQueue.queue_number + 1;
+            }
+
+            // 2. Update status and queue_number
+            const { data, error } = await supabase
+                .from('appointments')
+                .update({
+                    status: 'Checked-in',
+                    queue_number: nextSTT,
+                    check_in_time: new Date().toISOString()
+                })
+                .eq('id', registrationId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error: any) {
+            console.error('[CampaignService] Error in checkInRegistration:', error.message || error);
             throw error;
         }
     }

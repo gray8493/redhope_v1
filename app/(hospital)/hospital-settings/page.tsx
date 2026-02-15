@@ -145,6 +145,20 @@ function SettingsContent() {
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [isStaffMode, setIsStaffMode] = useState(false);
+
+    useEffect(() => {
+        setIsStaffMode(localStorage.getItem('hospital_staff_mode') === 'true');
+    }, []);
+
+    const toggleStaffMode = () => {
+        if (isStaffMode) {
+            localStorage.removeItem('hospital_staff_mode');
+        } else {
+            localStorage.setItem('hospital_staff_mode', 'true');
+        }
+        window.location.reload();
+    };
 
     const handleChangePassword = async () => {
         if (!newPassword || !confirmPassword) {
@@ -662,6 +676,34 @@ function SettingsContent() {
                                     className="bg-emerald-600 text-white px-10 py-4 rounded-full font-black text-base shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
                                 >
                                     {isSaving ? "Đang lưu..." : "Cập nhật bảo mật"}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Staff Mode Toggle */}
+                        <div className="bg-indigo-50 dark:bg-indigo-900/10 p-8 rounded-[2rem] border border-indigo-100 dark:border-indigo-900/20">
+                            <div className="flex items-center gap-3 mb-4">
+                                <MaterialIcon name="badge" className="text-indigo-600 text-2xl fill-1" />
+                                <h3 className="text-lg font-black text-indigo-700 dark:text-indigo-400">Chế độ Nhân viên (Staff View)</h3>
+                            </div>
+                            <p className="text-sm text-indigo-600/80 mb-6 font-medium leading-relaxed">
+                                Kích hoạt giao diện tối giản dành cho nhân viên tại điểm hiến máu. Các tính năng quản lý cấp cao (Dashboard, Báo cáo) sẽ bị ẩn đi để tập trung vào tác vụ chuyên môn.
+                            </p>
+                            <div className="flex items-center justify-between bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-3 h-3 rounded-full ${isStaffMode ? 'bg-indigo-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                        {isStaffMode ? "Đang bật chế độ Nhân viên" : "Đang ở chế độ Quản lý toàn quyền"}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={toggleStaffMode}
+                                    className={`px-6 py-2.5 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95 ${isStaffMode
+                                            ? 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                                            : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20'
+                                        }`}
+                                >
+                                    {isStaffMode ? "Tắt chế độ nhân viên" : "Bật chế độ nhân viên"}
                                 </button>
                             </div>
                         </div>

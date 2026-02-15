@@ -339,14 +339,14 @@ export default function SettingsPage() {
         <div className="relative flex h-screen w-full flex-row overflow-hidden bg-[#f6f6f8] dark:bg-[#120e1b] font-sans text-slate-900 dark:text-white">
             <Sidebar />
 
-            <div className="flex-1 flex flex-col h-full overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
                 <TopNav title="" />
 
                 <main className="flex-1 overflow-y-auto">
-                    <div className="max-w-5xl mx-auto px-6 py-8 w-full">
+                    <div className="max-w-5xl mx-auto px-4 sm:px-5 md:px-6 py-4 md:py-8 w-full">
 
                         {/* Tab Navigation */}
-                        <div className="flex items-center space-x-6 md:space-x-8 mb-8 border-b border-slate-300 dark:border-slate-800 overflow-x-auto no-scrollbar whitespace-nowrap px-1">
+                        <div className="flex items-center space-x-4 sm:space-x-6 md:space-x-8 mb-6 md:mb-8 border-b border-slate-300 dark:border-slate-800 overflow-x-auto no-scrollbar whitespace-nowrap px-1">
                             <button
                                 onClick={() => setActiveTab('profile')}
                                 className={`pb-4 text-[13px] md:text-sm font-bold transition-all relative shrink-0 ${activeTab === 'profile' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-[#0052CC]'}`}
@@ -383,8 +383,8 @@ export default function SettingsPage() {
 
                                 {/* Profile Header - Redesigned */}
                                 <section className="flex flex-col items-center justify-center mb-12">
-                                    <div className="relative group mb-6">
-                                        <div className="w-32 h-32 md:w-40 md:h-40 bg-white dark:bg-[#120e1b] rounded-full p-1.5 shadow-2xl border-4 border-slate-100 dark:border-slate-800 overflow-hidden">
+                                    <div className="relative group mb-4 md:mb-6">
+                                        <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 bg-white dark:bg-[#120e1b] rounded-full p-1.5 shadow-2xl border-4 border-slate-100 dark:border-slate-800 overflow-hidden">
                                             <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative">
                                                 {avatar ? (
                                                     <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -405,7 +405,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="text-center">
-                                        <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2">{name || "Người dùng"}</h2>
+                                        <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-2">{name || "Người dùng"}</h2>
                                         <div className="flex items-center justify-center gap-2 flex-wrap">
                                             <span className="bg-[#0065FF]/10 text-[#0065FF] px-3 py-1 rounded-full text-xs font-bold border border-[#0065FF]/20">
                                                 {user?.role === 'admin' ? "Quản trị viên" : "Người hiến máu"}

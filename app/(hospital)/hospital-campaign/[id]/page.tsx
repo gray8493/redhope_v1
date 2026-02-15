@@ -4,32 +4,42 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useSidebar } from '@/components/providers/SidebarProvider';
 import { campaignService, userService } from '@/services';
 import { bloodService } from '@/services/blood.service';
 import { toast } from 'sonner';
 import {
     ArrowLeft,
+    ChevronLeft,
+    Menu,
     Users,
     LayoutGrid,
-    Droplet,
     MapPin,
     Calendar,
-    CheckCircle2,
-    AlertCircle,
-    Download,
     Megaphone,
-    Search,
-    ChevronRight,
     Edit2,
+    Droplet,
+    MonitorPlay,
+    CheckCircle2,
+    Clock,
+    Activity,
+    Search,
+    Filter,
+    Download,
+    ChevronUp,
+    ChevronDown,
+    AlertCircle,
+    ChevronRight,
     Phone,
     MoreVertical,
     FileText,
-    ChevronDown,
     X,
-    Clock,
     Check,
     CalendarDays,
-    Loader2
+    Loader2,
+    Eye,
+    EyeOff,
+    MoreHorizontal
 } from "lucide-react";
 import { format } from 'date-fns';
 import { vi } from "date-fns/locale";
@@ -53,6 +63,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
@@ -156,98 +172,14 @@ const TimeInput = ({ value, onChange }: { value: string, onChange: (val: string)
     );
 };
 
-// ========== MOCK DATA FOR DEMO ==========
-const MOCK_CAMPAIGN = {
-    id: 'demo-campaign',
-    name: 'Chiến dịch Hiến máu Nhân đạo - Xuân 2026',
-    description: 'Chiến dịch hiến máu nhân đạo hưởng ứng Tết Nguyên Đán 2026, góp phần cứu sống nhiều bệnh nhân cần máu.',
-    location_name: 'Bệnh viện Chợ Rẫy, Quận 5, TP.HCM',
-    start_time: '2026-02-01T08:00:00',
-    end_time: '2026-02-28T17:00:00',
-    status: 'active',
-    target_units: 100,
-    blood_group_needed: ['A+', 'B+', 'O+', 'AB+'],
-};
 
-const MOCK_REGISTRATIONS = [
-    {
-        id: 'reg-1',
-        user: {
-            full_name: 'Nguyễn Văn An',
-            email: 'nguyenvanan@gmail.com',
-            phone: '0901234567',
-            blood_group: 'A+',
-            address: 'Quận 1, Hồ Chí Minh'
-        },
-        status: 'Booked',
-        blood_type: 'A+',
-        blood_volume: 350,
-        created_at: '2026-02-01T10:30:00'
-    },
-    {
-        id: 'reg-2',
-        user: {
-            full_name: 'Trần Thị Bình',
-            email: 'tranthib@gmail.com',
-            phone: '0908888999',
-            blood_group: 'B+',
-            address: 'Quận 3, Hồ Chí Minh'
-        },
-        status: 'Booked',
-        blood_type: 'B+',
-        blood_volume: 350,
-        created_at: '2026-02-01T11:00:00'
-    },
-    {
-        id: 'reg-3',
-        user: {
-            full_name: 'Lê Văn Cường',
-            email: 'levanc@gmail.com',
-            phone: '0912333444',
-            blood_group: 'O+',
-            address: 'Quận 10, Hồ Chí Minh'
-        },
-        status: 'Completed',
-        blood_type: 'O+',
-        blood_volume: 450,
-        created_at: '2026-02-01T09:00:00'
-    },
-    {
-        id: 'reg-4',
-        user: {
-            full_name: 'Phạm Thị Dung',
-            email: 'phamthid@gmail.com',
-            phone: '0977123456',
-            blood_group: 'AB+',
-            address: 'Quận 7, Hồ Chí Minh'
-        },
-        status: 'Deferred',
-        blood_type: 'AB+',
-        blood_volume: 250,
-        created_at: '2026-02-01T14:00:00'
-    },
-    {
-        id: 'reg-5',
-        user: {
-            full_name: 'Hoàng Minh Tuấn',
-            email: 'hoangminhtuan@gmail.com',
-            phone: '0933555777',
-            blood_group: 'A-',
-            address: 'Quận Bình Thạnh, Hồ Chí Minh'
-        },
-        status: 'Completed',
-        blood_type: 'A-',
-        blood_volume: 350,
-        created_at: '2026-02-02T08:30:00'
-    },
-];
-// ========== END MOCK DATA ==========
 
 export default function CampaignDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user } = useAuth();
+    const { toggle } = useSidebar();
     const fromTab = searchParams.get('fromTab') || 'active';
 
     const [campaign, setCampaign] = useState<any>(null);
@@ -257,6 +189,8 @@ export default function CampaignDetailsPage() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [bloodTypeFilter, setBloodTypeFilter] = useState('all');
     const [isSending, setIsSending] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showStats, setShowStats] = useState(true);
     const [announcementMsg, setAnnouncementMsg] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [emailType, setEmailType] = useState<'announcement' | 'registration_success' | 'reminder_8h' | 'reminder_4h' | 'new_campaign_invite'>('announcement');
@@ -296,11 +230,16 @@ export default function CampaignDetailsPage() {
             }
             setOpenBloodTypeDropdown(null);
             setOpenVolumeDropdown(null);
-            setOpenActionMenu(null);
+            // setOpenActionMenu(null); // Handled by ShadCN DropdownMenu now
         };
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
+
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, statusFilter, bloodTypeFilter]);
 
     // Fetch campaign details OR use mock data
     useEffect(() => {
@@ -372,7 +311,39 @@ export default function CampaignDetailsPage() {
         const matchesStatus = statusFilter === 'all' || r.status?.toLowerCase() === statusFilter.toLowerCase();
         const matchesBloodType = bloodTypeFilter === 'all' || (r.blood_type || r.user?.blood_group) === bloodTypeFilter;
         return matchesSearch && matchesStatus && matchesBloodType;
+    }).sort((a, b) => {
+        // Sort Priority: Checked-in > Booked > Completed > Others
+        const statusOrder: Record<string, number> = {
+            'checked-in': 1,
+            'booked': 2,
+            'completed': 3,
+            'deferred': 4,
+            'cancelled': 5
+        };
+
+        const sA = a.status?.toLowerCase() || 'booked';
+        const sB = b.status?.toLowerCase() || 'booked';
+
+        const pA = statusOrder[sA] || 99;
+        const pB = statusOrder[sB] || 99;
+
+        if (pA !== pB) return pA - pB;
+
+        // If both are checked-in, sort by queue number (ascending)
+        if (sA === 'checked-in') {
+            return (a.queue_number || Infinity) - (b.queue_number || Infinity);
+        }
+
+        // Default: Newest registration first
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
+
+    // Pagination Logic
+    const itemsPerPage = 7;
+    const totalPages = Math.ceil(filteredRegistrations.length / itemsPerPage);
+    const paginatedRegistrations = filteredRegistrations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+
 
     // Export to CSV
     const handleExport = () => {
@@ -444,8 +415,13 @@ export default function CampaignDetailsPage() {
         const hospitalId = campaign.hospital_id;
 
         try {
-            // 1. Tạo bản ghi hiến máu và kích hoạt email + cộng điểm (qua bloodService)
-            await bloodService.completeDonation(regId, donorId, hospitalId, volume);
+            // Is this a mock record?
+            if (!regId.startsWith('reg-')) {
+                // 1. Tạo bản ghi hiến máu và kích hoạt email + cộng điểm (qua bloodService)
+                await bloodService.completeDonation(regId, donorId, hospitalId, volume);
+            } else {
+                console.log("Demo/Mock mode: skipping backend call for", regId);
+            }
 
             // 2. Cập nhật state local để UI đổi màu/trạng thái ngay lập tức
             setRegistrations(prev => prev.map(r =>
@@ -463,8 +439,11 @@ export default function CampaignDetailsPage() {
     // Handle defer donation
     const handleDeferDonation = async (regId: string) => {
         try {
-            // In demo mode, only update local state
-            await campaignService.updateRegistrationStatus(regId, 'Deferred');
+            // In demo mode, only update local state if ID is mock
+            if (!regId.startsWith('reg-')) {
+                await campaignService.updateRegistrationStatus(regId, 'Deferred');
+            }
+
             setRegistrations(prev => prev.map(r =>
                 r.id === regId ? { ...r, status: 'Deferred' } : r
             ));
@@ -477,8 +456,11 @@ export default function CampaignDetailsPage() {
     // Handle edit - reset to Booked
     const handleEditRegistration = async (regId: string) => {
         try {
-            // In demo mode, only update local state
-            await campaignService.updateRegistrationStatus(regId, 'Booked');
+            // In demo mode, only update local state if ID is mock
+            if (!regId.startsWith('reg-')) {
+                await campaignService.updateRegistrationStatus(regId, 'Booked');
+            }
+
             setRegistrations(prev => prev.map(r =>
                 r.id === regId ? { ...r, status: 'Booked' } : r
             ));
@@ -489,11 +471,24 @@ export default function CampaignDetailsPage() {
         }
     };
 
+    // Handle Manual Check-in
+    const handleCheckInManual = async (regId: string) => {
+        try {
+            const regs = await campaignService.getCampaignRegistrations(campaignId);
+            setRegistrations(regs || []);
+
+            toast.success('Đã check-in thành công!');
+        } catch (error: any) {
+            toast.error('Lỗi check-in: ' + error.message);
+        }
+    };
+
     // Handle update blood type
     const handleUpdateBloodType = async (regId: string, bloodType: string) => {
         try {
-            // In demo mode, only update local state
+            // In demo mode, only update local state if ID is mock
             await campaignService.updateRegistration(regId, { blood_type: bloodType });
+
             setRegistrations(prev => prev.map(r =>
                 r.id === regId ? { ...r, blood_type: bloodType } : r
             ));
@@ -507,8 +502,9 @@ export default function CampaignDetailsPage() {
     // Handle update blood volume
     const handleUpdateVolume = async (regId: string, volume: number) => {
         try {
-            // In demo mode, only update local state
+            // In demo mode, only update local state if ID is mock
             await campaignService.updateRegistration(regId, { blood_volume: volume });
+
             setRegistrations(prev => prev.map(r =>
                 r.id === regId ? { ...r, blood_volume: volume } : r
             ));
@@ -715,8 +711,13 @@ export default function CampaignDetailsPage() {
                 };
             case 'deferred':
                 return {
-                    label: 'Hủy hồ sơ',
+                    label: 'Hủy hồ sơ', // Renamed from Pending per user request contexts or keep as distinct? User said "Hủy Hồ sơ" is state 4. "Deferred" usually means temporary. I will keep as is but add case for 'Checked-in'
                     className: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'
+                };
+            case 'checked-in':
+                return {
+                    label: 'Đã check-in',
+                    className: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-800'
                 };
             default:
                 return {
@@ -731,151 +732,180 @@ export default function CampaignDetailsPage() {
     return (
         <main className="flex-1 overflow-y-auto">
             {/* Header */}
-            <header className="h-20 px-8 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-4">
-                    <Link
-                        href={`/hospital-campaign?tab=${fromTab}`}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                    >
-                        <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                    </Link>
-                    <nav className="flex items-center text-sm text-slate-500 gap-2">
-                        <span>Chiến dịch</span>
-                        <ChevronRight className="w-4 h-4" />
-                        <span className="text-slate-900 dark:text-white font-medium">Chi tiết</span>
-                    </nav>
-                </div>
-            </header>
 
 
 
-            <div className="p-8 max-w-7xl mx-auto">
+
+            <div className="p-6 max-w-7xl mx-auto">
                 {/* Title Section */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight mb-1.5">
-                            {campaign.name}
-                        </h1>
-                        <div className="flex items-center gap-6 text-slate-500 dark:text-slate-400">
-                            <div className="flex items-center gap-1.5">
-                                <MapPin className="w-4 h-4" />
-                                <span className="text-sm">{campaign.location_name}</span>
+                        <div className="flex items-center flex-wrap gap-3 mb-2">
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    asChild
+                                    className="rounded-full w-9 h-9 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                >
+                                    <Link href={`/hospital-campaign?tab=${fromTab}`}>
+                                        <ChevronLeft className="w-6 h-6 text-slate-600 dark:text-slate-300" />
+                                    </Link>
+                                </Button>
+                                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                                    {campaign.name}
+                                </h1>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                                <Calendar className="w-4 h-4" />
-                                <span className="text-sm font-medium">
+                            <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border ${campaign.status === 'active'
+                                    ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
+                                    : (['completed', 'cancelled', 'ended', 'closed'].includes(campaign.status))
+                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                                        : (campaign.status === 'active' && campaign.description?.includes('data-status="paused"'))
+                                            ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'
+                                            : campaign.status === 'draft'
+                                                ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200'
+                                                : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
+                                    }`}>
+                                    {campaign.status === 'active'
+                                        ? (campaign.description?.includes('data-status="paused"') ? 'Tạm dừng' : 'Đang hoạt động')
+                                        : (campaign.status === 'cancelled' || campaign.status === 'completed' || campaign.status === 'ended') ? 'Đã kết thúc' :
+                                            campaign.status === 'draft' ? 'Bản nháp' : 'Đã kết thúc'}
+                                </span>
+                                <span className="px-2.5 py-1 text-[10px] font-bold rounded-lg border bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-800 flex items-center gap-1.5">
+                                    <Droplet className="w-3 h-3" />
+                                    {(() => {
+                                        const groups = parseBloodGroups(campaign.target_blood_group);
+                                        if (groups.length === 0 || groups.length === 8) return "Tất cả các nhóm";
+                                        if (groups.length >= 5) return "Hỗn hợp (" + groups.length + ")";
+                                        return groups.join(", ");
+                                    })()}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-5 ml-11">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 bg-blue-50 dark:bg-blue-900/30 rounded-md border border-blue-100/50 dark:border-blue-800/50">
+                                    <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <span className="text-[13px] font-medium text-slate-600 dark:text-slate-300 tracking-tight">
+                                    {campaign.location_name}
+                                </span>
+                            </div>
+
+                            <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
+
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 bg-amber-50 dark:bg-amber-900/30 rounded-md border border-amber-100/50 dark:border-amber-800/50">
+                                    <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <span className="text-[13px] font-medium text-slate-600 dark:text-slate-300 tracking-tight">
                                     {new Date(campaign.start_time).toLocaleDateString('vi-VN')} - {new Date(campaign.end_time).toLocaleDateString('vi-VN')}
                                 </span>
                             </div>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setIsDialogOpen(true)}
-                            className="flex items-center gap-2.5 px-5 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-[#0065FF] dark:text-blue-400 text-[11px] font-black rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all active:scale-95 uppercase tracking-wider"
-                        >
-                            <Megaphone className="w-4 h-4" />
-                            Gửi Email Thông Báo
-                        </button>
-                        <button
-                            onClick={openEditModal}
-                            className="p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
-                        >
-                            <Edit2 className="w-5 h-5" />
-                        </button>
-                        <div className="flex items-center gap-2">
-                            {/* Blood Type Badge */}
-                            <span className="px-3 py-1.5 text-xs font-bold rounded-lg border bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-800 flex items-center gap-1.5">
-                                <Droplet className="w-3.5 h-3.5" />
-                                {(() => {
-                                    const groups = parseBloodGroups(campaign.target_blood_group);
-                                    if (groups.length === 0 || groups.length === 8) return "Tất cả các nhóm";
-                                    if (groups.length >= 5) return "Hỗn hợp (" + groups.length + ")";
-                                    return groups.join(", ");
-                                })()}
-                            </span>
-                            <span className={`px-3 py-1.5 text-xs font-bold rounded-lg border ${campaign.status === 'active'
-                                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
-                                : (['completed', 'cancelled', 'ended', 'closed'].includes(campaign.status))
-                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                                    : (campaign.status === 'active' && campaign.description?.includes('data-status="paused"')) // Check metadata
-                                        ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800'
-                                        : campaign.status === 'draft' // Check for real draft
-                                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200'
-                                            : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
-                                }`}>
-                                {campaign.status === 'active'
-                                    ? (campaign.description?.includes('data-status="paused"') ? 'Tạm dừng' : 'Đang hoạt động')
-                                    : (campaign.status === 'cancelled' || campaign.status === 'completed' || campaign.status === 'ended') ? 'Đã kết thúc' :
-                                        campaign.status === 'draft' ? 'Bản nháp' : 'Đã kết thúc'}
-                            </span>
-                        </div>
+                        <Link href={`/kiosk?campaignId=${campaignId}`} target="_blank">
+                            <Button className="gap-2 bg-[#0065FF] hover:bg-[#0052cc] text-white font-bold rounded-xl h-10 px-4 shadow-lg shadow-blue-200 dark:shadow-none transition-all">
+                                <MonitorPlay className="w-4 h-4" />
+                                Kiosk Check-in
+                            </Button>
+                        </Link>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="h-10 w-10 p-0 rounded-xl bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
+                                    <MoreHorizontal className="w-5 h-5 text-slate-600" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52 p-1 rounded-lg border-slate-300 dark:border-slate-800 shadow-xl bg-white dark:bg-slate-900 overflow-hidden">
+                                <DropdownMenuItem onClick={() => setShowStats(!showStats)} className="cursor-pointer font-bold text-[13px] py-2 px-2.5 rounded-md text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-800 focus:text-blue-600 dark:focus:text-blue-400 group">
+                                    {showStats ? <EyeOff className="mr-2.5 w-4 h-4 text-slate-400 group-focus:text-blue-600" /> : <Eye className="mr-2.5 w-4 h-4 text-slate-400 group-focus:text-blue-600" />}
+                                    <span>{showStats ? 'Thu gọn thống kê' : 'Hiển thị thống kê'}</span>
+                                </DropdownMenuItem>
+                                <div className="h-px bg-slate-100 dark:bg-slate-800 my-0.5" />
+                                <DropdownMenuItem onClick={() => setIsDialogOpen(true)} className="cursor-pointer font-bold text-[13px] py-2 px-2.5 rounded-md text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-800 focus:text-blue-600 dark:focus:text-blue-400 group">
+                                    <Megaphone className="mr-2.5 w-4 h-4 text-slate-400 group-focus:text-blue-600" />
+                                    <span>Gửi Email thông báo</span>
+                                </DropdownMenuItem>
+                                <div className="h-px bg-slate-100 dark:bg-slate-800 my-0.5" />
+                                <DropdownMenuItem onClick={openEditModal} className="cursor-pointer font-bold text-[13px] py-2 px-2.5 rounded-md text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-800 focus:text-blue-600 dark:focus:text-blue-400 group">
+                                    <Edit2 className="mr-2.5 w-4 h-4 text-slate-400 group-focus:text-blue-600" />
+                                    <span>Chỉnh sửa thông tin</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
+
+
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-2.5 text-blue-600 dark:text-blue-400 mb-3">
-                            <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                                <Users className="w-4 h-4" />
+                {showStats && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 animate-in slide-in-from-top-2 fade-in duration-300">
+                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-400 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
+                                <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg shadow-sm border border-blue-100 dark:border-blue-800">
+                                    <Users className="w-4 h-4" />
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-400 uppercase tracking-tight">Đăng ký</span>
                             </div>
-                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Đăng ký</span>
+                            <div className="text-xl font-black text-slate-800 dark:text-white leading-none">{totalRegistered}</div>
                         </div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white">{totalRegistered}</div>
-                    </div>
 
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-2.5 text-emerald-600 dark:text-emerald-400 mb-3">
-                            <div className="p-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
-                                <CheckCircle2 className="w-4 h-4" />
+                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-400 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-2">
+                                <div className="p-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg shadow-sm border border-emerald-100 dark:border-emerald-800">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-400 uppercase tracking-tight">Hoàn thành</span>
                             </div>
-                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Hoàn thành</span>
+                            <div className="text-xl font-black text-slate-800 dark:text-white leading-none">{totalCompleted}</div>
                         </div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white">{totalCompleted}</div>
-                    </div>
 
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-2.5 text-amber-600 dark:text-amber-400 mb-3">
-                            <div className="p-1.5 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
-                                <Clock className="w-4 h-4" />
+                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-400 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-2">
+                                <div className="p-1.5 bg-amber-50 dark:bg-amber-900/30 rounded-lg shadow-sm border border-amber-100 dark:border-amber-800">
+                                    <Clock className="w-4 h-4" />
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-400 uppercase tracking-tight">Hoãn hiến</span>
                             </div>
-                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Hoãn hiến</span>
+                            <div className="text-xl font-black text-slate-800 dark:text-white leading-none">{totalDeferred}</div>
                         </div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white">{totalDeferred}</div>
-                    </div>
 
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-2.5 text-blue-600 dark:text-blue-400 mb-3">
-                            <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                                <Droplet className="w-4 h-4" />
+                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-400 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
+                                <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg shadow-sm border border-blue-100 dark:border-blue-800">
+                                    <Droplet className="w-4 h-4" />
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-400 uppercase tracking-tight">Tiến độ</span>
                             </div>
-                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tiến độ</span>
-                        </div>
-                        <div className="flex items-end justify-between mb-2">
-                            <div className="text-2xl font-bold text-slate-900 dark:text-white">{Math.round(progress)}%</div>
-                            <span className="text-[10px] text-slate-400 mb-1">Mục tiêu: {targetMl}ml</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div
-                                className="bg-blue-600 h-full transition-all duration-500"
-                                style={{ width: `${Math.min(progress, 100)}%` }}
-                            />
+                            <div className="flex items-end justify-between mb-1.5">
+                                <div className="text-xl font-black text-slate-800 dark:text-white leading-none">{Math.round(progress)}%</div>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase">Mục tiêu: {targetMl}ml</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                                <div
+                                    className="bg-blue-600 h-full transition-all duration-500 shadow-[0_0_8px_rgba(37,99,235,0.3)]"
+                                    style={{ width: `${Math.min(progress, 100)}%` }}
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Table Section */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-400 dark:border-slate-800 shadow-md">
                     {/* Filters */}
-                    <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center">
+                    <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center">
                         <div className="relative w-full sm:w-96">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 text-xs transition-all outline-none"
+                                className="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-xs transition-all outline-none shadow-sm"
                                 placeholder="Tìm kiếm theo tên, email, số điện thoại..."
                             />
                         </div>
@@ -883,9 +913,10 @@ export default function CampaignDetailsPage() {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 focus:ring-2 focus:ring-blue-500/20 min-w-[170px] outline-none"
+                                className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-400 focus:ring-2 focus:ring-blue-500/20 min-w-[170px] outline-none cursor-pointer"
                             >
                                 <option value="all">Tất cả trạng thái</option>
+                                <option value="checked-in">Đã check-in</option>
                                 <option value="Booked">Đã đặt lịch</option>
                                 <option value="Completed">Hoàn thành</option>
                                 <option value="Deferred">Hoãn hiến</option>
@@ -894,7 +925,7 @@ export default function CampaignDetailsPage() {
                             <select
                                 value={bloodTypeFilter}
                                 onChange={(e) => setBloodTypeFilter(e.target.value)}
-                                className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 focus:ring-2 focus:ring-blue-500/20 min-w-[150px] outline-none"
+                                className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-400 focus:ring-2 focus:ring-blue-500/20 min-w-[150px] outline-none cursor-pointer shadow-sm"
                             >
                                 <option value="all">Tất cả nhóm máu</option>
                                 {BLOOD_TYPES.map(type => (
@@ -903,7 +934,7 @@ export default function CampaignDetailsPage() {
                             </select>
                             <button
                                 onClick={handleExport}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-100 dark:shadow-none whitespace-nowrap"
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-200/50 dark:shadow-none whitespace-nowrap active:scale-95"
                             >
                                 <Download className="w-4 h-4" />
                                 XUẤT CSV
@@ -912,20 +943,20 @@ export default function CampaignDetailsPage() {
                     </div>
 
                     {/* Table */}
-                    <div className="overflow-visible min-h-[400px]">
-                        <table className="w-full text-left">
+                    <div className="min-h-[400px]">
+                        <table className="w-full border-collapse table-fixed">
                             <thead>
-                                <tr className="bg-slate-50/50 dark:bg-slate-800/50">
-                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">STT</th>
-                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NGƯỜI HIẾN MÁU</th>
-                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">LIÊN HỆ</th>
-                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">NHÓM MÁU</th>
-                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">LƯỢNG (ML)</th>
-                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">TRẠNG THÁI</th>
-                                    <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">THAO TÁC</th>
+                                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 text-center w-[6%]">STT</th>
+                                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 text-left w-[24%]">Người hiến máu</th>
+                                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 text-left w-[22%]">Liên hệ</th>
+                                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 text-left w-[10%]">Nhóm máu</th>
+                                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 text-left w-[11%]">Lượng (ml)</th>
+                                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 text-center w-[12%]">Trạng thái</th>
+                                    <th className="px-4 py-4 text-[11px] font-bold text-slate-400 text-right w-[15%]">Thao tác</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                                 {filteredRegistrations.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
@@ -933,73 +964,85 @@ export default function CampaignDetailsPage() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredRegistrations.map((reg, index) => {
+                                    paginatedRegistrations.map((reg, index) => {
                                         const statusLower = reg.status?.toLowerCase();
                                         const statusInfo = getStatusDisplay(reg.status);
-                                        const isBooked = statusLower === 'booked' || !reg.status;
+                                        const isCheckedIn = statusLower === 'checked-in';
+
+                                        // "Booked" specifically means just booked, not checked in yet
+                                        const isBookedStatus = statusLower === 'booked' || !reg.status;
+
+                                        // Editable means either Booked OR Checked-in
+                                        const isEditable = isBookedStatus || isCheckedIn;
+
                                         const isCompleted = statusLower === 'completed';
                                         const isDeferred = statusLower === 'deferred';
+
                                         const bloodType = reg.blood_type || reg.user?.blood_group || 'N/A';
                                         const bloodVolume = reg.blood_volume || 350;
                                         const initial = reg.user?.full_name?.charAt(0)?.toUpperCase() || 'U';
                                         const isDropdownOpen = openBloodTypeDropdown === reg.id || openVolumeDropdown === reg.id || openActionMenu === reg.id;
 
                                         // Status colors for individual columns
-                                        const bloodTypeStyle = isBooked
+                                        const bloodTypeStyle = isEditable
                                             ? 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30 text-rose-600'
                                             : 'bg-rose-50/50 dark:bg-rose-900/5 border-rose-100/50 dark:border-rose-900/20 text-rose-400';
 
-                                        const volumeStyle = isBooked
+                                        const volumeStyle = isEditable
                                             ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 text-blue-600'
                                             : 'bg-blue-50/50 dark:bg-blue-900/5 border-blue-100/50 dark:border-blue-900/20 text-blue-400';
 
                                         return (
                                             <tr key={reg.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group ${isDropdownOpen ? 'relative z-[50]' : ''}`}>
-                                                <td className="px-6 py-3.5 text-xs font-bold text-slate-400">
-                                                    {String(index + 1).padStart(2, '0')}
+                                                <td className="px-4 py-3.5 text-xs font-bold text-slate-400 text-center w-[6%]">
+                                                    {isCompleted || isCheckedIn ? (
+                                                        <span className="text-sm font-black text-purple-600 dark:text-purple-400">#{String(reg.queue_number || index + 1).padStart(3, '0')}</span>
+                                                    ) : (
+                                                        <span className="text-xs font-medium text-slate-300">--</span>
+                                                    )}
                                                 </td>
-                                                <td className="px-6 py-3.5">
+                                                <td className="px-4 py-3.5 w-[24%]">
                                                     <div className="flex items-center gap-2.5">
                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${getAvatarColor(reg.user?.full_name)}`}>
                                                             {initial}
                                                         </div>
                                                         <div>
-                                                            <p className="text-[13px] font-bold text-slate-900 dark:text-white uppercase">
+                                                            <p className="text-[13px] font-bold text-slate-800 dark:text-white leading-tight">
                                                                 {reg.user?.full_name || 'N/A'}
                                                             </p>
-                                                            <p className="text-[10px] text-slate-500">{reg.user?.email || 'N/A'}</p>
+                                                            <p className="text-[10px] text-slate-400">{reg.user?.email || 'N/A'}</p>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-3.5">
-                                                    <div className="flex items-center gap-2">
-                                                        <Phone className="w-3.5 h-3.5 text-slate-400" />
-                                                        <div>
-                                                            <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">
+                                                <td className="px-4 py-3.5 w-[22%]">
+                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                        <Phone className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                                        <div className="overflow-hidden">
+                                                            <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-300 truncate">
                                                                 {reg.user?.phone || 'N/A'}
                                                             </p>
-                                                            <p className="text-[10px] text-slate-400">
-                                                                {reg.user?.address || 'Chưa có địa chỉ'}
+                                                            <p className="text-[9px] text-slate-400 truncate">
+                                                                {reg.user?.address || 'N/A'}
                                                             </p>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-5">
+                                                <td className="px-4 py-5 w-[10%]">
                                                     {/* Blood Type Dropdown */}
                                                     <div className={`relative ${openBloodTypeDropdown === reg.id ? 'z-[60]' : ''}`} data-dropdown-trigger>
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                if (!isCampaignEnded && isBooked) {
+                                                                if (!isCampaignEnded && isEditable) {
                                                                     setOpenBloodTypeDropdown(openBloodTypeDropdown === reg.id ? null : reg.id);
                                                                     setOpenVolumeDropdown(null);
                                                                     setOpenActionMenu(null);
                                                                 }
                                                             }}
-                                                            className={`flex items-center justify-between px-2.5 py-1.5 border rounded-lg w-20 transition-all ${bloodTypeStyle} ${!isCampaignEnded && isBooked ? 'cursor-pointer hover:shadow-md hover:border-rose-300 active:scale-95' : 'cursor-default opacity-80'}`}
+                                                            className={`flex items-center justify-between px-2.5 py-1.5 border rounded-lg w-20 transition-all ${bloodTypeStyle} ${!isCampaignEnded && isEditable ? 'cursor-pointer hover:shadow-md hover:border-rose-300 active:scale-95' : 'cursor-default opacity-80'}`}
                                                         >
                                                             <span className="text-xs font-bold">{bloodType}</span>
-                                                            {!isCampaignEnded && isBooked && (
+                                                            {!isCampaignEnded && isEditable && (
                                                                 <ChevronDown className="w-3.5 h-3.5 opacity-40" />
                                                             )}
                                                         </button>
@@ -1030,22 +1073,22 @@ export default function CampaignDetailsPage() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-5">
+                                                <td className="px-4 py-5 w-[11%]">
                                                     {/* Blood Volume Dropdown */}
                                                     <div className={`relative ${openVolumeDropdown === reg.id ? 'z-[60]' : ''}`} data-dropdown-trigger>
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                if (!isCampaignEnded && isBooked) {
+                                                                if (!isCampaignEnded && isEditable) {
                                                                     setOpenVolumeDropdown(openVolumeDropdown === reg.id ? null : reg.id);
                                                                     setOpenBloodTypeDropdown(null);
                                                                     setOpenActionMenu(null);
                                                                 }
                                                             }}
-                                                            className={`flex items-center justify-between px-2.5 py-1.5 border rounded-lg w-24 transition-all ${volumeStyle} ${!isCampaignEnded && isBooked ? 'cursor-pointer hover:shadow-md hover:border-blue-300 active:scale-95' : 'cursor-default opacity-80'}`}
+                                                            className={`flex items-center justify-between px-2.5 py-1.5 border rounded-lg w-24 transition-all ${volumeStyle} ${!isCampaignEnded && isEditable ? 'cursor-pointer hover:shadow-md hover:border-blue-300 active:scale-95' : 'cursor-default opacity-80'}`}
                                                         >
                                                             <span className="text-xs font-bold">{bloodVolume} ml</span>
-                                                            {!isCampaignEnded && isBooked && (
+                                                            {!isCampaignEnded && isEditable && (
                                                                 <ChevronDown className="w-3.5 h-3.5 opacity-40" />
                                                             )}
                                                         </button>
@@ -1079,124 +1122,66 @@ export default function CampaignDetailsPage() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-3.5 text-center">
-                                                    <span className={`px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider rounded border ${statusInfo.className}`}>
+                                                <td className="px-4 py-3.5 text-center w-[12%]">
+                                                    <span className={`px-2 py-1 text-[9px] font-extrabold uppercase tracking-tight rounded border whitespace-nowrap ${statusInfo.className}`}>
                                                         {statusInfo.label}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-3.5">
-                                                    <div className="flex items-center justify-end gap-2.5">
+                                                <td className="px-4 py-3.5 w-[15%]">
+                                                    <div className="flex items-center justify-end gap-1.5 px-1">
                                                         {isCampaignEnded ? (
-                                                            <span className="text-[10px] text-slate-400 font-medium">
-                                                                Kết thúc hồ sơ
+                                                            <span className="text-[10px] text-slate-400 font-medium italic">
+                                                                Đã đóng
                                                             </span>
-                                                        ) : isBooked ? (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => handleConfirmDonation(reg.id)}
-                                                                    className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-md shadow-emerald-200 dark:shadow-none transition-all active:scale-95"
-                                                                >
-                                                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                                                    XÁC NHẬN
-                                                                </button>
-                                                                {/* Action Menu */}
-                                                                <div className={`relative ${openActionMenu === reg.id ? 'z-[60]' : ''}`} data-dropdown-trigger>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setOpenActionMenu(openActionMenu === reg.id ? null : reg.id);
-                                                                            setOpenBloodTypeDropdown(null);
-                                                                            setOpenVolumeDropdown(null);
-                                                                        }}
-                                                                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                                                                    >
-                                                                        <MoreVertical className="w-4 h-4" />
-                                                                    </button>
-                                                                    {openActionMenu === reg.id && (
-                                                                        <div className="absolute top-full right-0 mt-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 py-1.5 min-w-[130px] animate-in fade-in zoom-in-95 duration-200" data-dropdown>
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleDeferDonation(reg.id);
-                                                                                    setOpenActionMenu(null);
-                                                                                }}
-                                                                                className="w-full px-3 py-1.5 text-left text-[13px] font-bold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2"
-                                                                            >
-                                                                                <Clock className="w-3.5 h-3.5" />
-                                                                                Hủy hồ sơ
-                                                                            </button>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </>
                                                         ) : (
-                                                            /* Just the action menu for Completed/Deferred */
-                                                            <div className={`relative ${openActionMenu === reg.id ? 'z-[60]' : ''}`} data-dropdown-trigger>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setOpenActionMenu(openActionMenu === reg.id ? null : reg.id);
-                                                                        setOpenBloodTypeDropdown(null);
-                                                                        setOpenVolumeDropdown(null);
-                                                                    }}
-                                                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                                                                >
-                                                                    <MoreVertical className="w-4 h-4" />
-                                                                </button>
-                                                                {openActionMenu === reg.id && (
-                                                                    <div className="absolute top-full right-0 mt-2 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 py-1.5 min-w-[150px] animate-in fade-in zoom-in-95 duration-200" data-dropdown>
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleEditRegistration(reg.id);
-                                                                            }}
-                                                                            className="w-full px-3 py-1.5 text-left text-[13px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                                                                        >
-                                                                            <Edit2 className="w-3.5 h-3.5" />
-                                                                            Chỉnh sửa
-                                                                        </button>
-                                                                        {isCompleted && (
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleDeferDonation(reg.id);
-                                                                                    setOpenActionMenu(null);
-                                                                                }}
-                                                                                className="w-full px-3 py-1.5 text-left text-[13px] font-bold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2 border-t border-slate-50 dark:border-slate-800 mt-1 pt-1"
-                                                                            >
-                                                                                <Clock className="w-3.5 h-3.5" />
-                                                                                Hủy hồ sơ
-                                                                            </button>
-                                                                        )}
-                                                                        {isDeferred && (
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleEditRegistration(reg.id);
-                                                                                    setOpenActionMenu(null);
-                                                                                }}
-                                                                                className="w-full px-3 py-1.5 text-left text-[13px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
-                                                                            >
-                                                                                <Edit2 className="w-3.5 h-3.5" />
-                                                                                Chỉnh sửa
-                                                                            </button>
-                                                                        )}
-                                                                        {isBooked && (
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleDeferDonation(reg.id);
-                                                                                    setOpenActionMenu(null);
-                                                                                }}
-                                                                                className="w-full px-3 py-1.5 text-left text-[13px] font-bold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2 border-t border-slate-50 dark:border-slate-800 mt-1 pt-1"
-                                                                            >
-                                                                                <Clock className="w-3.5 h-3.5" />
-                                                                                Hủy hồ sơ
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
+                                                            <>
+                                                                {isEditable && (
+                                                                    <button
+                                                                        onClick={() => handleConfirmDonation(reg.id)}
+                                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-bold px-2 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition-all active:scale-95 whitespace-nowrap"
+                                                                    >
+                                                                        <CheckCircle2 className="w-3 h-3" />
+                                                                        HOÀN THÀNH
+                                                                    </button>
                                                                 )}
-                                                            </div>
+
+                                                                {/* Action Menu contains different items based on status */}
+                                                                <DropdownMenu open={openActionMenu === reg.id} onOpenChange={(open) => setOpenActionMenu(open ? reg.id : null)}>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors outline-none">
+                                                                            <MoreVertical className="w-4 h-4" />
+                                                                        </button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end" className="w-[150px] p-1 rounded-xl border-slate-200 dark:border-slate-800 shadow-xl">
+                                                                        {isEditable ? (
+                                                                            <DropdownMenuItem
+                                                                                onClick={() => handleDeferDonation(reg.id)}
+                                                                                className="text-amber-600 focus:text-amber-700 focus:bg-amber-50 dark:focus:bg-amber-900/20 font-medium text-[13px] gap-2 cursor-pointer rounded-md px-2.5 py-1.5"
+                                                                            >
+                                                                                <Clock className="w-3.5 h-3.5" />
+                                                                                Hủy hồ sơ
+                                                                            </DropdownMenuItem>
+                                                                        ) : (
+                                                                            <>
+                                                                                <DropdownMenuItem
+                                                                                    onClick={() => handleEditRegistration(reg.id)}
+                                                                                    className="text-slate-700 dark:text-slate-300 focus:bg-slate-50 dark:focus:bg-slate-800 font-medium text-[13px] gap-2 cursor-pointer rounded-md px-2.5 py-1.5"
+                                                                                >
+                                                                                    <Edit2 className="w-3.5 h-3.5" />
+                                                                                    Chỉnh sửa
+                                                                                </DropdownMenuItem>
+                                                                                <DropdownMenuItem
+                                                                                    onClick={() => handleDeferDonation(reg.id)}
+                                                                                    className="text-amber-600 focus:text-amber-700 focus:bg-amber-50 dark:focus:bg-amber-900/20 font-medium text-[13px] gap-2 cursor-pointer rounded-md px-2.5 py-1.5 border-t border-slate-100 dark:border-slate-800 mt-0.5"
+                                                                                >
+                                                                                    <Clock className="w-3.5 h-3.5" />
+                                                                                    Hủy hồ sơ
+                                                                                </DropdownMenuItem>
+                                                                            </>
+                                                                        )}
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </>
                                                         )}
                                                     </div>
                                                 </td>
@@ -1211,15 +1196,26 @@ export default function CampaignDetailsPage() {
                     {/* Pagination */}
                     <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <p className="text-xs font-medium text-slate-500">
-                            Hiển thị 1 - {filteredRegistrations.length} trên tổng số {filteredRegistrations.length} người hiến máu
+                            Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredRegistrations.length)} trên tổng số {filteredRegistrations.length} người hiến máu
                         </p>
                         <div className="flex items-center gap-2">
-                            <button className="p-2 disabled:opacity-30 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" disabled>
-                                <ArrowLeft className="w-5 h-5" />
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
                             </button>
-                            <button className="w-8 h-8 rounded-lg bg-[#0065FF] text-white text-xs font-bold">1</button>
-                            <button className="p-2 disabled:opacity-30 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" disabled>
-                                <ChevronRight className="w-5 h-5" />
+                            <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#0065FF] text-white text-xs font-bold shadow-sm shadow-blue-200 dark:shadow-none Select-none">
+                                {currentPage}
+                            </span>
+                            <span className="text-xs font-medium text-slate-400 min-w-[30px] text-center">/ {totalPages || 1}</span>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                            >
+                                <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
@@ -1394,7 +1390,7 @@ export default function CampaignDetailsPage() {
                                             type="number"
                                             value={editFormData.target_units}
                                             onChange={(e) => setEditFormData({ ...editFormData, target_units: parseInt(e.target.value) || 0 })}
-                                            className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
+                                            className="w-full h-11 px-5 rounded-full border border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-1.5">
@@ -1403,7 +1399,7 @@ export default function CampaignDetailsPage() {
                                             <select
                                                 value={editFormData.status}
                                                 onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
-                                                className="w-full h-11 px-5 rounded-full border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm appearance-none focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
+                                                className="w-full h-11 px-5 rounded-full border border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 text-sm appearance-none focus:ring-4 focus:ring-blue-500/5 outline-none text-slate-900 dark:text-white"
                                             >
                                                 <option value="active">Đang hoạt động</option>
                                                 <option value="paused">Tạm dừng</option>
@@ -1451,145 +1447,129 @@ export default function CampaignDetailsPage() {
 
             {/* Send Announcement Dialog */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-[500px] rounded-3xl border-slate-200 dark:border-slate-800 p-0 overflow-hidden bg-white dark:bg-slate-900">
-                    <DialogHeader className="p-8 pb-0 space-y-4">
-                        <div className="size-14 bg-blue-50 dark:bg-blue-900/40 rounded-2xl flex items-center justify-center text-[#0065FF] dark:text-blue-400">
-                            <Megaphone className="w-7 h-7" />
-                        </div>
-                        <div>
-                            <DialogTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Gửi Thông Báo Chiến Dịch</DialogTitle>
-                            <DialogDescription className="text-sm font-medium text-slate-500 mt-1">
-                                Nội dung này sẽ được gửi qua Email đến tất cả {registrations.length} người hiến máu trong danh sách.
-                            </DialogDescription>
-                        </div>
+                <DialogContent className="sm:max-w-[460px] rounded-xl border-slate-200 dark:border-slate-800 p-0 overflow-hidden bg-white dark:bg-slate-900">
+                    <DialogHeader className="p-5 pb-0">
+                        <DialogTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Megaphone className="w-4 h-4 text-[#0065FF]" />
+                            Gửi Thông Báo Chiến Dịch
+                        </DialogTitle>
+                        <DialogDescription className="text-[11px] font-medium text-slate-500 mt-1">
+                            Gửi Email đến {registrations.length} người hiến máu trong danh sách.
+                        </DialogDescription>
                     </DialogHeader>
 
-                    <div className="p-8 py-6">
-                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 mb-6 border border-slate-100 dark:border-slate-700/50">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Tới người hiến máu</p>
-                            <div className="flex -space-x-2">
+                    <div className="p-5 py-3">
+                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2.5 mb-3 border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Người nhận ({registrations.length})</p>
+                            <div className="flex -space-x-1.5">
                                 {registrations.slice(0, 5).map((reg, i) => (
-                                    <div key={i} className={`size-8 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-[10px] font-bold ${getAvatarColor(reg.user?.full_name)}`}>
+                                    <div key={i} className={`size-6 rounded-full border border-white dark:border-slate-800 flex items-center justify-center text-[9px] font-bold ${getAvatarColor(reg.user?.full_name)}`}>
                                         {reg.user?.full_name?.charAt(0) || 'U'}
                                     </div>
                                 ))}
                                 {registrations.length > 5 && (
-                                    <div className="size-8 rounded-full border-2 border-white dark:border-slate-800 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                    <div className="size-6 rounded-full border border-white dark:border-slate-800 bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[9px] font-bold text-slate-600 dark:text-slate-300">
                                         +{registrations.length - 5}
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Loại thông báo</label>
-                            <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Loại thông báo</label>
+                            <div className="grid grid-cols-2 gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setEmailType('announcement')}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'announcement'
+                                    className={`p-2.5 rounded-lg border transition-all text-left text-xs group ${emailType === 'announcement'
                                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        : 'border-slate-300 dark:border-slate-700 hover:border-blue-300'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Megaphone className="w-4 h-4 text-[#0065FF] dark:text-blue-400" />
-                                        <span className="text-xs font-bold text-slate-900 dark:text-white">Thông báo chung</span>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500">Gửi thông tin chiến dịch</p>
+                                    <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mb-0.5">
+                                        <Megaphone className="w-3 h-3 text-[#0065FF]" />
+                                        Thông báo chung
+                                    </span>
+                                    <span className="text-[10px] text-slate-500 block truncate">Gửi thông tin chiến dịch</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setEmailType('registration_success')}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'registration_success'
+                                    className={`p-2.5 rounded-lg border transition-all text-left text-xs group ${emailType === 'registration_success'
                                         ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        : 'border-slate-300 dark:border-slate-700 hover:border-emerald-300'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                        <span className="text-xs font-bold text-slate-900 dark:text-white">Xác nhận đăng ký</span>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500">Email cảm ơn & xác nhận</p>
+                                    <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mb-0.5">
+                                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                        Xác nhận ĐK
+                                    </span>
+                                    <span className="text-[10px] text-slate-500 block truncate">Email cảm ơn & xác nhận</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setEmailType('reminder_8h')}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'reminder_8h'
+                                    className={`p-2.5 rounded-lg border transition-all text-left text-xs group ${emailType === 'reminder_8h'
                                         ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        : 'border-slate-300 dark:border-slate-700 hover:border-amber-300'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                                        <span className="text-xs font-bold text-slate-900 dark:text-white">Nhắc nhở 8 giờ</span>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500">Nhắc trước 8 tiếng</p>
+                                    <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mb-0.5">
+                                        <Clock className="w-3 h-3 text-amber-600" />
+                                        Nhắc 8 giờ
+                                    </span>
+                                    <span className="text-[10px] text-slate-500 block truncate">Nhắc trước 8 tiếng</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setEmailType('reminder_4h')}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'reminder_4h'
+                                    className={`p-2.5 rounded-lg border transition-all text-left text-xs group ${emailType === 'reminder_4h'
                                         ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20'
-                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        : 'border-slate-300 dark:border-slate-700 hover:border-rose-300'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                                        <span className="text-xs font-bold text-slate-900 dark:text-white">Nhắc nhở 4 giờ</span>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500">Nhắc trước 4 tiếng</p>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setEmailType('new_campaign_invite')}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${emailType === 'new_campaign_invite'
-                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Search className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                                        <span className="text-xs font-bold text-slate-900 dark:text-white">Mời hiến máu</span>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500">Gửi tới khu vực lân cận</p>
+                                    <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mb-0.5">
+                                        <AlertCircle className="w-3 h-3 text-rose-600" />
+                                        Nhắc 4 giờ
+                                    </span>
+                                    <span className="text-[10px] text-slate-500 block truncate">Nhắc trước 4 tiếng</span>
                                 </button>
                             </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Nội dung thông điệp</label>
+                        <div className="space-y-2 mt-3">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nội dung</label>
                             <textarea
                                 value={announcementMsg}
                                 onChange={(e) => setAnnouncementMsg(e.target.value)}
-                                placeholder="Ví dụ: Cảm ơn các bạn đã đăng ký! Chiến dịch sẽ diễn ra vào lúc 8:00 sáng mai tại sảnh chính bệnh viện..."
-                                className="w-full h-40 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5 text-sm font-medium transition-all outline-none text-slate-900 dark:text-white resize-none"
+                                placeholder="Nhập nội dung thông báo..."
+                                className="w-full h-20 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 text-xs font-medium transition-all outline-none text-slate-900 dark:text-white resize-none"
                             />
                         </div>
                     </div>
 
-                    <DialogFooter className="p-8 pt-0 flex-row gap-3">
+                    <DialogFooter className="p-5 pt-0 flex-row gap-2">
                         <Button
                             type="button"
                             variant="ghost"
                             onClick={() => setIsDialogOpen(false)}
-                            className="flex-1 h-12 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                            className="flex-1 h-9 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-xs"
                         >
-                            HỦY BỎ
+                            HỦY
                         </Button>
                         <Button
                             onClick={handleSendAnnouncement}
                             disabled={isSending || !announcementMsg.trim()}
-                            className="flex-[2] h-12 rounded-xl bg-[#0065FF] hover:bg-blue-700 text-white font-black shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-95 disabled:opacity-50"
+                            className="flex-[2] h-9 rounded-lg bg-[#0065FF] hover:bg-blue-700 text-white font-bold shadow-sm shadow-blue-200 dark:shadow-none transition-all active:scale-95 disabled:opacity-50 text-xs"
                         >
                             {isSending ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
                                     ĐANG GỬI...
                                 </>
                             ) : (
                                 <>
-                                    <Megaphone className="w-4 h-4 mr-2" />
+                                    <Megaphone className="w-3.5 h-3.5 mr-2" />
                                     GỬI MAIL NGAY
                                 </>
                             )}

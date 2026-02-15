@@ -423,8 +423,8 @@ export default function ScreeningPage() {
     return (
         <div className="flex h-screen w-full flex-row overflow-hidden bg-slate-50 dark:bg-[#0b1120] font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
             <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto">
-                <TopNav title="Sàng lọc Y tế" />
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
+                <TopNav title="Sàng lọc Sức khỏe AI" />
 
                 <main className="flex-1 w-full max-w-3xl mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6">
 
@@ -762,6 +762,13 @@ export default function ScreeningPage() {
                                                         aiResult.status === 'warning' ? 'Cần lưu ý y tế' :
                                                             'Chưa đủ điều kiện'}
                                                 </h2>
+                                            </div>
+                                            <div className="relative pl-1">
+                                                <div className="max-h-[160px] md:max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
+                                                    <p className="text-slate-500 dark:text-slate-400 text-base font-medium leading-relaxed text-justify">
+                                                        {aiResult.analysis}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                         {/* Score */}
