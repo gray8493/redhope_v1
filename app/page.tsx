@@ -34,8 +34,10 @@ const Page = async () => {
   return (
     <>
       <style>{`
-        .landing-layout-zoom {
-          zoom: 0.875;
+        @media (min-width: 1024px) {
+          .landing-layout-zoom {
+            zoom: 0.875;
+          }
         }
       `}</style>
       <div className="landing-layout-zoom min-h-screen bg-white font-sans selection:bg-primary/20 selection:text-primary-dark">
@@ -56,8 +58,8 @@ const Page = async () => {
                     Mạng lưới hoạt động thời gian thực
                   </Badge>
 
-                  <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.3] md:leading-[1.1] mb-6">
-                    Công nghệ thông minh cho <br className="hidden md:block" />
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 leading-[1.2] md:leading-[1.1] mb-6">
+                    Công nghệ thông minh cho <br className="hidden sm:block" />
                     <span className="text-accent-red">Món quà Sự sống</span>
                   </h1>
 
@@ -99,62 +101,62 @@ const Page = async () => {
           {/* ========== STATS SECTION ========== */}
           <section className="py-6 md:py-8 bg-white md:-mt-16 md:relative md:z-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                 {/* Stat 1 */}
-                <Card className="p-1 md:p-2 border-gray-50 shadow-card hover:shadow-card-hover transition-shadow overflow-hidden">
-                  <CardContent className="flex items-start gap-3 md:gap-5 pt-4 md:pt-6">
-                    <div className="bg-blue-50 p-2.5 md:p-3 rounded-xl">
+                <Card className="p-1 md:p-2 border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden rounded-2xl">
+                  <CardContent className="flex items-center gap-4 md:gap-5 pt-4 md:pt-6">
+                    <div className="bg-blue-50 p-3 md:p-3.5 rounded-xl shrink-0">
                       <HeartPulse className="w-6 h-6 md:w-8 md:h-8 text-primary" />
                     </div>
                     <div>
-                      <p className="text-[10px] md:text-sm font-semibold text-gray-500 mb-0.5">Người được cứu</p>
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900">{stats.saved.toLocaleString()}+</h3>
+                      <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider mb-0.5">Người được cứu</p>
+                      <h3 className="text-2xl md:text-3xl font-black text-slate-900">{stats.saved.toLocaleString()}+</h3>
                     </div>
                   </CardContent>
                 </Card>
                 {/* Stat 2 */}
-                <Card className="p-1 md:p-2 border-gray-50 shadow-card hover:shadow-card-hover transition-shadow overflow-hidden">
-                  <CardContent className="flex items-start gap-3 md:gap-5 pt-4 md:pt-6">
-                    <div className="bg-red-50 p-2.5 md:p-3 rounded-xl">
+                <Card className="p-1 md:p-2 border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden rounded-2xl">
+                  <CardContent className="flex items-center gap-4 md:gap-5 pt-4 md:pt-6">
+                    <div className="bg-red-50 p-3 md:p-3.5 rounded-xl shrink-0">
                       <Users className="w-6 h-6 md:w-8 md:h-8 text-accent-red" />
                     </div>
                     <div>
-                      <p className="text-[10px] md:text-sm font-semibold text-gray-500 mb-0.5">Người hiến hoạt động</p>
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900">{stats.donors.toLocaleString()}+</h3>
+                      <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider mb-0.5">Người hiến</p>
+                      <h3 className="text-2xl md:text-3xl font-black text-slate-900">{stats.donors.toLocaleString()}+</h3>
                     </div>
                   </CardContent>
                 </Card>
                 {/* Stat 3 */}
-                <Card className="p-1 md:p-2 border-gray-50 shadow-card hover:shadow-card-hover transition-shadow overflow-hidden col-span-2 md:col-span-1">
-                  <CardContent className="flex items-start gap-3 md:gap-5 pt-4 md:pt-6">
-                    <div className="bg-blue-50 p-2.5 md:p-3 rounded-xl">
+                <Card className="p-1 md:p-2 border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden rounded-2xl sm:col-span-2 md:col-span-1">
+                  <CardContent className="flex items-center gap-4 md:gap-5 pt-4 md:pt-6">
+                    <div className="bg-blue-50 p-3 md:p-3.5 rounded-xl shrink-0">
                       <Hospital className="w-6 h-6 md:w-8 md:h-8 text-primary" />
                     </div>
                     <div>
-                      <p className="text-[10px] md:text-sm font-semibold text-gray-500 mb-0.5">Bệnh viện đối tác</p>
-                      <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900">{stats.hospitals.toLocaleString()}+</h3>
+                      <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider mb-0.5">Bệnh viện</p>
+                      <h3 className="text-2xl md:text-3xl font-black text-slate-900">{stats.hospitals.toLocaleString()}+</h3>
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
               {/* Trusted By Strip */}
-              <div className="mt-12 md:mt-16 border-t border-gray-100 pt-8 md:pt-10">
-                <div className="flex flex-wrap items-center justify-center gap-6 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+              <div className="mt-12 md:mt-16 border-t border-slate-100 pt-8 md:pt-10">
+                <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 lg:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
                   <span className="text-[10px] md:text-xs font-extrabold text-gray-400 tracking-widest uppercase w-full md:w-auto text-center mb-2 md:mb-0">Tin dùng bởi</span>
-                  <div className="flex items-center gap-2 text-base md:text-lg font-bold text-gray-700">
-                    <div className="w-5 h-5 md:w-6 md:h-6 bg-red-600 rounded-full flex items-center justify-center">
+                  <div className="flex items-center gap-2 text-sm md:text-lg font-bold text-slate-700">
+                    <div className="w-5 h-5 md:w-6 md:h-6 bg-red-600 rounded-full flex items-center justify-center shrink-0">
                       <Droplet className="w-3 h-3 text-white fill-current" />
-                    </div> Hội Chữ thập đỏ Việt Nam
+                    </div> <span>Hội Chữ thập đỏ Việt Nam</span>
                   </div>
-                  <div className="flex items-center gap-2 text-base md:text-lg font-bold text-gray-700">
-                    <div className="w-5 h-5 md:w-6 md:h-6 bg-blue-600 rounded-md"></div> Viện Huyết học TW
+                  <div className="flex items-center gap-2 text-sm md:text-lg font-bold text-slate-700">
+                    <div className="w-5 h-5 md:w-6 md:h-6 bg-blue-600 rounded-md shrink-0"></div> <span>Viện Huyết học TW</span>
                   </div>
-                  <div className="flex items-center gap-2 text-base md:text-lg font-bold text-gray-700">
-                    <div className="w-5 h-5 md:w-6 md:h-6 bg-emerald-600 rounded-sm"></div> Bộ Y tế VN
+                  <div className="flex items-center gap-2 text-sm md:text-lg font-bold text-slate-700">
+                    <div className="w-5 h-5 md:w-6 md:h-6 bg-emerald-600 rounded-sm shrink-0"></div> <span>Bộ Y tế VN</span>
                   </div>
-                  <div className="flex items-center gap-2 text-base md:text-lg font-bold text-gray-700">
-                    <div className="w-5 h-5 md:w-6 md:h-6 bg-indigo-600 rounded-full"></div> Vinmec Health
+                  <div className="flex items-center gap-2 text-sm md:text-lg font-bold text-slate-700">
+                    <div className="w-5 h-5 md:w-6 md:h-6 bg-indigo-600 rounded-full shrink-0"></div> <span>Vinmec Health</span>
                   </div>
                 </div>
               </div>

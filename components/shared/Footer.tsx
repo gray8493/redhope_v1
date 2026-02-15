@@ -3,7 +3,7 @@ import { RedHopeLogo } from './icons';
 
 const Footer = () => {
     return (
-        <footer className="bg-white pt-20 pb-10 border-t border-gray-100">
+        <footer className="bg-white pt-12 md:pt-20 pb-10 border-t border-gray-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
                     {/* Brand Column */}
@@ -46,7 +46,7 @@ const Footer = () => {
                     </div>
                 </div>
 
-                <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400">
+                <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400 text-center md:text-left">
                     <p>© 2026 Mạng lưới Hiến máu Thông minh REDHOPE. Bảo lưu mọi quyền.</p>
                     <div className="flex gap-6 mt-4 md:mt-0">
                         <a href="#" className="hover:text-gray-600">Twitter</a>
