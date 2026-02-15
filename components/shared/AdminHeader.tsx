@@ -12,8 +12,10 @@ import {
   CheckCircle,
   AlertTriangle,
   Info,
-  Menu
+  Menu,
+  PanelLeft
 } from "lucide-react";
+import { useSidebar } from "@/components/providers/SidebarProvider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -22,6 +24,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { notificationService } from "@/services";
 import { supabase } from "@/lib/supabase";
 import { formatDistanceToNow } from "date-fns";
@@ -36,6 +39,7 @@ export interface AdminHeaderProps {
 export default function AdminHeader({ title = "Hệ thống Quản trị" }: AdminHeaderProps) {
   const { user: authUser, signOut } = useAuth();
   const router = useRouter();
+  const { toggle } = useSidebar();
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -229,22 +233,35 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
   };
 
   return (
-    <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-6 py-3 sticky top-0 z-20 w-full shrink-0">
-      <div className="flex items-center gap-4 md:gap-8 flex-1">
+    <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 sticky top-0 z-20 w-full shrink-0 h-16">
+      <div className="flex items-center gap-1.5 flex-1 overflow-hidden">
         {/* Mobile Menu Trigger */}
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => {
             const event = new CustomEvent('open-mobile-menu');
             window.dispatchEvent(event);
           }}
-          className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 md:hidden"
+          className="md:hidden text-slate-500"
         >
           <Menu className="w-5 h-5" />
-        </button>
-        <h2 className="text-slate-900 dark:text-white text-lg md:text-xl font-bold truncate">{title}</h2>
+        </Button>
+
+        {/* Desktop Sidebar Trigger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggle}
+          className="hidden md:flex text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 w-10 h-10 -ml-2 transition-all active:scale-90"
+          title="Thu gọn menu"
+        >
+          <Menu className="w-7 h-7" strokeWidth={2.5} />
+        </Button>
+        <h2 className="text-slate-900 dark:text-white text-base md:text-lg font-bold truncate ml-1">{title}</h2>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4 shrink-0">
         {/* Notifications Icon */}
         <div className="relative" ref={notificationRef}>
           <button
@@ -259,7 +276,7 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 top-full mt-3 w-96 bg-white dark:bg-[#1c162e] rounded-2xl shadow-xl border border-slate-100 dark:border-[#2d263d] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right z-50">
+            <div className="absolute right-0 top-full mt-3 w-[calc(100vw-2rem)] sm:w-96 max-w-[24rem] bg-white dark:bg-[#1c162e] rounded-2xl shadow-xl border border-slate-100 dark:border-[#2d263d] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right z-50">
               <div className="p-4 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-[#1c162e]">
                 <h3 className="font-bold text-base text-[#120e1b] dark:text-white">Thông báo</h3>
                 {unreadCount > 0 && (

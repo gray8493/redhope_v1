@@ -374,87 +374,87 @@ export default function CampaignManagementPage() {
     }).length;
 
     return (
-        <main className="p-8 max-w-[1400px] w-full mx-auto">
+        <main className="p-3 sm:p-4 md:p-8 max-w-[1400px] w-full mx-auto">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 mb-4 md:mb-6">
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Chiến dịch Bệnh viện</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-base">Theo dõi các đợt hiến máu đang diễn ra và dữ liệu lịch sử.</p>
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Chiến dịch Bệnh viện</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">Theo dõi các đợt hiến máu đang diễn ra và dữ liệu lịch sử.</p>
                 </div>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="size-12 rounded-full bg-blue-50 flex items-center justify-center text-[#0065FF]">
-                        <Droplet className="w-6 h-6" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-8">
+                <div className="bg-white dark:bg-slate-900 p-3 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-all">
+                    <div className="size-9 md:size-12 rounded-full bg-blue-50 flex items-center justify-center text-[#0065FF] shrink-0">
+                        <Droplet className="w-4 h-4 md:w-6 md:h-6" />
                     </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">Tổng lượng máu</p>
-                        <div className="text-2xl font-black text-slate-900 dark:text-white">
-                            {loading ? <Skeleton className="h-8 w-16" /> : totalBlood} <span className="text-sm font-normal text-slate-400">Đv</span>
+                    <div className="min-w-0">
+                        <p className="text-[11px] md:text-sm font-medium text-slate-500 truncate">Tổng lượng máu</p>
+                        <div className="text-lg md:text-2xl font-black text-slate-900 dark:text-white">
+                            {loading ? <Skeleton className="h-6 w-12" /> : totalBlood} <span className="text-xs md:text-sm font-normal text-slate-400">Đv</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Đang vận hành</p>
+                        <p className="text-[9px] md:text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider hidden sm:block">Đang vận hành</p>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="size-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                        <Users className="w-6 h-6" />
+                <div className="bg-white dark:bg-slate-900 p-3 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-all">
+                    <div className="size-9 md:size-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                        <Users className="w-4 h-4 md:w-6 md:h-6" />
                     </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">Tỉ lệ hiến máu</p>
-                        <div className="flex items-baseline gap-2">
-                            <div className="text-2xl font-black text-slate-900 dark:text-white">
-                                {loading ? <Skeleton className="h-8 w-24" /> : (
+                    <div className="min-w-0">
+                        <p className="text-[11px] md:text-sm font-medium text-slate-500 truncate">Tỉ lệ hiến máu</p>
+                        <div className="flex items-baseline gap-1">
+                            <div className="text-lg md:text-2xl font-black text-slate-900 dark:text-white">
+                                {loading ? <Skeleton className="h-6 w-16" /> : (
                                     <>
                                         {totalCompleted}/{totalRegistered}
-                                        <span className={`ml-1 text-[10px] px-1 py-0.5 rounded font-bold ${donationRate >= 80 ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                                        <span className={`ml-1 text-[9px] md:text-[10px] px-1 py-0.5 rounded font-bold ${donationRate >= 80 ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
                                             {donationRate}%
                                         </span>
                                     </>
                                 )}
                             </div>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Đã hiến / Đăng ký tổng</p>
+                        <p className="text-[9px] md:text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider hidden sm:block">Đã hiến / Đăng ký tổng</p>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="size-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-                        <Clock className="w-6 h-6" />
+                <div className="bg-white dark:bg-slate-900 p-3 md:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-all">
+                    <div className="size-9 md:size-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                        <Clock className="w-4 h-4 md:w-6 md:h-6" />
                     </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">Hoãn hiến hệ thống</p>
-                        <div className="text-2xl font-black text-orange-600">
-                            {loading ? <Skeleton className="h-8 w-12" /> : totalDeferred}
-                            <span className="text-sm font-normal text-slate-400 ml-2">Người</span>
+                    <div className="min-w-0">
+                        <p className="text-[11px] md:text-sm font-medium text-slate-500 truncate">Hoãn hiến</p>
+                        <div className="text-lg md:text-2xl font-black text-orange-600">
+                            {loading ? <Skeleton className="h-6 w-10" /> : totalDeferred}
+                            <span className="text-xs md:text-sm font-normal text-slate-400 ml-1">Người</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần hỗ trợ theo dõi</p>
+                        <p className="text-[9px] md:text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider hidden sm:block">Cần hỗ trợ theo dõi</p>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-blue-50 dark:border-blue-900/30 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="size-12 rounded-full bg-blue-100 flex items-center justify-center text-[#0065FF]">
-                        <AlertCircle className="w-6 h-6" />
+                <div className="bg-white dark:bg-slate-900 p-3 md:p-5 rounded-xl border border-blue-50 dark:border-blue-900/30 shadow-sm flex items-center gap-3 md:gap-4 hover:shadow-md transition-all">
+                    <div className="size-9 md:size-12 rounded-full bg-blue-100 flex items-center justify-center text-[#0065FF] shrink-0">
+                        <AlertCircle className="w-4 h-4 md:w-6 md:h-6" />
                     </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">Thiếu hụt chỉ tiêu</p>
-                        <div className="text-2xl font-black text-[#0065FF]">
-                            {loading ? <Skeleton className="h-8 w-12" /> : underTargetCount} <span className="text-sm font-normal text-slate-400">Đợt</span>
+                    <div className="min-w-0">
+                        <p className="text-[11px] md:text-sm font-medium text-slate-500 truncate">Thiếu hụt</p>
+                        <div className="text-lg md:text-2xl font-black text-[#0065FF]">
+                            {loading ? <Skeleton className="h-6 w-10" /> : underTargetCount} <span className="text-xs md:text-sm font-normal text-slate-400">Đợt</span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Cần đẩy mạnh truyền thông</p>
+                        <p className="text-[9px] md:text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider hidden sm:block">Cần đẩy mạnh truyền thông</p>
                     </div>
                 </div>
             </div>
 
             {/* Search & Filters */}
-            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 flex flex-col lg:flex-row items-center gap-3">
+            <div className="bg-white dark:bg-slate-900 p-2 md:p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-4 md:mb-6 flex flex-col lg:flex-row items-center gap-3">
                 <div className="relative w-full lg:flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                    <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                     <input
-                        className="w-full h-11 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-full pl-12 pr-4 text-sm focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] text-slate-900 dark:text-white placeholder-slate-500 outline-none transition-all shadow-sm"
-                        placeholder="Tìm kiếm tên chiến dịch hoặc địa điểm..."
+                        className="w-full h-9 md:h-11 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-full pl-9 md:pl-12 pr-4 text-sm focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] text-slate-900 dark:text-white placeholder-slate-500 outline-none transition-all shadow-sm"
+                        placeholder="Tìm kiếm chiến dịch..."
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -463,7 +463,7 @@ export default function CampaignManagementPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-6 border-b border-slate-200 dark:border-slate-800 mb-6">
+            <div className="flex items-center gap-3 md:gap-6 border-b border-slate-200 dark:border-slate-800 mb-4 md:mb-6 overflow-x-auto no-scrollbar">
                 <button
                     onClick={() => handleTabChange('active')}
                     className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all relative ${activeTab === 'active' ? 'text-[#0065FF]' : 'text-slate-500 hover:text-slate-700'}`}
@@ -491,9 +491,9 @@ export default function CampaignManagementPage() {
 
             {/* View Mode Toggle */}
             {activeTab === 'active' && (
-                <div className="mb-6 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span className="size-2 bg-green-500 rounded-full animate-pulse"></span> Chiến dịch Đang hoạt động
+                <div className="mb-4 md:mb-6 flex items-center justify-between">
+                    <h2 className="text-sm md:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="size-2 bg-green-500 rounded-full animate-pulse"></span> <span className="hidden sm:inline">Chiến dịch </span>Đang hoạt động
                     </h2>
                     <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
                         <button
@@ -534,7 +534,7 @@ export default function CampaignManagementPage() {
                 </div>
             ) : (
                 <>
-                    <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12" : "flex flex-col gap-3 mb-12"}>
+                    <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-12" : "flex flex-col gap-3 mb-8 md:mb-12"}>
                         {paginatedCampaigns.map(campaign => {
                             const registered = campaign.appointments?.length || 0;
                             const completed = campaign.appointments?.filter((a: any) => a.status === 'Completed').length || 0;
@@ -567,17 +567,17 @@ export default function CampaignManagementPage() {
                                     <Link
                                         key={campaign.id}
                                         href={`/hospital-campaign/${campaign.id}?fromTab=${activeTab}`}
-                                        className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group flex h-28"
+                                        className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group flex flex-col sm:flex-row h-auto sm:h-28"
                                     >
                                         {/* Left: Mini Image/Gradient */}
-                                        <div className="w-2 relative flex-shrink-0">
-                                            <div className={`absolute inset-0 bg-gradient-to-b ${gradientClass}`}></div>
+                                        <div className="w-full sm:w-2 h-1.5 sm:h-auto relative flex-shrink-0">
+                                            <div className={`absolute inset-0 bg-gradient-to-r sm:bg-gradient-to-b ${gradientClass}`}></div>
                                         </div>
 
                                         {/* Main Content */}
-                                        <div className="flex-1 p-4 flex items-center justify-between min-w-0">
-                                            <div className="flex flex-col justify-center min-w-0 flex-1 pr-8">
-                                                <div className="flex items-center gap-3 mb-1">
+                                        <div className="flex-1 p-4 flex flex-col sm:flex-row sm:items-center justify-between min-w-0 gap-4 sm:gap-0">
+                                            <div className="flex flex-col justify-center min-w-0 flex-1 sm:pr-8">
+                                                <div className="flex items-center gap-3 mb-2 sm:mb-1">
                                                     <h3 className={`text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:${brandColor} transition-colors`}>
                                                         {campaign.name}
                                                     </h3>
@@ -605,7 +605,7 @@ export default function CampaignManagementPage() {
                                             </div>
 
                                             {/* Progress Section */}
-                                            <div className="w-64 flex flex-col justify-center gap-2">
+                                            <div className="w-full sm:w-64 flex flex-col justify-center gap-2">
                                                 <div className="flex justify-between text-[10px] font-bold text-slate-500">
                                                     <span>Tiến độ: {Math.round(progress)}%</span>
                                                     <span>Mục tiêu: {campaign.target_units} Đv</span>
@@ -621,7 +621,7 @@ export default function CampaignManagementPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="ml-8 pr-4">
+                                            <div className="hidden sm:block ml-8 pr-4">
                                                 <div className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-100 dark:border-slate-800 bg-blue-50/50 dark:bg-slate-800/50 ${brandColor} text-[9px] font-black uppercase tracking-wider opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500`}>
                                                     Chi tiết
                                                     <ArrowRight className="w-3 h-3" />
@@ -737,13 +737,13 @@ export default function CampaignManagementPage() {
             )}
             {/* Edit Modal */}
             {isEditModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
                     <div
-                        className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800"
+                        className="bg-white dark:bg-slate-900 w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800 max-h-[90vh] sm:max-h-none flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                        <div className="px-5 md:px-8 py-5 md:py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                             <div>
                                 <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Cập nhật chiến dịch</h2>
                                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Chỉnh sửa thông tin chiến dịch của bạn</p>
@@ -757,7 +757,7 @@ export default function CampaignManagementPage() {
                         </div>
 
                         {/* Body */}
-                        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                        <div className="p-4 md:p-8 space-y-5 md:space-y-6 flex-1 overflow-y-auto custom-scrollbar">
                             <div className="space-y-4">
                                 {/* Image Upload */}
                                 <div className="flex flex-col gap-1.5">
@@ -922,7 +922,7 @@ export default function CampaignManagementPage() {
                         </div>
 
                         {/* Footer */}
-                        <div className="px-8 py-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50/50 dark:bg-slate-800/30">
+                        <div className="px-4 md:px-8 py-4 md:py-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50/50 dark:bg-slate-800/30 shrink-0">
                             <button
                                 onClick={() => setIsEditModalOpen(false)}
                                 className="px-5 h-10 text-slate-400 text-xs font-bold hover:text-slate-600 dark:hover:text-slate-200 transition-colors"

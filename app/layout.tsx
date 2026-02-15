@@ -47,6 +47,7 @@ export const metadata: Metadata = {
 
 import { AuthProvider } from "@/context/AuthContext";
 import { MobileSidebar } from "@/components/shared/MobileSidebar";
+import { BottomNav } from "@/components/shared/BottomNav";
 
 export default function RootLayout({
   children,
@@ -62,6 +63,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <MobileSidebar />
+          <BottomNav />
           <Toaster position="top-center" richColors />
         </AuthProvider>
       </body>

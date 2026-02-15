@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import MiniFooter from "@/components/shared/MiniFooter";
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
 import { toast } from "sonner";
-import { TrendingUp, Search, UserPlus, Users, Droplet, Zap } from "lucide-react";
+import { TrendingUp, Search, UserPlus, Users, Droplet, Zap, QrCode, MonitorPlay } from "lucide-react";
+import { QRScannerModal } from "@/components/shared/QRScannerModal";
 
 export default function HospitalDashboard() {
     const { user } = useAuth();
@@ -178,16 +179,16 @@ export default function HospitalDashboard() {
                             <table className="w-full text-left">
                                 <thead className="bg-slate-50/50 dark:bg-slate-900/30">
                                     <tr>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Chiến dịch</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Người tham gia</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Trạng thái</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Tiến độ</th>
+                                        <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Chiến dịch</th>
+                                        <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Người tham gia</th>
+                                        <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Trạng thái</th>
+                                        <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">Tiến độ</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                                     {loading ? (
                                         [1, 2].map(i => (
-                                            <tr key={i}><td colSpan={4} className="px-6 py-4"><Skeleton className="h-10 w-full" /></td></tr>
+                                            <tr key={i}><td colSpan={4} className="px-4 py-4"><Skeleton className="h-10 w-full" /></td></tr>
                                         ))
                                     ) : filteredCampaigns.length > 0 ? (
                                         filteredCampaigns.map((camp) => {
@@ -201,22 +202,22 @@ export default function HospitalDashboard() {
                                                     onClick={() => router.push(`/hospital-campaign/${camp.id}`)}
                                                     className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors cursor-pointer group"
                                                 >
-                                                    <td className="px-6 py-5">
-                                                        <p className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-[#0065FF] transition-colors">{camp.name}</p>
-                                                        <p className="text-[11px] text-slate-500 font-medium">{camp.location_name}</p>
+                                                    <td className="px-4 py-4 min-w-[200px]">
+                                                        <p className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-[#0065FF] transition-colors line-clamp-2">{camp.name}</p>
+                                                        <p className="text-[11px] text-slate-500 font-medium truncate max-w-[200px]">{camp.location_name}</p>
                                                     </td>
-                                                    <td className="px-6 py-5 text-center">
+                                                    <td className="px-4 py-4 text-center whitespace-nowrap">
                                                         <span className="text-sm font-black text-slate-700 dark:text-slate-300">{completed} / {registered}</span>
                                                     </td>
-                                                    <td className="px-6 py-5 text-center">
-                                                        <span className={`px-3 py-1 text-[11px] font-black rounded-full border ${camp.status === 'active'
+                                                    <td className="px-4 py-4 text-center whitespace-nowrap">
+                                                        <span className={`px-2.5 py-1 text-[10px] font-black rounded-full border ${camp.status === 'active'
                                                             ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50'
                                                             : 'bg-slate-50 dark:bg-slate-900/20 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800/50'
                                                             }`}>
-                                                            {camp.status === 'active' ? 'Đang hoạt động' : (camp.status === 'completed' || camp.status === 'ended') ? 'Đã kết thúc' : 'Đã hủy'}
+                                                            {camp.status === 'active' ? 'ĐANG HOẠT ĐỘNG' : (camp.status === 'completed' || camp.status === 'ended') ? 'ĐÃ KẾT THÚC' : 'ĐÃ HỦY'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-5 text-right">
+                                                    <td className="px-4 py-4 text-right whitespace-nowrap">
                                                         <div className="flex flex-col items-end gap-1.5">
                                                             <span className="text-[12px] font-black text-slate-900 dark:text-white">
                                                                 {completed} / {camp.target_units} <span className="text-[10px] text-slate-400">Đv</span>
@@ -294,41 +295,7 @@ export default function HospitalDashboard() {
                         </div>
                     </div>
 
-                    {/* Performance Summary Card */}
-                    <div className="bg-[#0065FF] text-white rounded-[32px] shadow-xl shadow-blue-500/20 p-8 relative overflow-hidden group">
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-8">
-                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
-                                    <Zap className="w-5 h-5 text-white" />
-                                </div>
-                                <h3 className="font-black text-lg tracking-tight">HIỆU SUẤT THỰC TẾ</h3>
-                            </div>
 
-                            <div className="space-y-6">
-                                <div>
-                                    <div className="flex justify-between items-baseline mb-2">
-                                        <span className="text-xs font-bold text-white/80 uppercase tracking-wider">Tiến độ chỉ tiêu</span>
-                                        <span className="text-3xl font-black italic">{Math.round(attendanceRate)}%</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
-                                        <div className="bg-white h-full shadow-[0_0_15px_rgba(255,255,255,0.5)]" style={{ width: `${Math.min(attendanceRate, 100)}%` }}></div>
-                                    </div>
-                                </div>
-
-                                <div className="pt-6 border-t border-white/15">
-                                    <p className="text-white/60 text-[10px] font-black uppercase tracking-widest mb-1">Dự báo tiếp nhận</p>
-                                    <p className="text-3xl font-black italic">~ {attendanceRate.toFixed(0)}% <span className="text-xl font-bold opacity-80">tỉ lệ đến</span></p>
-                                    <p className="text-xs text-white/70 mt-4 leading-relaxed font-medium">
-                                        Vui lòng phản hồi các yêu cầu chi viện để đảm bảo tỉ lệ xử lý ca hiến duy trì dưới 12 phút.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Animated background shapes */}
-                        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
-                        <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-400/20 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
-                    </div>
 
 
                 </div>

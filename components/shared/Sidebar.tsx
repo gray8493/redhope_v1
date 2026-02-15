@@ -8,14 +8,13 @@ import {
     Award,
     Heart,
     Settings,
-    Star
 } from "lucide-react";
 import { RedHopeLogo, NameRedHope } from "@/components/shared/icons";
-import { Progress } from "@/components/ui/progress";
 
 export function Sidebar() {
     return (
-        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between p-4 h-screen hidden md:flex">
+        /* Desktop Sidebar only — Mobile drawer is handled by MobileSidebar in root layout */
+        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-col justify-between p-4 h-screen hidden md:flex">
             <div className="flex flex-col gap-8">
                 <Link href="/requests" className="flex items-center gap-3 px-2 hover:opacity-80 transition-opacity">
                     <div className="bg-[#0065FF] size-10 rounded-lg flex items-center justify-center text-white">
@@ -52,7 +51,6 @@ export function Sidebar() {
                     </Link>
                 </nav>
             </div>
-
         </aside>
     );
 }
