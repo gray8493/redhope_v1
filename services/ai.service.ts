@@ -5,18 +5,20 @@ export const aiService = {
         return { success: true, data: "Analyzed data" };
     },
 
-    analyzeScreening: async (answers: any) => {
+    analyzeScreening: async (answers: any, userId?: string) => {
         try {
+            const bodyPayload = { answers, userId };
             const response = await fetch("/api/ai/screening", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ answers }),
+                body: JSON.stringify(bodyPayload),
             });
 
             if (!response.ok) {
-                throw new Error("Network response was not ok");
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Lỗi kết nối");
             }
 
             return await response.json();

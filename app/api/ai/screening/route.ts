@@ -4,9 +4,33 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { answers } = body;
+        const { answers, userId } = body;
 
-        console.log("Answers received for analysis:", JSON.stringify(answers).substring(0, 50) + "...");
+        console.log("Answers received for analysis:", JSON.stringify(answers).substring(0, 100) + "...");
+
+        if (!userId) {
+            return NextResponse.json({ error: "Yêu cầu đăng nhập để thực hiện tính năng này" }, { status: 401 });
+        }
+
+        // Check user profile verification status
+        const { supabaseAdmin } = await import('@/lib/supabase-admin');
+        const { data: userProfile, error: profileError } = await supabaseAdmin
+            .from('users')
+            .select('is_verified, role')
+            .eq('id', userId)
+            .single();
+
+        if (profileError || !userProfile) {
+            return NextResponse.json({ error: "Không tìm thấy thông tin người dùng" }, { status: 404 });
+        }
+
+        if (userProfile.role === 'donor' && !userProfile.is_verified) {
+            return NextResponse.json({
+                error: "Vui lòng hoàn thành hồ sơ cá nhân trước khi thực hiện sàng lọc AI",
+                code: "PROFILE_INCOMPLETE",
+                redirect: "/complete-profile"
+            }, { status: 403 });
+        }
 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
@@ -15,35 +39,106 @@ export async function POST(req: Request) {
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        // Using "gemini-pro" as it's more standard if 1.5-flash is failing due to versioning
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-        const prompt = `
-            Bạn là một chuyên gia y tế AI phân tích hồ sơ sàng lọc hiến máu.
-            Dưới đây là danh sách các câu trả lời khảo sát của người dùng:
-            ${JSON.stringify(answers, null, 2)}
+        // Tách câu trả lời trắc nghiệm và tự luận
+        const choiceAnswers: Record<string, any> = {};
+        const textAnswers: Record<string, any> = {};
 
-            Hãy đưa ra kết luận về việc người này có đủ điều kiện hiến máu hay không.
-            
-            QUY TẮC MÃ:
-            - "eligible": Đủ điều kiện.
-            - "warning": Cần lưu ý (đang dùng thuốc nhẹ, mệt, xăm mình gần đây).
-            - "ineligible": Không đủ điều kiện (bệnh truyền nhiễm, bệnh lý nặng).
-
-            TRẢ VỀ JSON NGUYÊN BẢN (KHÔNG CÓ CODE BLOCK):
-            {
-                "status": "eligible" | "ineligible" | "warning",
-                "score": number,
-                "analysis": "tiếng Việt chuyên nghiệp",
-                "recommendations": ["khuyên nghị 1", "khuyên nghị 2"]
+        for (const [key, val] of Object.entries(answers)) {
+            const id = parseInt(key);
+            if (id <= 10) {
+                choiceAnswers[key] = val;
+            } else {
+                textAnswers[key] = val;
             }
+        }
+
+        const prompt = `
+Bạn là một chuyên gia y tế AI chuyên phân tích hồ sơ sàng lọc hiến máu theo tiêu chuẩn Bộ Y Tế Việt Nam.
+
+═══ DỮ LIỆU ĐẦU VÀO ═══
+
+📋 PHẦN 1 - TRẮC NGHIỆM (10 câu, mỗi câu 4 đáp án mức độ):
+Mỗi đáp án có mức độ severity: "safe" (an toàn), "mild" (nhẹ), "moderate" (trung bình), "high" (cao/nguy hiểm).
+
+Câu hỏi tương ứng:
+1. Tình trạng sức khỏe hôm nay
+2. Sử dụng thuốc trong 7 ngày qua
+3. Tiền sử bệnh lý lây truyền qua đường máu
+4. Lần hiến máu gần nhất
+5. Xăm mình hoặc xỏ khuyên trong 6 tháng qua
+6. Huyết áp
+7. Tình trạng thai kỳ / cho con bú
+8. Cân nặng
+9. Nhổ răng hoặc tiểu phẫu trong 7 ngày qua
+10. Đi đến vùng dịch bệnh trong 6 tháng qua
+
+Dữ liệu trắc nghiệm:
+${JSON.stringify(choiceAnswers, null, 2)}
+
+✏️ PHẦN 2 - TỰ LUẬN (5 câu mô tả chi tiết):
+11. Tình trạng sức khỏe chung hiện tại
+12. Bệnh lý mãn tính đang điều trị
+13. Chế độ ăn uống và nghỉ ngơi 24h qua
+14. Lo ngại về việc hiến máu
+15. Tiền sử dị ứng thuốc / thực phẩm
+
+Dữ liệu tự luận:
+${JSON.stringify(textAnswers, null, 2)}
+
+═══ QUY TẮC PHÂN TÍCH ═══
+
+CRITICAL (Tự động INELIGIBLE - không đủ điều kiện):
+- Có bệnh lý lây truyền qua đường máu (HIV, Viêm gan B/C, Giang mai) chưa khỏi
+- Đang mang thai
+- Cân nặng dưới 42kg
+- Đang bị ốm / sốt
+
+MODERATE RISK (Cần đánh giá kết hợp):
+- Dùng kháng sinh trong 7 ngày → có thể ineligible
+- Huyết áp cao đang uống thuốc → ineligible
+- Hiến máu dưới 8 tuần → ineligible
+- Xăm mình dưới 3 tháng → ineligible
+- Nhổ răng trong 3 ngày → ineligible
+
+WARNING (Cảnh báo nhưng có thể được):
+- Hơi mệt nhẹ + các chỉ số khác tốt → warning
+- Dùng thuốc giảm đau nhẹ → cần xem xét thêm
+- Cân nặng 42-45kg → cần cẩn thận
+
+ELIGIBLE:
+- Tất cả severity đều "safe" hoặc "mild" nhẹ
+- Câu tự luận không có dấu hiệu bất thường
+- Tổng thể sức khỏe tốt
+
+PHÂN TÍCH TỰ LUẬN:
+- Đọc kỹ phần mô tả sức khỏe, tìm từ khóa liên quan đến bệnh lý
+- Phát hiện mâu thuẫn giữa trắc nghiệm vs tự luận (VD: chọn "khỏe" nhưng tự luận ghi "đang uống thuốc huyết áp")
+- Đánh giá chế độ ăn uống/nghỉ ngơi có phù hợp cho hiến máu không
+
+═══ ĐẦU RA YÊU CẦU ═══
+
+SCORE: 0-100 (dựa trên số câu safe/mild vs moderate/high + nội dung tự luận)
+- 90-100: Hoàn toàn phù hợp
+- 70-89: Phù hợp với lưu ý nhỏ 
+- 50-69: Cần cân nhắc kỹ
+- 0-49: Không phù hợp
+
+TRẢ VỀ JSON NGUYÊN BẢN (KHÔNG CÓ CODE BLOCK, KHÔNG CÓ MARKDOWN):
+{
+    "status": "eligible" | "ineligible" | "warning",
+    "score": <number>,
+    "analysis": "<Phân tích chi tiết bằng tiếng Việt, chuyên nghiệp, 2-4 câu>",
+    "recommendations": ["<khuyến nghị 1>", "<khuyến nghị 2>", "<khuyến nghị 3>"]
+}
         `;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const responseText = response.text();
 
-        // Clean potentially problematic markdown code blocks
+        // Clean markdown code blocks
         const cleanedResponse = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
 
         const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
@@ -57,7 +152,6 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error("Gemini Error Detail:", error);
 
-        // Final fallback if Gemini still fails for some reason
         return NextResponse.json({
             status: "warning",
             score: 50,

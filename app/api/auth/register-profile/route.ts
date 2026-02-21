@@ -3,7 +3,19 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(request: Request) {
     try {
-        const { userId, email, fullName, role } = await request.json();
+        const {
+            userId,
+            email,
+            fullName,
+            role,
+            phone,
+            dob,
+            gender,
+            bloodGroup,
+            city,
+            district,
+            address
+        } = await request.json();
 
         if (!userId || !email) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -19,15 +31,21 @@ export async function POST(request: Request) {
                 email,
                 full_name: fullName,
                 role: role || 'donor',
-                current_points: role === 'donor' ? 0 : null,
-                created_at: new Date().toISOString()
+                phone: phone || null,
+                dob: dob || null,
+                gender: gender || null,
+                blood_group: bloodGroup || null,
+                city: city || null,
+                district: district || null,
+                address: address || null,
+                current_points: role === 'donor' ? 0 : null
             }, { onConflict: 'id' })
             .select()
             .single();
 
         if (error) {
-            console.error('[API] Error creating user profile:', error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error('[API] Error creating user profile:', JSON.stringify(error, null, 2));
+            return NextResponse.json({ error: error.message || 'Database error' }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, user: data });
