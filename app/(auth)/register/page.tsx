@@ -227,7 +227,9 @@ export default function RegisterPage() {
 
               <form onSubmit={handleRegister} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName" className="ml-1 font-bold text-gray-700">Họ và tên</Label>
+                  <Label htmlFor="fullName" className="ml-1 font-bold text-gray-700">
+                    {selectedRole === 'hospital' ? 'Tên bệnh viện' : 'Họ và tên'}
+                  </Label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#0065FF] transition-colors z-10">
                       <UserIcon className="w-5 h-5" />
@@ -238,7 +240,7 @@ export default function RegisterPage() {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] transition-all font-medium text-base"
-                      placeholder="Nguyễn Văn A"
+                      placeholder={selectedRole === 'hospital' ? "Tên bệnh viện của bạn" : "Nguyễn Văn A"}
                       required
                     />
                   </div>
