@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react"
-import { AlertCircle, ChevronLeft, ChevronRight, MapPin, Droplets, Calendar, ArrowRight, Loader2 } from "lucide-react";
+import { Gift, ChevronRight, Tag, Ticket, Sparkles, Star, Loader2 } from "lucide-react";
 import Autoplay from "embla-carousel-autoplay"
 
 import {
@@ -10,8 +10,7 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel"
-import { campaignService } from "@/services/campaign.service";
-import { toast } from "sonner";
+import { voucherService } from "@/services/voucher.service";
 import Link from "next/link";
 
 interface SlideData {
@@ -21,29 +20,42 @@ interface SlideData {
     badgeColor: string;
     title: string;
     description: string;
+    pointCost: number;
     buttonText: string;
-    buttonLink?: string;
+    buttonLink: string;
     icon: any;
     imageElement: React.ReactNode;
 }
 
+// Màu sắc xoay vòng cho các voucher
+const VOUCHER_THEMES = [
+    { bg: "from-violet-600/20 via-purple-500/10", accent: "text-violet-400", badgeBg: "bg-violet-500", iconBg: "from-violet-800 to-violet-950", borderColor: "border-violet-500/30" },
+    { bg: "from-emerald-600/20 via-teal-500/10", accent: "text-emerald-400", badgeBg: "bg-emerald-500", iconBg: "from-emerald-800 to-emerald-950", borderColor: "border-emerald-500/30" },
+    { bg: "from-amber-600/20 via-orange-500/10", accent: "text-amber-400", badgeBg: "bg-amber-500", iconBg: "from-amber-800 to-amber-950", borderColor: "border-amber-500/30" },
+    { bg: "from-sky-600/20 via-blue-500/10", accent: "text-sky-400", badgeBg: "bg-sky-500", iconBg: "from-sky-800 to-sky-950", borderColor: "border-sky-500/30" },
+    { bg: "from-rose-600/20 via-pink-500/10", accent: "text-rose-400", badgeBg: "bg-rose-500", iconBg: "from-rose-800 to-rose-950", borderColor: "border-rose-500/30" },
+];
+
+const VOUCHER_ICONS = [Gift, Tag, Ticket, Sparkles, Star];
+
 const DEFAULT_SLIDES: SlideData[] = [
     {
-        id: 'default-1',
-        theme: "blue",
-        badge: "CẦN MÁU KHẨN CẤP",
-        badgeColor: "bg-red-500",
-        title: "Trạng thái Nhóm máu O+",
-        description: "Các bệnh viện tại TP.HCM đang thiếu hụt nhóm máu của bạn. Một lần hiến máu của bạn có thể cứu sống 3 người hôm nay.",
-        buttonText: "Tìm điểm hiến máu gần nhất",
-        buttonLink: "/donate",
-        icon: MapPin,
+        id: 'default-voucher',
+        theme: "purple",
+        badge: "ĐỔI ĐIỂM NGAY",
+        badgeColor: "bg-[#6324eb]",
+        title: "Khám phá ưu đãi hấp dẫn",
+        description: "Đổi điểm hiến máu lấy voucher từ các đối tác hàng đầu. Mỗi giọt máu bạn hiến đều có giá trị!",
+        pointCost: 0,
+        buttonText: "Xem tất cả ưu đãi",
+        buttonLink: "/rewards",
+        icon: Gift,
         imageElement: (
-            <div className="w-24 h-32 bg-[#1a1f36] rounded-xl border border-white/10 flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
-                <div className="absolute top-0 right-0 p-1 opacity-50"><Droplets className="w-8 h-8 text-blue-500" /></div>
-                <h2 className="text-4xl font-black text-white mb-1">O+</h2>
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Nhóm của bạn</p>
-                <div className="absolute bottom-0 w-full h-1 bg-red-500"></div>
+            <div className="w-24 h-32 bg-gradient-to-b from-[#6324eb]/40 to-[#1a1f36] rounded-xl border border-[#6324eb]/30 flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
+                <div className="absolute top-0 right-0 p-1 opacity-40"><Sparkles className="w-8 h-8 text-purple-400" /></div>
+                <Gift className="w-10 h-10 text-purple-400 mb-1" />
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Voucher</p>
+                <div className="absolute bottom-0 w-full h-1 bg-[#6324eb]"></div>
             </div>
         )
     }
@@ -58,54 +70,57 @@ export function DashboardCarousel() {
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
-        const fetchCampaigns = async () => {
+        const fetchVouchers = async () => {
             try {
-                const campaigns = await campaignService.getActive();
-                if (campaigns && campaigns.length > 0) {
-                    const campaignSlides: SlideData[] = campaigns.map((campaign: any) => {
-                        const startDate = new Date(campaign.start_time);
-                        const day = startDate.getDate();
-                        const month = startDate.getMonth() + 1; // 0-indexed
+                const vouchers = await voucherService.getAll();
+                // Chỉ lấy voucher Active
+                const activeVouchers = vouchers.filter((v: any) => v.status === 'Active');
 
-                        // Strip HTML tags from description if present
-                        const cleanDescription = (campaign.description || "").replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ');
+                if (activeVouchers && activeVouchers.length > 0) {
+                    const voucherSlides: SlideData[] = activeVouchers.map((voucher: any, index: number) => {
+                        const theme = VOUCHER_THEMES[index % VOUCHER_THEMES.length];
+                        const IconComponent = VOUCHER_ICONS[index % VOUCHER_ICONS.length];
 
                         return {
-                            id: campaign.id,
-                            theme: "orange",
-                            badge: "CHIẾN DỊCH SẮP TỚI",
-                            badgeColor: "bg-orange-500",
-                            title: campaign.name,
-                            description: `${campaign.location_name} • ${startDate.toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}. ${cleanDescription || "Hãy tham gia hiến máu cứu người."}`,
-                            buttonText: "Đăng ký ngay",
-                            buttonLink: `/campaigns/${campaign.id}`,
-                            icon: Calendar,
+                            id: voucher.id,
+                            theme: "voucher",
+                            badge: voucher.point_cost ? `${voucher.point_cost.toLocaleString()} ĐIỂM` : "MIỄN PHÍ",
+                            badgeColor: theme.badgeBg,
+                            title: voucher.title || voucher.partner_name || "Ưu đãi",
+                            description: voucher.description
+                                || `Voucher giảm giá từ ${voucher.partner_name || "đối tác"}. Đổi ngay trước khi hết hạn!`,
+                            pointCost: voucher.point_cost || 0,
+                            buttonText: "Đổi voucher",
+                            buttonLink: "/rewards",
+                            icon: IconComponent,
                             imageElement: (
-                                <div className="w-24 h-32 bg-gradient-to-b from-orange-900 to-[#1a1f36] rounded-xl border border-orange-500/30 flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
-                                    <div className="absolute top-1 left-1"><Calendar className="w-5 h-5 text-orange-500" /></div>
-                                    <h2 className="text-3xl font-black text-orange-400 mb-0 leading-none">{day}</h2>
-                                    <p className="text-sm font-bold text-orange-200 uppercase mb-1">Tháng {month}</p>
-                                    <div className="w-8 h-0.5 bg-orange-500/50 rounded-full"></div>
+                                <div className={`w-24 h-32 bg-gradient-to-b ${theme.iconBg} rounded-xl border ${theme.borderColor} flex flex-col items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-500`}>
+                                    <div className="absolute top-1 right-1 opacity-30"><Star className="w-5 h-5 text-white" /></div>
+                                    <IconComponent className={`w-9 h-9 ${theme.accent} mb-1`} />
+                                    <p className="text-[10px] text-white/70 font-bold text-center px-1 leading-tight line-clamp-2">
+                                        {voucher.partner_name || "Ưu đãi"}
+                                    </p>
+                                    {voucher.point_cost && (
+                                        <div className={`absolute bottom-0 w-full py-0.5 ${theme.badgeBg}/80 text-center`}>
+                                            <span className="text-[8px] font-black text-white">{voucher.point_cost} pts</span>
+                                        </div>
+                                    )}
                                 </div>
                             )
                         };
                     });
-                    // Combine default generic slides with real campaigns
-                    // Put campaigns first
-                    setSlides([...campaignSlides, ...DEFAULT_SLIDES]);
+                    setSlides([...voucherSlides, ...DEFAULT_SLIDES]);
                 } else {
-                    // Keep defaults if no campaigns
                     setSlides(DEFAULT_SLIDES);
                 }
             } catch (error: any) {
-                console.error("Failed to fetch campaigns for carousel", error.message || error.details || error);
-                // Keep defaults on error
+                console.error("Failed to fetch vouchers for carousel", error.message || error.details || error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchCampaigns();
+        fetchVouchers();
     }, []);
 
     return (
@@ -121,6 +136,7 @@ export function DashboardCarousel() {
                         <div className="w-full flex-shrink-0 h-[200px] sm:h-[250px] md:h-[300px] relative p-4 sm:p-6 md:p-10 flex items-center justify-between text-white">
                             {/* Background Effect */}
                             <div className="absolute top-0 right-0 w-48 h-48 bg-slate-800 rounded-full filter blur-[100px] opacity-20 translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-900/30 rounded-full filter blur-[80px] opacity-30 -translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
 
                             <div className="flex flex-col gap-2 max-w-lg z-10">
                                 <div className="flex items-center gap-2">
@@ -136,19 +152,13 @@ export function DashboardCarousel() {
                                     <p className="text-slate-300 text-[11px] sm:text-xs md:text-sm font-medium leading-relaxed line-clamp-2">{slide.description}</p>
                                 </div>
 
-                                {slide.buttonLink ? (
-                                    <Link href={slide.buttonLink}>
-                                        <button className="mt-1 w-fit bg-[#6324eb] hover:bg-[#501ac2] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2 transition-all shadow-lg shadow-[#6324eb]/25 group-hover:translate-x-1">
-                                            <slide.icon className="w-3 h-3" />
-                                            {slide.buttonText}
-                                        </button>
-                                    </Link>
-                                ) : (
+                                <Link href={slide.buttonLink}>
                                     <button className="mt-1 w-fit bg-[#6324eb] hover:bg-[#501ac2] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2 transition-all shadow-lg shadow-[#6324eb]/25 group-hover:translate-x-1">
                                         <slide.icon className="w-3 h-3" />
                                         {slide.buttonText}
+                                        <ChevronRight className="w-3 h-3 opacity-60" />
                                     </button>
-                                )}
+                                </Link>
                             </div>
 
                             <div className="hidden md:flex items-center justify-center mr-4 z-10">

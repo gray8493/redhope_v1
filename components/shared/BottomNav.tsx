@@ -25,7 +25,6 @@ export function BottomNav() {
 
     // Only show on donor pages
     const isDonorPage =
-        pathname === "/" ||
         pathname.startsWith("/requests") ||
         pathname.startsWith("/dashboard") ||
         pathname.startsWith("/donations") ||
