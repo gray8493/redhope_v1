@@ -35,6 +35,7 @@ import {
     AvatarFallback,
     AvatarImage,
 } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 
 interface TopNavProps {
     title?: string;
@@ -361,16 +362,20 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
     return (
         <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 sm:px-4 md:px-8 py-3 md:py-4 sticky top-0 z-20 w-full">
             <div className="flex items-center gap-3 md:gap-8 flex-1 min-w-0">
-                {/* Mobile Menu Trigger */}
-                <button
+                {/* Menu Trigger */}
+                <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => {
-                        const event = new CustomEvent('open-mobile-menu');
-                        window.dispatchEvent(event);
+                        // Mobile: open drawer sidebar
+                        window.dispatchEvent(new CustomEvent('open-mobile-menu'));
+                        // Desktop: toggle collapsible sidebar
+                        window.dispatchEvent(new CustomEvent('toggle-sidebar'));
                     }}
-                    className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 md:hidden flex-shrink-0"
+                    className="text-slate-500"
                 >
                     <Menu className="w-5 h-5" />
-                </button>
+                </Button>
                 <h2 className="text-slate-900 dark:text-white text-base md:text-xl font-bold truncate">{title}</h2>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">

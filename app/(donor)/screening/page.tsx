@@ -293,7 +293,7 @@ export default function ScreeningPage() {
 
     if (!authLoading && profile && profile.is_verified !== true) {
         return (
-            <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-[#0b1120] p-4">
+            <div className="flex h-full w-full items-center justify-center bg-slate-50 dark:bg-[#0b1120] p-4">
                 <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-6">
                     <div className="size-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto">
                         <Shield className="size-10 text-red-500" />
@@ -421,7 +421,7 @@ export default function ScreeningPage() {
 
     /* ═══════════════════════ RENDER ═══════════════════════ */
     return (
-        <div className="flex h-screen w-full flex-row overflow-hidden bg-slate-50 dark:bg-[#0b1120] font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
+        <div className="flex h-full w-full flex-row overflow-hidden bg-slate-50 dark:bg-[#0b1120] font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
             <Sidebar />
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="Sàng lọc Sức khỏe AI" />
@@ -746,8 +746,8 @@ export default function ScreeningPage() {
                                 {/* Header */}
                                 <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800">
                                     <div className="flex items-start justify-between gap-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`size-10 sm:size-12 rounded-xl flex items-center justify-center text-white shadow-md ${aiResult.status === 'eligible' ? 'bg-blue-600 shadow-blue-600/20' :
+                                        <div className="flex items-start gap-4 flex-1 min-w-0">
+                                            <div className={`flex-none size-10 sm:size-12 rounded-xl flex items-center justify-center text-white shadow-md ${aiResult.status === 'eligible' ? 'bg-blue-600 shadow-blue-600/20' :
                                                 aiResult.status === 'warning' ? 'bg-slate-500 shadow-slate-500/20' :
                                                     'bg-slate-700 shadow-slate-700/20'
                                                 }`}>
@@ -755,17 +755,17 @@ export default function ScreeningPage() {
                                                     aiResult.status === 'warning' ? <AlertCircle className="size-5 sm:size-6" /> :
                                                         <XCircle className="size-5 sm:size-6" />}
                                             </div>
-                                            <div>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Kết quả chẩn đoán</p>
-                                                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                                            <div className="flex-none max-w-[140px] sm:max-w-[180px]">
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Kết quả chẩn đoán</p>
+                                                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
                                                     {aiResult.status === 'eligible' ? 'Đủ điều kiện hiến máu' :
                                                         aiResult.status === 'warning' ? 'Cần lưu ý y tế' :
                                                             'Chưa đủ điều kiện'}
                                                 </h2>
                                             </div>
-                                            <div className="relative pl-1">
-                                                <div className="max-h-[160px] md:max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
-                                                    <p className="text-slate-500 dark:text-slate-400 text-base font-medium leading-relaxed text-justify">
+                                            <div className="flex-1 relative pl-4 border-l border-slate-100 dark:border-slate-800 min-w-0 hidden md:block">
+                                                <div className="max-h-[100px] overflow-y-auto pr-2 custom-scrollbar">
+                                                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed">
                                                         {aiResult.analysis}
                                                     </p>
                                                 </div>

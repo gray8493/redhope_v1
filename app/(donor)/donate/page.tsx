@@ -168,7 +168,7 @@ export default function DonatePage() {
     };
 
     return (
-        <div className="flex h-screen w-full flex-row overflow-hidden bg-slate-50 dark:bg-[#0f0a19] font-sans text-slate-900 dark:text-blue-50">
+        <div className="flex h-full w-full flex-row overflow-hidden bg-slate-50 dark:bg-[#0f0a19] font-sans text-slate-900 dark:text-blue-50">
             <Sidebar />
 
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
