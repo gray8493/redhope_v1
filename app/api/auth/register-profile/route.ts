@@ -45,6 +45,12 @@ export async function POST(request: Request) {
 
         if (error) {
             console.error('[API] Error creating user profile:', JSON.stringify(error, null, 2));
+
+            // Thông báo thân thiện khi email đã tồn tại
+            if (error.message?.includes('duplicate key') || error.message?.includes('users_email_key')) {
+                return NextResponse.json({ error: 'Email này đã có người đăng ký. Vui lòng sử dụng email khác.' }, { status: 409 });
+            }
+
             return NextResponse.json({ error: error.message || 'Database error' }, { status: 500 });
         }
 

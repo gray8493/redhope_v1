@@ -347,6 +347,15 @@ export const campaignService = {
                     action_type: 'view_registrations',
                     action_url: `/hospital-campaign/${campaignId}`
                 });
+
+                // Gửi thông báo chuông cho donor
+                await notificationService.createNotification({
+                    user_id: userId,
+                    title: '✅ Đăng ký thành công',
+                    content: `Bạn đã đăng ký tham gia chiến dịch "${campaign.name}" thành công. Hãy đến đúng giờ nhé!`,
+                    action_type: 'view_appointments',
+                    action_url: `/donate`
+                });
             } catch (notifError: any) {
                 console.error('Failed to send notification to hospital:', notifError);
             }
