@@ -9,8 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import MiniFooter from "@/components/shared/MiniFooter";
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
 import { toast } from "sonner";
-import { TrendingUp, Search, UserPlus, Users, Droplet, Zap, QrCode, MonitorPlay } from "lucide-react";
-import { QRScannerModal } from "@/components/shared/QRScannerModal";
+import { TrendingUp, Search, UserPlus, Users, Droplet, Zap, MonitorPlay } from "lucide-react";
+
 
 export default function HospitalDashboard() {
     const { user } = useAuth();

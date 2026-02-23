@@ -16,8 +16,7 @@ import {
     Monitor,
     Check,
     X,
-    Loader2,
-    QrCode
+    Loader2
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
@@ -106,7 +105,6 @@ export default function RewardsPage() {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isRedeeming, setIsRedeeming] = useState(false);
     const [selectedRedemption, setSelectedRedemption] = useState<any | null>(null);
-    const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
     const userPoints = profile?.current_points || 0;
 
@@ -185,10 +183,8 @@ export default function RewardsPage() {
         setIsConfirmOpen(true);
     };
 
-    const handleShowQr = (redemption: any) => {
-        setSelectedRedemption(redemption);
-        setIsQrModalOpen(true);
-    };
+
+
 
     const confirmRedeem = async () => {
         if (!rewardToRedeem || !user?.id) return;
@@ -199,7 +195,7 @@ export default function RewardsPage() {
             setAlertMessage({
                 type: "success",
                 title: "Đổi quà thành công!",
-                description: "Mã voucher đã được lưu vào lịch sử đổi quà. Bạn có thể xem mã QR để sử dụng."
+                description: "Mã voucher đã được lưu vào lịch sử đổi quà. Bạn có thể sử dụng mã này để đổi quà."
             });
             await refreshUser();
             if (activeTab === "history") fetchHistory();
@@ -345,16 +341,7 @@ export default function RewardsPage() {
                                                                 </code>
                                                             </td>
                                                             <td className="py-4 px-6 text-left">
-                                                                {item.redemption_code ? (
-                                                                    <button
-                                                                        onClick={() => handleShowQr(item)}
-                                                                        className="flex items-center gap-2 text-xs font-bold text-[#0065FF] hover:underline"
-                                                                    >
-                                                                        <QrCode className="w-4 h-4" /> Xem mã QR
-                                                                    </button>
-                                                                ) : (
-                                                                    <span className="text-xs text-slate-400">Không có mã</span>
-                                                                )}
+                                                                <span className="text-xs text-slate-400">Đã đổi</span>
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -387,14 +374,8 @@ export default function RewardsPage() {
                                                     <code className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs font-mono font-bold text-[#0065FF] uppercase">
                                                         {item.redemption_code || '---'}
                                                     </code>
-                                                    {item.redemption_code && (
-                                                        <button
-                                                            onClick={() => handleShowQr(item)}
-                                                            className="flex items-center gap-2 text-xs font-bold text-[#0065FF] hover:bg-blue-50 dark:hover:bg-blue-900/20 px-3 py-1.5 rounded-lg transition-colors"
-                                                        >
-                                                            <QrCode className="w-4 h-4" /> Xem QR
-                                                        </button>
-                                                    )}
+                                                    <span className="text-xs text-slate-400">Đã đổi</span>
+
                                                 </div>
                                             </div>
                                         ))
@@ -487,39 +468,7 @@ export default function RewardsPage() {
                 </AlertDialogContent>
             </AlertDialog>
 
-            <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
-                <DialogContent className="bg-white dark:bg-[#1c162e] border-[#ebe7f3] dark:border-[#2d263d] sm:max-w-md">
-                    <DialogHeader className="text-left">
-                        <DialogTitle className="text-[#120e1b] dark:text-white">Mã ưu đãi của bạn</DialogTitle>
-                        <DialogDescription className="text-[#654d99] dark:text-[#a594c9]">
-                            Quét mã này tại quầy để sử dụng ưu đãi.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-[#251e36] rounded-xl border border-dashed border-[#0065FF]/30">
-                        {selectedRedemption?.redemption_code ? (
-                            <>
-                                <div className="bg-white p-4 rounded-xl shadow-inner mb-4">
-                                    <img
-                                        src={`https://chart.googleapis.com/chart?cht=qr&chs=250x250&chl=${encodeURIComponent(selectedRedemption.redemption_code)}`}
-                                        alt="Redemption QR Code"
-                                        className="w-48 h-48"
-                                    />
-                                </div>
-                                <p className="text-xs font-bold text-[#654d99] dark:text-gray-400 mb-1 uppercase tracking-widest">Mã định danh</p>
-                                <p className="text-xl font-black text-[#0065FF] font-mono tracking-tighter">
-                                    {selectedRedemption.redemption_code}
-                                </p>
-                                <p className="mt-4 text-[10px] text-[#a594c9] text-center italic">
-                                    Dành cho: {selectedRedemption.vouchers?.partner_name}<br />
-                                    Ngày đổi: {new Date(selectedRedemption.redeemed_at).toLocaleDateString('vi-VN')}
-                                </p>
-                            </>
-                        ) : (
-                            <p className="text-sm text-red-500">Lỗi: Không tìm thấy mã!</p>
-                        )}
-                    </div>
-                </DialogContent>
-            </Dialog>
+
         </div>
     );
 }

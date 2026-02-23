@@ -3,7 +3,6 @@
 import {
     Heart,
     CreditCard,
-    QrCode,
     Trophy,
     TrendingUp,
     Users,
@@ -47,7 +46,7 @@ export default function DonatePage() {
 
     const [amount, setAmount] = useState<string>("100000");
     const [paymentMethod, setPaymentMethod] = useState<string>("momo");
-    const [showQRModal, setShowQRModal] = useState(false);
+    const [showMoMoModal, setShowMoMoModal] = useState(false);
     const [showCardModal, setShowCardModal] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isAnonymous, setIsAnonymous] = useState(false);
@@ -119,7 +118,7 @@ export default function DonatePage() {
             setCurrentDonationId(donation.id);
 
             if (paymentMethod === "momo") {
-                setShowQRModal(true);
+                setShowMoMoModal(true);
             } else {
                 setShowCardModal(true);
             }
@@ -148,7 +147,7 @@ export default function DonatePage() {
             toast.error("Không thể xác nhận thanh toán.");
         }
 
-        setShowQRModal(false);
+        setShowMoMoModal(false);
         setShowCardModal(false);
         setCurrentDonationId(null);
     };
@@ -273,11 +272,11 @@ export default function DonatePage() {
                                                 >
                                                     <div className={`size-10 rounded-full flex items-center justify-center transition-colors ${paymentMethod === "momo" ? "bg-pink-600 text-white" : "bg-pink-50 text-pink-600 group-hover:bg-pink-100"
                                                         }`}>
-                                                        <QrCode className="w-6 h-6" />
+                                                        <Wallet className="w-6 h-6" />
                                                     </div>
                                                     <div>
                                                         <p className={`font-bold transition-colors ${paymentMethod === "momo" ? "text-[#7f1d1d]" : "text-[#450a0a] dark:text-white group-hover:text-[#7f1d1d]"}`}>Ví MoMo</p>
-                                                        <p className="text-xs text-[#7f1d1d] dark:text-red-300">Quét mã QR nhanh chóng</p>
+                                                        <p className="text-xs text-[#7f1d1d] dark:text-red-300">Thanh toán qua ứng dụng MoMo</p>
                                                     </div>
                                                 </button>
                                                 <button
@@ -424,23 +423,23 @@ export default function DonatePage() {
                 <MiniFooter />
             </div>
 
-            {/* QR Code Modal (MoMo) */}
-            {showQRModal && (
+            {/* MoMo Payment Modal */}
+            {showMoMoModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowQRModal(false)}></div>
+                    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowMoMoModal(false)}></div>
                     <div className="bg-white dark:bg-[#1c162e] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
                         <div className="bg-pink-600 p-6 text-center text-white relative">
-                            <button onClick={() => setShowQRModal(false)} className="absolute right-4 top-4 hover:bg-black/10 p-1 rounded-full transition-colors">
+                            <button onClick={() => setShowMoMoModal(false)} className="absolute right-4 top-4 hover:bg-black/10 p-1 rounded-full transition-colors">
                                 <X className="w-6 h-6" />
                             </button>
-                            <QrCode className="w-12 h-12 mx-auto mb-2" />
+                            <Wallet className="w-12 h-12 mx-auto mb-2" />
                             <h3 className="text-xl font-black">Thanh toán qua MoMo</h3>
-                            <p className="text-white/80 text-sm">Quét mã để quyên góp {formatAmount(amount)}đ</p>
+                            <p className="text-white/80 text-sm">Vui lòng thanh toán số tiền {formatAmount(amount)}đ</p>
                         </div>
                         <div className="p-5 sm:p-8 text-center flex flex-col items-center">
                             <div className="bg-white p-4 rounded-2xl shadow-inner border-4 border-pink-50 mb-6">
                                 <div className="size-48 bg-[#fdf2f8] rounded-xl flex items-center justify-center relative overflow-hidden ring-1 ring-pink-100">
-                                    <div className="grid grid-cols-4 gap-2 opacity-20">
+                                    <div className="grid grid-cols-4 gap-2 opacity-5">
                                         {Array.from({ length: 16 }).map((_, i) => <div key={i} className="size-8 bg-pink-900 rounded-sm"></div>)}
                                     </div>
                                     <div className="absolute inset-0 flex items-center justify-center">

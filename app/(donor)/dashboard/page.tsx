@@ -4,11 +4,8 @@ import { useEffect, useState } from "react";
 import {
     Droplet,
     Award,
-    Calendar,
     Clock,
-    Hospital,
-    MapPin,
-    QrCode
+    MapPin
 } from "lucide-react";
 import Link from "next/link";
 import { Sidebar } from "@/components/shared/Sidebar";
@@ -27,7 +24,6 @@ import { settingService } from "@/services/setting.service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, addMonths, isAfter } from "date-fns";
 import { vi } from "date-fns/locale";
-import { QRCodeModal } from "@/components/shared/QRCodeModal";
 
 export default function DashboardPage() {
     const { user, profile } = useAuth();
@@ -36,7 +32,6 @@ export default function DashboardPage() {
     const [donorStats, setDonorStats] = useState<any[]>([]);
     const [nextDonationDate, setNextDonationDate] = useState<Date | null>(null);
     const [loading, setLoading] = useState(true);
-    const [showQR, setShowQR] = useState(false);
 
     const firstName = user?.user_metadata?.full_name?.split(' ').pop() || user?.email?.split('@')[0] || "người bạn";
     const isVerified = profile?.is_verified || false;
@@ -58,7 +53,6 @@ export default function DashboardPage() {
 
                 // Calculate next donation date
                 if (sData && sData.length > 0) {
-                    // Assuming sData is sorted by date desc OR we find the latest
                     const latestDonation = sData.reduce((prev: any, current: any) =>
                         (new Date(current.verified_at) > new Date(prev.verified_at)) ? current : prev
                     );
@@ -110,15 +104,6 @@ export default function DashboardPage() {
                                                 <p className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-300">Đã xác minh</p>
                                             </div>
                                         </div>
-                                        <Button
-                                            onClick={() => setShowQR(true)}
-                                            variant="outline"
-                                            className="h-auto py-1.5 sm:py-2 rounded-lg sm:rounded-xl border-red-100 dark:border-red-900 text-red-600 dark:text-red-400 font-bold text-[11px] sm:text-xs gap-1.5 sm:gap-2 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-sm"
-                                        >
-                                            <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                            <span className="hidden sm:inline">Mã QR định danh</span>
-                                            <span className="sm:hidden">QR</span>
-                                        </Button>
                                     </div>
                                 )}
                             </div>
@@ -268,18 +253,6 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
-
-            <QRCodeModal
-                isOpen={showQR}
-                onOpenChange={setShowQR}
-                userData={user ? {
-                    id: user.id || "",
-                    fullName: profile?.full_name || user?.user_metadata?.full_name || user?.email || "",
-                    bloodGroup: profile?.blood_group || "??",
-                    city: profile?.city || "Chưa cập nhật",
-                    dob: profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('vi-VN') : "--/--/----"
-                } : null}
-            />
         </div>
     );
 }
