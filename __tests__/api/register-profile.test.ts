@@ -148,7 +148,7 @@ describe('POST /api/auth/register-profile', () => {
     });
 
     /* ── DB Error ── */
-    it('should return 500 when database upsert fails', async () => {
+    it('should return 409 when database upsert fails with duplicate key', async () => {
         mockSingle.mockResolvedValue({
             data: null,
             error: { message: 'duplicate key violation' },
@@ -162,9 +162,9 @@ describe('POST /api/auth/register-profile', () => {
 
         const res = await POST(req);
 
-        expect(res.status).toBe(500);
+        expect(res.status).toBe(409);
         const data = await res.json();
-        expect(data.error).toContain('duplicate key');
+        expect(data.error).toContain('Email này đã có người đăng ký');
     });
 
     /* ── Exception ── */
