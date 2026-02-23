@@ -25,6 +25,21 @@ jest.mock('@google/generative-ai', () => ({
     })),
 }));
 
+// Mock Supabase Admin
+const mockSingle = jest.fn();
+const mockEq = jest.fn(() => ({ single: mockSingle }));
+const mockFrom = jest.fn(() => ({
+    select: jest.fn(() => ({
+        eq: mockEq
+    }))
+}));
+
+jest.mock('@/lib/supabase-admin', () => ({
+    supabaseAdmin: {
+        from: mockFrom,
+    },
+}));
+
 /* ─────────── Test Data ─────────── */
 const SAFE_ANSWERS = {
     // Trắc nghiệm (10 câu - tất cả safe)
@@ -92,6 +107,7 @@ describe('POST /api/ai/screening', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         process.env.GEMINI_API_KEY = 'test-api-key-12345';
+        mockSingle.mockResolvedValue({ data: { is_verified: true, role: 'donor' }, error: null });
     });
 
     /* ── API Key ── */
@@ -99,7 +115,7 @@ describe('POST /api/ai/screening', () => {
         it('should return 500 when GEMINI_API_KEY is missing', async () => {
             delete process.env.GEMINI_API_KEY;
 
-            const req = createRequest({ answers: SAFE_ANSWERS });
+            const req = createRequest({ answers: SAFE_ANSWERS, userId: 'test-user' });
             const res = await POST(req);
 
             expect(res.status).toBe(500);
@@ -120,7 +136,7 @@ describe('POST /api/ai/screening', () => {
             };
             mockAIResponse(aiOutput);
 
-            const req = createRequest({ answers: SAFE_ANSWERS });
+            const req = createRequest({ answers: SAFE_ANSWERS, userId: 'test-user' });
             const res = await POST(req);
             const data = await res.json();
 
@@ -143,7 +159,7 @@ describe('POST /api/ai/screening', () => {
             };
             mockAIResponse(aiOutput);
 
-            const req = createRequest({ answers: HIGH_RISK_ANSWERS });
+            const req = createRequest({ answers: HIGH_RISK_ANSWERS, userId: 'test-user' });
             const res = await POST(req);
             const data = await res.json();
 
@@ -171,7 +187,7 @@ describe('POST /api/ai/screening', () => {
                 6: { value: 'low_mild', severity: 'mild', id: 6 },
             };
 
-            const req = createRequest({ answers: mixedAnswers });
+            const req = createRequest({ answers: mixedAnswers, userId: 'test-user' });
             const res = await POST(req);
             const data = await res.json();
 
@@ -198,7 +214,7 @@ describe('POST /api/ai/screening', () => {
                 },
             });
 
-            const req = createRequest({ answers: SAFE_ANSWERS });
+            const req = createRequest({ answers: SAFE_ANSWERS, userId: 'test-user' });
             const res = await POST(req);
             const data = await res.json();
 
@@ -217,7 +233,7 @@ describe('POST /api/ai/screening', () => {
                 },
             });
 
-            const req = createRequest({ answers: SAFE_ANSWERS });
+            const req = createRequest({ answers: SAFE_ANSWERS, userId: 'test-user' });
             const res = await POST(req);
             const data = await res.json();
 
@@ -233,7 +249,7 @@ describe('POST /api/ai/screening', () => {
         it('should return fallback when Gemini throws error', async () => {
             mockGenerateContent.mockRejectedValue(new Error('Gemini quota exceeded'));
 
-            const req = createRequest({ answers: SAFE_ANSWERS });
+            const req = createRequest({ answers: SAFE_ANSWERS, userId: 'test-user' });
             const res = await POST(req);
             const data = await res.json();
 
@@ -256,7 +272,7 @@ describe('POST /api/ai/screening', () => {
             };
             mockAIResponse(aiOutput);
 
-            const req = createRequest({ answers: SAFE_ANSWERS });
+            const req = createRequest({ answers: SAFE_ANSWERS, userId: 'test-user' });
             await POST(req);
 
             // Kiểm tra generateContent được gọi đúng 1 lần 
@@ -283,7 +299,7 @@ describe('POST /api/ai/screening', () => {
             };
             mockAIResponse(aiOutput);
 
-            const req = createRequest({ answers: {} });
+            const req = createRequest({ answers: {}, userId: 'test-user' });
             const res = await POST(req);
             const data = await res.json();
 
@@ -305,7 +321,7 @@ describe('POST /api/ai/screening', () => {
             };
             mockAIResponse(aiOutput);
 
-            const req = createRequest({ answers: partialAnswers });
+            const req = createRequest({ answers: partialAnswers, userId: 'test-user' });
             const res = await POST(req);
             const data = await res.json();
 

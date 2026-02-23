@@ -1,0 +1,55 @@
+﻿  console.log
+    Γ£à Loaded environment variables from .env.local for integration tests
+
+      at Object.<anonymous> (jest.env.setup.js:19:13)
+
+  console.log
+    Answers received for analysis: {"1":{"value":"very_good","severity":"safe","id":1},"2":{"value":"no_meds","severity":"safe","id":2}...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.log
+    Answers received for analysis: {"1":{"value":"very_good","severity":"safe","id":1},"2":{"value":"no_meds","severity":"safe","id":2}...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.log
+    Answers received for analysis: {"1":{"value":"sick","severity":"high","id":1},"2":{"value":"antibiotics","severity":"high","id":2},...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.log
+    Answers received for analysis: {"1":{"value":"mild_tired","severity":"moderate","id":1},"2":{"value":"no_meds","severity":"safe","i...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.log
+    Answers received for analysis: {"1":{"value":"very_good","severity":"safe","id":1},"2":{"value":"no_meds","severity":"safe","id":2}...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.log
+    Answers received for analysis: {"1":{"value":"very_good","severity":"safe","id":1},"2":{"value":"no_meds","severity":"safe","id":2}...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.log
+    Answers received for analysis: {"1":{"value":"very_good","severity":"safe","id":1},"2":{"value":"no_meds","severity":"safe","id":2}...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.log
+    Answers received for analysis: {"1":{"value":"very_good","severity":"safe","id":1},"2":{"value":"no_meds","severity":"safe","id":2}...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.log
+    Answers received for analysis: {}...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.log
+    Answers received for analysis: {"1":{"value":"very_good","severity":"safe","id":1},"2":{"value":"no_meds","severity":"safe","id":2}...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+

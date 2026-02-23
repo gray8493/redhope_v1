@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Wallet,
     Heart,
@@ -9,8 +9,6 @@ import {
     Coffee,
     ShoppingBag,
     Activity,
-    Clock,
-    Ticket,
     Pizza,
     Film,
     Monitor,
@@ -36,9 +34,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
     Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
@@ -104,11 +99,10 @@ export default function RewardsPage() {
     const [rewardToRedeem, setRewardToRedeem] = useState<RewardItem | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isRedeeming, setIsRedeeming] = useState(false);
-    const [selectedRedemption, setSelectedRedemption] = useState<any | null>(null);
 
     const userPoints = profile?.current_points || 0;
 
-    const fetchRewards = async () => {
+    const fetchRewards = useCallback(async () => {
         setLoadingRewards(true);
         try {
             const data = await voucherService.getAll();
@@ -132,9 +126,9 @@ export default function RewardsPage() {
         } finally {
             setLoadingRewards(false);
         }
-    };
+    }, []);
 
-    const fetchHistory = async () => {
+    const fetchHistory = useCallback(async () => {
         if (!user?.id) return;
         setLoadingHistory(true);
         try {
@@ -145,17 +139,17 @@ export default function RewardsPage() {
         } finally {
             setLoadingHistory(false);
         }
-    };
+    }, [user?.id]);
 
     useEffect(() => {
         fetchRewards();
-    }, []);
+    }, [fetchRewards]);
 
     useEffect(() => {
         if (activeTab === "history") {
             fetchHistory();
         }
-    }, [activeTab]);
+    }, [activeTab, fetchHistory]);
 
     const filteredRewards = rewards.filter((reward) => {
         if (activeTab === "history") return false;

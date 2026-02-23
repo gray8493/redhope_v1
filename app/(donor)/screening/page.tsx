@@ -291,36 +291,6 @@ export default function ScreeningPage() {
         }
     }, [user, profile, authLoading, router]);
 
-    if (!authLoading && profile && profile.is_verified !== true) {
-        return (
-            <div className="flex h-full w-full items-center justify-center bg-slate-50 dark:bg-[#0b1120] p-4">
-                <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-6">
-                    <div className="size-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto">
-                        <Shield className="size-10 text-red-500" />
-                    </div>
-                    <div className="space-y-2">
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Chưa xác minh hồ sơ</h2>
-                        <p className="text-slate-500 dark:text-slate-400">
-                            Vui lòng hoàn thành xác minh hồ sơ y tế trước khi thực hiện sàng lọc AI.
-                        </p>
-                    </div>
-                    <Button
-                        onClick={() => router.push("/complete-profile/verification")}
-                        className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"
-                    >
-                        Đến trang xác minh
-                    </Button>
-                    <button
-                        onClick={() => router.push("/requests")}
-                        className="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium"
-                    >
-                        Quay lại trang chủ
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
     /* ── Load screening status from DB ── */
     useEffect(() => {
         if (!user?.id) return;
@@ -363,6 +333,36 @@ export default function ScreeningPage() {
         }
         return () => clearInterval(interval);
     }, [step]);
+
+    if (!authLoading && profile && profile.is_verified !== true) {
+        return (
+            <div className="flex h-full w-full items-center justify-center bg-slate-50 dark:bg-[#0b1120] p-4">
+                <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-6">
+                    <div className="size-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto">
+                        <Shield className="size-10 text-red-500" />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Chưa xác minh hồ sơ</h2>
+                        <p className="text-slate-500 dark:text-slate-400">
+                            Vui lòng hoàn thành xác minh hồ sơ y tế trước khi thực hiện sàng lọc AI.
+                        </p>
+                    </div>
+                    <Button
+                        onClick={() => router.push("/complete-profile/verification")}
+                        className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                    >
+                        Đến trang xác minh
+                    </Button>
+                    <button
+                        onClick={() => router.push("/requests")}
+                        className="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium"
+                    >
+                        Quay lại trang chủ
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     /* ── AI Analysis ── */
     const generateAiAnalysis = async () => {
