@@ -441,11 +441,11 @@ export default function CampaignDetailsPage() {
         try {
             // In demo mode, only update local state if ID is mock
             if (!regId.startsWith('reg-')) {
-                await campaignService.updateRegistrationStatus(regId, 'Deferred');
+                await campaignService.updateRegistrationStatus(regId, 'Cancelled');
             }
 
             setRegistrations(prev => prev.map(r =>
-                r.id === regId ? { ...r, status: 'Deferred' } : r
+                r.id === regId ? { ...r, status: 'Cancelled' } : r
             ));
             toast.success('Đã hủy hồ sơ hiến máu');
         } catch (error: any) {

@@ -98,13 +98,7 @@ export default function NotificationsPage() {
                 n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 n.desc.toLowerCase().includes(searchQuery.toLowerCase());
 
-            // LỌC CHỈ XEM THÔNG BÁO TỪ BỆNH VIỆN (Chiến dịch, lời mời hiến máu)
-            // Dựa trên action_type hoặc logic Title liên quan đến Hospital
-            const fromHospital = n.action_url?.includes('/campaigns/') ||
-                n.title.includes('Chiến dịch') ||
-                n.title.includes('Bệnh viện');
-
-            return matchesFilter && matchesSearch && fromHospital;
+            return matchesFilter && matchesSearch;
         });
 
     return (
