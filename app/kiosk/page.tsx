@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { QRCodeSVG } from 'qrcode.react';
+
 import { campaignService } from '@/services';
 import { format } from 'date-fns';
 import { vi } from "date-fns/locale";
@@ -15,7 +15,6 @@ export default function KioskPage() {
     const [registrations, setRegistrations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentTime, setCurrentTime] = useState(new Date());
-    const [checkInUrl, setCheckInUrl] = useState('');
 
     // Clock effect
     useEffect(() => {
@@ -57,11 +56,8 @@ export default function KioskPage() {
         return () => clearInterval(interval);
     }, [campaignId]);
 
-    useEffect(() => {
-        if (typeof window !== 'undefined' && campaignId) {
-            setCheckInUrl(`${window.location.origin}/requests?campaignId=${campaignId}`);
-        }
-    }, [campaignId]);
+
+
 
     // --- Logic phân loại ---
     // 1. Đang khám (Screening)
@@ -115,36 +111,7 @@ export default function KioskPage() {
                     color: var(--neon-red);
                     text-shadow: 0 0 10px rgba(255, 45, 85, 0.5), 0 0 20px rgba(255, 45, 85, 0.2);
                 }
-                .qr-frame {
-                    position: relative;
-                    padding: 20px;
-                    background: rgba(0, 0, 0, 0.2);
-                    border-radius: 20px;
-                }
-                .qr-frame::before, .qr-frame::after {
-                    content: '';
-                    position: absolute;
-                    width: 40px;
-                    height: 40px;
-                    border: 3px solid var(--neon-blue);
-                }
-                .qr-frame::before { top: 0; left: 0; border-right: 0; border-bottom: 0; border-radius: 12px 0 0 0; }
-                .qr-frame::after { bottom: 0; right: 0; border-left: 0; border-top: 0; border-radius: 0 0 12px 0; }
-                .scanning-line {
-                    position: absolute;
-                    left: 0;
-                    width: 100%;
-                    height: 2px;
-                    background: linear-gradient(to right, transparent, var(--neon-blue), transparent);
-                    box-shadow: 0 0 15px var(--neon-blue);
-                    animation: scan 3s ease-in-out infinite;
-                    z-index: 10;
-                }
-                @keyframes scan {
-                    0%, 100% { top: 0%; opacity: 0; }
-                    5%, 95% { opacity: 1; }
-                    50% { top: 100%; }
-                }
+
                 .step-circle {
                     width: 44px;
                     height: 44px;
@@ -233,29 +200,22 @@ export default function KioskPage() {
                             Check-in Tức Thì
                         </h2>
                         <div className="h-1 w-24 bg-gradient-to-r from-cyan-500 to-transparent mx-auto rounded-full mb-4"></div>
-                        <p className="text-lg text-white/50 font-light italic">Quét mã QR để tự động lấy số thứ tự</p>
                     </div>
 
                     <div className="relative">
                         <div className="absolute -inset-10 bg-cyan-500/10 blur-[60px] rounded-full group-hover:bg-cyan-500/20 transition-all duration-700"></div>
-                        <div className="qr-frame">
-                            <div className="scanning-line"></div>
-                            <div className="bg-white p-4 rounded-xl shadow-[0_0_40px_rgba(0,0,0,0.4)]">
-                                <QRCodeSVG
-                                    value={checkInUrl}
-                                    size={250}
-                                    level="H"
-                                    className="filter contrast-125"
-                                />
-                            </div>
+                        <div className="glass-card p-12 flex flex-col items-center justify-center border-dashed border-cyan-500/40 border-2">
+                            <span className="material-symbols-outlined text-8xl neon-text-blue mb-6">assignment_ind</span>
+                            <p className="text-xl font-bold tracking-widest text-white/80 uppercase">Vui lòng đăng ký tại bàn hướng dẫn</p>
                         </div>
                     </div>
 
+
                     <div className="mt-16 grid grid-cols-3 gap-12 w-full max-w-xl">
                         {[
-                            { step: '01', label: 'Quét mã' },
-                            { step: '02', label: 'Xác nhận' },
-                            { step: '03', label: 'Lấy số' }
+                            { step: '01', label: 'Đăng ký' },
+                            { step: '02', label: 'Khám sàng lọc' },
+                            { step: '03', label: 'Hiến máu' }
                         ].map((item, i) => (
                             <div key={i} className="flex flex-col items-center gap-4">
                                 <div className="step-circle group-hover:border-cyan-500/50 transition-colors">
@@ -264,6 +224,7 @@ export default function KioskPage() {
                                 <span className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-bold">{item.label}</span>
                             </div>
                         ))}
+
                     </div>
                 </section>
 

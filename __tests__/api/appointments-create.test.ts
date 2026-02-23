@@ -55,7 +55,6 @@ const MOCK_APPOINTMENT = {
     user_id: 'user-001',
     campaign_id: 'campaign-001',
     status: 'Booked',
-    qr_code: 'QR-12345-user-001',
 };
 
 /* ─────────── Helpers ─────────── */

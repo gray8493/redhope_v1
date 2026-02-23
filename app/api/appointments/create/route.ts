@@ -91,8 +91,7 @@ export async function POST(req: Request) {
             }
         }
 
-        // 4. Tạo QR code (simple format)
-        const qrCode = `QR-${Date.now()}-${userId.substring(0, 8)}`;
+
 
         // 4. Tạo appointment - Dùng supabaseAdmin để bypass RLS
         const { data: appointment, error: appointmentError } = await supabaseAdmin
@@ -101,7 +100,7 @@ export async function POST(req: Request) {
                 user_id: userId,
                 campaign_id: campaignId,
                 scheduled_time: scheduledTime || campaign.start_time,
-                qr_code: qrCode,
+
                 status: 'Booked',
             })
             .select()

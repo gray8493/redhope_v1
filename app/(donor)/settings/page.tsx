@@ -336,7 +336,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="relative flex h-screen w-full flex-row overflow-hidden bg-[#f6f6f8] dark:bg-[#120e1b] font-sans text-slate-900 dark:text-white">
+        <div className="relative flex h-full w-full flex-row overflow-hidden bg-[#f6f6f8] dark:bg-[#120e1b] font-sans text-slate-900 dark:text-white">
             <Sidebar />
 
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">

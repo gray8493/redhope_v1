@@ -1,0 +1,143 @@
+﻿  console.log
+    Γ£à Loaded environment variables from .env.local for integration tests
+
+      at Object.<anonymous> (jest.env.setup.js:19:13)
+
+  console.log
+    Answers received for analysis: {"1":"Khß╗Åe mß║ính b├¼nh th╞░ß╗¥ng","2":"Kh├┤ng sß╗¡ dß╗Ñng thuß╗æc n├áo","3":"Kh├┤ng mß║»c bß╗çnh truyß╗ün nhiß╗àm","4":"Ch...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.error
+    Gemini Error Detail: Error: AI kh├┤ng trß║ú vß╗ü ─æ├║ng ─æß╗ïnh dß║íng JSON
+        at POST (C:\Users\admin\nextjs\my-demo-app\app\api\ai\screening\route.ts:146:19)
+        at Object.<anonymous> (C:\Users\admin\nextjs\my-demo-app\__tests__\integration\ai-screening.integration.test.ts:75:21)
+
+    [0m [90m 151 |[39m
+     [90m 152 |[39m     } [36mcatch[39m (error[33m:[39m any) {
+    [31m[1m>[22m[39m[90m 153 |[39m         console[33m.[39merror([32m"Gemini Error Detail:"[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 154 |[39m
+     [90m 155 |[39m         [36mreturn[39m [33mNextResponse[39m[33m.[39mjson({
+     [90m 156 |[39m             status[33m:[39m [32m"warning"[39m[33m,[39m[0m
+
+      at POST (app/api/ai/screening/route.ts:153:17)
+      at Object.<anonymous> (__tests__/integration/ai-screening.integration.test.ts:75:21)
+
+  console.log
+    Answers received for analysis: {"1":"─Éang bß╗ï sß╗æt cao","2":"─Éang sß╗¡ dß╗Ñng kh├íng sinh","3":"─Éang ─æiß╗üu trß╗ï Vi├¬m gan B","4":"Mß╗¢i hiß║┐n m├í...
+
+      at POST (app/api/ai/screening/route.ts:9:17)
+
+  console.error
+    Gemini Error Detail: Error: AI kh├┤ng trß║ú vß╗ü ─æ├║ng ─æß╗ïnh dß║íng JSON
+        at POST (C:\Users\admin\nextjs\my-demo-app\app\api\ai\screening\route.ts:146:19)
+        at Object.<anonymous> (C:\Users\admin\nextjs\my-demo-app\__tests__\integration\ai-screening.integration.test.ts:114:21)
+
+    [0m [90m 151 |[39m
+     [90m 152 |[39m     } [36mcatch[39m (error[33m:[39m any) {
+    [31m[1m>[22m[39m[90m 153 |[39m         console[33m.[39merror([32m"Gemini Error Detail:"[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 154 |[39m
+     [90m 155 |[39m         [36mreturn[39m [33mNextResponse[39m[33m.[39mjson({
+     [90m 156 |[39m             status[33m:[39m [32m"warning"[39m[33m,[39m[0m
+
+      at POST (app/api/ai/screening/route.ts:153:17)
+      at Object.<anonymous> (__tests__/integration/ai-screening.integration.test.ts:114:21)
+
+node.exe : FAIL __tests__/integration/ai-scr
+eening.integration.test.ts
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: 
+    (FAIL __tests__/...gration.test.ts:Str  
+  ing) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommand 
+   Error
+ 
+  AI Screening API Integration Test
+    ├ù should call Gemini API and return 
+structured JSON for an Eligible case (25 ms)
+    ├ù should return ineligible or warning 
+for a high-risk case (12 ms)
+
+  ΓùÅ AI Screening API Integration Test ΓÇ║ 
+should call Gemini API and return 
+structured JSON for an Eligible case
+
+    expect(received).toBeGreaterThanOrEqual(
+expected)
+
+    Expected: >= 70
+    Received:    50
+
+    [0m [90m 81 |[39m         
+expect([[32m'eligible'[39m[33m,[39m 
+[32m'warning'[39m[33m,[39m [32m'ineligi
+ble'[39m])[33m.[39mtoContain(jsonResponse
+[33m.[39mstatus)[33m;[39m
+     [90m 82 |[39m         [36mif[39m 
+(jsonResponse[33m.[39mstatus 
+[33m!==[39m [32m'ineligible'[39m) {
+    [31m[1m>[22m[39m[90m 83 |[39m     
+        expect(jsonResponse[33m.[39mscore)
+[33m.[39mtoBeGreaterThanOrEqual([35m70[3
+9m)[33m;[39m
+     [90m    |[39m                        
+                [31m[1m^[22m[39m
+     [90m 84 |[39m         }
+     [90m 85 |[39m         expect(jsonResp
+onse)[33m.[39mtoHaveProperty([32m'analysi
+s'[39m)[33m;[39m
+     [90m 86 |[39m         expect(jsonResp
+onse)[33m.[39mtoHaveProperty([32m'recomme
+ndations'[39m)[33m;[39m[0m
+
+      at Object.<anonymous> (__tests__/integ
+ration/ai-screening.integration.test.ts:83:4
+0)
+
+  ΓùÅ AI Screening API Integration Test ΓÇ║ 
+should return ineligible or warning for a 
+high-risk case
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: "ineligible"
+    Received: "warning"
+
+    [0m [90m 118 |[39m         expect(res
+[33m.[39mstatus)[33m.[39mtoBe([35m200[
+39m)[33m;[39m
+     [90m 119 |[39m         expect(jsonRes
+ponse)[33m.[39mtoHaveProperty([32m'status
+'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 120 |[39m    
+     expect(jsonResponse[33m.[39mstatus)[
+33m.[39mtoBe([32m'ineligible'[39m)[33m;
+[39m [90m// AI n├¬n ─æ├ính gi├í rß╗¢t[39m
+     [90m     |[39m                       
+              [31m[1m^[22m[39m
+     [90m 121 |[39m         expect(jsonRes
+ponse[33m.[39mscore)[33m.[39mtoBeLessTha
+nOrEqual([35m50[39m)[33m;[39m
+     [90m 122 |[39m         expect(jsonRes
+ponse[33m.[39manalysis[33m.[39mlength)[
+33m.[39mtoBeGreaterThan([35m0[39m)[33m;
+[39m
+     [90m 123 |[39m[0m
+
+      at Object.<anonymous> (__tests__/integ
+ration/ai-screening.integration.test.ts:120:
+37)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 2 total
+Snapshots:   0 total
+Time:        0.762 s, estimated 1 s
+Ran all test suites matching __tests__/integ
+ration/ai-screening.integration.test.ts.

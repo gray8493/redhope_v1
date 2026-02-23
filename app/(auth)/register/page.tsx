@@ -141,7 +141,7 @@ export default function RegisterPage() {
         href="/"
         className="absolute top-4 left-4 lg:top-6 lg:left-6 z-50"
       >
-        <Button variant="ghost" className="gap-2 text-sm font-bold text-slate-600 lg:text-white/80 hover:text-slate-900 lg:hover:text-white bg-white/20 lg:bg-white/10 backdrop-blur-md border border-slate-200 lg:border-white/20 group transition-all rounded-full h-10 lg:h-11 px-4 lg:px-5">
+        <Button variant="ghost" className="gap-2 text-sm font-bold text-slate-600 lg:text-white/80 hover:text-slate-900 lg:hover:text-white bg-white/20 lg:bg-white/10 lg:hover:bg-white/20 backdrop-blur-md border border-slate-200 lg:border-white/20 group transition-all rounded-full h-10 lg:h-11 px-4 lg:px-5">
           <ChevronLeft className="size-5 group-hover:-translate-x-1 transition-transform" />
           <span className="hidden sm:inline">Quay về trang chủ</span>
         </Button>
