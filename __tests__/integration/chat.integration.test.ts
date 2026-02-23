@@ -13,7 +13,8 @@ describeOrSkip('Chat API Integration Test', () => {
 
     it('should respond to user message via Gemini AI', async () => {
         const body = {
-            messages: [{ role: 'user', content: 'Xin chào, bạn có thể giúp gì cho tôi?' }]
+            message: 'Xin chào, bạn có thể giúp gì cho tôi?',
+            history: []
         };
 
         const req = new Request('http://localhost:3000/api/chat', {

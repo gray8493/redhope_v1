@@ -474,6 +474,10 @@ export default function CampaignDetailsPage() {
     // Handle Manual Check-in
     const handleCheckInManual = async (regId: string) => {
         try {
+            // Gọi service check-in (cập nhật status + gán STT)
+            await campaignService.checkInRegistration(regId, campaignId);
+
+            // Refresh danh sách đăng ký
             const regs = await campaignService.getCampaignRegistrations(campaignId);
             setRegistrations(regs || []);
 

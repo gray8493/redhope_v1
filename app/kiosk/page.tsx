@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { QRCodeSVG } from 'qrcode.react';
 
 import { campaignService } from '@/services';
 import { format } from 'date-fns';
 import { vi } from "date-fns/locale";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default function KioskPage() {
     const searchParams = useSearchParams();
@@ -34,7 +37,7 @@ export default function KioskPage() {
     };
 
     // Data fetching
-    const fetchData = async () => {
+    const fetchData = React.useCallback(async () => {
         if (!campaignId) return;
         try {
             const camp = await campaignService.getById(campaignId);
@@ -48,28 +51,46 @@ export default function KioskPage() {
             console.error("Failed to load kiosk data", error);
             setLoading(false);
         }
-    };
+    }, [campaignId]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData();
         const interval = setInterval(fetchData, 10000); // 10s refresh
         return () => clearInterval(interval);
-    }, [campaignId]);
+    }, [fetchData]);
 
 
 
+
+    // --- QR Check-in URL ---
+    const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const checkinUrl = campaignId ? `${siteUrl}/checkin?campaignId=${campaignId}` : '';
 
     // --- Logic phân loại ---
     // 1. Đang khám (Screening)
     const screening = registrations.find(r => r.status?.toLowerCase() === 'screening' || r.status === 'In-Progress');
-    // 2. Đang lấy máu (Donating) - giả sử trạng thái In-Progress cũng có thể là donating nếu có thêm field, ở đây mình demo lấy người thứ 2 In-Progress hoặc người Completed gần nhất
+    // 2. Đang lấy máu (Donating)
     const donating = registrations.find(r => r.status?.toLowerCase() === 'donating' || (r.status === 'In-Progress' && r.id !== screening?.id));
 
-    // 3. Danh sách chờ (Checked-in / Booked)
+    // 3. Danh sách chờ - ưu tiên Checked-in (theo STT) rồi đến Booked
     const waitingList = registrations
         .filter(r => ['booked', 'checked-in'].includes(r.status?.toLowerCase()) || (r.status === 'In-Progress' && r.id !== screening?.id && r.id !== donating?.id))
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        .slice(0, 5);
+        .sort((a, b) => {
+            const aCheckedIn = a.status?.toLowerCase() === 'checked-in';
+            const bCheckedIn = b.status?.toLowerCase() === 'checked-in';
+            // Checked-in lên trước Booked
+            if (aCheckedIn && !bCheckedIn) return -1;
+            if (!aCheckedIn && bCheckedIn) return 1;
+            // Cùng checked-in → sort theo queue_number
+            if (aCheckedIn && bCheckedIn) return (a.queue_number || 0) - (b.queue_number || 0);
+            // Cùng booked → sort theo thời gian đăng ký
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        })
+        .slice(0, 8);
+
+    // Đếm số người đã check-in
+    const checkedInCount = registrations.filter(r => r.status?.toLowerCase() === 'checked-in').length;
 
     if (loading) return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-cyan-500 font-mono animate-pulse">HỆ THỐNG ĐANG KHỞI ĐỘNG...</div>;
     if (!campaign) return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-red-500 font-mono">KHÔNG TÌM THẤY CHIẾN DỊCH_</div>;
@@ -193,38 +214,70 @@ export default function KioskPage() {
 
             {/* Main Content */}
             <main className="flex-1 flex p-8 gap-8 overflow-hidden relative z-10">
-                {/* Left Panel: Check-in */}
+                {/* Left Panel: QR Check-in */}
                 <section className="flex-[1.2] glass-card p-10 flex flex-col items-center justify-center relative group">
-                    <div className="text-center mb-12">
+                    <div className="text-center mb-8">
                         <h2 className="text-5xl lg:text-6xl font-extrabold mb-3 tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60">
                             Check-in Tức Thì
                         </h2>
                         <div className="h-1 w-24 bg-gradient-to-r from-cyan-500 to-transparent mx-auto rounded-full mb-4"></div>
+                        <p className="text-sm text-white/40 tracking-wide">Quét mã QR bằng điện thoại để check-in</p>
                     </div>
 
                     <div className="relative">
                         <div className="absolute -inset-10 bg-cyan-500/10 blur-[60px] rounded-full group-hover:bg-cyan-500/20 transition-all duration-700"></div>
-                        <div className="glass-card p-12 flex flex-col items-center justify-center border-dashed border-cyan-500/40 border-2">
-                            <span className="material-symbols-outlined text-8xl neon-text-blue mb-6">assignment_ind</span>
-                            <p className="text-xl font-bold tracking-widest text-white/80 uppercase">Vui lòng đăng ký tại bàn hướng dẫn</p>
+                        <div className="glass-card p-8 flex flex-col items-center justify-center border-dashed border-cyan-500/40 border-2">
+                            {checkinUrl ? (
+                                <div className="bg-white p-6 rounded-2xl shadow-[0_0_40px_rgba(0,242,255,0.15)]">
+                                    <QRCodeSVG
+                                        value={checkinUrl}
+                                        size={280}
+                                        level="H"
+                                        includeMargin={false}
+                                        bgColor="#ffffff"
+                                        fgColor="#0f172a"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center gap-4">
+                                    <span className="material-symbols-outlined text-8xl neon-text-blue">qr_code_2</span>
+                                    <p className="text-sm text-white/40">Không tìm thấy chiến dịch</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
+                    {/* Stats row */}
+                    <div className="mt-10 flex items-center gap-8">
+                        <div className="flex items-center gap-3 glass-card px-5 py-3 rounded-full">
+                            <span className="material-symbols-outlined text-cyan-400 text-lg">how_to_reg</span>
+                            <span className="text-sm font-bold text-white/70">
+                                <span className="text-2xl neon-text-blue font-extrabold">{checkedInCount}</span>
+                                <span className="text-white/30 ml-1">đã check-in</span>
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3 glass-card px-5 py-3 rounded-full">
+                            <span className="material-symbols-outlined text-amber-400 text-lg">groups</span>
+                            <span className="text-sm font-bold text-white/70">
+                                <span className="text-2xl text-amber-400 font-extrabold">{registrations.length}</span>
+                                <span className="text-white/30 ml-1">đã đăng ký</span>
+                            </span>
+                        </div>
+                    </div>
 
-                    <div className="mt-16 grid grid-cols-3 gap-12 w-full max-w-xl">
+                    <div className="mt-10 grid grid-cols-3 gap-12 w-full max-w-xl">
                         {[
-                            { step: '01', label: 'Đăng ký' },
-                            { step: '02', label: 'Khám sàng lọc' },
-                            { step: '03', label: 'Hiến máu' }
+                            { step: '01', label: 'Quét mã QR', icon: 'qr_code_scanner' },
+                            { step: '02', label: 'Khám sàng lọc', icon: 'fact_check' },
+                            { step: '03', label: 'Hiến máu', icon: 'volunteer_activism' }
                         ].map((item, i) => (
                             <div key={i} className="flex flex-col items-center gap-4">
                                 <div className="step-circle group-hover:border-cyan-500/50 transition-colors">
-                                    <span className="text-cyan-400 font-bold">{item.step}</span>
+                                    <span className="material-symbols-outlined text-cyan-400 text-lg">{item.icon}</span>
                                 </div>
                                 <span className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-bold">{item.label}</span>
                             </div>
                         ))}
-
                     </div>
                 </section>
 
@@ -273,35 +326,42 @@ export default function KioskPage() {
                         </div>
 
                         <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-2">
-                            {waitingList.map((reg, index) => (
-                                <div
-                                    key={reg.id}
-                                    className="waitlist-item p-4 rounded-xl flex items-center justify-between border border-white/10 bg-white/5 relative overflow-hidden group hover:bg-white/10"
-                                    style={{
-                                        opacity: Math.max(0.2, 1 - index * 0.2),
-                                        transform: `scale(${Math.max(0.9, 1 - index * 0.02)})`
-                                    }}
-                                >
-                                    <div className="flex items-center gap-6 relative z-10">
-                                        <span className={`text-3xl font-extrabold tracking-tighter ${index === 0 ? 'text-white' : 'text-white/50'}`}>
-                                            #{reg.id.slice(0, 3)}
-                                        </span>
-                                        <div className="h-6 w-[1px] bg-white/10"></div>
-                                        <span className={`text-base font-medium ${index === 0 ? 'text-white' : 'text-white/60'}`}>
-                                            {reg.user?.full_name || 'Khách vãng lai'}
-                                        </span>
-                                    </div>
-                                    <div className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest relative z-10 ${index === 0
-                                        ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                                        : 'bg-white/5 text-white/20 border border-white/5'
-                                        }`}>
-                                        {index === 0 ? 'Sắp đến' : 'Đang chờ'}
-                                    </div>
+                            {waitingList.map((reg, index) => {
+                                const isCheckedIn = reg.status?.toLowerCase() === 'checked-in';
+                                return (
+                                    <div
+                                        key={reg.id}
+                                        className={`waitlist-item p-4 rounded-xl flex items-center justify-between border relative overflow-hidden group hover:bg-white/10 ${isCheckedIn
+                                            ? 'border-cyan-500/20 bg-cyan-500/5'
+                                            : 'border-white/10 bg-white/5'
+                                            }`}
+                                        style={{
+                                            opacity: Math.max(0.3, 1 - index * 0.1),
+                                            transform: `scale(${Math.max(0.95, 1 - index * 0.01)})`
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-6 relative z-10">
+                                            <span className={`text-3xl font-extrabold tracking-tighter ${isCheckedIn ? 'neon-text-blue' : (index === 0 ? 'text-white' : 'text-white/50')
+                                                }`}>
+                                                {isCheckedIn ? `#${String(reg.queue_number || '?').padStart(2, '0')}` : `--`}
+                                            </span>
+                                            <div className="h-6 w-[1px] bg-white/10"></div>
+                                            <span className={`text-base font-medium ${index === 0 ? 'text-white' : 'text-white/60'}`}>
+                                                {reg.user?.full_name || 'Khách vãng lai'}
+                                            </span>
+                                        </div>
+                                        <div className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest relative z-10 ${isCheckedIn
+                                            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                            : 'bg-white/5 text-white/20 border border-white/5'
+                                            }`}>
+                                            {isCheckedIn ? `STT #${reg.queue_number || '?'}` : 'Chưa check-in'}
+                                        </div>
 
-                                    {/* Scan effect on hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                                </div>
-                            ))}
+                                        {/* Scan effect on hover */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                                    </div>
+                                )
+                            })}
 
                             {waitingList.length === 0 && (
                                 <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2">
