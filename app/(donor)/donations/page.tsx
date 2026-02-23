@@ -145,7 +145,7 @@ export default function DonationsPage() {
     const livesSaved = totalUnits * 3;
 
     return (
-        <div className="flex h-screen w-full flex-row overflow-hidden bg-[#f8fafc] dark:bg-[#0f111a] font-sans text-[#1e1b4b] dark:text-white">
+        <div className="flex h-full w-full flex-row overflow-hidden bg-[#f8fafc] dark:bg-[#0f111a] font-sans text-[#1e1b4b] dark:text-white">
             <Sidebar />
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="" />

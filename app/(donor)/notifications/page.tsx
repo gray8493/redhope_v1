@@ -108,7 +108,7 @@ export default function NotificationsPage() {
         });
 
     return (
-        <div className="flex h-screen w-full flex-row overflow-hidden bg-slate-50 dark:bg-[#0f0a19]">
+        <div className="flex h-full w-full flex-row overflow-hidden bg-slate-50 dark:bg-[#0f0a19]">
             <Sidebar />
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="Thông báo" />
