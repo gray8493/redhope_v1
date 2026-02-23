@@ -214,10 +214,9 @@ export default function KioskPage() {
 
             {/* Main Content */}
             <main className="flex-1 flex p-8 gap-8 overflow-hidden relative z-10">
-                {/* Left Panel: QR Check-in */}
                 <section className="flex-[1.2] glass-card p-10 flex flex-col items-center justify-center relative group">
                     <div className="text-center mb-8">
-                        <h2 className="text-5xl lg:text-6xl font-extrabold mb-3 tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60">
+                        <h2 className="text-5xl lg:text-6xl font-extrabold mb-3 tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60" style={{ color: 'white' }}>
                             Check-in Tức Thì
                         </h2>
                         <div className="h-1 w-24 bg-gradient-to-r from-cyan-500 to-transparent mx-auto rounded-full mb-4"></div>
@@ -228,14 +227,24 @@ export default function KioskPage() {
                         <div className="absolute -inset-10 bg-cyan-500/10 blur-[60px] rounded-full group-hover:bg-cyan-500/20 transition-all duration-700"></div>
                         <div className="glass-card p-8 flex flex-col items-center justify-center border-dashed border-cyan-500/40 border-2">
                             {checkinUrl ? (
-                                <div className="bg-white p-6 rounded-2xl shadow-[0_0_40px_rgba(0,242,255,0.15)]">
+                                <div
+                                    className="p-4 rounded-xl shadow-[0_0_40px_rgba(0,242,255,0.15)] overflow-hidden flex items-center justify-center"
+                                    style={{
+                                        backgroundColor: '#ffffff',
+                                        color: '#000000',
+                                        minWidth: '300px',
+                                        minHeight: '300px',
+                                        colorScheme: 'light',
+                                        forcedColorAdjust: 'none'
+                                    }}
+                                >
                                     <QRCodeSVG
                                         value={checkinUrl}
                                         size={280}
                                         level="H"
                                         includeMargin={false}
                                         bgColor="#ffffff"
-                                        fgColor="#0f172a"
+                                        fgColor="#000000"
                                     />
                                 </div>
                             ) : (
