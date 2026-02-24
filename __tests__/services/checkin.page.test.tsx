@@ -1,14 +1,13 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CheckinPage from '@/app/checkin/page';
 
 // Mock modules
-const mockPush = jest.fn();
 const mockSearchParams = new URLSearchParams();
 
 jest.mock('next/navigation', () => ({
-    useRouter: () => ({ push: mockPush, replace: jest.fn(), prefetch: jest.fn(), back: jest.fn() }),
+    useRouter: () => ({ push: jest.fn(), replace: jest.fn(), prefetch: jest.fn(), back: jest.fn() }),
     useSearchParams: () => mockSearchParams,
 }));
 
@@ -16,18 +15,6 @@ jest.mock('next/link', () => ({
     __esModule: true,
     default: ({ children, href, ...props }: any) =>
         React.createElement('a', { href, ...props }, children),
-}));
-
-// Mock AuthContext
-const mockUser = { id: 'donor-123', role: 'donor', full_name: 'Test User' };
-let mockAuthLoading = false;
-let mockAuthUser: any = null;
-
-jest.mock('@/context/AuthContext', () => ({
-    useAuth: () => ({
-        user: mockAuthUser,
-        loading: mockAuthLoading,
-    }),
 }));
 
 // Mock campaignService
@@ -43,37 +30,21 @@ jest.mock('@/services', () => ({
     },
 }));
 
+// Helper: fill the identifier input and submit
+const submitIdentifier = (value: string) => {
+    const input = screen.getByPlaceholderText(/0912345678/);
+    fireEvent.change(input, { target: { value } });
+    const btn = screen.getByText('Check-in ngay');
+    fireEvent.click(btn);
+};
+
 describe('CheckinPage', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        mockAuthUser = null;
-        mockAuthLoading = false;
-        // Reset search params
         mockSearchParams.delete('campaignId');
     });
 
-    test('hiển thị thông báo đăng nhập khi chưa login', async () => {
-        mockSearchParams.set('campaignId', 'campaign-1');
-        mockAuthUser = null;
-
-        render(React.createElement(CheckinPage));
-
-        await waitFor(() => {
-            expect(screen.getByText('Vui lòng đăng nhập')).toBeInTheDocument();
-        });
-
-        // Kiểm tra link đăng nhập
-        const loginLink = screen.getByText('Đăng nhập ngay');
-        expect(loginLink).toBeInTheDocument();
-        expect(loginLink.closest('a')).toHaveAttribute('href',
-            expect.stringContaining('/auth/login')
-        );
-    });
-
     test('hiển thị lỗi khi không có campaignId', async () => {
-        mockAuthUser = mockUser;
-        // Không set campaignId
-
         render(React.createElement(CheckinPage));
 
         await waitFor(() => {
@@ -82,8 +53,7 @@ describe('CheckinPage', () => {
     });
 
     test('hiển thị lỗi khi campaign không tồn tại', async () => {
-        mockAuthUser = mockUser;
-        mockSearchParams.set('campaignId', 'nonexistent-campaign');
+        mockSearchParams.set('campaignId', 'nonexistent');
         mockGetById.mockResolvedValue(null);
 
         render(React.createElement(CheckinPage));
@@ -94,7 +64,6 @@ describe('CheckinPage', () => {
     });
 
     test('hiển thị lỗi khi campaign không active', async () => {
-        mockAuthUser = mockUser;
         mockSearchParams.set('campaignId', 'campaign-ended');
         mockGetById.mockResolvedValue({
             id: 'campaign-ended',
@@ -109,28 +78,48 @@ describe('CheckinPage', () => {
         });
     });
 
-    test('hiển thị lỗi khi donor chưa đăng ký chiến dịch', async () => {
-        mockAuthUser = mockUser;
+    test('hiển thị form nhập SĐT/Email khi campaign active', async () => {
         mockSearchParams.set('campaignId', 'campaign-1');
         mockGetById.mockResolvedValue({
             id: 'campaign-1',
             name: 'Hiến Máu Xuân',
             status: 'active',
         });
-        // Trả về registrations rỗng - donor chưa đăng ký
-        mockGetCampaignRegistrations.mockResolvedValue([]);
 
         render(React.createElement(CheckinPage));
 
         await waitFor(() => {
-            expect(screen.getByText('Chưa đăng ký')).toBeInTheDocument();
+            expect(screen.getByText('Check-in Hiến Máu')).toBeInTheDocument();
         });
 
-        expect(screen.getByText(/Vui lòng đăng ký trước khi check-in/)).toBeInTheDocument();
+        expect(screen.getByText('Hiến Máu Xuân')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText(/0912345678/)).toBeInTheDocument();
+        expect(screen.getByText('Check-in ngay')).toBeInTheDocument();
     });
 
-    test('hiển thị thông báo đã check-in khi quét lại', async () => {
-        mockAuthUser = mockUser;
+    test('hiển thị lỗi khi submit form rỗng', async () => {
+        mockSearchParams.set('campaignId', 'campaign-1');
+        mockGetById.mockResolvedValue({
+            id: 'campaign-1',
+            name: 'Hiến Máu Xuân',
+            status: 'active',
+        });
+
+        render(React.createElement(CheckinPage));
+
+        await waitFor(() => {
+            expect(screen.getByText('Check-in ngay')).toBeInTheDocument();
+        });
+
+        // Submit empty
+        fireEvent.click(screen.getByText('Check-in ngay'));
+
+        await waitFor(() => {
+            expect(screen.getByText(/Vui lòng nhập số điện thoại hoặc email/)).toBeInTheDocument();
+        });
+    });
+
+    test('hiển thị lỗi khi không tìm thấy đăng ký với SĐT/Email', async () => {
         mockSearchParams.set('campaignId', 'campaign-1');
         mockGetById.mockResolvedValue({
             id: 'campaign-1',
@@ -140,26 +129,26 @@ describe('CheckinPage', () => {
         mockGetCampaignRegistrations.mockResolvedValue([
             {
                 id: 'apt-1',
-                user_id: 'donor-123', // same as mockUser.id
-                campaign_id: 'campaign-1',
-                status: 'Checked-in',
-                queue_number: 3,
-                check_in_time: '2026-02-23T09:00:00Z',
+                user_id: 'donor-123',
+                user: { phone: '0912345678', email: 'donor@test.com' },
+                status: 'Booked',
             },
         ]);
 
         render(React.createElement(CheckinPage));
 
         await waitFor(() => {
-            expect(screen.getByText('Bạn đã check-in rồi!')).toBeInTheDocument();
+            expect(screen.getByText('Check-in ngay')).toBeInTheDocument();
         });
 
-        // Hiển thị STT
-        expect(screen.getByText('#03')).toBeInTheDocument();
+        submitIdentifier('0999999999');
+
+        await waitFor(() => {
+            expect(screen.getByText(/Không tìm thấy đăng ký nào/)).toBeInTheDocument();
+        });
     });
 
-    test('check-in thành công cho donor đã đăng ký', async () => {
-        mockAuthUser = mockUser;
+    test('check-in thành công bằng SĐT', async () => {
         mockSearchParams.set('campaignId', 'campaign-1');
         mockGetById.mockResolvedValue({
             id: 'campaign-1',
@@ -172,10 +161,10 @@ describe('CheckinPage', () => {
         mockGetCampaignRegistrations.mockResolvedValue([
             {
                 id: 'apt-1',
-                user_id: 'donor-123', // same as mockUser.id
+                user_id: 'donor-123',
+                user: { phone: '0912345678', email: 'donor@test.com' },
                 campaign_id: 'campaign-1',
                 status: 'Booked',
-                queue_number: null,
             },
         ]);
         mockCheckInRegistration.mockResolvedValue({
@@ -187,23 +176,22 @@ describe('CheckinPage', () => {
 
         render(React.createElement(CheckinPage));
 
-        // Chờ check-in thành công
+        await waitFor(() => {
+            expect(screen.getByText('Check-in ngay')).toBeInTheDocument();
+        });
+
+        submitIdentifier('0912345678');
+
         await waitFor(() => {
             expect(screen.getByText('Check-in thành công!')).toBeInTheDocument();
         });
 
-        // Hiển thị STT
         expect(screen.getByText('#05')).toBeInTheDocument();
-
-        // Hiển thị bước tiếp theo
         expect(screen.getByText(/phòng khám sàng lọc/)).toBeInTheDocument();
-
-        // Verify checkInRegistration được gọi đúng tham số
         expect(mockCheckInRegistration).toHaveBeenCalledWith('apt-1', 'campaign-1');
     });
 
-    test('hiển thị lỗi khi appointment đã bị hủy', async () => {
-        mockAuthUser = mockUser;
+    test('check-in thành công bằng email', async () => {
         mockSearchParams.set('campaignId', 'campaign-1');
         mockGetById.mockResolvedValue({
             id: 'campaign-1',
@@ -214,6 +202,79 @@ describe('CheckinPage', () => {
             {
                 id: 'apt-1',
                 user_id: 'donor-123',
+                user: { phone: '0912345678', email: 'donor@test.com' },
+                campaign_id: 'campaign-1',
+                status: 'Booked',
+            },
+        ]);
+        mockCheckInRegistration.mockResolvedValue({
+            id: 'apt-1',
+            status: 'Checked-in',
+            queue_number: 1,
+            check_in_time: '2026-02-23T09:15:00Z',
+        });
+
+        render(React.createElement(CheckinPage));
+
+        await waitFor(() => {
+            expect(screen.getByText('Check-in ngay')).toBeInTheDocument();
+        });
+
+        submitIdentifier('donor@test.com');
+
+        await waitFor(() => {
+            expect(screen.getByText('Check-in thành công!')).toBeInTheDocument();
+        });
+
+        expect(mockCheckInRegistration).toHaveBeenCalledWith('apt-1', 'campaign-1');
+    });
+
+    test('hiển thị thông báo đã check-in khi quét lại', async () => {
+        mockSearchParams.set('campaignId', 'campaign-1');
+        mockGetById.mockResolvedValue({
+            id: 'campaign-1',
+            name: 'Hiến Máu Xuân',
+            status: 'active',
+        });
+        mockGetCampaignRegistrations.mockResolvedValue([
+            {
+                id: 'apt-1',
+                user_id: 'donor-123',
+                user: { phone: '0912345678', email: 'donor@test.com' },
+                campaign_id: 'campaign-1',
+                status: 'Checked-in',
+                queue_number: 3,
+                check_in_time: '2026-02-23T09:00:00Z',
+            },
+        ]);
+
+        render(React.createElement(CheckinPage));
+
+        await waitFor(() => {
+            expect(screen.getByText('Check-in ngay')).toBeInTheDocument();
+        });
+
+        submitIdentifier('0912345678');
+
+        await waitFor(() => {
+            expect(screen.getByText('Đã check-in rồi!')).toBeInTheDocument();
+        });
+
+        expect(screen.getByText('#03')).toBeInTheDocument();
+    });
+
+    test('hiển thị lỗi khi appointment đã bị hủy', async () => {
+        mockSearchParams.set('campaignId', 'campaign-1');
+        mockGetById.mockResolvedValue({
+            id: 'campaign-1',
+            name: 'Hiến Máu Xuân',
+            status: 'active',
+        });
+        mockGetCampaignRegistrations.mockResolvedValue([
+            {
+                id: 'apt-1',
+                user_id: 'donor-123',
+                user: { phone: '0912345678', email: 'donor@test.com' },
                 campaign_id: 'campaign-1',
                 status: 'Cancelled',
             },
@@ -222,12 +283,17 @@ describe('CheckinPage', () => {
         render(React.createElement(CheckinPage));
 
         await waitFor(() => {
+            expect(screen.getByText('Check-in ngay')).toBeInTheDocument();
+        });
+
+        submitIdentifier('0912345678');
+
+        await waitFor(() => {
             expect(screen.getByText('Đã hủy')).toBeInTheDocument();
         });
     });
 
     test('hiển thị thông báo khi đã hoàn thành hiến máu', async () => {
-        mockAuthUser = mockUser;
         mockSearchParams.set('campaignId', 'campaign-1');
         mockGetById.mockResolvedValue({
             id: 'campaign-1',
@@ -238,6 +304,7 @@ describe('CheckinPage', () => {
             {
                 id: 'apt-1',
                 user_id: 'donor-123',
+                user: { phone: '0912345678', email: 'donor@test.com' },
                 campaign_id: 'campaign-1',
                 status: 'Completed',
             },
@@ -246,14 +313,19 @@ describe('CheckinPage', () => {
         render(React.createElement(CheckinPage));
 
         await waitFor(() => {
+            expect(screen.getByText('Check-in ngay')).toBeInTheDocument();
+        });
+
+        submitIdentifier('0912345678');
+
+        await waitFor(() => {
             expect(screen.getByText('Đã hoàn thành')).toBeInTheDocument();
         });
 
         expect(screen.getByText(/Cảm ơn bạn/)).toBeInTheDocument();
     });
 
-    test('hiển thị lỗi khi service check-in throw error', async () => {
-        mockAuthUser = mockUser;
+    test('hiển thị lỗi khi service throw error', async () => {
         mockSearchParams.set('campaignId', 'campaign-1');
         mockGetById.mockResolvedValue({
             id: 'campaign-1',
@@ -264,6 +336,7 @@ describe('CheckinPage', () => {
             {
                 id: 'apt-1',
                 user_id: 'donor-123',
+                user: { phone: '0912345678', email: 'donor@test.com' },
                 campaign_id: 'campaign-1',
                 status: 'Booked',
             },
@@ -273,37 +346,15 @@ describe('CheckinPage', () => {
         render(React.createElement(CheckinPage));
 
         await waitFor(() => {
+            expect(screen.getByText('Check-in ngay')).toBeInTheDocument();
+        });
+
+        submitIdentifier('0912345678');
+
+        await waitFor(() => {
             expect(screen.getByText('Lỗi')).toBeInTheDocument();
         });
 
         expect(screen.getByText('Database connection failed')).toBeInTheDocument();
-    });
-
-    test('không gọi checkIn cho người dùng khác (chỉ user đã login)', async () => {
-        mockAuthUser = mockUser; // donor-123
-        mockSearchParams.set('campaignId', 'campaign-1');
-        mockGetById.mockResolvedValue({
-            id: 'campaign-1',
-            name: 'Hiến Máu Xuân',
-            status: 'active',
-        });
-        // Chỉ có donor khác đăng ký, không có donor-123
-        mockGetCampaignRegistrations.mockResolvedValue([
-            {
-                id: 'apt-other',
-                user_id: 'other-donor', // Người khác
-                campaign_id: 'campaign-1',
-                status: 'Booked',
-            },
-        ]);
-
-        render(React.createElement(CheckinPage));
-
-        await waitFor(() => {
-            expect(screen.getByText('Chưa đăng ký')).toBeInTheDocument();
-        });
-
-        // checkInRegistration KHÔNG được gọi
-        expect(mockCheckInRegistration).not.toHaveBeenCalled();
     });
 });

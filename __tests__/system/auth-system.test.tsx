@@ -107,7 +107,7 @@ describe('Hệ thống Xác thực (Authentication System)', () => {
             fireEvent.click(hospitalBtn);
 
             // Điền thông tin
-            fireEvent.change(screen.getByPlaceholderText(/Nguyễn Văn A/i), { target: { value: 'Test Hospital' } });
+            fireEvent.change(screen.getByPlaceholderText(/Tên bệnh viện của bạn/i), { target: { value: 'Test Hospital' } });
             fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), { target: { value: 'hospital@test.com' } });
 
             const passwordInputs = screen.getAllByPlaceholderText(/••••••••/i);

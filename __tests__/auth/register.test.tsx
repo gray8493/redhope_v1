@@ -135,7 +135,7 @@ describe('RegisterPage', () => {
         // Select hospital role
         fireEvent.click(screen.getByText(/Bệnh viện/i));
 
-        fireEvent.change(screen.getByPlaceholderText(/Nguyễn Văn A/i), {
+        fireEvent.change(screen.getByPlaceholderText(/Tên bệnh viện của bạn/i), {
             target: { value: 'Test Hospital' },
         });
         fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), {

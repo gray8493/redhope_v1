@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import { campaignService } from '@/services';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -11,8 +10,9 @@ import Link from 'next/link';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 type CheckinState =
-    | 'loading'
-    | 'not_logged_in'
+    | 'loading_campaign'
+    | 'identify'
+    | 'checking_in'
     | 'no_campaign'
     | 'not_registered'
     | 'already_checked_in'
@@ -24,32 +24,23 @@ type CheckinState =
 
 export default function CheckinPage() {
     const searchParams = useSearchParams();
-    const { user, loading: authLoading } = useAuth();
     const campaignId = searchParams.get('campaignId');
 
-    const [state, setState] = useState<CheckinState>('loading');
+    const [state, setState] = useState<CheckinState>('loading_campaign');
     const [campaign, setCampaign] = useState<any>(null);
     const [appointment, setAppointment] = useState<any>(null);
     const [errorMessage, setErrorMessage] = useState('');
-    const hasRun = useRef(false);
+    const [identifier, setIdentifier] = useState('');
+    const [identifierError, setIdentifierError] = useState('');
 
-    const performCheckin = useCallback(async () => {
-        if (authLoading) return;
-
-        // 1. Check login
-        if (!user) {
-            setState('not_logged_in');
-            return;
-        }
-
-        // 2. Check campaignId
+    // Step 1: Load campaign info
+    const loadCampaign = useCallback(async () => {
         if (!campaignId) {
             setState('no_campaign');
             return;
         }
 
         try {
-            // 3. Fetch campaign info
             const camp = await campaignService.getById(campaignId);
             if (!camp) {
                 setState('no_campaign');
@@ -57,24 +48,59 @@ export default function CheckinPage() {
             }
             setCampaign(camp);
 
-            // 4. Check campaign status
             if (camp.status !== 'active') {
                 setState('campaign_not_active');
                 return;
             }
 
-            // 5. Find user's appointment in this campaign
+            // Campaign OK → show identify form
+            setState('identify');
+        } catch (err: any) {
+            console.error('Load campaign error:', err);
+            setErrorMessage('Không thể tải thông tin chiến dịch.');
+            setState('error');
+        }
+    }, [campaignId]);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadCampaign();
+    }, [loadCampaign]);
+
+    // Step 2: Identify & check-in
+    const handleCheckin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIdentifierError('');
+
+        const trimmed = identifier.trim();
+        if (!trimmed) {
+            setIdentifierError('Vui lòng nhập số điện thoại hoặc email.');
+            return;
+        }
+
+        if (!campaignId) return;
+
+        setState('checking_in');
+
+        try {
+            // Fetch all registrations for this campaign
             const registrations = await campaignService.getCampaignRegistrations(campaignId);
-            const userAppointment = registrations?.find(
-                (r: any) => r.user_id === user.id
-            );
+
+            // Find matching user by phone or email
+            const normalizedInput = trimmed.toLowerCase();
+            const userAppointment = registrations?.find((r: any) => {
+                const phone = r.user?.phone?.trim() || '';
+                const email = r.user?.email?.trim().toLowerCase() || '';
+                return phone === trimmed || email === normalizedInput;
+            });
 
             if (!userAppointment) {
-                setState('not_registered');
+                setState('identify');
+                setIdentifierError('Không tìm thấy đăng ký nào với thông tin này. Vui lòng kiểm tra lại SĐT hoặc email.');
                 return;
             }
 
-            // 6. Check appointment status
+            // Check appointment status
             const status = userAppointment.status?.toLowerCase();
 
             if (status === 'checked-in') {
@@ -99,7 +125,7 @@ export default function CheckinPage() {
                 return;
             }
 
-            // 7. Perform check-in!
+            // Perform check-in!
             const result = await campaignService.checkInRegistration(
                 userAppointment.id,
                 campaignId
@@ -113,31 +139,32 @@ export default function CheckinPage() {
             setErrorMessage(err.message || 'Đã xảy ra lỗi khi check-in');
             setState('error');
         }
-    }, [user, campaignId, authLoading]);
+    };
 
-    useEffect(() => {
-        if (!hasRun.current) {
-            hasRun.current = true;
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            performCheckin();
-        }
-    }, [performCheckin]);
-
-    // --- Render based on state ---
+    // --- Render ---
     return (
         <>
             {/* eslint-disable-next-line @next/next/no-page-custom-font */}
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=optional" />
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
                 <div className="w-full max-w-md">
-                    {state === 'loading' && <LoadingCard />}
-                    {state === 'not_logged_in' && <NotLoggedInCard campaignId={campaignId} />}
+                    {state === 'loading_campaign' && <LoadingCard message="Đang tải chiến dịch..." />}
+                    {state === 'checking_in' && <LoadingCard message="Đang xử lý check-in..." />}
+                    {state === 'identify' && (
+                        <IdentifyCard
+                            campaign={campaign}
+                            identifier={identifier}
+                            setIdentifier={setIdentifier}
+                            identifierError={identifierError}
+                            onSubmit={handleCheckin}
+                        />
+                    )}
                     {state === 'no_campaign' && <ErrorCard icon="error" title="Không tìm thấy chiến dịch" message="Mã QR không hợp lệ hoặc chiến dịch không tồn tại." />}
                     {state === 'campaign_not_active' && <ErrorCard icon="event_busy" title="Chiến dịch chưa hoạt động" message={`Chiến dịch "${campaign?.name}" hiện không hoạt động.`} />}
-                    {state === 'not_registered' && <ErrorCard icon="person_off" title="Chưa đăng ký" message={`Bạn chưa đăng ký chiến dịch "${campaign?.name}". Vui lòng đăng ký trước khi check-in.`} />}
+                    {state === 'not_registered' && <ErrorCard icon="person_off" title="Chưa đăng ký" message={`Không tìm thấy đăng ký cho chiến dịch "${campaign?.name}".`} />}
                     {state === 'already_checked_in' && <AlreadyCheckedInCard appointment={appointment} campaign={campaign} />}
                     {state === 'already_completed' && <ErrorCard icon="check_circle" title="Đã hoàn thành" message="Bạn đã hoàn thành hiến máu cho chiến dịch này. Cảm ơn bạn!" color="emerald" />}
-                    {state === 'already_cancelled' && <ErrorCard icon="cancel" title="Đã hủy" message="Đăng ký của bạn cho chiến dịch này đã bị hủy." />}
+                    {state === 'already_cancelled' && <ErrorCard icon="cancel" title="Đã hủy" message="Đăng ký cho chiến dịch này đã bị hủy." />}
                     {state === 'success' && <SuccessCard appointment={appointment} campaign={campaign} />}
                     {state === 'error' && <ErrorCard icon="warning" title="Lỗi" message={errorMessage} />}
                 </div>
@@ -148,42 +175,105 @@ export default function CheckinPage() {
 
 // --- Sub-components ---
 
-function LoadingCard() {
+function LoadingCard({ message }: { message: string }) {
     return (
         <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl p-10 flex flex-col items-center gap-6 animate-pulse">
             <div className="w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                 <span className="material-symbols-outlined text-4xl text-blue-500 animate-spin">progress_activity</span>
             </div>
-            <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">Đang xử lý check-in...</p>
+            <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">{message}</p>
         </div>
     );
 }
 
-function NotLoggedInCard({ campaignId }: { campaignId: string | null }) {
+function IdentifyCard({
+    campaign,
+    identifier,
+    setIdentifier,
+    identifierError,
+    onSubmit,
+}: {
+    campaign: any;
+    identifier: string;
+    setIdentifier: (v: string) => void;
+    identifierError: string;
+    onSubmit: (e: React.FormEvent) => void;
+}) {
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl p-10 flex flex-col items-center gap-6 text-center">
-            <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <span className="material-symbols-outlined text-4xl text-amber-500">login</span>
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-center text-white relative overflow-hidden">
+                <div className="absolute inset-0">
+                    <div className="absolute w-32 h-32 bg-white/10 rounded-full -top-8 -right-8 animate-pulse"></div>
+                    <div className="absolute w-20 h-20 bg-white/5 rounded-full bottom-2 left-4 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                </div>
+                <div className="relative z-10">
+                    <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3 backdrop-blur-sm">
+                        <span className="material-symbols-outlined text-3xl">how_to_reg</span>
+                    </div>
+                    <h2 className="text-xl font-extrabold tracking-tight">Check-in Hiến Máu</h2>
+                    <p className="text-sm text-white/70 mt-1">{campaign?.name}</p>
+                </div>
             </div>
-            <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Vui lòng đăng nhập</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Bạn cần đăng nhập để check-in chiến dịch hiến máu.</p>
-            </div>
-            <Link
-                href={`/auth/login?redirect=/checkin?campaignId=${campaignId}`}
-                className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold rounded-2xl text-center hover:from-blue-700 hover:to-blue-600 transition-all shadow-lg shadow-blue-500/25"
-            >
-                Đăng nhập ngay
-            </Link>
+
+            {/* Form */}
+            <form onSubmit={onSubmit} className="p-6 space-y-5">
+                <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        Nhập số điện thoại hoặc email đã đăng ký
+                    </label>
+                    <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
+                            person_search
+                        </span>
+                        <input
+                            type="text"
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
+                            placeholder="VD: 0912345678 hoặc email@gmail.com"
+                            className={`w-full pl-11 pr-4 py-3.5 rounded-xl border-2 text-sm transition-all outline-none
+                                ${identifierError
+                                    ? 'border-red-400 bg-red-50 dark:bg-red-900/10 dark:border-red-500'
+                                    : 'border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'
+                                }
+                                text-slate-900 dark:text-white placeholder:text-slate-400`}
+                            autoFocus
+                            autoComplete="off"
+                        />
+                    </div>
+                    {identifierError && (
+                        <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-sm">error</span>
+                            {identifierError}
+                        </p>
+                    )}
+                </div>
+
+                <button
+                    type="submit"
+                    className="w-full py-3.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl text-center hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                    <span className="material-symbols-outlined text-xl">check_circle</span>
+                    Check-in ngay
+                </button>
+
+                {/* Info */}
+                <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-800/50">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 flex items-start gap-2">
+                        <span className="material-symbols-outlined text-sm mt-0.5">info</span>
+                        Sử dụng SĐT hoặc email bạn đã dùng khi đăng ký chiến dịch hiến máu này.
+                    </p>
+                </div>
+            </form>
         </div>
     );
 }
 
 function ErrorCard({ icon, title, message, color = 'red' }: { icon: string; title: string; message: string; color?: string }) {
-    const colorMap: Record<string, { bg: string; text: string; iconColor: string }> = {
-        red: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-500', iconColor: 'text-red-500' },
-        amber: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-500', iconColor: 'text-amber-500' },
-        emerald: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-500', iconColor: 'text-emerald-500' },
+    const colorMap: Record<string, { bg: string; iconColor: string }> = {
+        red: { bg: 'bg-red-100 dark:bg-red-900/30', iconColor: 'text-red-500' },
+        amber: { bg: 'bg-amber-100 dark:bg-amber-900/30', iconColor: 'text-amber-500' },
+        emerald: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', iconColor: 'text-emerald-500' },
     };
     const c = colorMap[color] || colorMap.red;
 
@@ -197,7 +287,7 @@ function ErrorCard({ icon, title, message, color = 'red' }: { icon: string; titl
                 <p className="text-sm text-slate-500 dark:text-slate-400">{message}</p>
             </div>
             <Link
-                href="/dashboard"
+                href="/"
                 className="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline"
             >
                 ← Quay về trang chủ
@@ -213,7 +303,7 @@ function AlreadyCheckedInCard({ appointment, campaign }: { appointment: any; cam
                 <span className="material-symbols-outlined text-4xl text-purple-500">how_to_reg</span>
             </div>
             <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Bạn đã check-in rồi!</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Đã check-in rồi!</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">Chiến dịch: {campaign?.name}</p>
             </div>
             <div className="w-full bg-purple-50 dark:bg-purple-900/20 rounded-2xl p-6 border border-purple-100 dark:border-purple-800">
@@ -227,12 +317,6 @@ function AlreadyCheckedInCard({ appointment, campaign }: { appointment: any; cam
                     </p>
                 )}
             </div>
-            <Link
-                href="/dashboard"
-                className="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline"
-            >
-                ← Quay về trang chủ
-            </Link>
         </div>
     );
 }
@@ -293,13 +377,6 @@ function SuccessCard({ appointment, campaign }: { appointment: any; campaign: an
                     <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-2">📋 Bước tiếp theo</p>
                     <p className="text-xs text-blue-500 dark:text-blue-400/70">Vui lòng chờ gọi số thứ tự và đến phòng khám sàng lọc.</p>
                 </div>
-
-                <Link
-                    href="/dashboard"
-                    className="w-full py-3 px-6 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-2xl text-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-all text-sm"
-                >
-                    Quay về trang chủ
-                </Link>
             </div>
         </div>
     );
