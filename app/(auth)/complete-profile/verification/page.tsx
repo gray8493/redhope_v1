@@ -284,8 +284,7 @@ export default function VerificationProfilePage() {
                                             type="button"
                                             className="flex items-center gap-2 px-6 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 font-semibold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                                         >
-                                            <ArrowLeft className="w-4 h-4" />
-                                            Quay lại
+                                            ← Quay lại
                                         </button>
                                     </Link>
 
@@ -295,7 +294,6 @@ export default function VerificationProfilePage() {
                                         className="w-full md:w-auto flex items-center justify-center gap-2 px-8 py-3.5 md:py-3 rounded-lg bg-[#0065FF] hover:bg-[#0065FF]/90 text-white font-bold text-sm shadow-lg shadow-[#0065FF]/30 transition-transform active:scale-95 disabled:opacity-50"
                                     >
                                         {submitting ? "Đang xử lý..." : "Hoàn tất đăng ký"}
-                                        <CheckCircle className="w-4 h-4" />
                                     </button>
                                 </div>
 

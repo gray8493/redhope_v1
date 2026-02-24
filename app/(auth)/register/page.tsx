@@ -142,7 +142,7 @@ export default function RegisterPage() {
         className="absolute top-4 left-4 lg:top-6 lg:left-6 z-50"
       >
         <Button variant="ghost" className="gap-2 text-sm font-bold text-slate-600 lg:text-white/80 hover:text-slate-900 lg:hover:text-white bg-white/20 lg:bg-white/10 lg:hover:bg-white/20 backdrop-blur-md border border-slate-200 lg:border-white/20 group transition-all rounded-full h-10 lg:h-11 px-4 lg:px-5">
-          <ChevronLeft className="size-5 group-hover:-translate-x-1 transition-transform" />
+          ←
           <span className="hidden sm:inline">Quay về trang chủ</span>
         </Button>
       </Link>
@@ -315,7 +315,7 @@ export default function RegisterPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="ml-auto text-gray-400 hover:text-[#0065FF] hover:bg-transparent"
                   >
-                    {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                    {showPassword ? "Ẩn" : "Hiện"}
                   </Button>
                 </div>
 
@@ -324,7 +324,7 @@ export default function RegisterPage() {
                   disabled={loading}
                   className="w-full py-7 text-base font-extrabold rounded-2xl bg-[#0065FF] hover:bg-[#0052cc] text-white shadow-xl shadow-blue-100 transition-all transform active:scale-[0.98] disabled:opacity-50"
                 >
-                  {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Đăng ký ngay"}
+                  {loading ? "Đang xử lý..." : "Đăng ký ngay"}
                 </Button>
               </form>
 

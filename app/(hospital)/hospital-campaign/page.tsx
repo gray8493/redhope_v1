@@ -623,8 +623,7 @@ export default function CampaignManagementPage() {
 
                                             <div className="hidden sm:block ml-8 pr-4">
                                                 <div className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-100 dark:border-slate-800 bg-blue-50/50 dark:bg-slate-800/50 ${brandColor} text-[9px] font-black uppercase tracking-wider opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500`}>
-                                                    Chi tiết
-                                                    <ArrowRight className="w-3 h-3" />
+                                                    Chi tiết →
                                                 </div>
                                             </div>
                                         </div>
@@ -693,8 +692,7 @@ export default function CampaignManagementPage() {
                                                 <Users className="w-3 h-3" /> {completed}/{registered}
                                             </span>
                                             <div className={`flex items-center gap-1 text-[11px] font-black ${brandColor} group-hover:gap-2.5 transition-all duration-300 uppercase tracking-tight`}>
-                                                Chi tiết
-                                                <ArrowRight className="w-3.5 h-3.5" />
+                                                Chi tiết →
                                             </div>
                                         </div>
                                     </div>
@@ -784,7 +782,6 @@ export default function CampaignManagementPage() {
                                                 htmlFor="edit-campaign-image"
                                                 className="inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-all"
                                             >
-                                                <Edit2 className="w-3 h-3 mr-2" />
                                                 Thay đổi ảnh
                                             </label>
                                             <p className="text-[10px] text-slate-400 mt-1 max-w-xs">Hỗ trợ PNG, JPG (Max 5MB).</p>
@@ -934,12 +931,7 @@ export default function CampaignManagementPage() {
                                 disabled={isSubmitting}
                                 className="px-6 h-10 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-full text-xs font-extrabold shadow-lg shadow-blue-200 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                             >
-                                {isSubmitting ? (
-                                    <Clock className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                    <Check className="w-3.5 h-3.5" />
-                                )}
-                                LƯU THAY ĐỔI
+                                {isSubmitting ? 'Đang lưu...' : 'LƯU THAY ĐỔI'}
                             </button>
                         </div>
                     </div>

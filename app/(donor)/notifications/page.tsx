@@ -109,8 +109,8 @@ export default function NotificationsPage() {
 
                 <div className="max-w-4xl mx-auto p-4 sm:p-5 md:p-6 space-y-4 md:space-y-6">
                     <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
-                        <Link href="/dashboard" className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
-                            <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-slate-700 dark:text-slate-300" />
+                        <Link href="/dashboard" className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-700 dark:text-slate-300 font-bold">
+                            ←
                         </Link>
                         <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <Bell className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />

@@ -204,7 +204,6 @@ const SystemSettingsPage = () => {
                         disabled={saving}
                         className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-[#1f1f1f] transition-colors flex items-center gap-2 disabled:opacity-50"
                     >
-                        <RefreshCw className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
                         Khôi phục mặc định
                     </button>
                     <button
@@ -212,8 +211,7 @@ const SystemSettingsPage = () => {
                         disabled={saving}
                         className="px-6 py-2 bg-[#0065FF] text-white text-sm font-bold rounded-lg hover:bg-opacity-90 shadow-sm transition-all flex items-center gap-2 disabled:opacity-70"
                     >
-                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                        Lưu thay đổi
+                        {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
                     </button>
                 </div>
             </div>

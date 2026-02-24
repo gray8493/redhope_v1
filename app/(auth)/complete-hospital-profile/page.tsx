@@ -172,12 +172,9 @@ export default function CompleteHospitalProfilePage() {
                                     disabled={submitting}
                                 >
                                     {submitting ? (
-                                        <Loader2 className="size-5 animate-spin" />
+                                        "Đang xử lý..."
                                     ) : (
-                                        <>
-                                            Xác nhận & Bắt đầu
-                                            <ArrowRight className="size-5" />
-                                        </>
+                                        "Xác nhận & Bắt đầu"
                                     )}
                                 </Button>
                                 <p className="text-center text-[10px] font-bold text-slate-400 mt-4 uppercase tracking-[0.2em]">

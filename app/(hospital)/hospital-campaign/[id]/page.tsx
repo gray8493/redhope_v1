@@ -753,7 +753,7 @@ export default function CampaignDetailsPage() {
                                     className="rounded-full w-9 h-9 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                                 >
                                     <Link href={`/hospital-campaign?tab=${fromTab}`}>
-                                        <ChevronLeft className="w-6 h-6 text-slate-600 dark:text-slate-300" />
+                                        ←
                                     </Link>
                                 </Button>
                                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
@@ -812,7 +812,6 @@ export default function CampaignDetailsPage() {
                     <div className="flex items-center gap-3">
                         <Link href={`/kiosk?campaignId=${campaignId}`} target="_blank">
                             <Button className="gap-2 bg-[#0065FF] hover:bg-[#0052cc] text-white font-bold rounded-xl h-10 px-4 shadow-lg shadow-blue-200 dark:shadow-none transition-all">
-                                <MonitorPlay className="w-4 h-4" />
                                 Kiosk Check-in
                             </Button>
                         </Link>
@@ -835,7 +834,6 @@ export default function CampaignDetailsPage() {
                                 </DropdownMenuItem>
                                 <div className="h-px bg-slate-100 dark:bg-slate-800 my-0.5" />
                                 <DropdownMenuItem onClick={openEditModal} className="cursor-pointer font-bold text-[13px] py-2 px-2.5 rounded-md text-slate-700 dark:text-slate-200 focus:bg-slate-100 dark:focus:bg-slate-800 focus:text-blue-600 dark:focus:text-blue-400 group">
-                                    <Edit2 className="mr-2.5 w-4 h-4 text-slate-400 group-focus:text-blue-600" />
                                     <span>Chỉnh sửa thông tin</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -1144,7 +1142,6 @@ export default function CampaignDetailsPage() {
                                                                         onClick={() => handleConfirmDonation(reg.id)}
                                                                         className="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-bold px-2 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition-all active:scale-95 whitespace-nowrap"
                                                                     >
-                                                                        <CheckCircle2 className="w-3 h-3" />
                                                                         HOÀN THÀNH
                                                                     </button>
                                                                 )}
@@ -1171,7 +1168,6 @@ export default function CampaignDetailsPage() {
                                                                                     onClick={() => handleEditRegistration(reg.id)}
                                                                                     className="text-slate-700 dark:text-slate-300 focus:bg-slate-50 dark:focus:bg-slate-800 font-medium text-[13px] gap-2 cursor-pointer rounded-md px-2.5 py-1.5"
                                                                                 >
-                                                                                    <Edit2 className="w-3.5 h-3.5" />
                                                                                     Chỉnh sửa
                                                                                 </DropdownMenuItem>
                                                                                 <DropdownMenuItem
@@ -1208,7 +1204,7 @@ export default function CampaignDetailsPage() {
                                 disabled={currentPage === 1}
                                 className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                             >
-                                <ChevronLeft className="w-4 h-4" />
+                                ←
                             </button>
                             <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#0065FF] text-white text-xs font-bold shadow-sm shadow-blue-200 dark:shadow-none Select-none">
                                 {currentPage}
@@ -1219,7 +1215,7 @@ export default function CampaignDetailsPage() {
                                 disabled={currentPage === totalPages || totalPages === 0}
                                 className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                             >
-                                <ChevronRight className="w-4 h-4" />
+                                →
                             </button>
                         </div>
                     </div>
@@ -1278,7 +1274,6 @@ export default function CampaignDetailsPage() {
                                                 htmlFor="edit-campaign-image-detail"
                                                 className="inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-all"
                                             >
-                                                <Edit2 className="w-3 h-3 mr-2" />
                                                 Thay đổi ảnh
                                             </label>
                                             <p className="text-[10px] text-slate-400 mt-1 max-w-xs">Hỗ trợ PNG, JPG (Max 5MB).</p>
@@ -1436,12 +1431,7 @@ export default function CampaignDetailsPage() {
                                     disabled={isSubmitting}
                                     className="px-6 h-10 bg-gradient-to-r from-[#0065FF] to-blue-500 text-white rounded-full text-xs font-extrabold shadow-lg shadow-blue-200 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                                 >
-                                    {isSubmitting ? (
-                                        <Clock className="w-3.5 h-3.5 animate-spin" />
-                                    ) : (
-                                        <Check className="w-3.5 h-3.5" />
-                                    )}
-                                    LƯU THAY ĐỔI
+                                    {isSubmitting ? 'Đang lưu...' : 'LƯU THAY ĐỔI'}
                                 </button>
                             </div>
                         </div>
@@ -1568,12 +1558,10 @@ export default function CampaignDetailsPage() {
                         >
                             {isSending ? (
                                 <>
-                                    <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
                                     ĐANG GỬI...
                                 </>
                             ) : (
                                 <>
-                                    <Megaphone className="w-3.5 h-3.5 mr-2" />
                                     GỬI MAIL NGAY
                                 </>
                             )}

@@ -478,7 +478,6 @@ export default function ScreeningPage() {
                                         : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                                         }`}
                                 >
-                                    <ClipboardCheck className="size-3.5 sm:size-4" />
                                     <span>Trắc nghiệm</span>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === "choice"
                                         ? "bg-white/20 text-white"
@@ -494,7 +493,6 @@ export default function ScreeningPage() {
                                         : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                                         }`}
                                 >
-                                    <FileText className="size-3.5 sm:size-4" />
                                     <span>Tự luận</span>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === "text"
                                         ? "bg-white/20 text-white"
@@ -592,7 +590,6 @@ export default function ScreeningPage() {
                                                 className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20 active:scale-95"
                                             >
                                                 Tiếp tục phần Tự luận
-                                                <ChevronRight className="size-3.5" />
                                             </button>
                                         </div>
                                     )}
@@ -666,7 +663,6 @@ export default function ScreeningPage() {
                                             onClick={() => setActiveTab("choice")}
                                             className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
                                         >
-                                            <ChevronLeft className="size-3.5" />
                                             Quay lại phần Trắc nghiệm
                                         </button>
                                     </div>
@@ -693,9 +689,7 @@ export default function ScreeningPage() {
                                                 <p className="text-sm sm:text-base font-bold">Gửi & Phân tích AI</p>
                                                 <p className="text-[9px] font-medium opacity-60">Neural Engine v4.2</p>
                                             </div>
-                                            <div className="size-8 sm:size-9 rounded-lg bg-blue-600 flex items-center justify-center text-white group-hover:rotate-6 transition-transform">
-                                                <BrainCircuit className="size-4 sm:size-5" />
-                                            </div>
+
                                         </div>
                                     </Button>
                                 </div>

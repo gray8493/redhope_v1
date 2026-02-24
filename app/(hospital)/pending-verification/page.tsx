@@ -165,11 +165,6 @@ export default function PendingVerificationPage() {
                                 onClick={handleCheckStatus}
                                 disabled={isChecking}
                             >
-                                {isChecking ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                    <RefreshCw className="w-4 h-4 mr-2" />
-                                )}
                                 {isChecking ? "Đang kiểm tra..." : "Kiểm tra lại trạng thái"}
                             </Button>
                             <Button variant="ghost" className="w-full h-10 text-sm text-slate-400 font-medium" onClick={signOut}>

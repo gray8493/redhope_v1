@@ -570,7 +570,6 @@ export default function RequestsPage() {
                                             onClick={() => router.push('/screening')}
                                             className="flex items-center gap-1.5 sm:gap-2 bg-emerald-500/10 text-emerald-600 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-emerald-500/20 hover:bg-emerald-500/20 transition-all cursor-pointer"
                                         >
-                                            <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                             <span className="text-xs sm:text-sm font-bold truncate">Đủ điều kiện</span>
                                         </button>
                                     ) : screeningStatus === 'failed' ? (
@@ -578,7 +577,6 @@ export default function RequestsPage() {
                                             onClick={() => router.push('/screening')}
                                             className="flex items-center gap-1.5 sm:gap-2 bg-red-500/10 text-red-600 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-all cursor-pointer"
                                         >
-                                            <XCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                             <span className="text-xs sm:text-sm font-bold truncate">Không đủ điều kiện</span>
                                         </button>
                                     ) : (
@@ -586,7 +584,6 @@ export default function RequestsPage() {
                                             onClick={() => router.push('/screening')}
                                             className="flex items-center gap-1.5 sm:gap-2 bg-amber-500/10 text-amber-600 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer animate-pulse"
                                         >
-                                            <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                             <span className="text-xs sm:text-sm font-bold truncate">Kiểm tra sức khỏe AI</span>
                                         </button>
                                     )}
@@ -608,7 +605,6 @@ export default function RequestsPage() {
                                     ))}
                                     <Button variant="outline" className="h-9 md:h-11 gap-2 rounded-xl bg-white dark:bg-[#1c162d] border-slate-200 dark:border-slate-800 whitespace-nowrap">
                                         <span className="text-sm font-bold">Lọc thêm</span>
-                                        <SlidersHorizontal className="w-4 h-4" />
                                     </Button>
                                 </div>
 
@@ -723,9 +719,8 @@ export default function RequestsPage() {
                                                         </div>
                                                         <div className="flex items-center gap-1 shrink-0">
                                                             <span className="text-[#0065FF] text-xs font-black whitespace-nowrap">
-                                                                Chi tiết
+                                                                Chi tiết →
                                                             </span>
-                                                            <ArrowRight className="w-3 h-3 text-[#0065FF]" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -974,12 +969,10 @@ export default function RequestsPage() {
                                             onClick={() => handleGetDirections(selectedRequest)}
                                             className="flex-1 h-10 sm:h-11 p-0 rounded-xl border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 group gap-2"
                                         >
-                                            <Navigation className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0065FF] group-hover:scale-110 transition-transform" />
-                                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 sm:hidden">Chỉ đường</span>
+                                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">Chỉ đường</span>
                                         </Button>
                                         <Button variant="outline" className="flex-1 h-10 sm:h-11 p-0 rounded-xl border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 gap-2">
-                                            <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-600 dark:text-slate-400" />
-                                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 sm:hidden">Gọi điện</span>
+                                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">Gọi điện</span>
                                         </Button>
                                     </div>
                                 </div>

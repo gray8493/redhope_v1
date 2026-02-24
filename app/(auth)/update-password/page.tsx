@@ -114,7 +114,7 @@ const UpdatePasswordPage = () => {
                                 className="w-full py-4 bg-[#0065FF] text-white font-bold rounded-xl hover:bg-[#0052cc] shadow-lg shadow-indigo-100 transition-all flex justify-center transform active:scale-[0.98] disabled:opacity-70"
                                 type="submit"
                             >
-                                {loading ? <Loader2 className="animate-spin" /> : 'Cập nhật mật khẩu'}
+                                {loading ? 'Đang xử lý...' : 'Cập nhật mật khẩu'}
                             </button>
                         </form>
                     </>

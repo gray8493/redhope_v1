@@ -428,7 +428,6 @@ function DonorProfileContent() {
                                         className="w-full md:w-auto flex items-center justify-center gap-2 px-8 py-3.5 md:py-3 rounded-lg bg-[#0065FF] hover:bg-[#0065FF]/90 text-white font-bold text-sm shadow-lg shadow-[#0065FF]/30 transition-transform active:scale-95 disabled:opacity-50"
                                     >
                                         {submitting ? "Đang lưu..." : "Lưu và Tiếp tục"}
-                                        <ArrowRight className="w-4 h-4" />
                                     </button>
                                 </div>
                             </form>

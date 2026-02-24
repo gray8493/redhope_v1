@@ -189,8 +189,7 @@ export default function DonorManagementPage() {
                         onClick={openAddModal}
                         className="flex items-center gap-2 bg-[#0065FF] px-4 py-2 rounded-lg text-sm font-semibold text-white hover:bg-opacity-90 transition-colors shadow-lg shadow-blue-500/30"
                     >
-                        <Plus className="w-5 h-5" />
-                        Thêm người hiến mới
+                        + Thêm người hiến mới
                     </button>
                 </div>
             </div>
@@ -390,8 +389,7 @@ export default function DonorManagementPage() {
                                     disabled={isSaving}
                                     className="px-6 py-2 text-sm font-bold text-white bg-[#0065FF] hover:bg-[#0052cc] rounded-lg shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
-                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    {mode === 'add' ? 'Thêm mới' : 'Lưu thay đổi'}
+                                    {isSaving ? 'Đang lưu...' : (mode === 'add' ? 'Thêm mới' : 'Lưu thay đổi')}
                                 </button>
                             </div>
                         </form>

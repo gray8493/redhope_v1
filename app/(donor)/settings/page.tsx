@@ -578,7 +578,6 @@ export default function SettingsPage() {
                                             disabled={isSaving || isUploading}
                                             className={`w-full md:w-auto bg-gradient-to-r from-[#0065FF] to-blue-600 text-white px-8 md:px-12 py-3.5 md:py-4 rounded-full font-black text-sm md:text-base flex items-center justify-center space-x-3 transition-all shadow-xl shadow-blue-500/20 active:scale-95 ${isSaving || isUploading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
                                         >
-                                            <Save className={`size-5 ${isSaving || isUploading ? 'animate-spin' : ''}`} />
                                             <span>{isUploading ? "Đang tải ảnh..." : (isSaving ? "Đang lưu..." : "Lưu thay đổi hồ sơ")}</span>
                                         </button>
                                     </div>
@@ -696,9 +695,9 @@ export default function SettingsPage() {
                                                 />
                                                 <button
                                                     onClick={() => setShowPassword(!showPassword)}
-                                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0065FF]"
+                                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0065FF] text-xs font-bold"
                                                 >
-                                                    {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                                                    {showPassword ? "Ẩn" : "Hiện"}
                                                 </button>
                                             </div>
                                         </div>

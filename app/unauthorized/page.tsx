@@ -26,7 +26,6 @@ export default function UnauthorizedPage() {
                     <div className="flex flex-col gap-3">
                         <Link href="/requests">
                             <Button className="w-full py-6 bg-[#6324eb] hover:bg-[#501ac2] text-white rounded-2xl font-bold shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all">
-                                <Home className="w-5 h-5" />
                                 Quay về trang chủ
                             </Button>
                         </Link>
@@ -34,7 +33,6 @@ export default function UnauthorizedPage() {
                             onClick={() => window.history.back()}
                             className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors py-2"
                         >
-                            <ArrowLeft className="w-4 h-4" />
                             Quay lại trang trước
                         </button>
                     </div>

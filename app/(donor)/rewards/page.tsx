@@ -456,7 +456,7 @@ export default function RewardsPage() {
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isRedeeming} className="bg-[#f6f6f8] dark:bg-[#2d263d] text-[#120e1b] dark:text-white border-none hover:bg-[#ebe7f3] dark:hover:bg-[#3d335a]">Hủy</AlertDialogCancel>
                         <AlertDialogAction disabled={isRedeeming} onClick={confirmRedeem} className="bg-[#0065FF] text-white hover:bg-[#0052CC]">
-                            {isRedeeming ? <Loader2 className="animate-spin" /> : "Xác nhận"}
+                            {isRedeeming ? "Đang xử lý..." : "Xác nhận"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

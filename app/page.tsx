@@ -73,7 +73,6 @@ const Page = async () => {
                     </Button>
                     <Button asChild variant="outline" size="lg" className="rounded-xl px-8 h-12 md:h-14 font-bold text-base md:text-lg bg-white border-gray-200">
                       <Link href="*">
-                        <PlayIcon className="w-5 h-5 fill-current" />
                         <span>Video giới thiệu</span>
                       </Link>
                     </Button>
@@ -215,7 +214,7 @@ const Page = async () => {
                       </p>
                       <Button asChild variant="link" className={`p-0 h-auto font-bold ${feat.accent} group-hover:gap-2 transition-all`}>
                         <Link href={feat.link}>
-                          {feat.cta} <ArrowRight className="w-4 h-4 ml-1" />
+                          {feat.cta}
                         </Link>
                       </Button>
                     </CardContent>

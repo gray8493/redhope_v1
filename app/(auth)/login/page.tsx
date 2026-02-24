@@ -131,7 +131,7 @@ export default function LoginPage() {
         className="absolute top-4 left-4 lg:top-6 lg:left-6 z-50"
       >
         <Button variant="ghost" className="gap-2 text-sm font-bold text-slate-600 lg:text-white/80 hover:text-slate-900 lg:hover:text-white bg-white/20 lg:bg-white/10 lg:hover:bg-white/20 backdrop-blur-md border border-slate-200 lg:border-white/20 group transition-all rounded-full h-10 lg:h-11 px-4 lg:px-5">
-          <ChevronLeft className="size-5 group-hover:-translate-x-1 transition-transform" />
+          ←
           <span className="hidden sm:inline">Quay về trang chủ</span>
         </Button>
       </Link>
@@ -251,7 +251,7 @@ export default function LoginPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#0065FF] hover:bg-transparent transition-colors z-20"
                     >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      {showPassword ? "Ẩn" : "Hiện"}
                     </Button>
                   </div>
                 </div>
@@ -278,7 +278,7 @@ export default function LoginPage() {
                   type="submit"
                   disabled={loading}
                 >
-                  {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Đăng nhập ngay"}
+                  {loading ? "Đang xử lý..." : "Đăng nhập ngay"}
                 </Button>
               </form>
 

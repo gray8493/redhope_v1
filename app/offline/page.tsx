@@ -32,7 +32,6 @@ export default function OfflinePage() {
                         onClick={handleRefresh}
                         className="flex items-center justify-center gap-2 px-6 py-3 bg-[#6324eb] text-white font-bold rounded-xl hover:bg-[#501ac2] transition-all shadow-lg shadow-[#6324eb]/20"
                     >
-                        <RefreshCw className="w-5 h-5" />
                         Thử lại
                     </button>
                     <Link

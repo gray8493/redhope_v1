@@ -214,8 +214,8 @@ export default function DonationsPage() {
                                 <div className="relative w-full">
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <button className="absolute left-0 top-0 bottom-0 pl-3 md:pl-4 pr-2 flex items-center group z-10 w-10 outline-none">
-                                                <CalendarIcon className="w-4 h-4 text-blue-600 group-hover:text-blue-800 transition-colors" />
+                                            <button className="absolute left-0 top-0 bottom-0 pl-3 md:pl-4 pr-2 flex items-center group z-10 w-10 outline-none text-blue-600 group-hover:text-blue-800 transition-colors text-xs font-bold">
+                                                📅
                                             </button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-auto p-0" align="start">
@@ -245,9 +245,9 @@ export default function DonationsPage() {
                                                 setDateFilter(undefined);
                                                 setDateInput("");
                                             }}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 hover:bg-slate-100 p-1 rounded-full text-slate-400 hover:text-red-500 transition-colors z-10"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 hover:bg-slate-100 p-1 rounded-full text-slate-400 hover:text-red-500 transition-colors z-10 text-xs font-bold"
                                         >
-                                            <X className="w-3 h-3" />
+                                            ✕
                                         </button>
                                     )}
                                 </div>
@@ -319,7 +319,6 @@ export default function DonationsPage() {
                                                 </TableCell>
                                                 <TableCell className="px-6 py-5 text-right whitespace-nowrap">
                                                     <button className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 rounded-lg font-bold text-xs transition-colors">
-                                                        <FileText className="w-4 h-4" />
                                                         Chứng nhận
                                                     </button>
                                                 </TableCell>
@@ -375,7 +374,6 @@ export default function DonationsPage() {
                                         </div>
                                         <div className="mt-4">
                                             <button className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors active:scale-95">
-                                                <FileText className="w-4 h-4" />
                                                 Tải chứng nhận
                                             </button>
                                         </div>

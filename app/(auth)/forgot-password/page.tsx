@@ -30,7 +30,7 @@ const ForgotPasswordPage = () => {
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-6">
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-gray-100">
                 <Link href="/login" className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-[#0065FF] mb-8 transition-colors">
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại đăng nhập
+                    ← Quay lại đăng nhập
                 </Link>
 
                 {success ? (
@@ -89,7 +89,7 @@ const ForgotPasswordPage = () => {
                                 className="w-full py-4 bg-[#0065FF] text-white font-bold rounded-xl hover:bg-[#0052cc] shadow-lg shadow-indigo-100 transition-all flex justify-center transform active:scale-[0.98] disabled:opacity-70"
                                 type="submit"
                             >
-                                {loading ? <Loader2 className="animate-spin" /> : 'Gửi link khôi phục'}
+                                {loading ? 'Đang xử lý...' : 'Gửi link khôi phục'}
                             </button>
                         </form>
                     </>

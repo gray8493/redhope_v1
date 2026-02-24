@@ -189,7 +189,7 @@ export default function HospitalNotificationsPage() {
 
                                     <div className="flex items-center gap-6">
                                         <button className="text-[10px] font-black uppercase tracking-widest text-[#0065FF] flex items-center gap-2 group/btn">
-                                            Xem chi tiết <ArrowRight className="size-3 group-hover/btn:translate-x-1 transition-transform" />
+                                            Xem chi tiết →
                                         </button>
                                         <button className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 transition-colors flex items-center gap-2">
                                             <Trash2 className="size-3" /> Gỡ bỏ
@@ -214,7 +214,7 @@ export default function HospitalNotificationsPage() {
                 {filteredNotifications.length > 5 && (
                     <div className="p-8 border-t border-slate-100 bg-slate-50/30 text-center">
                         <button className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-[#0065FF] transition-colors flex items-center gap-3 mx-auto">
-                            Tải thêm dữ liệu lịch sử <ChevronDown className="size-4" />
+                            Tải thêm dữ liệu lịch sử ▼
                         </button>
                     </div>
                 )}

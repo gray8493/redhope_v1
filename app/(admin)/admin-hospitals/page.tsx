@@ -288,8 +288,7 @@ export default function HospitalDirectoryPage() {
                         onClick={openAddModal}
                         className="bg-[#0065FF] text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-opacity-90 transition-all shadow-lg shadow-[#0065FF]/20"
                     >
-                        <Plus className="w-5 h-5" />
-                        <span>Đăng ký mới</span>
+                        + <span>Đăng ký mới</span>
                     </button>
                 </div>
             </div>
@@ -541,8 +540,7 @@ export default function HospitalDirectoryPage() {
                             <div className="pt-4 flex gap-3 justify-end">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg">Hủy bỏ</button>
                                 <button type="submit" disabled={isSaving} className="px-6 py-2 text-sm font-bold text-white bg-[#0065FF] hover:bg-[#0052cc] rounded-lg shadow-lg flex items-center gap-2">
-                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    {mode === 'add' ? 'Thêm mới' : 'Lưu thay đổi'}
+                                    {isSaving ? 'Đang lưu...' : (mode === 'add' ? 'Thêm mới' : 'Lưu thay đổi')}
                                 </button>
                             </div>
                         </form>
@@ -599,7 +597,7 @@ export default function HospitalDirectoryPage() {
                                     'bg-blue-600 hover:bg-blue-700'
                                 } text-white`}
                         >
-                            {isVerifying && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                            {isVerifying && 'Đang xử lý... '}
                             {verifyAction === 'approve' && 'Phê duyệt'}
                             {verifyAction === 'reject' && 'Từ chối'}
                             {verifyAction === 'in_review' && 'Xác nhận'}
