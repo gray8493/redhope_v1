@@ -10,10 +10,11 @@ export default function AuthLayout({
             <style>{`
                 .auth-layout-zoom {
                     zoom: 0.875;
-                    min-height: calc(100vh / 0.875);
+                    height: calc(100vh / 0.875);
+                    overflow-y: auto;
                 }
             `}</style>
-            <div className="auth-layout-zoom min-h-screen">
+            <div className="auth-layout-zoom">
                 {children}
             </div>
         </>

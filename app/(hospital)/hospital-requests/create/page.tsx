@@ -22,15 +22,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { userService } from "@/services/user.service";
 
-import {
-    Sparkles,
-    Zap,
-    AlertTriangle,
-    CheckCircle,
-    Info,
-    Clock,
-    CalendarDays
-} from "lucide-react";
+
 
 // Tải ReactQuill phía client
 const ReactQuill = dynamic(() => import("react-quill-new"), {
@@ -503,59 +495,6 @@ export default function CreateRequestPage() {
                                     </div>
                                 </div>
 
-                                {/* Smart Insight AI Block - Re-designed to avoid overlap */}
-                                <div className="relative group overflow-hidden bg-gradient-to-br from-[#0065FF] via-blue-600 to-[#0052cc] rounded-[2rem] p-6 text-white shadow-xl shadow-blue-200/50">
-                                    {/* AI Pattern Overlay */}
-                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <MaterialIcon name="neurology" className="text-8xl" />
-                                    </div>
-
-                                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-                                        <div className="flex items-center gap-4 shrink-0 bg-white/10 backdrop-blur-md p-4 rounded-3xl border border-white/20">
-                                            <div className="size-12 bg-white rounded-2xl flex items-center justify-center text-[#0065FF] shadow-inner">
-                                                <MaterialIcon name="psychology" className="text-[28px] fill-1" />
-                                            </div>
-                                            <div className="text-left">
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="text-white font-black text-sm tracking-tight">AI PREDICT</h3>
-                                                    <span className="flex size-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                                </div>
-                                                <p className="text-[10px] text-white/60 font-black uppercase tracking-widest">Active Scan Optimized</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="hidden md:block h-12 w-px bg-white/20"></div>
-
-                                        <div className="flex flex-1 gap-8 justify-around w-full">
-                                            <div className="text-center md:text-left flex flex-col">
-                                                <p className="text-[10px] text-white/60 font-black uppercase tracking-widest mb-1.5">Nhu cầu thực tế</p>
-                                                <div className="flex items-baseline gap-1">
-                                                    <span className="text-white text-3xl font-black">{targetCount || "63"}</span>
-                                                    <span className="text-[11px] font-bold text-white/50 uppercase">Donors</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-center md:text-left flex flex-col">
-                                                <p className="text-[10px] text-white/60 font-black uppercase tracking-widest mb-1.5">Hiệu suất kỳ vọng</p>
-                                                <div className="flex items-baseline gap-1">
-                                                    <span className="text-white text-3xl font-black">92</span>
-                                                    <span className="text-[11px] font-bold text-white/50 uppercase">%</span>
-                                                </div>
-                                            </div>
-                                            <div className="hidden lg:flex text-center md:text-left flex flex-col">
-                                                <p className="text-[10px] text-white/60 font-black uppercase tracking-widest mb-1.5">Trạng thái kho</p>
-                                                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/10 mt-1">
-                                                    <div className="size-2 rounded-full bg-red-400 animate-pulse"></div>
-                                                    <span className="text-[11px] font-bold text-white">SẮP CẠN KIỆT</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Animated Progress Bar at Bottom */}
-                                    <div className="absolute bottom-0 left-0 h-1 bg-white/30 w-full overflow-hidden">
-                                        <div className="h-full bg-emerald-400 w-2/3 animate-[shimmer_2s_infinite]"></div>
-                                    </div>
-                                </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                     <div className="flex flex-col gap-2">
@@ -813,14 +752,14 @@ export default function CreateRequestPage() {
                                     ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-blue-500/30 hover:shadow-blue-500/50'
                                     : 'bg-gradient-to-r from-[#0065FF] to-blue-400 text-white shadow-blue-500/30 hover:shadow-blue-500/50'}`}
                             >
-                                <MaterialIcon name="send" className="text-[20px] group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+
                                 Đăng Yêu cầu {isUrgent ? 'KHẨN CẤP' : 'Công khai'}
                             </button>
                             <button
                                 onClick={() => handleCreate(true)}
                                 className="w-full sm:flex-1 h-14 bg-slate-100 text-slate-600 rounded-full font-black text-base hover:bg-slate-200 transition-all flex items-center justify-center gap-3 active:scale-95"
                             >
-                                <MaterialIcon name="drafts" className="text-[20px]" />
+
                                 Lưu bản nháp
                             </button>
                         </div>
@@ -866,10 +805,8 @@ export default function CreateRequestPage() {
                     filter: invert(0.5);
                     cursor: pointer;
                 }
-                @keyframes shimmer {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
-                }
+
+
                 .material-symbols-outlined {
                     font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
                 }

@@ -356,7 +356,6 @@ function SettingsContent() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                                 <div className="absolute bottom-6 right-6">
                                     <label className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-5 py-2.5 rounded-full text-sm font-bold transition-all border border-white/30 cursor-pointer active:scale-95 shadow-lg">
-                                        <MaterialIcon name="photo_camera" className="text-sm" />
                                         <span>Thay đổi ảnh bìa</span>
                                         <input type="file" className="hidden" accept="image/*" onChange={handleCoverUpload} />
                                     </label>
@@ -497,7 +496,6 @@ function SettingsContent() {
                                     </div>
                                     <div className="absolute bottom-6 right-6">
                                         <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-full font-black text-sm flex items-center shadow-2xl hover:scale-105 active:scale-95 transition-all gap-2 border border-white/10">
-                                            <MaterialIcon name="gps_fixed" className="text-lg" />
                                             <span>Ghim vị trí chính xác</span>
                                         </button>
                                     </div>
@@ -510,7 +508,6 @@ function SettingsContent() {
                                     disabled={isSaving}
                                     className={`bg-gradient-to-r from-[#0065FF] to-blue-600 text-white px-12 py-4 rounded-full font-black text-base flex items-center space-x-3 transition-all shadow-2xl shadow-blue-500/30 active:scale-95 ${isSaving ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1'}`}
                                 >
-                                    <MaterialIcon name={isSaving ? "sync" : "save"} className={`text-xl ${isSaving ? 'animate-spin' : ''}`} />
                                     <span>{isSaving ? "Đang lưu..." : "Lưu thay đổi hồ sơ"}</span>
                                 </button>
                             </div>
@@ -699,8 +696,8 @@ function SettingsContent() {
                                 <button
                                     onClick={toggleStaffMode}
                                     className={`px-6 py-2.5 rounded-full font-bold text-sm shadow-lg transition-all active:scale-95 ${isStaffMode
-                                            ? 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-                                            : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20'
+                                        ? 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                                        : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20'
                                         }`}
                                 >
                                     {isStaffMode ? "Tắt chế độ nhân viên" : "Bật chế độ nhân viên"}

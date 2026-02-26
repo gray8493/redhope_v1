@@ -84,8 +84,10 @@ export default function DonorManagementPage() {
             toast.success("Đã xóa người dùng thành công!");
         } catch (error: any) {
             console.error('Delete failed:', error);
-            setErrorMsg('Xóa thất bại. ' + (error.message || ''));
-            toast.error("Xóa thất bại: " + error.message);
+            const errMessage = error?.message || error?.error_description || (typeof error === 'object' ? JSON.stringify(error) : String(error));
+            const msg = errMessage === '{}' ? 'Lỗi hệ thống hoặc kết nối' : errMessage;
+            setErrorMsg('Xóa thất bại. ' + msg);
+            toast.error("Xóa thất bại: " + msg);
         } finally {
             setDeleteId(null);
         }
