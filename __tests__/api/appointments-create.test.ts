@@ -1,6 +1,6 @@
 /**
  * Test: POST /api/appointments/create
- * Kiểm tra API tạo appointment đăng ký hiến máu
+ * Updated for security-hardened route (auth via getAuthenticatedUser)
  */
 
 // Mock NextResponse
@@ -11,6 +11,18 @@ jest.mock('next/server', () => ({
             status: init?.status || 200,
         })),
     },
+}));
+
+// Mock auth-helpers
+jest.mock('@/lib/auth-helpers', () => ({
+    getAuthenticatedUser: jest.fn().mockResolvedValue({
+        user: { id: 'user-001', email: 'test@redhope.vn', role: 'donor' },
+        error: null,
+    }),
+    requireRole: jest.fn().mockResolvedValue({
+        user: { id: 'user-001', email: 'test@redhope.vn', role: 'admin' },
+        error: null,
+    }),
 }));
 
 // Mock Supabase
@@ -78,29 +90,21 @@ describe('POST /api/appointments/create', () => {
         jest.clearAllMocks();
     });
 
-    it('should return 400 when userId is missing', async () => {
-        const req = createRequest({ campaignId: 'c1' });
-        const res = await POST(req);
-
-        expect(res.status).toBe(400);
-        const data = await res.json();
-        expect(data.error).toContain('Missing required fields');
-    });
-
+    // Note: userId is now from JWT, route only requires campaignId
     it('should return 400 when campaignId is missing', async () => {
-        const req = createRequest({ userId: 'u1' });
+        const req = createRequest({});
         const res = await POST(req);
 
         expect(res.status).toBe(400);
         const data = await res.json();
-        expect(data.error).toContain('Missing required fields');
+        expect(data.error).toContain('campaignId');
     });
 
     it('should return 404 when campaign not found', async () => {
         const campaignChain = createMockChain(null, { message: 'not found' });
         mockFrom.mockReturnValueOnce(campaignChain);
 
-        const req = createRequest({ userId: 'user-001', campaignId: 'invalid-id' });
+        const req = createRequest({ campaignId: 'invalid-id' });
         const res = await POST(req);
 
         expect(res.status).toBe(404);
@@ -116,7 +120,7 @@ describe('POST /api/appointments/create', () => {
             .mockReturnValueOnce(campaignChain)
             .mockReturnValueOnce(donorChain);
 
-        const req = createRequest({ userId: 'invalid-user', campaignId: 'campaign-001' });
+        const req = createRequest({ campaignId: 'campaign-001' });
         const res = await POST(req);
 
         expect(res.status).toBe(404);
@@ -128,7 +132,6 @@ describe('POST /api/appointments/create', () => {
         const campaignChain = createMockChain(MOCK_CAMPAIGN);
         const donorChain = createMockChain(MOCK_DONOR);
         const settingsChain = createMockChain({ donation_interval_months: 3 });
-        // Last appointment was yesterday
         const lastApptChain = createMockChain({
             scheduled_time: new Date().toISOString(),
             created_at: new Date().toISOString(),
@@ -140,7 +143,7 @@ describe('POST /api/appointments/create', () => {
             .mockReturnValueOnce(settingsChain)
             .mockReturnValueOnce(lastApptChain);
 
-        const req = createRequest({ userId: 'user-001', campaignId: 'campaign-001' });
+        const req = createRequest({ campaignId: 'campaign-001' });
         const res = await POST(req);
 
         expect(res.status).toBe(403);
@@ -152,11 +155,8 @@ describe('POST /api/appointments/create', () => {
         const campaignChain = createMockChain(MOCK_CAMPAIGN);
         const donorChain = createMockChain(MOCK_DONOR);
         const settingsChain = createMockChain({ donation_interval_months: 3 });
-        // No last appointment
         const lastApptChain = createMockChain(null, null);
-        // Insert appointment
         const insertChain = createMockChain(MOCK_APPOINTMENT);
-        // Two notification inserts
         const notif1Chain = createMockChain(null);
         const notif2Chain = createMockChain(null);
 
@@ -169,7 +169,7 @@ describe('POST /api/appointments/create', () => {
             .mockReturnValueOnce(notif1Chain)
             .mockReturnValueOnce(notif2Chain);
 
-        const req = createRequest({ userId: 'user-001', campaignId: 'campaign-001' });
+        const req = createRequest({ campaignId: 'campaign-001' });
         const res = await POST(req);
         const data = await res.json();
 
@@ -184,7 +184,6 @@ describe('POST /api/appointments/create', () => {
         const donorChain = createMockChain(MOCK_DONOR);
         const settingsChain = createMockChain({ donation_interval_months: 3 });
         const lastApptChain = createMockChain(null, null);
-        // Insert fails
         const insertChain = createMockChain(null, { message: 'insert failed' });
 
         mockFrom
@@ -194,7 +193,7 @@ describe('POST /api/appointments/create', () => {
             .mockReturnValueOnce(lastApptChain)
             .mockReturnValueOnce(insertChain);
 
-        const req = createRequest({ userId: 'user-001', campaignId: 'campaign-001' });
+        const req = createRequest({ campaignId: 'campaign-001' });
         const res = await POST(req);
 
         expect(res.status).toBe(500);

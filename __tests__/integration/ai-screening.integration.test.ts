@@ -9,6 +9,18 @@
  * 3. Kiểm tra kết quả trả về đúng cấu trúc JSON mong đợi không
  */
 
+// Mock auth-helpers
+jest.mock('@/lib/auth-helpers', () => ({
+    getAuthenticatedUser: jest.fn().mockResolvedValue({
+        user: { id: 'test-user-id', email: 'test@redhope.vn', role: 'donor' },
+        error: null,
+    }),
+    requireRole: jest.fn().mockResolvedValue({
+        user: { id: 'test-user-id', email: 'test@redhope.vn', role: 'admin' },
+        error: null,
+    }),
+}));
+
 import { POST } from '@/app/api/ai/screening/route';
 
 // Bỏ qua nếu không có API key

@@ -1,9 +1,13 @@
-
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import { getAuthenticatedUser } from "@/lib/auth-helpers";
 
 export async function POST(req: Request) {
     try {
+        // SECURITY: Verify authentication
+        const { user: authUser, error: authError } = await getAuthenticatedUser();
+        if (authError || !authUser) return authError!;
+
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             return NextResponse.json(
@@ -18,9 +22,14 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { message, history } = body;
 
-        // Construct simplified history for the model
-        // Note: history should be formatted as { role: 'user' | 'model', parts: string }
-        // We act as REDHOPE assistant
+        // SECURITY: Validate input
+        if (!message || typeof message !== 'string' || message.length > 2000) {
+            return NextResponse.json(
+                { error: "Tin nhắn không hợp lệ" },
+                { status: 400 }
+            );
+        }
+
         const chat = model.startChat({
             history: [
                 {
@@ -31,32 +40,32 @@ export async function POST(req: Request) {
                     role: "model",
                     parts: [{ text: "Chào bạn! 🩺 Tôi là Bác sĩ AI của REDHOPE. Tôi ở đây để giải đáp mọi thắc mắc y tế về việc hiến máu và sức khỏe của bạn. Đừng ngần ngại hỏi nhé! 💉🏥" }],
                 },
-                // Append previous relevant history if needed
-                ...(history || []).map((msg: any) => ({
+                // Append previous relevant history (limit to last 10 messages)
+                ...(history || []).slice(-10).map((msg: any) => ({
                     role: msg.isBot ? "model" : "user",
-                    parts: [{ text: msg.text }]
+                    parts: [{ text: String(msg.text).substring(0, 2000) }]
                 }))
             ],
             generationConfig: {
                 maxOutputTokens: 2000,
             },
-            // Disable safety filters to prevent blocking useful medical info
+            // SECURITY FIX: Keep safety filters at reasonable level
             safetySettings: [
                 {
                     category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-                    threshold: HarmBlockThreshold.BLOCK_NONE,
+                    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
                 },
                 {
                     category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                    threshold: HarmBlockThreshold.BLOCK_NONE,
+                    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
                 },
                 {
                     category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                    threshold: HarmBlockThreshold.BLOCK_NONE,
+                    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
                 },
                 {
                     category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                    threshold: HarmBlockThreshold.BLOCK_NONE,
+                    threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
                 },
             ],
         });
@@ -67,7 +76,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ text });
     } catch (error: any) {
-        console.error("Gemini API Error:", error);
+        console.error("Gemini API Error:", error?.message);
         return NextResponse.json(
             { error: "Không thể kết nối với trợ lý ảo lúc này." },
             { status: 500 }

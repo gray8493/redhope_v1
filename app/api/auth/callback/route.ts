@@ -5,8 +5,9 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
-    // if "next" is in search params, use it as the redirection URL
-    const next = searchParams.get('next') ?? '/'
+    // SECURITY: Validate 'next' parameter to prevent open redirect
+    const rawNext = searchParams.get('next') ?? '/'
+    const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/'
 
     if (code) {
         const cookieStore = await cookies()
@@ -32,7 +33,6 @@ export async function GET(request: Request) {
         const { error, data } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error && data?.user) {
-            // Check if user already exists in our 'users' table
             const { data: userData } = await supabase
                 .from('users')
                 .select('role')
@@ -42,7 +42,6 @@ export async function GET(request: Request) {
             let role = userData?.role || 'donor';
 
             if (!userData) {
-                // Create default donor profile if first time login via OAuth
                 await supabase.from('users').insert({
                     id: data.user.id,
                     email: data.user.email,
@@ -55,7 +54,6 @@ export async function GET(request: Request) {
 
             let redirectPath = next;
 
-            // If next is just the root '/', determine the actual dashboard based on role
             if (next === '/') {
                 switch (role) {
                     case 'admin':
@@ -71,20 +69,12 @@ export async function GET(request: Request) {
 
             const response = NextResponse.redirect(`${origin}${redirectPath}`)
 
-            // Set legacy cookies for middleware compatibility
-            response.cookies.set('auth-token', data.session?.access_token || '', {
-                path: '/',
-                maxAge: 60 * 60 * 24 * 7
-            })
-            response.cookies.set('user-role', role, {
-                path: '/',
-                maxAge: 60 * 60 * 24 * 7
-            })
+            // SECURITY: Removed insecure legacy cookies (auth-token, user-role)
+            // Supabase SSR handles session cookies automatically via the cookie handlers above.
 
             return response;
         }
     }
 
-    // return the user to an error page with instructions
     return NextResponse.redirect(`${origin}/login?error=Could not authenticate user`)
 }

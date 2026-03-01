@@ -1,6 +1,6 @@
 /**
  * Test: POST /api/donation/complete-notification
- * Kiểm tra API gửi email xác nhận hiến máu thành công
+ * Updated for security-hardened route (hospitalId from JWT, donorId from body)
  */
 
 // Mock NextResponse
@@ -11,6 +11,18 @@ jest.mock('next/server', () => ({
             status: init?.status || 200,
         })),
     },
+}));
+
+// Mock auth-helpers
+jest.mock('@/lib/auth-helpers', () => ({
+    getAuthenticatedUser: jest.fn().mockResolvedValue({
+        user: { id: 'hospital-001', email: 'hospital@redhope.vn', role: 'hospital' },
+        error: null,
+    }),
+    requireRole: jest.fn().mockResolvedValue({
+        user: { id: 'hospital-001', email: 'hospital@redhope.vn', role: 'hospital' },
+        error: null,
+    }),
 }));
 
 // Mock SendGrid
@@ -35,18 +47,14 @@ jest.mock('@/lib/supabase-admin', () => ({
 
 /* ─────────── Helpers ─────────── */
 function createRequest(body: any): Request {
-    return {
-        json: async () => body,
-    } as any;
+    return { json: async () => body } as any;
 }
 
-const createMockChain = (resolvedData?: any, resolvedError?: any) => {
-    return {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: resolvedData ?? null, error: resolvedError ?? null })
-    };
-};
+const createMockChain = (resolvedData?: any, resolvedError?: any) => ({
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue({ data: resolvedData ?? null, error: resolvedError ?? null })
+});
 
 /* ─────────── Tests ─────────── */
 describe('POST /api/donation/complete-notification', () => {
@@ -65,7 +73,7 @@ describe('POST /api/donation/complete-notification', () => {
 
     it('should return 500 when SENDGRID_API_KEY is missing', async () => {
         delete process.env.SENDGRID_API_KEY;
-        const req = createRequest({ donorId: '1', hospitalId: '2' });
+        const req = createRequest({ donorId: '1' });
         const res = await POST(req);
 
         expect(res.status).toBe(500);
@@ -73,19 +81,19 @@ describe('POST /api/donation/complete-notification', () => {
         expect(data.message).toContain('not configured');
     });
 
-    it('should return 400 when missing required fields', async () => {
-        const req = createRequest({ donorId: '1' });
+    it('should return 400 when donorId is missing', async () => {
+        const req = createRequest({});
         const res = await POST(req);
 
         expect(res.status).toBe(400);
         const data = await res.json();
-        expect(data.error).toContain('Missing');
+        expect(data.error).toContain('donorId');
     });
 
-    it('should return 404 when donor email or hospital not found', async () => {
+    it('should return 404 when donor email not found', async () => {
         mockFrom.mockReturnValue(createMockChain(null));
 
-        const req = createRequest({ donorId: 'd1', hospitalId: 'h1' });
+        const req = createRequest({ donorId: 'd1' });
         const res = await POST(req);
 
         expect(res.status).toBe(404);
@@ -103,7 +111,7 @@ describe('POST /api/donation/complete-notification', () => {
 
         mockSend.mockResolvedValue({});
 
-        const req = createRequest({ donorId: 'd1', hospitalId: 'h1', volumeMl: 350 });
+        const req = createRequest({ donorId: 'd1', volumeMl: 350 });
         const res = await POST(req);
         const data = await res.json();
 
@@ -127,12 +135,13 @@ describe('POST /api/donation/complete-notification', () => {
 
         mockSend.mockRejectedValue(new Error('SendGrid Error'));
 
-        const req = createRequest({ donorId: 'd1', hospitalId: 'h1' });
+        const req = createRequest({ donorId: 'd1' });
         const res = await POST(req);
 
         expect(res.status).toBe(500);
         const data = await res.json();
-        expect(data.error).toBe('SendGrid Error');
+        // Route returns generic error message for security
+        expect(data.error).toBe('Internal Server Error');
     });
 });
 

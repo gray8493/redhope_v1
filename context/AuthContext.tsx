@@ -39,9 +39,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const signOut = async () => {
         try {
             await authService.signOut();
-            // Clear legacy cookies
-            Cookies.remove('auth-token');
-            Cookies.remove('user-role');
+            // SECURITY: No more insecure client-side cookies to clear
+            // Supabase SSR handles session cookie cleanup automatically
             setUser(null);
         } catch (error) {
             console.error("Sign out error:", error);

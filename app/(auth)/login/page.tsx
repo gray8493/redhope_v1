@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle, ChevronLeft, CheckCircle2 } from "lucide-react";
-import Cookies from "js-cookie";
+
 import { useAuth } from "@/context/AuthContext";
 
 // Shadcn UI Components
@@ -25,16 +25,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rememberMe, setRememberMe] = useState(false);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
-    // Clear old cookies to prevent role conflicts
-    Cookies.remove('auth-token');
-    Cookies.remove('user-role');
 
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
@@ -57,19 +53,11 @@ export default function LoginPage() {
           .eq('id', data.user.id)
           .maybeSingle() as { data: HospitalProfile | null, error: any };
 
-        // Ưu tiên lấy role từ metadata (vì nó có sẵn ngay sau khi signIn)
-        // Sau đó mới lấy từ DB (có thể bị chặn bởi RLS lúc mới login)
         const role = profile?.role || data.user.user_metadata?.role || 'donor';
-        console.log("Detected Role for user:", data.user.id, "is:", role);
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          // Log nhẹ nhàng hơn vì đã có fallback
-          console.log("Note: Profile fetch from DB skipped or limited by RLS, using metadata fallback.");
-        }
-
-        const cookieOptions = rememberMe ? { expires: 30 } : { expires: 7 };
-        Cookies.set('auth-token', data.session?.access_token || '', cookieOptions);
-        Cookies.set('user-role', role, cookieOptions);
+        // SECURITY: No more client-side cookie setting
+        // Supabase SSR handles session cookies automatically
+        // Middleware verifies auth via Supabase JWT server-side
 
         // Cập nhật trạng thái auth global trước khi chuyển trang
         await refreshUser();
@@ -80,7 +68,6 @@ export default function LoginPage() {
             router.push('/admin-dashboard');
             break;
           case 'hospital':
-            // Check if profile is complete (needs address and phone)
             {
               const isComplete = profile?.hospital_address && profile?.phone;
               if (isComplete) {
@@ -95,7 +82,6 @@ export default function LoginPage() {
         }
       }
     } catch (err: unknown) {
-      console.error("Login error:", err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       const msg = errorMessage === 'Invalid login credentials' ? 'Email hoặc mật khẩu không đúng.' : 'Đăng nhập thất bại. Vui lòng kiểm tra lại.';
       setError(msg);
@@ -256,21 +242,7 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Remember Me Checkbox */}
-                <div className="flex items-center space-x-2 ml-1">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    className="rounded-md border-gray-300 data-[state=checked]:bg-[#0065FF] data-[state=checked]:border-[#0065FF]"
-                  />
-                  <Label
-                    htmlFor="remember"
-                    className="text-sm font-bold text-gray-500 cursor-pointer"
-                  >
-                    Ghi nhớ đăng nhập
-                  </Label>
-                </div>
+
 
                 {/* Submit Button */}
                 <Button

@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getAuthenticatedUser } from '@/lib/auth-helpers';
 
 export async function POST(request: Request) {
     try {
+        // SECURITY: Verify authentication
+        const { user: authUser, error: authError } = await getAuthenticatedUser();
+        if (authError || !authUser) return authError!;
+
         const {
-            userId,
             email,
             fullName,
-            role,
             phone,
             dob,
             gender,
@@ -17,11 +20,22 @@ export async function POST(request: Request) {
             address
         } = await request.json();
 
-        if (!userId || !email) {
+        // SECURITY: Use server-verified userId, not client-supplied
+        const userId = authUser.id;
+
+        if (!email) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        console.log(`[API] Registering profile for ${email} with role ${role}...`);
+        // SECURITY: Force role based on existing DB record or default to 'donor'
+        // Users CANNOT self-assign roles - only admin can promote
+        const { data: existingUser } = await supabaseAdmin
+            .from('users')
+            .select('role')
+            .eq('id', userId)
+            .maybeSingle();
+
+        const safeRole = existingUser?.role || 'donor';
 
         // Insert into users table using Admin client to bypass RLS
         const { data, error } = await supabaseAdmin
@@ -30,7 +44,7 @@ export async function POST(request: Request) {
                 id: userId,
                 email,
                 full_name: fullName,
-                role: role || 'donor',
+                role: safeRole, // SECURITY: Server-enforced role
                 phone: phone || null,
                 dob: dob || null,
                 gender: gender || null,
@@ -38,25 +52,22 @@ export async function POST(request: Request) {
                 city: city || null,
                 district: district || null,
                 address: address || null,
-                current_points: role === 'donor' ? 0 : null
+                current_points: safeRole === 'donor' ? 0 : null
             }, { onConflict: 'id' })
             .select()
             .single();
 
         if (error) {
-            console.error('[API] Error creating user profile:', JSON.stringify(error, null, 2));
-
-            // Thông báo thân thiện khi email đã tồn tại
             if (error.message?.includes('duplicate key') || error.message?.includes('users_email_key')) {
                 return NextResponse.json({ error: 'Email này đã có người đăng ký. Vui lòng sử dụng email khác.' }, { status: 409 });
             }
 
-            return NextResponse.json({ error: error.message || 'Database error' }, { status: 500 });
+            return NextResponse.json({ error: 'Database error' }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, user: data });
     } catch (error: any) {
-        console.error('[API] Unexpected error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('[API] Unexpected error:', error?.message);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

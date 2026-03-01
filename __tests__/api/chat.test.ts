@@ -13,6 +13,18 @@ jest.mock('next/server', () => ({
     },
 }));
 
+// Mock auth-helpers
+jest.mock('@/lib/auth-helpers', () => ({
+    getAuthenticatedUser: jest.fn().mockResolvedValue({
+        user: { id: 'user-001', email: 'test@redhope.vn', role: 'donor' },
+        error: null,
+    }),
+    requireRole: jest.fn().mockResolvedValue({
+        user: { id: 'user-001', email: 'test@redhope.vn', role: 'admin' },
+        error: null,
+    }),
+}));
+
 // Mock GoogleGenerativeAI
 const mockSendMessage = jest.fn();
 const mockStartChat = jest.fn(() => ({
