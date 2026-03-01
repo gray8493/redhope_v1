@@ -1,28 +1,28 @@
 import { NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/auth-helpers';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@supabase/supabase-js';
 
-// Client-side Supabase (cho read operations)
+// Read-only client for non-RLS queries
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Server-side Supabase Admin (cho write operations - bypass RLS)
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
-
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-        const { userId, campaignId, scheduledTime } = body;
+        // SECURITY: Verify authentication
+        const { user: authUser, error: authError } = await getAuthenticatedUser();
+        if (authError || !authUser) return authError!;
 
-        if (!userId || !campaignId) {
+        const body = await req.json();
+        const { campaignId, scheduledTime } = body;
+
+        // SECURITY: Use authenticated user's ID, not from body
+        const userId = authUser.id;
+
+        if (!campaignId) {
             return NextResponse.json(
-                { error: 'Missing required fields: userId, campaignId' },
+                { error: 'Missing required field: campaignId' },
                 { status: 400 }
             );
         }
@@ -56,7 +56,6 @@ export async function POST(req: Request) {
         }
 
         // 3. Kiểm tra khoảng cách giữa các lần hiến máu
-        // 3a. Lấy cấu hình hệ thống
         const { data: settings } = await supabase
             .from('system_settings')
             .select('donation_interval_months')
@@ -65,7 +64,6 @@ export async function POST(req: Request) {
 
         const intervalMonths = settings?.donation_interval_months || 3;
 
-        // 3b. Tìm lần hiến máu thành công gần nhất
         const { data: lastAppointment } = await supabase
             .from('appointments')
             .select('scheduled_time, created_at')
@@ -91,16 +89,13 @@ export async function POST(req: Request) {
             }
         }
 
-
-
-        // 4. Tạo appointment - Dùng supabaseAdmin để bypass RLS
+        // 4. Tạo appointment
         const { data: appointment, error: appointmentError } = await supabaseAdmin
             .from('appointments')
             .insert({
                 user_id: userId,
                 campaign_id: campaignId,
                 scheduled_time: scheduledTime || campaign.start_time,
-
                 status: 'Booked',
             })
             .select()
@@ -114,7 +109,7 @@ export async function POST(req: Request) {
             );
         }
 
-        // 5. Gửi thông báo cho donor - Dùng supabaseAdmin
+        // 5. Gửi thông báo cho donor
         try {
             await supabaseAdmin
                 .from('notifications')
@@ -134,7 +129,7 @@ export async function POST(req: Request) {
             console.error('Failed to send donor notification:', notifError);
         }
 
-        // 6. Gửi thông báo cho hospital - Dùng supabaseAdmin
+        // 6. Gửi thông báo cho hospital
         try {
             await supabaseAdmin
                 .from('notifications')
@@ -164,7 +159,7 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error('Error in appointment creation:', error);
         return NextResponse.json(
-            { error: error.message || 'Internal server error' },
+            { error: 'Internal server error' },
             { status: 500 }
         );
     }

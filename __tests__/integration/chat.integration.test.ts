@@ -4,6 +4,18 @@
  * INTEGRATION TEST: Chat functionality
  */
 
+// Mock auth-helpers
+jest.mock('@/lib/auth-helpers', () => ({
+    getAuthenticatedUser: jest.fn().mockResolvedValue({
+        user: { id: 'user-001', email: 'test@redhope.vn', role: 'donor' },
+        error: null,
+    }),
+    requireRole: jest.fn().mockResolvedValue({
+        user: { id: 'user-001', email: 'test@redhope.vn', role: 'admin' },
+        error: null,
+    }),
+}));
+
 import { POST } from '@/app/api/chat/route';
 
 const hasGeminiKey = process.env.GEMINI_API_KEY;

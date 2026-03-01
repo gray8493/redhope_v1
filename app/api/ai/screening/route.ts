@@ -1,16 +1,18 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import { getAuthenticatedUser } from "@/lib/auth-helpers";
 
 export async function POST(req: Request) {
     try {
+        // SECURITY: Verify authentication via JWT (not trusting client-sent userId)
+        const { user: authUser, error: authError } = await getAuthenticatedUser();
+        if (authError || !authUser) return authError!;
+
         const body = await req.json();
-        const { answers, userId } = body;
+        const { answers } = body;
 
-        console.log("Answers received for analysis:", JSON.stringify(answers).substring(0, 100) + "...");
-
-        if (!userId) {
-            return NextResponse.json({ error: "Yêu cầu đăng nhập để thực hiện tính năng này" }, { status: 401 });
-        }
+        // SECURITY: Use server-verified userId, not client-supplied
+        const userId = authUser.id;
 
         // Check user profile verification status
         const { supabaseAdmin } = await import('@/lib/supabase-admin');
@@ -50,7 +52,8 @@ export async function POST(req: Request) {
             if (id <= 10) {
                 choiceAnswers[key] = val;
             } else {
-                textAnswers[key] = val;
+                // SECURITY: Sanitize text answers (limit length)
+                textAnswers[key] = typeof val === 'string' ? val.substring(0, 500) : val;
             }
         }
 
@@ -150,7 +153,7 @@ TRẢ VỀ JSON NGUYÊN BẢN (KHÔNG CÓ CODE BLOCK, KHÔNG CÓ MARKDOWN):
         return NextResponse.json(jsonResponse);
 
     } catch (error: any) {
-        console.error("Gemini Error Detail:", error);
+        console.error("Gemini Error:", error?.message);
 
         return NextResponse.json({
             status: "warning",

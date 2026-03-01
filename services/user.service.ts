@@ -209,8 +209,25 @@ export const userService = {
 
     // Upload image (avatar or cover)
     async uploadImage(file: File, folder: string = 'avatars'): Promise<string> {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        // SECURITY: Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            throw new Error('Chỉ chấp nhận file ảnh (JPEG, PNG, WebP, GIF)');
+        }
+
+        // SECURITY: Validate file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            throw new Error('File ảnh không được vượt quá 5MB');
+        }
+
+        const fileExt = file.name.split('.').pop()?.toLowerCase();
+        const allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        if (!fileExt || !allowedExts.includes(fileExt)) {
+            throw new Error('Phần mở rộng file không hợp lệ');
+        }
+
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `${fileName}`;
 
         const { error: uploadError } = await supabase.storage

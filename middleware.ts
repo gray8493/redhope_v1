@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
-
-    const authToken = request.cookies.get('auth-token')?.value;
-    const userRole = request.cookies.get('user-role')?.value;
 
     // Define route groups
     const adminRoutes = [
@@ -24,7 +22,6 @@ export function middleware(request: NextRequest) {
         '/hospital-reports',
         '/hospital-requests',
         '/hospital-settings',
-
         '/support'
     ];
 
@@ -39,53 +36,103 @@ export function middleware(request: NextRequest) {
         '/settings'
     ];
 
-    // 1. Redirect to appropriate dashboard if already logged in and trying to access auth pages
-    if (['/login', '/register'].includes(pathname) && authToken && userRole) {
+    // Check if current path matches any protected route
+    const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
+    const isHospitalRoute = hospitalRoutes.some(route => pathname.startsWith(route));
+    const isDonorRoute = donorRoutes.some(route => pathname.startsWith(route));
+    const isProtectedRoute = isAdminRoute || isHospitalRoute || isDonorRoute;
+    const isAuthPage = ['/login', '/register'].includes(pathname);
+
+    // Create Supabase server client with cookie handling
+    let response = NextResponse.next({
+        request: { headers: request.headers },
+    });
+
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() {
+                    return request.cookies.getAll();
+                },
+                setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        request.cookies.set(name, value);
+                    });
+                    response = NextResponse.next({
+                        request: { headers: request.headers },
+                    });
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        response.cookies.set(name, value, options);
+                    });
+                },
+            },
+        }
+    );
+
+    // SECURE: Verify user via Supabase JWT (server-side, NOT client cookie)
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    // If user is authenticated, fetch role from DB (trusted source)
+    let userRole: string | null = null;
+    if (user && !userError) {
+        const { data: profile } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        userRole = profile?.role || user.user_metadata?.role || 'donor';
+    }
+
+    // 1. Redirect to dashboard if already logged in and trying to access auth pages
+    if (isAuthPage && user && userRole) {
         let redirectPath = '/requests';
         if (userRole === 'admin') redirectPath = '/admin-dashboard';
         else if (userRole === 'hospital') redirectPath = '/hospital-dashboard';
         return NextResponse.redirect(new URL(redirectPath, request.url));
     }
 
-    // Check if current path matches any protected route
-    const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
-    const isHospitalRoute = hospitalRoutes.some(route => pathname.startsWith(route));
-    const isDonorRoute = donorRoutes.some(route => pathname.startsWith(route));
-    const isProtectedRoute = isAdminRoute || isHospitalRoute || isDonorRoute;
-
-    // 2. Redirect to login if not authenticated
-    if (isProtectedRoute && !authToken) {
+    // 2. Redirect to login if not authenticated and accessing protected route
+    if (isProtectedRoute && !user) {
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
     }
 
-    // Admin has access to all routes
-    if (userRole === 'admin') {
-        return NextResponse.next();
+    // 3. Role-based access control (using server-verified role)
+    if (user && userRole) {
+        // Admin has access to all routes
+        if (userRole === 'admin') {
+            return response;
+        }
+
+        // Protect Admin routes
+        if (isAdminRoute && userRole !== 'admin') {
+            return NextResponse.redirect(new URL('/unauthorized', request.url));
+        }
+
+        // Protect Hospital routes
+        if (isHospitalRoute && userRole !== 'hospital' && userRole !== 'admin') {
+            return NextResponse.redirect(new URL('/unauthorized', request.url));
+        }
+
+        // Protect Donor routes
+        if (isDonorRoute && !['donor', 'admin'].includes(userRole)) {
+            return NextResponse.redirect(new URL('/unauthorized', request.url));
+        }
     }
 
-    // Protect Admin routes
-    if (isAdminRoute && userRole !== 'admin') {
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
-    }
-
-    // Protect Hospital routes
-    if (isHospitalRoute && userRole !== 'hospital' && userRole !== 'admin') {
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
-    }
-
-    // Protect Donor routes (allow donors only, but admin/hospital can also access for flexibility)
-    if (isDonorRoute && !['donor', 'admin'].includes(userRole || '')) {
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
-    }
-
-    return NextResponse.next();
+    return response;
 }
 
-// Match all protected routes
+// Match all protected routes + auth pages
 export const config = {
     matcher: [
+        // Auth pages (for redirect if logged in)
+        '/login',
+        '/register',
         // Admin routes
         '/admin-dashboard/:path*',
         '/admin-donor/:path*',
@@ -96,11 +143,10 @@ export const config = {
         '/system-setting/:path*',
         // Hospital routes
         '/hospital-dashboard/:path*',
-        // '/hospital-campaign/:path*', // TEMPORARILY DISABLED FOR DEMO MODE
+        '/hospital-campaign/:path*',
         '/hospital-reports/:path*',
         '/hospital-requests/:path*',
         '/hospital-settings/:path*',
-
         '/support/:path*',
         // Donor routes
         '/dashboard/:path*',

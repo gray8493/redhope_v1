@@ -3,13 +3,17 @@ import sgMail from '@sendgrid/mail';
 import { render } from '@react-email/render';
 import * as React from 'react';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requireRole } from '@/lib/auth-helpers';
 import DonationSuccessEmail from '@/components/emails/DonationSuccessEmail';
 
 export async function POST(req: Request) {
+    // SECURITY: Only hospital and admin can send donation notifications
+    const { user: authUser, error: authError } = await requireRole(['hospital', 'admin']);
+    if (authError || !authUser) return authError!;
+
     const sendgridApiKey = process.env.SENDGRID_API_KEY;
 
     if (!sendgridApiKey) {
-        console.warn('SENDGRID_API_KEY is not configured');
         return NextResponse.json({
             success: false,
             message: 'Email service not configured'
@@ -19,10 +23,13 @@ export async function POST(req: Request) {
     sgMail.setApiKey(sendgridApiKey);
 
     try {
-        const { donorId, hospitalId, volumeMl } = await req.json();
+        const { donorId, volumeMl } = await req.json();
 
-        if (!donorId || !hospitalId) {
-            return NextResponse.json({ error: 'Missing donorId or hospitalId' }, { status: 400 });
+        // SECURITY: Use authenticated hospital user's ID
+        const hospitalId = authUser.id;
+
+        if (!donorId) {
+            return NextResponse.json({ error: 'Missing donorId' }, { status: 400 });
         }
 
         // 1. Fetch donor and hospital details
@@ -47,7 +54,7 @@ export async function POST(req: Request) {
                 donorName: donor.full_name || 'Người hiến máu',
                 hospitalName: hospitalName,
                 volumeMl: volumeMl || 350,
-                pointsEarned: 100 // Giả định là 100 điểm theo logic hệ thống
+                pointsEarned: 100
             })
         );
 
@@ -60,11 +67,11 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
             success: true,
-            message: 'Donation congratulation email sent via SendGrid'
+            message: 'Donation congratulation email sent'
         });
 
     } catch (error: any) {
-        console.error('API Error:', error);
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+        console.error('API Error:', error?.message);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

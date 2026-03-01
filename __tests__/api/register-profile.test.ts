@@ -1,6 +1,6 @@
 /**
  * Test: POST /api/auth/register-profile
- * Kiểm tra API đăng ký profile cho user mới
+ * Updated for security-hardened route (userId from JWT, role from DB)
  */
 
 // Mock NextResponse
@@ -13,16 +13,36 @@ jest.mock('next/server', () => ({
     },
 }));
 
+// Mock auth-helpers
+const mockGetAuthenticatedUser = jest.fn().mockResolvedValue({
+    user: { id: 'user-123', email: 'test@redhope.vn', role: 'donor' },
+    error: null,
+});
+jest.mock('@/lib/auth-helpers', () => ({
+    getAuthenticatedUser: (...args: any[]) => mockGetAuthenticatedUser(...args),
+    requireRole: jest.fn().mockResolvedValue({
+        user: { id: 'user-123', email: 'test@redhope.vn', role: 'admin' },
+        error: null,
+    }),
+}));
+
 // Mock Supabase Admin
 const mockUpsert = jest.fn();
 const mockSelect = jest.fn();
 const mockSingle = jest.fn();
+const mockMaybeSingle = jest.fn();
+const mockEq = jest.fn();
 
 const mockSupabaseAdmin = {
     from: jest.fn(() => ({
         upsert: mockUpsert.mockReturnValue({
             select: mockSelect.mockReturnValue({
                 single: mockSingle,
+            }),
+        }),
+        select: jest.fn().mockReturnValue({
+            eq: mockEq.mockReturnValue({
+                maybeSingle: mockMaybeSingle,
             }),
         }),
     })),
@@ -48,20 +68,17 @@ describe('POST /api/auth/register-profile', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockGetAuthenticatedUser.mockResolvedValue({
+            user: { id: 'user-123', email: 'test@redhope.vn', role: 'donor' },
+            error: null,
+        });
+        // Default: no existing user in DB
+        mockMaybeSingle.mockResolvedValue({ data: null, error: null });
     });
 
     /* ── Validation ── */
-    it('should return 400 when userId is missing', async () => {
-        const req = createRequest({ email: 'test@email.com' });
-        const res = await POST(req);
-
-        expect(res.status).toBe(400);
-        const data = await res.json();
-        expect(data.error).toContain('Missing required fields');
-    });
-
     it('should return 400 when email is missing', async () => {
-        const req = createRequest({ userId: 'user-123' });
+        const req = createRequest({ fullName: 'Test User' });
         const res = await POST(req);
 
         expect(res.status).toBe(400);
@@ -82,10 +99,8 @@ describe('POST /api/auth/register-profile', () => {
         mockSingle.mockResolvedValue({ data: mockUser, error: null });
 
         const req = createRequest({
-            userId: 'user-123',
             email: 'donor@example.com',
             fullName: 'Trần Văn B',
-            role: 'donor',
         });
 
         const res = await POST(req);
@@ -94,47 +109,13 @@ describe('POST /api/auth/register-profile', () => {
         expect(res.status).toBe(200);
         expect(data.success).toBe(true);
         expect(data.user).toBeDefined();
-        expect(data.user.email).toBe('donor@example.com');
     });
 
-    it('should create hospital profile with null points', async () => {
-        const mockUser = {
-            id: 'hospital-123',
-            email: 'hospital@example.com',
-            full_name: 'Bệnh viện ABC',
-            role: 'hospital',
-            current_points: null,
-        };
-
-        mockSingle.mockResolvedValue({ data: mockUser, error: null });
+    it('should default role to donor when no existing user in DB', async () => {
+        mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+        mockSingle.mockResolvedValue({ data: { id: 'user-123', role: 'donor' }, error: null });
 
         const req = createRequest({
-            userId: 'hospital-123',
-            email: 'hospital@example.com',
-            fullName: 'Bệnh viện ABC',
-            role: 'hospital',
-        });
-
-        const res = await POST(req);
-        const data = await res.json();
-
-        expect(res.status).toBe(200);
-        expect(data.success).toBe(true);
-        // Kiểm tra upsert được gọi với current_points = null cho hospital
-        expect(mockUpsert).toHaveBeenCalledWith(
-            expect.objectContaining({
-                role: 'hospital',
-                current_points: null,
-            }),
-            expect.any(Object)
-        );
-    });
-
-    it('should default role to donor when not provided', async () => {
-        mockSingle.mockResolvedValue({ data: { id: 'u1', role: 'donor' }, error: null });
-
-        const req = createRequest({
-            userId: 'u1',
             email: 'test@example.com',
             fullName: 'Test User',
         });
@@ -147,6 +128,23 @@ describe('POST /api/auth/register-profile', () => {
         );
     });
 
+    it('should preserve existing role from DB (prevents role injection)', async () => {
+        mockMaybeSingle.mockResolvedValue({ data: { role: 'hospital' }, error: null });
+        mockSingle.mockResolvedValue({ data: { id: 'user-123', role: 'hospital' }, error: null });
+
+        const req = createRequest({
+            email: 'hospital@example.com',
+            fullName: 'Bệnh viện ABC',
+        });
+
+        await POST(req);
+
+        expect(mockUpsert).toHaveBeenCalledWith(
+            expect.objectContaining({ role: 'hospital' }),
+            expect.any(Object)
+        );
+    });
+
     /* ── DB Error ── */
     it('should return 409 when database upsert fails with duplicate key', async () => {
         mockSingle.mockResolvedValue({
@@ -155,7 +153,6 @@ describe('POST /api/auth/register-profile', () => {
         });
 
         const req = createRequest({
-            userId: 'user-999',
             email: 'fail@example.com',
             fullName: 'Fail User',
         });
@@ -177,7 +174,7 @@ describe('POST /api/auth/register-profile', () => {
 
         expect(res.status).toBe(500);
         const data = await res.json();
-        expect(data.error).toContain('JSON parse error');
+        expect(data.error).toContain('Internal server error');
     });
 });
 

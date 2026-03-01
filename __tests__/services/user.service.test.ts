@@ -348,7 +348,7 @@ describe('userService', () => {
         });
 
         test('should throw error on upload failure', async () => {
-            const mockFile = new File(['test'], 'avatar.png');
+            const mockFile = new File(['test'], 'avatar.png', { type: 'image/png' });
             const uploadError = { message: 'Upload failed' };
 
             const mockStorage = {
@@ -362,7 +362,7 @@ describe('userService', () => {
 
     describe('uploadAvatar', () => {
         test('should call uploadImage with avatars folder', async () => {
-            const mockFile = new File(['test'], 'avatar.png');
+            const mockFile = new File(['test'], 'avatar.png', { type: 'image/png' });
             const mockPublicUrl = 'https://storage.example.com/avatars/abc.png';
 
             const mockStorage = {

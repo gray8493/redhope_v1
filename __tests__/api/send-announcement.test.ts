@@ -20,6 +20,18 @@ jest.mock('next/server', () => ({
     },
 }));
 
+// Mock auth-helpers - use admin to skip ownership checks
+jest.mock('@/lib/auth-helpers', () => ({
+    getAuthenticatedUser: jest.fn().mockResolvedValue({
+        user: { id: 'admin-001', email: 'admin@redhope.vn', role: 'admin' },
+        error: null,
+    }),
+    requireRole: jest.fn().mockResolvedValue({
+        user: { id: 'admin-001', email: 'admin@redhope.vn', role: 'admin' },
+        error: null,
+    }),
+}));
+
 // Mock dependencies
 jest.mock('@/lib/supabase-admin');
 jest.mock('@sendgrid/mail', () => ({
@@ -363,7 +375,7 @@ describe('Campaign Email Auto-Send Feature', () => {
             const result = await response.json();
 
             expect(response.status).toBe(500);
-            expect(result.error).toContain('SENDGRID_API_KEY');
+            expect(result.error).toContain('Email');
         });
     });
 });

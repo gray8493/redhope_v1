@@ -17,6 +17,18 @@ jest.mock('next/server', () => ({
     }
 }));
 
+// Mock auth-helpers - use admin to skip ownership checks
+jest.mock('@/lib/auth-helpers', () => ({
+    getAuthenticatedUser: jest.fn().mockResolvedValue({
+        user: { id: 'admin-001', email: 'admin@redhope.vn', role: 'admin' },
+        error: null,
+    }),
+    requireRole: jest.fn().mockResolvedValue({
+        user: { id: 'admin-001', email: 'admin@redhope.vn', role: 'admin' },
+        error: null,
+    }),
+}));
+
 jest.mock('@react-email/render', () => ({
     render: jest.fn(() => Promise.resolve('<html>Mock Email</html>')),
 }));
