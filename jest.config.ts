@@ -10,8 +10,8 @@ const config: Config = {
         '^@/(.*)$': '<rootDir>/$1',
     },
     testMatch: [
-        '**/__tests__/**/*.test.[jt]s?(x)',
-        '**/?(*.)+(spec|test).[jt]s?(x)',
+        '<rootDir>/tests/unit/**/*.test.[jt]s?(x)',
+        '<rootDir>/tests/unit/**/*.spec.[jt]s?(x)',
     ],
     collectCoverageFrom: [
         'services/**/*.{js,jsx,ts,tsx}',

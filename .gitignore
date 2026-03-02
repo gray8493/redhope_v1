@@ -62,3 +62,17 @@ ai-test*.log
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+#Docs
+docs/main_flow.md
+.agent/plan.md
+#Test
+tests/
+tests/e2e
+test/unit
+#Supabase
+.supabase
+.agent
+#Test-result
+*.txt
+*.md
+*.log
