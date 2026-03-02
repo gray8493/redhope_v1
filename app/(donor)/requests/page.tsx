@@ -433,8 +433,21 @@ export default function RequestsPage() {
         }
 
         // 2. Check Single Active Registration Constraint
-        // Users can only have ONE 'Booked' appointment at a time.
-        const activeAppointment = userAppointments.find(app => app.status === 'Booked');
+        // Users can only have ONE 'Booked' appointment at a time, but ignore ended campaigns.
+        const activeAppointment = userAppointments.find(app => {
+            if (app.status !== 'Booked') return false;
+
+            // Allow booking if the active appointment's campaign has already ended
+            if (app.campaign?.end_time) {
+                const endTimeDate = new Date(app.campaign.end_time);
+                // Set the end time to the end of the day or just rely on the exact time
+                if (endTimeDate < new Date()) {
+                    return false; // Ignore this expired appointment
+                }
+            }
+            return true;
+        });
+
         if (activeAppointment) {
             const activeName = activeAppointment.campaign?.name || "Yêu cầu khẩn cấp";
             toast.error("Bạn đang có lịch hẹn chưa hoàn thành!", {
