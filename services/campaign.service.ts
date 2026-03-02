@@ -26,6 +26,17 @@ export async function triggerCampaignEmail(campaignId: string): Promise<void> {
 }
 
 
+// Helper function to dynamically check if an active campaign has ended based on time
+const normalizeCampaignStatus = (campaign: any) => {
+    if (!campaign) return campaign;
+    if (campaign.status === 'active' && campaign.end_time) {
+        if (new Date(campaign.end_time) < new Date()) {
+            return { ...campaign, status: 'ended' };
+        }
+    }
+    return campaign;
+};
+
 export const campaignService = {
     async getAll(hospitalId?: string) {
         try {
@@ -40,7 +51,7 @@ export const campaignService = {
 
             const { data, error } = await query;
             if (error) throw error;
-            return data || [];
+            return (data || []).map(normalizeCampaignStatus);
         } catch (error: any) {
             console.error('[CampaignService] Error in getAll:', error.message || error.details || error);
             throw error;
@@ -56,7 +67,7 @@ export const campaignService = {
                 .maybeSingle();
 
             if (error) throw error;
-            return data;
+            return normalizeCampaignStatus(data);
         } catch (error: any) {
             console.error('[CampaignService] Error in getById:', error.message || error.details || error);
             throw error;
@@ -76,8 +87,12 @@ export const campaignService = {
 
         const { data, error } = await query;
         if (error) throw error;
-        return data || [];
+
+        // Normalize status and filter out automatically ended campaigns
+        const normalizedData = (data || []).map(normalizeCampaignStatus);
+        return normalizedData.filter(c => c.status === 'active');
     },
+
     async getRequests(hospitalId?: string) {
         let query = supabase
             .from('blood_requests')
