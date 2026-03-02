@@ -22,6 +22,7 @@ export async function middleware(request: NextRequest) {
         '/hospital-reports',
         '/hospital-requests',
         '/hospital-settings',
+        '/pending-verification',
         '/support'
     ];
 

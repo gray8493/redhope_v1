@@ -32,8 +32,7 @@ export default function PendingVerificationPage() {
         try {
             await refreshUser();
             // After refreshUser, the useEffect above will handle redirect if approved
-            // If still not approved, show a message
-            // We need a small delay to let state update
+            toast.success("Đã cập nhật trạng thái mới nhất.");
             setTimeout(() => {
                 setIsChecking(false);
             }, 800);
@@ -167,7 +166,14 @@ export default function PendingVerificationPage() {
                             >
                                 {isChecking ? "Đang kiểm tra..." : "Kiểm tra lại trạng thái"}
                             </Button>
-                            <Button variant="ghost" className="w-full h-10 text-sm text-slate-400 font-medium" onClick={signOut}>
+                            <Button
+                                variant="ghost"
+                                className="w-full h-10 text-sm text-slate-400 font-medium"
+                                onClick={async () => {
+                                    await signOut();
+                                    router.push('/login');
+                                }}
+                            >
                                 Đăng xuất
                             </Button>
                         </div>
