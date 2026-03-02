@@ -640,19 +640,20 @@ export default function CampaignDetailsPage() {
     const confirmEndCampaign = async () => {
         try {
             setIsSubmitting(true);
-            // 1. Update campaign status. Use 'cancelled' as it is a standard valid status likely allowed by constraint.
-            // 'completed', 'closed', 'paused' seem to be invalid based on user reports.
-            await campaignService.updateCampaign(campaignId, { status: 'cancelled' });
+            // 1. Update campaign status to 'ended'
+            await campaignService.updateCampaign(campaignId, { status: 'ended' });
 
-            // 2. Fetch latest registrations to be sure
+            // 2. Fetch latest registrations
             const currentRegs = await campaignService.getCampaignRegistrations(campaignId);
 
-            // 3. Filter Booked ones
-            const bookedRegs = currentRegs.filter((r: any) => r.status === 'Booked');
+            // 3. Filter Booked/Checked-in ones
+            const pendingRegs = currentRegs.filter((r: any) =>
+                ['booked', 'checked-in'].includes(r.status?.toLowerCase())
+            );
 
-            // 4. Cancel each one
-            await Promise.all(bookedRegs.map((r: any) =>
-                campaignService.updateRegistrationStatus(r.id, 'Cancelled')
+            // 4. Set to 'Deferred' (Hủy hồ sơ)
+            await Promise.all(pendingRegs.map((r: any) =>
+                campaignService.updateRegistrationStatus(r.id, 'Deferred')
             ));
 
             const updated = await campaignService.getById(campaignId as string);
@@ -662,11 +663,9 @@ export default function CampaignDetailsPage() {
             const newRegs = await campaignService.getCampaignRegistrations(campaignId);
             setRegistrations(newRegs || []);
 
-            toast.success('Đã kết thúc chiến dịch và hủy các lịch hẹn chưa hoàn thành');
+            toast.success('Đã kết thúc chiến dịch và chuyển các lịch hẹn tồn đọng sang "Hủy hồ sơ"');
             setIsEditModalOpen(false);
-
-            // Redirect to history tab optionally
-            // router.push('/hospital-campaign?tab=history');
+            setIsConfirmOpen(false);
         } catch (error: any) {
             toast.error('Lỗi khi kết thúc chiến dịch: ' + error.message);
         } finally {
@@ -731,7 +730,7 @@ export default function CampaignDetailsPage() {
         }
     };
 
-    const isCampaignEnded = campaign.status?.toLowerCase() === 'completed' || campaign.status?.toLowerCase() === 'cancelled';
+    const isCampaignEnded = ['completed', 'cancelled', 'ended', 'closed'].includes(campaign.status?.toLowerCase());
 
     return (
         <main className="flex-1 overflow-y-auto">
@@ -1225,7 +1224,7 @@ export default function CampaignDetailsPage() {
 
             {/* Edit Campaign Modal */}
             {isEditModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300">
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[40] animate-in fade-in duration-300">
                     <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-[600px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800">
                         {/* Header */}
                         <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
