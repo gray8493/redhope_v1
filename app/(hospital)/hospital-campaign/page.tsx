@@ -746,7 +746,7 @@ export default function CampaignManagementPage() {
             )}
             {/* Edit Modal */}
             {isEditModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-[45] flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
                     <div
                         className="bg-white dark:bg-slate-900 w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800 max-h-[90vh] sm:max-h-none flex flex-col"
                         onClick={(e) => e.stopPropagation()}
