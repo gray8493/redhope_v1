@@ -153,7 +153,8 @@ export const donationService = {
      */
     async confirmPayment(donationId: string) {
         try {
-            const { data, error } = await supabase
+            // 1. Cập nhật trạng thái quyên góp
+            const { data: donation, error } = await supabase
                 .from('financial_donations')
                 .update({ status: 'completed' })
                 .eq('id', donationId)
@@ -161,7 +162,29 @@ export const donationService = {
                 .single();
 
             if (error) throw error;
-            return data;
+
+            // 2. Tặng điểm cho người dùng nếu có donor_id
+            if (donation.donor_id) {
+                // Lấy điểm hiện tại
+                const { data: user } = await supabase
+                    .from('users')
+                    .select('current_points')
+                    .eq('id', donation.donor_id)
+                    .single();
+
+                if (user) {
+                    // Quy đổi: 1,000đ = 1 điểm
+                    const earnedPoints = Math.floor(donation.amount / 1000);
+                    const newPoints = (user.current_points || 0) + earnedPoints;
+
+                    await supabase
+                        .from('users')
+                        .update({ current_points: newPoints })
+                        .eq('id', donation.donor_id);
+                }
+            }
+
+            return donation;
         } catch (error) {
             console.error('[DonationService] Error confirming payment:', error);
             throw error;

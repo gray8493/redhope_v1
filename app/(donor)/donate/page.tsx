@@ -133,8 +133,11 @@ export default function DonatePage() {
         if (!currentDonationId) return;
 
         try {
+            const amountValue = parseAmount(amount);
+            const earnedPoints = Math.floor(amountValue / 1000);
+
             await donationService.confirmPayment(currentDonationId);
-            toast.success("Cảm ơn bạn đã quyên góp cho cộng đồng!");
+            toast.success(`Cảm ơn bạn! Bạn vừa nhận được ${earnedPoints.toLocaleString('vi-VN')} điểm REDHOPE.`);
 
             // Refresh data
             const [statsData, recentData] = await Promise.all([
@@ -456,7 +459,10 @@ export default function DonatePage() {
                                 </div>
                                 <div className="flex justify-between text-sm py-2 border-b border-slate-100 dark:border-slate-800">
                                     <span className="text-slate-400 font-medium">Nội dung:</span>
-                                    <span className="text-slate-900 dark:text-white font-black">REDHOPE {currentDonationId?.slice(-6).toUpperCase()}</span>
+                                    <span className="text-slate-900 dark:text-white font-black">RED {currentDonationId?.slice(-6).toUpperCase()}</span>
+                                </div>
+                                <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-xs text-slate-500 italic">
+                                    Hệ thống demo: Bạn có thể bấm xác nhận dưới đây mà không cần quét thẻ thật.
                                 </div>
                             </div>
                             <button
@@ -483,39 +489,55 @@ export default function DonatePage() {
                             <h3 className="text-xl font-black">Chuyển khoản Ngân hàng</h3>
                             <p className="text-white/80 text-sm">Vui lòng chuyển chính xác {formatAmount(amount)}đ</p>
                         </div>
-                        <div className="p-5 sm:p-8">
-                            <div className="space-y-4 mb-8">
-                                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-100 dark:border-red-900/30">
-                                    <p className="text-[10px] uppercase font-black text-red-400 mb-1 tracking-widest">Số tài khoản</p>
-                                    <div className="flex justify-between items-center">
-                                        <p className="text-xl font-black text-red-900 dark:text-red-200 tracking-wider">1234 5678 9012</p>
-                                        <button className="text-red-600 p-2 hover:bg-red-100 rounded-lg transition-colors"><Copy className="w-4 h-4" /></button>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
-                                        <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-widest">Ngân hàng</p>
-                                        <p className="font-black text-[#450a0a] dark:text-white">Vietcombank</p>
-                                    </div>
-                                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
-                                        <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-widest">Chủ TK</p>
-                                        <p className="font-black text-[#450a0a] dark:text-white">REDHOPE VN</p>
-                                    </div>
-                                </div>
+                        <div className="flex justify-center mb-6">
+                            <div className="bg-white p-3 rounded-2xl border-4 border-slate-50 shadow-inner">
+                                {/* VietQR API: 970436 is Vietcombank BIN */}
+                                <img
+                                    src={`https://img.vietqr.io/image/970436-123456789012-compact.png?amount=${parseAmount(amount)}&addInfo=RED%20${currentDonationId?.slice(-6).toUpperCase()}&accountName=REDHOPE%20VN`}
+                                    alt="VietQR Payment"
+                                    className="size-48 object-contain"
+                                />
                             </div>
-                            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 flex items-start gap-3 mb-6">
-                                <CheckCircle2 className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
-                                <p className="text-xs text-yellow-800 dark:text-yellow-200 leading-relaxed font-medium">
-                                    Ghi chú chuyển khoản: <span className="font-black">REDHOPE {currentDonationId?.slice(-6).toUpperCase()}</span>. Tiền sẽ được cập nhật sau 1-3 phút.
-                                </p>
-                            </div>
-                            <button
-                                onClick={handlePaymentComplete}
-                                className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl transition-all shadow-lg shadow-red-600/20"
-                            >
-                                Hoàn tất chuyển khoản
-                            </button>
                         </div>
+                        <div className="space-y-4 mb-8">
+                            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-100 dark:border-red-900/30">
+                                <p className="text-[10px] uppercase font-black text-red-400 mb-1 tracking-widest">Số tài khoản</p>
+                                <div className="flex justify-between items-center">
+                                    <p className="text-xl font-black text-red-900 dark:text-red-200 tracking-wider">1234 5678 9012</p>
+                                    <button
+                                        className="text-red-600 p-2 hover:bg-red-100 rounded-lg transition-colors"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText("123456789012");
+                                            toast.success("Đã sao chép STK");
+                                        }}
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                    <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-widest">Ngân hàng</p>
+                                    <p className="font-black text-[#450a0a] dark:text-white">Vietcombank</p>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                    <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-widest">Chủ TK</p>
+                                    <p className="font-black text-[#450a0a] dark:text-white">REDHOPE VN</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 flex items-start gap-3 mb-6">
+                            <CheckCircle2 className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                            <p className="text-xs text-yellow-800 dark:text-yellow-200 leading-relaxed font-medium">
+                                Ghi chú chuyển khoản: <span className="font-black">REDHOPE {currentDonationId?.slice(-6).toUpperCase()}</span>. Tiền sẽ được cập nhật sau 1-3 phút.
+                            </p>
+                        </div>
+                        <button
+                            onClick={handlePaymentComplete}
+                            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl transition-all shadow-lg shadow-red-600/20"
+                        >
+                            Hoàn tất chuyển khoản
+                        </button>
                     </div>
                 </div>
             )}
