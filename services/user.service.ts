@@ -123,12 +123,14 @@ export const userService = {
 
     // Delete user
     async delete(id: string): Promise<void> {
-        const { error } = await supabase
-            .from('users')
-            .delete()
-            .eq('id', id);
+        const response = await fetch(`/api/manage-users/${id}`, {
+            method: 'DELETE',
+        });
 
-        if (error) throw error;
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Lỗi khi xóa người dùng: ${response.statusText}`);
+        }
     },
 
     // Get users by blood group

@@ -19,31 +19,24 @@ export default function KioskPage() {
     const [loading, setLoading] = useState(true);
     const [currentTime, setCurrentTime] = useState(new Date());
 
-    // Clock effect
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
 
-    // Fullscreen toggle on double click
     const toggleFullScreen = () => {
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch((e) => console.log(e));
+            document.documentElement.requestFullscreen().catch(() => { });
         } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
+            document.exitFullscreen?.();
         }
     };
 
-    // Data fetching
     const fetchData = React.useCallback(async () => {
         if (!campaignId) return;
         try {
             const camp = await campaignService.getById(campaignId);
             setCampaign(camp);
-
-            // Fetch regs
             const regs = await campaignService.getCampaignRegistrations(campaignId);
             setRegistrations(regs || []);
             setLoading(false);
@@ -56,352 +49,259 @@ export default function KioskPage() {
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData();
-        const interval = setInterval(fetchData, 10000); // 10s refresh
+        const interval = setInterval(fetchData, 10000);
         return () => clearInterval(interval);
     }, [fetchData]);
 
-
-
-
-    // --- QR Check-in URL ---
     const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
     const checkinUrl = campaignId ? `${siteUrl}/checkin?campaignId=${campaignId}` : '';
 
-    // --- Logic phân loại ---
-    // 1. Đang khám (Screening)
-    const screening = registrations.find(r => r.status?.toLowerCase() === 'screening' || r.status === 'In-Progress');
-    // 2. Đang lấy máu (Donating)
-    const donating = registrations.find(r => r.status?.toLowerCase() === 'donating' || (r.status === 'In-Progress' && r.id !== screening?.id));
-
-    // 3. Danh sách chờ - ưu tiên Checked-in (theo STT) rồi đến Booked
     const waitingList = registrations
-        .filter(r => ['booked', 'checked-in'].includes(r.status?.toLowerCase()) || (r.status === 'In-Progress' && r.id !== screening?.id && r.id !== donating?.id))
+        .filter(r => ['booked', 'checked-in'].includes(r.status?.toLowerCase()))
         .sort((a, b) => {
-            const aCheckedIn = a.status?.toLowerCase() === 'checked-in';
-            const bCheckedIn = b.status?.toLowerCase() === 'checked-in';
-            // Checked-in lên trước Booked
-            if (aCheckedIn && !bCheckedIn) return -1;
-            if (!aCheckedIn && bCheckedIn) return 1;
-            // Cùng checked-in → sort theo queue_number
-            if (aCheckedIn && bCheckedIn) return (a.queue_number || 0) - (b.queue_number || 0);
-            // Cùng booked → sort theo thời gian đăng ký
+            const aCI = a.status?.toLowerCase() === 'checked-in';
+            const bCI = b.status?.toLowerCase() === 'checked-in';
+            if (aCI && !bCI) return -1;
+            if (!aCI && bCI) return 1;
+            if (aCI && bCI) return (a.queue_number || 0) - (b.queue_number || 0);
             return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         })
-        .slice(0, 8);
+        .slice(0, 10);
 
-    // Đếm số người đã check-in
     const checkedInCount = registrations.filter(r => r.status?.toLowerCase() === 'checked-in').length;
+    const completedCount = registrations.filter(r => r.status?.toLowerCase() === 'completed').length;
 
-    if (loading) return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-cyan-500 font-mono animate-pulse">HỆ THỐNG ĐANG KHỞI ĐỘNG...</div>;
-    if (!campaign) return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-red-500 font-mono">KHÔNG TÌM THẤY CHIẾN DỊCH_</div>;
+    if (loading) return (
+        <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="flex flex-col items-center gap-5">
+                <div className="w-16 h-16 border-4 border-red-100 border-t-red-600 rounded-full animate-spin"></div>
+                <p className="text-base font-semibold text-slate-500">Đang khởi động...</p>
+            </div>
+        </div>
+    );
+
+    if (!campaign) return (
+        <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="text-center">
+                <span className="material-symbols-outlined text-6xl text-red-200 mb-4 block">error_outline</span>
+                <h2 className="text-xl font-bold text-slate-700 mb-2">Không tìm thấy chiến dịch</h2>
+                <p className="text-sm text-slate-400">Vui lòng kiểm tra lại hoặc liên hệ nhân viên y tế.</p>
+            </div>
+        </div>
+    );
 
     return (
-        <div onDoubleClick={toggleFullScreen} className="min-h-[114.28vh] bg-[#020617] text-white flex flex-col relative overflow-hidden font-sans select-none" style={{ zoom: "87.5%" }}>
-            {/* Styles inject */}
+        <div onDoubleClick={toggleFullScreen} className="min-h-screen bg-[#F5F5F5] flex flex-col select-none" style={{ fontFamily: "'Inter', sans-serif" }}>
             <style jsx global>{`
-                @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
-                @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-                @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
-                
-                :root {
-                    --glass-bg: rgba(255, 255, 255, 0.03);
-                    --glass-border: rgba(255, 255, 255, 0.12);
-                    --neon-blue: #00f2ff;
-                    --neon-red: #ff2d55;
-                }
-                .mesh-gradient {
-                    background: 
-                        radial-gradient(at 0% 0%, hsla(215, 100%, 15%, 1) 0, transparent 50%),
-                        radial-gradient(at 100% 0%, hsla(230, 80%, 10%, 1) 0, transparent 50%),
-                        radial-gradient(at 50% 50%, hsla(220, 60%, 5%, 1) 0, transparent 100%);
-                }
-                .glass-card {
-                    background: var(--glass-bg);
-                    backdrop-filter: blur(24px);
-                    border: 1px solid var(--glass-border);
-                    border-top: 1px solid rgba(255,255,255,0.2);
-                    border-left: 1px solid rgba(255,255,255,0.2);
-                    border-radius: 24px;
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-                }
-                .neon-text-blue {
-                    color: var(--neon-blue);
-                    text-shadow: 0 0 10px rgba(0, 242, 255, 0.5), 0 0 20px rgba(0, 242, 255, 0.2);
-                }
-                .neon-text-red {
-                    color: var(--neon-red);
-                    text-shadow: 0 0 10px rgba(255, 45, 85, 0.5), 0 0 20px rgba(255, 45, 85, 0.2);
-                }
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=optional');
 
-                .step-circle {
-                    width: 44px;
-                    height: 44px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.2), 0 0 15px rgba(0, 242, 255, 0.1);
+                .ticker-wrap { overflow: hidden; }
+                .ticker-content {
+                    display: inline-block; white-space: nowrap;
+                    animation: ticker-scroll 45s linear infinite;
                 }
-                .waitlist-item {
-                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                    transform-origin: center top;
-                }
-                .ticker-wrap {
-                    width: 100%;
-                    overflow: hidden;
-                    background: rgba(0, 0, 0, 0.3);
-                    backdrop-filter: blur(10px);
-                }
-                .ticker-move {
-                    display: inline-block;
-                    white-space: nowrap;
-                    padding-right: 100%;
-                    animation: ticker 60s linear infinite;
-                }
-                @keyframes ticker {
-                    0% { transform: translate3d(0, 0, 0); }
-                    100% { transform: translate3d(-100%, 0, 0); }
-                }
-                .orb {
-                    position: absolute;
-                    width: 400px;
-                    height: 400px;
-                    border-radius: 50%;
-                    filter: blur(120px);
-                    opacity: 0.15;
-                    pointer-events: none;
+                @keyframes ticker-scroll {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
                 }
             `}</style>
 
-            <div className="absolute inset-0 mesh-gradient -z-10"></div>
-            <div className="orb bg-cyan-500 top-[-100px] left-[-100px]"></div>
-            <div className="orb bg-blue-600 bottom-[-100px] right-[-100px]"></div>
-            <div className="orb bg-purple-600 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10"></div>
-
-            {/* Header */}
-            <header className="h-24 flex items-center justify-between px-12 relative z-10 border-b border-white/5">
-                <div className="flex items-center gap-6">
-                    <div className="w-14 h-14 glass-card flex items-center justify-center border-white/10">
-                        <span className="material-symbols-outlined text-3xl neon-text-blue">medical_services</span>
+            {/* ═══ HEADER ═══ */}
+            <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 flex-shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
+                        <span className="material-symbols-outlined text-white text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
                     </div>
                     <div>
-                        <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
-                            RED<span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-amber-500">HOPE</span>
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">KIOSK</span>
-                        </h1>
-                        <p className="text-[10px] text-cyan-400/60 uppercase tracking-[0.3em] font-bold">HỆ THỐNG CHECK-IN THÔNG MINH v1.0</p>
+                        <h1 className="text-lg font-extrabold text-slate-800 leading-tight">RED<span className="text-red-600">HOPE</span></h1>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em]">Kiosk Check-in</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-12">
+
+                <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
+                    <span className="material-symbols-outlined text-red-400 text-base" style={{ fontVariationSettings: "'FILL' 1" }}>campaign</span>
+                    {campaign?.name}
+                    {campaign?.location_name && (
+                        <span className="text-slate-300 text-xs ml-1 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[13px]">location_on</span>
+                            {campaign.location_name}
+                        </span>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-5">
                     <div className="text-right">
-                        <p className="text-xs text-white/40 font-medium mb-1 uppercase tracking-widest">
-                            {format(currentTime, 'dd MMM yyyy', { locale: vi })}
-                        </p>
-                        <p className="text-3xl font-light tracking-tighter tabular-nums">
+                        <p className="text-[10px] text-slate-400 capitalize">{format(currentTime, 'EEEE, dd/MM', { locale: vi })}</p>
+                        <p className="text-lg font-bold text-slate-800 tabular-nums leading-tight">
                             {format(currentTime, 'HH:mm')}
-                            <span className="opacity-40 text-xl">:{format(currentTime, 'ss')}</span>
+                            <span className="text-xs text-slate-300">:{format(currentTime, 'ss')}</span>
                         </p>
                     </div>
-                    <div className="h-10 w-[1px] bg-white/10"></div>
-                    <div className="flex items-center gap-3 glass-card px-5 py-2.5 rounded-full border-green-500/20">
-                        <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e] animate-pulse"></div>
-                        <span className="text-xs font-bold tracking-widest text-green-500/80 uppercase">HỆ THỐNG SẴN SÀNG</span>
+                    <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-full">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-[10px] font-bold text-slate-500">ONLINE</span>
                     </div>
                 </div>
             </header>
 
-            {/* Main Content */}
-            <main className="flex-1 flex p-8 gap-8 overflow-hidden relative z-10">
-                <section className="flex-[1.2] glass-card p-10 flex flex-col items-center justify-center relative group">
-                    <div className="text-center mb-8">
-                        <h2 className="text-5xl lg:text-6xl font-extrabold mb-3 tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60" style={{ color: 'white' }}>
-                            Check-in Tức Thì
+            {/* ═══ MAIN ═══ */}
+            <main className="flex-1 flex p-5 gap-5 overflow-hidden">
+
+                {/* ─── LEFT: QR ─── */}
+                <section className="flex-1 bg-white rounded-2xl border border-slate-200 p-8 flex flex-col items-center justify-center relative">
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-red-600 rounded-t-2xl"></div>
+
+                    <div className="text-center mb-5">
+                        <h2 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2">
+                            Quét mã <span className="text-red-600">Check-in</span>
                         </h2>
-                        <div className="h-1 w-24 bg-gradient-to-r from-cyan-500 to-transparent mx-auto rounded-full mb-4"></div>
-                        <p className="text-sm text-white/40 tracking-wide">Quét mã QR bằng điện thoại để check-in</p>
+                        <p className="text-sm text-slate-400">Dùng camera điện thoại quét mã QR bên dưới</p>
                     </div>
 
-                    <div className="relative">
-                        <div className="absolute -inset-10 bg-cyan-500/10 blur-[60px] rounded-full group-hover:bg-cyan-500/20 transition-all duration-700"></div>
-                        <div className="glass-card p-8 flex flex-col items-center justify-center border-dashed border-cyan-500/40 border-2">
-                            {checkinUrl ? (
-                                <div
-                                    className="p-4 rounded-xl shadow-[0_0_40px_rgba(0,242,255,0.15)] overflow-hidden flex items-center justify-center"
-                                    style={{
-                                        backgroundColor: '#ffffff',
-                                        color: '#000000',
-                                        minWidth: '300px',
-                                        minHeight: '300px',
-                                        colorScheme: 'light',
-                                        forcedColorAdjust: 'none'
-                                    }}
-                                >
-                                    <QRCodeSVG
-                                        value={checkinUrl}
-                                        size={280}
-                                        level="H"
-                                        includeMargin={false}
-                                        bgColor="#ffffff"
-                                        fgColor="#000000"
-                                    />
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center gap-4">
-                                    <span className="material-symbols-outlined text-8xl neon-text-blue">qr_code_2</span>
-                                    <p className="text-sm text-white/40">Không tìm thấy chiến dịch</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Stats row */}
-                    <div className="mt-10 flex items-center gap-8">
-                        <div className="flex items-center gap-3 glass-card px-5 py-3 rounded-full">
-                            <span className="material-symbols-outlined text-cyan-400 text-lg">how_to_reg</span>
-                            <span className="text-sm font-bold text-white/70">
-                                <span className="text-2xl neon-text-blue font-extrabold">{checkedInCount}</span>
-                                <span className="text-white/30 ml-1">đã check-in</span>
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3 glass-card px-5 py-3 rounded-full">
-                            <span className="material-symbols-outlined text-amber-400 text-lg">groups</span>
-                            <span className="text-sm font-bold text-white/70">
-                                <span className="text-2xl text-amber-400 font-extrabold">{registrations.length}</span>
-                                <span className="text-white/30 ml-1">đã đăng ký</span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="mt-10 grid grid-cols-3 gap-12 w-full max-w-xl">
-                        {[
-                            { step: '01', label: 'Quét mã QR', icon: 'qr_code_scanner' },
-                            { step: '02', label: 'Khám sàng lọc', icon: 'fact_check' },
-                            { step: '03', label: 'Hiến máu', icon: 'volunteer_activism' }
-                        ].map((item, i) => (
-                            <div key={i} className="flex flex-col items-center gap-4">
-                                <div className="step-circle group-hover:border-cyan-500/50 transition-colors">
-                                    <span className="material-symbols-outlined text-cyan-400 text-lg">{item.icon}</span>
-                                </div>
-                                <span className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-bold">{item.label}</span>
+                    {/* QR */}
+                    <div className="bg-white p-4 rounded-xl border-2 border-red-100 shadow-sm" style={{ colorScheme: 'light', forcedColorAdjust: 'none' }}>
+                        {checkinUrl ? (
+                            <QRCodeSVG value={checkinUrl} size={220} level="H" includeMargin={false} bgColor="#ffffff" fgColor="#1e293b" />
+                        ) : (
+                            <div className="w-[220px] h-[220px] flex items-center justify-center">
+                                <span className="material-symbols-outlined text-5xl text-slate-200">qr_code_2</span>
                             </div>
-                        ))}
+                        )}
+                    </div>
+
+                    {/* Steps */}
+                    <div className="mt-6 flex items-center gap-2 text-xs text-slate-500">
+                        <span className="flex items-center gap-1 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+                            <span className="material-symbols-outlined text-red-500 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>phone_iphone</span>
+                            Quét QR
+                        </span>
+                        <span className="material-symbols-outlined text-slate-300 text-xs">arrow_forward</span>
+                        <span className="flex items-center gap-1 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+                            <span className="material-symbols-outlined text-red-500 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>badge</span>
+                            Nhập SĐT
+                        </span>
+                        <span className="material-symbols-outlined text-slate-300 text-xs">arrow_forward</span>
+                        <span className="flex items-center gap-1 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+                            <span className="material-symbols-outlined text-red-500 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>confirmation_number</span>
+                            Nhận STT
+                        </span>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="mt-5 flex items-center gap-6 text-sm">
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <span className="material-symbols-outlined text-base text-red-400" style={{ fontVariationSettings: "'FILL' 1" }}>groups</span>
+                            <span className="font-extrabold text-slate-700 text-lg">{registrations.length}</span>
+                            <span className="text-xs">đăng ký</span>
+                        </div>
+                        <div className="w-px h-5 bg-slate-200"></div>
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <span className="material-symbols-outlined text-base text-red-400" style={{ fontVariationSettings: "'FILL' 1" }}>how_to_reg</span>
+                            <span className="font-extrabold text-slate-700 text-lg">{checkedInCount}</span>
+                            <span className="text-xs">check-in</span>
+                        </div>
+                        <div className="w-px h-5 bg-slate-200"></div>
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <span className="material-symbols-outlined text-base text-red-400" style={{ fontVariationSettings: "'FILL' 1" }}>volunteer_activism</span>
+                            <span className="font-extrabold text-slate-700 text-lg">{completedCount}</span>
+                            <span className="text-xs">hoàn thành</span>
+                        </div>
                     </div>
                 </section>
 
-                {/* Right Panel: Status Board */}
-                <section className="flex-1 flex flex-col gap-6">
-                    {/* Live Status */}
-                    <div className="glass-card p-8 border-cyan-500/20">
-                        <div className="flex items-center gap-3 mb-8">
-                            <span className="material-symbols-outlined text-cyan-400">monitoring</span>
-                            <h3 className="text-sm font-bold uppercase tracking-[0.25em] text-white/60">Trạng Thái Trực Tuyến</h3>
+                {/* ─── RIGHT: Queue ─── */}
+                <section className="flex-1 bg-white rounded-2xl border border-slate-200 flex flex-col overflow-hidden relative">
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-red-600 rounded-t-2xl"></div>
+
+                    <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                            <span className="material-symbols-outlined text-red-500 text-xl">format_list_numbered</span>
+                            <h3 className="text-sm font-extrabold text-slate-700">Danh sách chờ</h3>
+                            <span className="text-[10px] text-slate-400 font-medium">({waitingList.length})</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-8 divide-x divide-white/5">
-                            <div className="relative group text-center px-4">
-                                <p className="text-[10px] font-black text-cyan-500/60 uppercase tracking-widest mb-4">Đang Khám Sàng Lọc</p>
-                                <div className="text-7xl lg:text-8xl font-black leading-none neon-text-blue tracking-tighter drop-shadow-2xl">
-                                    {screening ? `#${screening.id.slice(0, 3)}` : '--'}
-                                </div>
-                                <div className="mt-6 text-[10px] font-bold text-white/30 border border-white/10 inline-block px-3 py-1 rounded">
-                                    PHÒNG KHÁM 01
-                                </div>
-                            </div>
-                            <div className="relative group text-center px-4">
-                                <p className="text-[10px] font-black text-red-500/60 uppercase tracking-widest mb-4">Đang Lấy Máu</p>
-                                <div className="text-7xl lg:text-8xl font-black leading-none neon-text-red tracking-tighter drop-shadow-2xl">
-                                    {donating ? `#${donating.id.slice(0, 3)}` : '--'}
-                                </div>
-                                <div className="mt-6 text-[10px] font-bold text-white/30 border border-white/10 inline-block px-3 py-1 rounded">
-                                    GHẾ LẤY MÁU 01
-                                </div>
-                            </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
+                            <span className="material-symbols-outlined text-xs text-red-400 animate-spin" style={{ animationDuration: '3s' }}>sync</span>
+                            Tự động cập nhật
                         </div>
                     </div>
 
-                    {/* Waiting List */}
-                    <div className="flex-1 flex flex-col overflow-hidden glass-card p-6 border-white/5">
-                        <div className="flex items-center justify-between mb-6 px-2">
-                            <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-xs text-white/40">format_list_numbered</span>
-                                <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em]">Danh sách chờ tiếp theo</h4>
-                            </div>
-                            <div className="flex gap-1.5">
-                                <div className="w-1 h-1 bg-cyan-500 rounded-full animate-pulse"></div>
-                                <div className="w-1 h-1 bg-white/20 rounded-full"></div>
-                                <div className="w-1 h-1 bg-white/20 rounded-full"></div>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-2">
-                            {waitingList.map((reg, index) => {
-                                const isCheckedIn = reg.status?.toLowerCase() === 'checked-in';
-                                return (
-                                    <div
-                                        key={reg.id}
-                                        className={`waitlist-item p-4 rounded-xl flex items-center justify-between border relative overflow-hidden group hover:bg-white/10 ${isCheckedIn
-                                            ? 'border-cyan-500/20 bg-cyan-500/5'
-                                            : 'border-white/10 bg-white/5'
-                                            }`}
-                                        style={{
-                                            opacity: Math.max(0.3, 1 - index * 0.1),
-                                            transform: `scale(${Math.max(0.95, 1 - index * 0.01)})`
-                                        }}
-                                    >
-                                        <div className="flex items-center gap-6 relative z-10">
-                                            <span className={`text-3xl font-extrabold tracking-tighter ${isCheckedIn ? 'neon-text-blue' : (index === 0 ? 'text-white' : 'text-white/50')
-                                                }`}>
-                                                {isCheckedIn ? `#${String(reg.queue_number || '?').padStart(2, '0')}` : `--`}
-                                            </span>
-                                            <div className="h-6 w-[1px] bg-white/10"></div>
-                                            <span className={`text-base font-medium ${index === 0 ? 'text-white' : 'text-white/60'}`}>
-                                                {reg.user?.full_name || 'Khách vãng lai'}
-                                            </span>
-                                        </div>
-                                        <div className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest relative z-10 ${isCheckedIn
-                                            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                                            : 'bg-white/5 text-white/20 border border-white/5'
-                                            }`}>
-                                            {isCheckedIn ? `STT #${reg.queue_number || '?'}` : 'Chưa check-in'}
-                                        </div>
-
-                                        {/* Scan effect on hover */}
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                    <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+                        {waitingList.map((reg, index) => {
+                            const isCI = reg.status?.toLowerCase() === 'checked-in';
+                            return (
+                                <div key={reg.id}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${isCI ? 'bg-red-50/50 border-red-100' : 'bg-white border-slate-100 hover:bg-slate-50'
+                                        }`}
+                                >
+                                    {/* STT */}
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-black text-sm flex-shrink-0 ${isCI ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-300'
+                                        }`}>
+                                        {isCI ? String(reg.queue_number || '?').padStart(2, '0') : '—'}
                                     </div>
-                                )
-                            })}
 
-                            {waitingList.length === 0 && (
-                                <div className="flex flex-col items-center justify-center h-full text-white/20 gap-2">
-                                    <span className="material-symbols-outlined text-4xl">inbox</span>
-                                    <span className="text-xs tracking-widest uppercase">Hàng chờ trống</span>
+                                    {/* Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`text-sm font-semibold truncate ${isCI ? 'text-slate-800' : 'text-slate-500'}`}>
+                                            {reg.user?.full_name || 'Khách vãng lai'}
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                            <span className="material-symbols-outlined text-[11px]">schedule</span>
+                                            {isCI && reg.check_in_time
+                                                ? format(new Date(reg.check_in_time), 'HH:mm')
+                                                : reg.created_at ? format(new Date(reg.created_at), 'HH:mm') : '—'
+                                            }
+                                        </p>
+                                    </div>
+
+                                    {/* Badge */}
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold flex-shrink-0 ${isCI ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-400'
+                                        }`}>
+                                        <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                            {isCI ? 'check_circle' : 'pending'}
+                                        </span>
+                                        {isCI ? 'Check-in' : 'Chờ'}
+                                    </span>
                                 </div>
-                            )}
-                        </div>
+                            );
+                        })}
+
+                        {waitingList.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-full gap-3 py-16">
+                                <span className="material-symbols-outlined text-5xl text-slate-200">inbox</span>
+                                <p className="text-sm font-semibold text-slate-400">Hàng chờ trống</p>
+                                <p className="text-xs text-slate-300">Quét mã QR để bắt đầu check-in</p>
+                            </div>
+                        )}
                     </div>
                 </section>
             </main>
 
-            {/* Footer Ticker */}
-            <footer className="h-12 ticker-wrap flex items-center border-t border-white/5 relative z-20">
-                <div className="ticker-move text-xs font-medium tracking-[0.1em] text-white/60 uppercase py-2">
-                    <span className="mx-16 flex items-center gap-3 inline-flex">
-                        <span className="material-symbols-outlined text-cyan-400 text-sm">info</span>
-                        Lưu ý: Vui lòng chuẩn bị Căn cước công dân gắn chip hoặc ứng dụng VNeID mức 2 khi làm thủ tục.
-                    </span>
-                    <span className="mx-16 flex items-center gap-3 inline-flex">
-                        <span className="material-symbols-outlined text-red-400 text-sm">favorite</span>
-                        Mỗi giọt máu cho đi, một cuộc đời ở lại — Cảm ơn nghĩa cử cao đẹp của bạn.
-                    </span>
-                    <span className="mx-16 flex items-center gap-3 inline-flex">
-                        <span className="material-symbols-outlined text-cyan-400 text-sm">verified_user</span>
-                        Quy trình hiến máu đảm bảo an toàn tuyệt đối theo tiêu chuẩn của Bộ Y Tế.
-                    </span>
-                    <span className="mx-16 flex items-center gap-3 inline-flex">
-                        <span className="material-symbols-outlined text-amber-400 text-sm">bolt</span>
-                        Địa điểm: {campaign?.location_name || 'Đang cập nhật...'}
-                    </span>
+            {/* ═══ FOOTER ═══ */}
+            <footer className="h-10 bg-white border-t border-slate-200 flex items-center overflow-hidden flex-shrink-0">
+                <div className="ticker-wrap">
+                    <div className="ticker-content">
+                        {[1, 2].map(dup => (
+                            <React.Fragment key={dup}>
+                                <span className="mx-10 inline-flex items-center gap-2 text-xs text-slate-400">
+                                    <span className="material-symbols-outlined text-red-400 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                                    Mỗi giọt máu cho đi, một cuộc đời ở lại
+                                </span>
+                                <span className="mx-10 inline-flex items-center gap-2 text-xs text-slate-400">
+                                    <span className="material-symbols-outlined text-red-400 text-sm">id_card</span>
+                                    Vui lòng chuẩn bị CCCD gắn chip hoặc VNeID mức 2
+                                </span>
+                                <span className="mx-10 inline-flex items-center gap-2 text-xs text-slate-400">
+                                    <span className="material-symbols-outlined text-red-400 text-sm">verified</span>
+                                    Quy trình an toàn theo tiêu chuẩn Bộ Y Tế
+                                </span>
+                                <span className="mx-10 inline-flex items-center gap-2 text-xs text-slate-400">
+                                    <span className="material-symbols-outlined text-red-400 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
+                                    {campaign?.location_name || '—'}
+                                </span>
+                            </React.Fragment>
+                        ))}
+                    </div>
                 </div>
             </footer>
         </div>

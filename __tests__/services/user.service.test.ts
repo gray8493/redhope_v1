@@ -218,19 +218,41 @@ describe('userService', () => {
     });
 
     describe('delete', () => {
+        let globalFetch: typeof fetch;
+
+        beforeEach(() => {
+            // Save original fetch
+            globalFetch = global.fetch;
+            // Mock fetch
+            global.fetch = jest.fn();
+        });
+
+        afterEach(() => {
+            // Restore original fetch
+            global.fetch = globalFetch;
+        });
+
         test('should delete user without error', async () => {
-            mockSupabaseQuery.eq.mockResolvedValue({ error: null });
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ success: true })
+            });
 
             await expect(userService.delete('user-1')).resolves.not.toThrow();
-            expect(mockSupabaseQuery.delete).toHaveBeenCalled();
-            expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('id', 'user-1');
+            expect(global.fetch).toHaveBeenCalledWith('/api/manage-users/user-1', {
+                method: 'DELETE',
+            });
         });
 
         test('should throw error on deletion failure', async () => {
-            const dbError = { message: 'Cannot delete' };
-            mockSupabaseQuery.eq.mockResolvedValue({ error: dbError });
+            const dbError = { error: 'Cannot delete' };
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: false,
+                statusText: 'Internal Server Error',
+                json: async () => dbError
+            });
 
-            await expect(userService.delete('user-1')).rejects.toEqual(dbError);
+            await expect(userService.delete('user-1')).rejects.toThrow('Cannot delete');
         });
     });
 

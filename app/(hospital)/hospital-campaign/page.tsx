@@ -264,6 +264,11 @@ export default function CampaignManagementPage() {
             desc = desc.replace(imgMatch[0], '');
         }
 
+        const isPaused = desc.includes('data-status="paused"');
+        if (isPaused) {
+            desc = desc.replace(/<div data-status="paused"[^>]*><\/div>/g, '');
+        }
+
         setEditFormData({
             name: campaign.name || '',
             location_name: campaign.location_name || '',
@@ -271,7 +276,7 @@ export default function CampaignManagementPage() {
             start_time: campaign.start_time ? format(new Date(campaign.start_time), 'HH:mm') : '08:00',
             end_time: campaign.end_time ? format(new Date(campaign.end_time), 'HH:mm') : '17:00',
             target_units: campaign.target_units || 0,
-            status: campaign.status || 'active',
+            status: isPaused ? 'paused' : (campaign.status || 'active'),
             description: desc,
             target_blood_group: initialBloodGroups,
             image: img
@@ -286,10 +291,16 @@ export default function CampaignManagementPage() {
             const startStr = `${editFormData.date}T${editFormData.start_time}:00`;
             const endStr = `${editFormData.date}T${editFormData.end_time}:00`;
 
-            // Embed image logic
-            const finalDesc = editFormData.image
-                ? `<div data-cover="${editFormData.image}" style="display:none"></div>${editFormData.description}`
-                : editFormData.description;
+            // Embed image logic and status logic
+            let finalDesc = editFormData.description;
+            if (editFormData.status === 'paused') {
+                finalDesc = `<div data-status="paused" style="display:none"></div>${finalDesc}`;
+            }
+            if (editFormData.image) {
+                finalDesc = `<div data-cover="${editFormData.image}" style="display:none"></div>${finalDesc}`;
+            }
+
+            const dbStatus = editFormData.status === 'paused' ? 'active' : editFormData.status;
 
             const updateData = {
                 name: editFormData.name,
@@ -297,7 +308,7 @@ export default function CampaignManagementPage() {
                 start_time: startStr,
                 end_time: endStr,
                 target_units: editFormData.target_units,
-                status: editFormData.status,
+                status: dbStatus,
                 description: finalDesc,
                 target_blood_group: editFormData.target_blood_group
                 // removed 'image' field to prevent schema error
@@ -910,6 +921,8 @@ export default function CampaignManagementPage() {
                                             >
                                                 <option value="active">Đang hoạt động</option>
                                                 <option value="paused">Tạm dừng</option>
+                                                <option value="completed">Kết thúc</option>
+                                                <option value="cancelled">Hủy bỏ</option>
                                             </select>
                                             <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
                                         </div>
