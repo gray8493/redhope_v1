@@ -50,3 +50,11 @@ scripts/
 mcp_config.json
 test-lib*.js
 test_result*
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
