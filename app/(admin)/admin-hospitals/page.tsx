@@ -230,18 +230,21 @@ export default function HospitalDirectoryPage() {
 
     // Filter by tab and search
     const filteredHospitals = hospitals.filter(h => {
-        const matchSearch = h.hospital_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            h.hospital_address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            h.city?.toLowerCase().includes(searchTerm.toLowerCase());
+        const searchStr = searchTerm.toLowerCase();
+        const matchSearch = !searchStr || Boolean(
+            h.hospital_name?.toLowerCase().includes(searchStr) ||
+            h.hospital_address?.toLowerCase().includes(searchStr) ||
+            h.city?.toLowerCase().includes(searchStr)
+        );
 
         if (activeTab === 'all') return matchSearch;
-        if (activeTab === 'pending') return matchSearch && (h.verification_status === 'pending' || h.verification_status === 'in_review');
+        if (activeTab === 'pending') return matchSearch && (!h.verification_status || h.verification_status === 'pending' || h.verification_status === 'in_review');
         if (activeTab === 'approved') return matchSearch && h.verification_status === 'approved';
         if (activeTab === 'rejected') return matchSearch && h.verification_status === 'rejected';
         return matchSearch;
     });
 
-    const pendingCount = hospitals.filter(h => h.verification_status === 'pending' || h.verification_status === 'in_review').length;
+    const pendingCount = hospitals.filter(h => !h.verification_status || h.verification_status === 'pending' || h.verification_status === 'in_review').length;
     const approvedCount = hospitals.filter(h => h.verification_status === 'approved').length;
     const rejectedCount = hospitals.filter(h => h.verification_status === 'rejected').length;
 
