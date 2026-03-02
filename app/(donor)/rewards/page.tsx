@@ -49,6 +49,7 @@ interface RewardItem {
     name: string;
     description: string;
     points: number;
+    stock: number;
     category: "food" | "shopping" | "health";
     icon: React.ReactNode;
     iconColor: string;
@@ -106,20 +107,23 @@ export default function RewardsPage() {
         setLoadingRewards(true);
         try {
             const data = await voucherService.getAll();
-            const formattedRewards: RewardItem[] = data.map((v, index) => {
-                const style = getCategoryAndStyle(v.partner_name || "Unknown", index);
-                return {
-                    id: v.id,
-                    name: v.partner_name || "Ưu đãi",
-                    description: `Voucher giảm giá từ ${v.partner_name || "đối tác"}`,
-                    points: v.point_cost || 0,
-                    category: style.category,
-                    icon: style.icon,
-                    iconColor: style.iconColor,
-                    gradientColor: style.gradientColor,
-                    badge: style.badge
-                };
-            });
+            const formattedRewards: RewardItem[] = data
+                .filter(v => v.status === 'Active' && v.stock_quantity != null && v.stock_quantity > 0)
+                .map((v, index) => {
+                    const style = getCategoryAndStyle(v.partner_name || "Unknown", index);
+                    return {
+                        id: v.id,
+                        name: v.partner_name || "Ưu đãi",
+                        description: `Voucher giảm giá từ ${v.partner_name || "đối tác"}`,
+                        points: v.point_cost || 0,
+                        stock: v.stock_quantity || 0,
+                        category: style.category,
+                        icon: style.icon,
+                        iconColor: style.iconColor,
+                        gradientColor: style.gradientColor,
+                        badge: style.badge
+                    };
+                });
             setRewards(formattedRewards);
         } catch (error) {
             console.error("Failed to fetch rewards", error);
@@ -192,6 +196,7 @@ export default function RewardsPage() {
                 description: "Mã voucher đã được lưu vào lịch sử đổi quà. Bạn có thể sử dụng mã này để đổi quà."
             });
             await refreshUser();
+            await fetchRewards();
             if (activeTab === "history") fetchHistory();
         } catch (error: any) {
             setAlertMessage({
@@ -413,6 +418,7 @@ export default function RewardsPage() {
                                                             <span className={`font-black text-base md:text-xl ${userPoints < reward.points ? "text-gray-400" : "text-[#0065FF]"}`}>
                                                                 {reward.points.toLocaleString()} pts
                                                             </span>
+                                                            <span className="text-[9px] md:text-[10px] text-gray-500 mt-0.5 font-medium">Còn lại: {reward.stock}</span>
                                                         </div>
                                                         {userPoints < reward.points ? (
                                                             <button disabled className="bg-gray-200 dark:bg-[#3d335a] text-gray-400 font-bold py-1.5 md:py-2 px-2 md:px-4 rounded-lg text-[10px] md:text-xs cursor-not-allowed">
