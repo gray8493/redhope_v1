@@ -9,7 +9,7 @@ export async function POST(req: Request) {
         if (authError || !authUser) return authError!;
 
         const body = await req.json();
-        const { answers } = body;
+        const { answers, campaignId } = body;
 
         // SECURITY: Use server-verified userId, not client-supplied
         const userId = authUser.id;
@@ -150,6 +150,41 @@ TRẢ VỀ JSON NGUYÊN BẢN (KHÔNG CÓ CODE BLOCK, KHÔNG CÓ MARKDOWN):
         }
 
         const jsonResponse = JSON.parse(jsonMatch[0]);
+
+        // ═══ Save to screening_logs table ═══
+        try {
+            // Find appointment if campaignId provided
+            let appointmentId: string | null = null;
+            if (campaignId) {
+                const { data: appointment } = await supabaseAdmin
+                    .from('appointments')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('campaign_id', campaignId)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+                appointmentId = appointment?.id || null;
+            }
+
+            await supabaseAdmin.from('screening_logs').insert({
+                user_id: userId,
+                campaign_id: campaignId || null,
+                appointment_id: appointmentId,
+                ai_result: jsonResponse.status === 'eligible',
+                health_details: {
+                    score: jsonResponse.score,
+                    status: jsonResponse.status,
+                    analysis: jsonResponse.analysis,
+                    recommendations: jsonResponse.recommendations,
+                    answers: answers,
+                    analyzed_at: new Date().toISOString(),
+                },
+            });
+        } catch (logError: any) {
+            console.error('Failed to save screening log:', logError?.message);
+        }
+
         return NextResponse.json(jsonResponse);
 
     } catch (error: any) {

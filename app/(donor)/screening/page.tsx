@@ -368,7 +368,7 @@ export default function ScreeningPage() {
     const generateAiAnalysis = async () => {
         try {
             if (!user?.id) return;
-            const result = await aiService.analyzeScreening(answers, user.id);
+            const result = await aiService.analyzeScreening(answers, user.id, campaignId || undefined);
             setAiResult(result);
             if (user?.id) {
                 const dbStatus = result.status === 'eligible' ? 'passed' : 'failed';

@@ -5,9 +5,9 @@ export const aiService = {
         return { success: true, data: "Analyzed data" };
     },
 
-    analyzeScreening: async (answers: any, userId?: string) => {
+    analyzeScreening: async (answers: any, userId?: string, campaignId?: string) => {
         try {
-            const bodyPayload = { answers, userId };
+            const bodyPayload = { answers, userId, campaignId };
             const response = await fetch("/api/ai/screening", {
                 method: "POST",
                 headers: {

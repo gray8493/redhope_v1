@@ -407,7 +407,13 @@ export default function RequestsPage() {
         const eligibility = await screeningService.checkEligibility(profile.id);
 
         if (!eligibility.eligible) {
-            if (eligibility.status === 'failed') {
+            if (eligibility.status === 'cooldown') {
+                // Chưa đủ 3 tháng sau lần hiến máu gần nhất
+                toast.error("Chưa đủ thời gian giữa 2 lần hiến máu", {
+                    description: eligibility.reason,
+                    duration: 8000,
+                });
+            } else if (eligibility.status === 'failed') {
                 // Đã làm test nhưng FAIL
                 toast.error("Bạn chưa đủ điều kiện hiến máu", {
                     description: eligibility.reason,

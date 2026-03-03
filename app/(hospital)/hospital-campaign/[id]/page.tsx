@@ -37,6 +37,7 @@ import {
     Check,
     CalendarDays,
     Loader2,
+    BrainCircuit,
     Eye,
     EyeOff,
     MoreHorizontal
@@ -71,6 +72,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { DonorScreeningModal } from '@/components/hospital/DonorScreeningModal';
 
 // Blood volume options
 const BLOOD_VOLUMES = [250, 350, 450];
@@ -195,6 +197,9 @@ export default function CampaignDetailsPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [emailType, setEmailType] = useState<'announcement' | 'registration_success' | 'reminder_8h' | 'reminder_4h' | 'new_campaign_invite'>('announcement');
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+    // Screening modal state
+    const [screeningModal, setScreeningModal] = useState<{ open: boolean; userId: string; userName: string }>({ open: false, userId: '', userName: '' });
 
     // Edit Campaign states
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -1152,7 +1157,16 @@ export default function CampaignDetailsPage() {
                                                                             <MoreVertical className="w-4 h-4" />
                                                                         </button>
                                                                     </DropdownMenuTrigger>
-                                                                    <DropdownMenuContent align="end" className="w-[150px] p-1 rounded-xl border-slate-200 dark:border-slate-800 shadow-xl">
+                                                                    <DropdownMenuContent align="end" className="w-[170px] p-1 rounded-xl border-slate-200 dark:border-slate-800 shadow-xl">
+                                                                        {/* AI Screening Result Button - Always visible */}
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => setScreeningModal({ open: true, userId: reg.user_id, userName: reg.user?.full_name || 'N/A' })}
+                                                                            className="text-blue-600 focus:text-blue-700 focus:bg-blue-50 dark:focus:bg-blue-900/20 font-medium text-[13px] gap-2 cursor-pointer rounded-md px-2.5 py-1.5"
+                                                                        >
+                                                                            <BrainCircuit className="w-3.5 h-3.5" />
+                                                                            Kết quả AI
+                                                                        </DropdownMenuItem>
+                                                                        <div className="h-px bg-slate-100 dark:bg-slate-800 my-0.5" />
                                                                         {isEditable ? (
                                                                             <DropdownMenuItem
                                                                                 onClick={() => handleDeferDonation(reg.id)}
@@ -1577,6 +1591,14 @@ export default function CampaignDetailsPage() {
                 onConfirm={confirmEndCampaign}
                 confirmText="Xác nhận kết thúc"
                 variant="destructive"
+            />
+            {/* Donor Screening Modal */}
+            <DonorScreeningModal
+                open={screeningModal.open}
+                onClose={() => setScreeningModal({ open: false, userId: '', userName: '' })}
+                userId={screeningModal.userId}
+                userName={screeningModal.userName}
+                campaignId={campaignId}
             />
         </main>
     );

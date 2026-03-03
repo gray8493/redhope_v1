@@ -182,6 +182,24 @@ export const campaignService = {
     },
 
     async registerToBloodRequest(userId: string, requestId: string) {
+        // 0. Check cooldown 3 tháng
+        const { data: lastDonation } = await supabase
+            .from('donation_records')
+            .select('verified_at')
+            .eq('donor_id', userId)
+            .order('verified_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (lastDonation?.verified_at) {
+            const diffDays = Math.floor((Date.now() - new Date(lastDonation.verified_at).getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays < 84) {
+                const nextDate = new Date(lastDonation.verified_at);
+                nextDate.setDate(nextDate.getDate() + 84);
+                throw new Error(`Bạn cần đợi đủ 3 tháng sau lần hiến máu gần nhất. Ngày đủ điều kiện: ${nextDate.toLocaleDateString('vi-VN')}.`);
+            }
+        }
+
         // 1. Check for any existing record for this user and blood request
         const { data: existing } = await supabase
             .from('appointments')
@@ -277,6 +295,24 @@ export const campaignService = {
     },
 
     async registerToCampaign(userId: string, campaignId: string) {
+        // 0. Check cooldown 3 tháng
+        const { data: lastDonation } = await supabase
+            .from('donation_records')
+            .select('verified_at')
+            .eq('donor_id', userId)
+            .order('verified_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (lastDonation?.verified_at) {
+            const diffDays = Math.floor((Date.now() - new Date(lastDonation.verified_at).getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays < 84) {
+                const nextDate = new Date(lastDonation.verified_at);
+                nextDate.setDate(nextDate.getDate() + 84);
+                throw new Error(`Bạn cần đợi đủ 3 tháng sau lần hiến máu gần nhất. Ngày đủ điều kiện: ${nextDate.toLocaleDateString('vi-VN')}.`);
+            }
+        }
+
         // 1. Check for any existing record for this user and campaign
         const { data: existing } = await supabase
             .from('appointments')
@@ -538,6 +574,33 @@ export const campaignService = {
 
     async deleteCampaign(id: string) {
         try {
+            // 1. Lấy danh sách appointment IDs thuộc campaign này
+            const { data: appointments } = await supabase
+                .from('appointments')
+                .select('id')
+                .eq('campaign_id', id);
+
+            if (appointments && appointments.length > 0) {
+                const appointmentIds = appointments.map(a => a.id);
+
+                // 2. Xóa donation_records liên kết với các appointments
+                const { error: donationError } = await supabase
+                    .from('donation_records')
+                    .delete()
+                    .in('appointment_id', appointmentIds);
+
+                if (donationError) throw donationError;
+
+                // 3. Xóa appointments
+                const { error: apptError } = await supabase
+                    .from('appointments')
+                    .delete()
+                    .eq('campaign_id', id);
+
+                if (apptError) throw apptError;
+            }
+
+            // 4. Xóa campaign
             const { error } = await supabase
                 .from('campaigns')
                 .delete()

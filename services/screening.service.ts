@@ -74,10 +74,73 @@ export const screeningService = {
     },
 
     /**
+     * Kiểm tra cooldown 3 tháng (84 ngày) kể từ lần hiến máu hoàn thành gần nhất.
+     * Trả về { onCooldown, nextEligibleDate, daysSinceLast }
+     */
+    async checkDonationCooldown(userId: string): Promise<{
+        onCooldown: boolean;
+        nextEligibleDate: Date | null;
+        daysSinceLast: number | null;
+        daysRemaining: number | null;
+    }> {
+        const COOLDOWN_DAYS = 84; // 3 tháng = 84 ngày
+
+        const { data, error } = await supabase
+            .from('donation_records')
+            .select('verified_at')
+            .eq('donor_id', userId)
+            .order('verified_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) {
+            console.error('[ScreeningService] Error checking donation cooldown:', error);
+            return { onCooldown: false, nextEligibleDate: null, daysSinceLast: null, daysRemaining: null };
+        }
+
+        if (!data?.verified_at) {
+            return { onCooldown: false, nextEligibleDate: null, daysSinceLast: null, daysRemaining: null };
+        }
+
+        const lastDonation = new Date(data.verified_at);
+        const now = new Date();
+        const diffMs = now.getTime() - lastDonation.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays < COOLDOWN_DAYS) {
+            const nextDate = new Date(lastDonation);
+            nextDate.setDate(nextDate.getDate() + COOLDOWN_DAYS);
+            return {
+                onCooldown: true,
+                nextEligibleDate: nextDate,
+                daysSinceLast: diffDays,
+                daysRemaining: COOLDOWN_DAYS - diffDays
+            };
+        }
+
+        return { onCooldown: false, nextEligibleDate: null, daysSinceLast: diffDays, daysRemaining: null };
+    },
+
+    /**
      * Check xem user có đủ điều kiện đăng ký không
-     * Returns: { eligible: boolean, reason: string }
+     * Kiểm tra cả AI screening + cooldown 3 tháng
+     * Returns: { eligible: boolean, reason: string, status: string }
      */
     async checkEligibility(userId: string): Promise<{ eligible: boolean; reason: string; status: string }> {
+        // 1. Check cooldown 3 tháng trước
+        const cooldown = await this.checkDonationCooldown(userId);
+        if (cooldown.onCooldown && cooldown.nextEligibleDate) {
+            const nextDateStr = cooldown.nextEligibleDate.toLocaleDateString('vi-VN', {
+                day: '2-digit', month: '2-digit', year: 'numeric'
+            });
+            return {
+                eligible: false,
+                reason: `Bạn vừa hiến máu ${cooldown.daysSinceLast} ngày trước. Cần đợi đủ 3 tháng (84 ngày) mới được đăng ký lại. Ngày đủ điều kiện: ${nextDateStr} (còn ${cooldown.daysRemaining} ngày).`,
+                status: 'cooldown'
+            };
+        }
+
+        // 2. Check AI screening status
         const screening = await this.getScreeningStatus(userId);
 
         if (screening.status === 'passed') {
