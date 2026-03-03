@@ -97,7 +97,7 @@ export const RegistrationSuccessEmail = ({
 
                         <Section style={btnSection}>
                             <Link
-                                href={`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requests`}
+                                href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://redhope-two.vercel.app'}/requests`}
                                 style={button}
                             >
                                 Xem chi tiết đăng ký
@@ -112,7 +112,7 @@ export const RegistrationSuccessEmail = ({
                             © 2026 RedHope - Kết nối những trái tim nhân ái.
                         </Text>
                         <Text style={footerText}>
-                            <Link href={`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/settings/notifications`} style={unsubscribeLink}>
+                            <Link href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://redhope-two.vercel.app'}/settings/notifications`} style={unsubscribeLink}>
                                 Hủy đăng ký nhận email
                             </Link>
                         </Text>

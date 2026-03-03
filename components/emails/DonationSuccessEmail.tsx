@@ -57,7 +57,7 @@ export const DonationSuccessEmail = ({
                     </Text>
 
                     <Section style={btnContainer}>
-                        <Link style={button} href="https://redhope.vn/rewards">
+                        <Link style={button} href="https://redhope-two.vercel.app/rewards">
                             Đổi quà tặng ngay
                         </Link>
                     </Section>
