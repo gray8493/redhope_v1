@@ -2,22 +2,31 @@
 
 import {
     Heart,
-    CreditCard,
     Trophy,
     TrendingUp,
     Users,
     Wallet,
-    Loader2
+    Loader2,
+    QrCode,
+    Download,
+    Smartphone
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
 import MiniFooter from "@/components/shared/MiniFooter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, CheckCircle2, Copy } from "lucide-react";
 import { donationService } from "@/services/donation.service";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import {
+    generateVietQRUrl,
+    generateTransferContent,
+    formatAccountNumber,
+    REDHOPE_BANK_CONFIG,
+    BANK_LIST,
+} from "@/services/vietqr.service";
 
 interface DonationStats {
     totalAmount: number;
@@ -43,14 +52,14 @@ interface RecentDonation {
 export default function DonatePage() {
     const { user, profile } = useAuth();
 
-
     const [amount, setAmount] = useState<string>("100000");
-    const [paymentMethod, setPaymentMethod] = useState<string>("momo");
-    const [showMoMoModal, setShowMoMoModal] = useState(false);
-    const [showCardModal, setShowCardModal] = useState(false);
+    const [showVietQRModal, setShowVietQRModal] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isAnonymous, setIsAnonymous] = useState(false);
     const [currentDonationId, setCurrentDonationId] = useState<string | null>(null);
+    const [qrUrl, setQrUrl] = useState<string>("");
+    const [qrLoaded, setQrLoaded] = useState(false);
+    const [countdown, setCountdown] = useState(0);
 
     // Data states
     const [stats, setStats] = useState<DonationStats>({ totalAmount: 0, totalDonors: 0, totalTransactions: 0 });
@@ -59,6 +68,7 @@ export default function DonatePage() {
     const [loading, setLoading] = useState(true);
 
     const donationPresets = ["50000", "100000", "200000", "500000"];
+    const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -81,6 +91,24 @@ export default function DonatePage() {
         fetchData();
     }, []);
 
+    // Countdown timer for QR modal (15 minutes)
+    useEffect(() => {
+        if (showVietQRModal && countdown > 0) {
+            countdownRef.current = setInterval(() => {
+                setCountdown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(countdownRef.current!);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => {
+            if (countdownRef.current) clearInterval(countdownRef.current);
+        };
+    }, [showVietQRModal, countdown]);
+
     const formatAmount = (value: string) => {
         const num = parseInt(value.replace(/\D/g, ''), 10);
         if (isNaN(num)) return "";
@@ -98,6 +126,12 @@ export default function DonatePage() {
         return amount.toLocaleString('vi-VN');
     };
 
+    const formatCountdown = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
     const handleConfirmDonation = async () => {
         const amountValue = parseAmount(amount);
         if (amountValue < 10000) {
@@ -111,17 +145,23 @@ export default function DonatePage() {
                 donorId: user?.id,
                 donorName: profile?.full_name || "Người dùng",
                 amount: amountValue,
-                paymentMethod: paymentMethod as 'momo' | 'bank_transfer',
+                paymentMethod: 'vietqr',
                 isAnonymous
             });
 
             setCurrentDonationId(donation.id);
 
-            if (paymentMethod === "momo") {
-                setShowMoMoModal(true);
-            } else {
-                setShowCardModal(true);
-            }
+            // Generate VietQR URL
+            const transferContent = generateTransferContent(donation.id);
+            const url = generateVietQRUrl({
+                amount: amountValue,
+                description: transferContent,
+                template: 'compact2',
+            });
+            setQrUrl(url);
+            setQrLoaded(false);
+            setCountdown(15 * 60); // 15 minutes
+            setShowVietQRModal(true);
         } catch (error) {
             toast.error("Không thể tạo giao dịch. Vui lòng thử lại.");
         } finally {
@@ -150,9 +190,18 @@ export default function DonatePage() {
             toast.error("Không thể xác nhận thanh toán.");
         }
 
-        setShowMoMoModal(false);
-        setShowCardModal(false);
+        setShowVietQRModal(false);
         setCurrentDonationId(null);
+    };
+
+    const handleCloseModal = () => {
+        setShowVietQRModal(false);
+        if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+
+    const copyToClipboard = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        toast.success(`Đã sao chép ${label}`);
     };
 
     const timeAgo = (dateString: string) => {
@@ -168,6 +217,9 @@ export default function DonatePage() {
         const diffDays = Math.floor(diffHours / 24);
         return `${diffDays} ngày trước`;
     };
+
+    const bankInfo = BANK_LIST[REDHOPE_BANK_CONFIG.bankCode];
+    const transferContent = currentDonationId ? generateTransferContent(currentDonationId) : '';
 
     return (
         <div className="flex h-full w-full flex-row overflow-hidden bg-slate-50 dark:bg-[#0f0a19] font-sans text-slate-900 dark:text-blue-50">
@@ -263,41 +315,21 @@ export default function DonatePage() {
                                             <span className="text-sm font-medium text-slate-600 dark:text-slate-200">Quyên góp ẩn danh</span>
                                         </label>
 
+                                        {/* VietQR Payment Method (only option) */}
                                         <div>
                                             <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 uppercase tracking-wider">Phương thức thanh toán</label>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <button
-                                                    onClick={() => setPaymentMethod("momo")}
-                                                    className={`flex items-center gap-4 p-4 rounded-xl border transition-all group text-left hover:shadow-md ${paymentMethod === "momo"
-                                                        ? "border-red-900 bg-red-50/50 dark:bg-red-900/5 shadow-md shadow-red-900/10"
-                                                        : "border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c162e]"
-                                                        }`}
-                                                >
-                                                    <div className={`size-10 rounded-full flex items-center justify-center transition-colors ${paymentMethod === "momo" ? "bg-pink-600 text-white" : "bg-pink-50 text-pink-600 group-hover:bg-pink-100"
-                                                        }`}>
-                                                        <Wallet className="w-6 h-6" />
-                                                    </div>
-                                                    <div>
-                                                        <p className={`font-bold transition-colors ${paymentMethod === "momo" ? "text-[#7f1d1d]" : "text-[#450a0a] dark:text-white group-hover:text-[#7f1d1d]"}`}>Ví MoMo</p>
-                                                        <p className="text-xs text-[#7f1d1d] dark:text-red-300">Thanh toán qua ứng dụng MoMo</p>
-                                                    </div>
-                                                </button>
-                                                <button
-                                                    onClick={() => setPaymentMethod("bank_transfer")}
-                                                    className={`flex items-center gap-4 p-4 rounded-xl border transition-all group text-left hover:shadow-md ${paymentMethod === "bank_transfer"
-                                                        ? "border-red-900 bg-red-50/50 dark:bg-red-900/5 shadow-md shadow-red-900/10"
-                                                        : "border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c162e]"
-                                                        }`}
-                                                >
-                                                    <div className={`size-10 rounded-full flex items-center justify-center transition-colors ${paymentMethod === "bank_transfer" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
-                                                        }`}>
-                                                        <CreditCard className="w-6 h-6" />
-                                                    </div>
-                                                    <div>
-                                                        <p className={`font-bold transition-colors ${paymentMethod === "bank_transfer" ? "text-[#7f1d1d]" : "text-[#450a0a] dark:text-white group-hover:text-[#7f1d1d]"}`}>Thẻ Ngân hàng / Visa</p>
-                                                        <p className="text-xs text-[#7f1d1d] dark:text-red-300">Chuyển khoản trực tiếp</p>
-                                                    </div>
-                                                </button>
+                                            <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-red-900 bg-red-50/50 dark:bg-red-900/5 shadow-md shadow-red-900/10">
+                                                <div className="size-12 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg">
+                                                    <QrCode className="w-6 h-6" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="font-bold text-[#450a0a] dark:text-white text-base">VietQR – Chuyển khoản ngân hàng</p>
+                                                    <p className="text-xs text-slate-500 dark:text-red-300">Quét mã QR bằng ứng dụng ngân hàng • Miễn phí • Tức thì</p>
+                                                </div>
+                                                <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded-full">
+                                                    <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                                    <span className="text-xs font-bold text-green-700 dark:text-green-400">0% phí</span>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -308,8 +340,10 @@ export default function DonatePage() {
                                         >
                                             {isProcessing ? (
                                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                            ) : null}
-                                            {isProcessing ? "Đang xử lý..." : `Tiến hành Quyên góp ${formatAmount(amount)}đ`}
+                                            ) : (
+                                                <QrCode className="w-5 h-5" />
+                                            )}
+                                            {isProcessing ? "Đang tạo mã QR..." : `Tạo mã QR – ${formatAmount(amount)}đ`}
                                         </button>
                                     </div>
                                 </div>
@@ -426,118 +460,151 @@ export default function DonatePage() {
                 <MiniFooter />
             </div>
 
-            {/* MoMo Payment Modal */}
-            {showMoMoModal && (
+            {/* VietQR Payment Modal */}
+            {showVietQRModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowMoMoModal(false)}></div>
+                    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={handleCloseModal}></div>
                     <div className="bg-white dark:bg-[#1c162e] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
-                        <div className="bg-pink-600 p-6 text-center text-white relative">
-                            <button onClick={() => setShowMoMoModal(false)} className="absolute right-4 top-4 hover:bg-black/10 p-1 rounded-full transition-colors">
-                                <X className="w-6 h-6" />
-                            </button>
-                            <Wallet className="w-12 h-12 mx-auto mb-2" />
-                            <h3 className="text-xl font-black">Thanh toán qua MoMo</h3>
-                            <p className="text-white/80 text-sm">Vui lòng thanh toán số tiền {formatAmount(amount)}đ</p>
-                        </div>
-                        <div className="p-5 sm:p-8 text-center flex flex-col items-center">
-                            <div className="bg-white p-4 rounded-2xl shadow-inner border-4 border-pink-50 mb-6">
-                                <div className="size-48 bg-[#fdf2f8] rounded-xl flex items-center justify-center relative overflow-hidden ring-1 ring-pink-100">
-                                    <div className="grid grid-cols-4 gap-2 opacity-5">
-                                        {Array.from({ length: 16 }).map((_, i) => <div key={i} className="size-8 bg-pink-900 rounded-sm"></div>)}
-                                    </div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="size-32 bg-white rounded-lg shadow-sm border border-pink-100 flex items-center justify-center p-2">
-                                            <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="MoMo" className="w-full opacity-80" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="w-full space-y-3 mb-6">
-                                <div className="flex justify-between text-sm py-2 border-b border-slate-100 dark:border-slate-800">
-                                    <span className="text-slate-400 font-medium">Số tiền:</span>
-                                    <span className="text-slate-900 dark:text-white font-black">{formatAmount(amount)} VNĐ</span>
-                                </div>
-                                <div className="flex justify-between text-sm py-2 border-b border-slate-100 dark:border-slate-800">
-                                    <span className="text-slate-400 font-medium">Nội dung:</span>
-                                    <span className="text-slate-900 dark:text-white font-black">RED {currentDonationId?.slice(-6).toUpperCase()}</span>
-                                </div>
-                                <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-xs text-slate-500 italic">
-                                    Hệ thống demo: Bạn có thể bấm xác nhận dưới đây mà không cần quét thẻ thật.
-                                </div>
-                            </div>
-                            <button
-                                onClick={handlePaymentComplete}
-                                className="w-full py-4 bg-pink-600 hover:bg-pink-700 text-white font-black rounded-xl transition-all shadow-lg shadow-pink-600/20"
-                            >
-                                Tôi đã thanh toán
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
-            {/* Bank Card Modal */}
-            {showCardModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowCardModal(false)}></div>
-                    <div className="bg-white dark:bg-[#1c162e] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
-                        <div className="bg-red-600 p-6 text-center text-white relative">
-                            <button onClick={() => setShowCardModal(false)} className="absolute right-4 top-4 hover:bg-black/10 p-1 rounded-full transition-colors">
-                                <X className="w-6 h-6" />
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-center text-white relative">
+                            <button onClick={handleCloseModal} className="absolute right-4 top-4 hover:bg-black/10 p-1.5 rounded-full transition-colors">
+                                <X className="w-5 h-5" />
                             </button>
-                            <CreditCard className="w-12 h-12 mx-auto mb-2" />
-                            <h3 className="text-xl font-black">Chuyển khoản Ngân hàng</h3>
-                            <p className="text-white/80 text-sm">Vui lòng chuyển chính xác {formatAmount(amount)}đ</p>
+                            <div className="size-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-3">
+                                <QrCode className="w-7 h-7" />
+                            </div>
+                            <h3 className="text-xl font-black">Thanh toán VietQR</h3>
+                            <p className="text-white/80 text-sm mt-1">Quét mã bằng ứng dụng ngân hàng</p>
+                            {countdown > 0 && (
+                                <div className="mt-3 inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                                    <div className="size-2 rounded-full bg-green-400 animate-pulse"></div>
+                                    <span className="text-sm font-mono font-bold">{formatCountdown(countdown)}</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="flex justify-center mb-6">
-                            <div className="bg-white p-3 rounded-2xl border-4 border-slate-50 shadow-inner">
-                                {/* VietQR API: 970436 is Vietcombank BIN */}
+
+                        {/* QR Code */}
+                        <div className="p-6 flex flex-col items-center">
+                            <div className="bg-white p-3 rounded-2xl shadow-lg border-2 border-blue-100 mb-4 relative">
+                                {!qrLoaded && (
+                                    <div className="size-52 flex items-center justify-center">
+                                        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                                    </div>
+                                )}
                                 <img
-                                    src={`https://img.vietqr.io/image/970436-123456789012-compact.png?amount=${parseAmount(amount)}&addInfo=RED%20${currentDonationId?.slice(-6).toUpperCase()}&accountName=REDHOPE%20VN`}
-                                    alt="VietQR Payment"
-                                    className="size-48 object-contain"
+                                    src={qrUrl}
+                                    alt="VietQR Payment Code"
+                                    className={`size-52 object-contain ${qrLoaded ? 'block' : 'hidden'}`}
+                                    onLoad={() => setQrLoaded(true)}
+                                    onError={() => {
+                                        setQrLoaded(true);
+                                        toast.error("Không thể tải mã QR. Vui lòng thử lại.");
+                                    }}
                                 />
                             </div>
-                        </div>
-                        <div className="space-y-4 mb-8">
-                            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-100 dark:border-red-900/30">
-                                <p className="text-[10px] uppercase font-black text-red-400 mb-1 tracking-widest">Số tài khoản</p>
-                                <div className="flex justify-between items-center">
-                                    <p className="text-xl font-black text-red-900 dark:text-red-200 tracking-wider">1234 5678 9012</p>
-                                    <button
-                                        className="text-red-600 p-2 hover:bg-red-100 rounded-lg transition-colors"
-                                        onClick={() => {
-                                            navigator.clipboard.writeText("123456789012");
-                                            toast.success("Đã sao chép STK");
-                                        }}
-                                    >
-                                        <Copy className="w-4 h-4" />
-                                    </button>
+
+                            {/* Amount display */}
+                            <div className="text-center mb-4">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Số tiền</p>
+                                <p className="text-3xl font-black text-red-900 dark:text-red-400">{formatAmount(amount)} <span className="text-base">VNĐ</span></p>
+                            </div>
+
+                            {/* Instructions */}
+                            <div className="w-full bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Smartphone className="w-4 h-4 text-blue-600" />
+                                    <p className="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Hướng dẫn</p>
+                                </div>
+                                <ol className="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
+                                    <li>Mở ứng dụng ngân hàng trên điện thoại</li>
+                                    <li>Chọn <strong>Quét QR</strong> hoặc <strong>Chuyển khoản</strong></li>
+                                    <li>Quét mã QR phía trên</li>
+                                    <li>Kiểm tra thông tin và nhấn <strong>Xác nhận</strong></li>
+                                </ol>
+                            </div>
+
+                            {/* Bank Details */}
+                            <div className="w-full space-y-3 mb-4">
+                                {/* Account Number */}
+                                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Số tài khoản</p>
+                                            <p className="text-base font-black text-slate-900 dark:text-white tracking-wider">
+                                                {formatAccountNumber(REDHOPE_BANK_CONFIG.accountNumber)}
+                                            </p>
+                                        </div>
+                                        <button
+                                            className="text-blue-600 p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                                            onClick={() => copyToClipboard(REDHOPE_BANK_CONFIG.accountNumber, 'STK')}
+                                        >
+                                            <Copy className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Bank + Account Name */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Ngân hàng</p>
+                                        <p className="font-black text-slate-900 dark:text-white text-sm">{bankInfo.name}</p>
+                                    </div>
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Chủ TK</p>
+                                        <p className="font-black text-slate-900 dark:text-white text-sm">{REDHOPE_BANK_CONFIG.accountName}</p>
+                                    </div>
+                                </div>
+
+                                {/* Transfer Content */}
+                                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-xl border border-yellow-200 dark:border-yellow-900/30">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-yellow-600 tracking-widest">Nội dung CK</p>
+                                            <p className="font-black text-yellow-900 dark:text-yellow-200">{transferContent}</p>
+                                        </div>
+                                        <button
+                                            className="text-yellow-600 p-2 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 rounded-lg transition-colors"
+                                            onClick={() => copyToClipboard(transferContent, 'nội dung CK')}
+                                        >
+                                            <Copy className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
-                                    <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-widest">Ngân hàng</p>
-                                    <p className="font-black text-[#450a0a] dark:text-white">Vietcombank</p>
-                                </div>
-                                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
-                                    <p className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-widest">Chủ TK</p>
-                                    <p className="font-black text-[#450a0a] dark:text-white">REDHOPE VN</p>
-                                </div>
+
+                            {/* Notice */}
+                            <div className="w-full bg-green-50 dark:bg-green-900/20 p-3 rounded-xl border border-green-200 dark:border-green-900/30 flex items-start gap-2 mb-4">
+                                <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                                <p className="text-xs text-green-800 dark:text-green-200 leading-relaxed">
+                                    Sau khi chuyển khoản thành công, nhấn <strong>&quot;Tôi đã thanh toán&quot;</strong> để hệ thống ghi nhận. Điểm thưởng sẽ được cộng ngay.
+                                </p>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="w-full space-y-2">
+                                <button
+                                    onClick={handlePaymentComplete}
+                                    className="w-full py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-black rounded-xl transition-all shadow-lg shadow-green-600/20 flex items-center justify-center gap-2"
+                                >
+                                    <CheckCircle2 className="w-5 h-5" />
+                                    Tôi đã thanh toán
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const a = document.createElement('a');
+                                        a.href = qrUrl;
+                                        a.download = `vietqr-${parseAmount(amount)}.png`;
+                                        a.target = '_blank';
+                                        a.click();
+                                    }}
+                                    className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Tải mã QR
+                                </button>
                             </div>
                         </div>
-                        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 flex items-start gap-3 mb-6">
-                            <CheckCircle2 className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
-                            <p className="text-xs text-yellow-800 dark:text-yellow-200 leading-relaxed font-medium">
-                                Ghi chú chuyển khoản: <span className="font-black">REDHOPE {currentDonationId?.slice(-6).toUpperCase()}</span>. Tiền sẽ được cập nhật sau 1-3 phút.
-                            </p>
-                        </div>
-                        <button
-                            onClick={handlePaymentComplete}
-                            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl transition-all shadow-lg shadow-red-600/20"
-                        >
-                            Hoàn tất chuyển khoản
-                        </button>
                     </div>
                 </div>
             )}

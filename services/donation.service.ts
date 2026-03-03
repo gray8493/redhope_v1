@@ -5,7 +5,7 @@ export interface FinancialDonation {
     donor_id: string | null;
     donor_name: string;
     amount: number;
-    payment_method: 'momo' | 'bank_transfer';
+    payment_method: 'vietqr';
     status: 'pending' | 'completed' | 'failed';
     transaction_code: string;
     is_anonymous: boolean;
@@ -118,7 +118,7 @@ export const donationService = {
         donorId?: string;
         donorName: string;
         amount: number;
-        paymentMethod: 'momo' | 'bank_transfer';
+        paymentMethod: 'vietqr';
         isAnonymous: boolean;
         message?: string;
     }) {
