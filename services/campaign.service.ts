@@ -88,9 +88,10 @@ export const campaignService = {
         const { data, error } = await query;
         if (error) throw error;
 
-        // Normalize status and filter out automatically ended campaigns
-        const normalizedData = (data || []).map(normalizeCampaignStatus);
-        return normalizedData.filter(c => c.status === 'active');
+        // Return all campaigns that are 'active' in DB
+        // Don't filter out campaigns whose end_time has passed — they should still
+        // appear so donors can register/check-in (especially on campaign day)
+        return (data || []).map(normalizeCampaignStatus);
     },
 
     async getRequests(hospitalId?: string) {

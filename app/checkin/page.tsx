@@ -48,7 +48,10 @@ export default function CheckinPage() {
             }
             setCampaign(camp);
 
-            if (camp.status !== 'active') {
+            // Allow check-in for 'active' and 'ended' campaigns
+            // ('ended' = end_time passed but DB status is still 'active', normalized client-side)
+            // Only block truly inactive campaigns (draft, cancelled, etc.)
+            if (camp.status !== 'active' && camp.status !== 'ended') {
                 setState('campaign_not_active');
                 return;
             }

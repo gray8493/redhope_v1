@@ -108,7 +108,7 @@ export function BloodDropChatbot() {
             {/* Floating Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`fixed bottom-6 right-6 z-50 group transition-all duration-300 ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}
+                className={`fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 group transition-all duration-300 ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}
             >
                 {/* Pulse rings */}
                 <div className="absolute inset-0 rounded-full bg-red-600 animate-ping opacity-25"></div>
@@ -130,7 +130,7 @@ export function BloodDropChatbot() {
             </button>
 
             {/* Chat Window */}
-            <div className={`fixed bottom-6 right-6 z-50 w-[380px] h-[550px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
+            <div className={`fixed inset-0 md:inset-auto md:bottom-6 md:right-6 z-50 md:w-[380px] md:h-[550px] bg-white dark:bg-slate-900 md:rounded-2xl shadow-2xl md:border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
 
                 {/* Header */}
                 <div className="bg-gradient-to-r from-red-600 to-red-700 p-4 flex items-center justify-between">
@@ -190,12 +190,12 @@ export function BloodDropChatbot() {
 
                 {/* Quick Replies */}
                 <div className="px-4 py-2 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700">
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="flex flex-wrap gap-2">
                         {quickReplies.map((reply) => (
                             <button
                                 key={reply}
                                 onClick={() => handleSend(reply)}
-                                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/30 text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 text-xs font-medium rounded-full whitespace-nowrap transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-800"
+                                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/30 text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 text-xs font-medium rounded-full transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-800"
                             >
                                 {reply}
                             </button>
@@ -204,7 +204,7 @@ export function BloodDropChatbot() {
                 </div>
 
                 {/* Input */}
-                <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700">
+                <div className="p-4 pb-20 md:pb-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700">
                     <div className="flex items-center gap-2">
                         <input
                             type="text"

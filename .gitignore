@@ -76,3 +76,6 @@ test/unit
 *.txt
 *.md
 *.log
+#Playwright
+    playwright-report
+    test-results
