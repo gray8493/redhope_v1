@@ -109,6 +109,38 @@ export default function DonatePage() {
         };
     }, [showVietQRModal, countdown]);
 
+    // Poll for donation status completion
+    useEffect(() => {
+        if (!showVietQRModal || !currentDonationId) return;
+
+        const interval = setInterval(async () => {
+            try {
+                const status = await donationService.getDonationStatus(currentDonationId);
+                if (status === 'completed') {
+                    clearInterval(interval);
+
+                    const amountValue = parseAmount(amount);
+                    const earnedPoints = Math.floor(amountValue / 1000);
+
+                    toast.success(`Cảm ơn bạn! Hệ thống đã ghi nhận khoản đóng góp tự động. Bạn nhận được ${earnedPoints.toLocaleString('vi-VN')} điểm REDHOPE.`);
+
+                    // Refresh data
+                    const [statsData, recentData] = await Promise.all([
+                        donationService.getStats(),
+                        donationService.getRecentDonations(5)
+                    ]);
+                    setStats(statsData);
+                    setRecentDonations(recentData);
+
+                    setShowVietQRModal(false);
+                    setCurrentDonationId(null);
+                }
+            } catch (err) { }
+        }, 5000); // Poll every 5 seconds
+
+        return () => clearInterval(interval);
+    }, [showVietQRModal, currentDonationId, amount]);
+
     const formatAmount = (value: string) => {
         const num = parseInt(value.replace(/\D/g, ''), 10);
         if (isNaN(num)) return "";
@@ -145,7 +177,7 @@ export default function DonatePage() {
                 donorId: user?.id,
                 donorName: profile?.full_name || "Người dùng",
                 amount: amountValue,
-                paymentMethod: 'vietqr',
+
                 isAnonymous
             });
 
@@ -169,30 +201,7 @@ export default function DonatePage() {
         }
     };
 
-    const handlePaymentComplete = async () => {
-        if (!currentDonationId) return;
-
-        try {
-            const amountValue = parseAmount(amount);
-            const earnedPoints = Math.floor(amountValue / 1000);
-
-            await donationService.confirmPayment(currentDonationId);
-            toast.success(`Cảm ơn bạn! Bạn vừa nhận được ${earnedPoints.toLocaleString('vi-VN')} điểm REDHOPE.`);
-
-            // Refresh data
-            const [statsData, recentData] = await Promise.all([
-                donationService.getStats(),
-                donationService.getRecentDonations(5)
-            ]);
-            setStats(statsData);
-            setRecentDonations(recentData);
-        } catch (error) {
-            toast.error("Không thể xác nhận thanh toán.");
-        }
-
-        setShowVietQRModal(false);
-        setCurrentDonationId(null);
-    };
+    // The payment completion is now handled automatically via polling in useEffect
 
     const handleCloseModal = () => {
         setShowVietQRModal(false);
@@ -577,19 +586,16 @@ export default function DonatePage() {
                             <div className="w-full bg-green-50 dark:bg-green-900/20 p-3 rounded-xl border border-green-200 dark:border-green-900/30 flex items-start gap-2 mb-4">
                                 <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
                                 <p className="text-xs text-green-800 dark:text-green-200 leading-relaxed">
-                                    Sau khi chuyển khoản thành công, nhấn <strong>&quot;Tôi đã thanh toán&quot;</strong> để hệ thống ghi nhận. Điểm thưởng sẽ được cộng ngay.
+                                    Hệ thống đang tự động kiểm tra trạng thái thanh toán. <strong>Không cần thao tác thêm</strong>. Điểm thưởng sẽ được cộng ngay sau khi ghi nhận.
                                 </p>
                             </div>
 
                             {/* Action Buttons */}
                             <div className="w-full space-y-2">
-                                <button
-                                    onClick={handlePaymentComplete}
-                                    className="w-full py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-black rounded-xl transition-all shadow-lg shadow-green-600/20 flex items-center justify-center gap-2"
-                                >
-                                    <CheckCircle2 className="w-5 h-5" />
-                                    Tôi đã thanh toán
-                                </button>
+                                <div className="w-full py-4 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-500 font-bold rounded-xl flex items-center justify-center gap-2">
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    Đang chờ thanh toán...
+                                </div>
                                 <button
                                     onClick={() => {
                                         const a = document.createElement('a');

@@ -187,7 +187,6 @@ describe('donationService', () => {
                 donorId: 'user-123',
                 donorName: 'John Doe',
                 amount: 100000,
-                paymentMethod: 'vietqr' as const,
                 isAnonymous: false,
             };
 
@@ -224,7 +223,6 @@ describe('donationService', () => {
             const donationData = {
                 donorName: 'John Doe',
                 amount: 50000,
-                paymentMethod: 'vietqr' as const,
                 isAnonymous: true,
             };
 
@@ -244,7 +242,6 @@ describe('donationService', () => {
             const donationData = {
                 donorName: 'John',
                 amount: 100000,
-                paymentMethod: 'vietqr' as const,
                 isAnonymous: false,
             };
 
@@ -252,6 +249,29 @@ describe('donationService', () => {
             mockSupabaseQuery.single.mockResolvedValue({ data: null, error: dbError });
 
             await expect(donationService.createDonation(donationData)).rejects.toEqual(dbError);
+        });
+    });
+
+    describe('getDonationStatus', () => {
+        test('should return status correctly', async () => {
+            mockSupabaseQuery.single.mockResolvedValue({ data: { status: 'completed' }, error: null });
+
+            const result = await donationService.getDonationStatus('donation-1');
+
+            expect(supabase.from).toHaveBeenCalledWith('financial_donations');
+            expect(mockSupabaseQuery.select).toHaveBeenCalledWith('status');
+            expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('id', 'donation-1');
+            expect(result).toBe('completed');
+        });
+
+        test('should return null on error', async () => {
+            mockSupabaseQuery.single.mockResolvedValue({ data: null, error: { message: 'Not found' } });
+
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+            const result = await donationService.getDonationStatus('invalid-id');
+
+            expect(result).toBeNull();
+            consoleSpy.mockRestore();
         });
     });
 

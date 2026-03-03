@@ -5,7 +5,7 @@ export interface FinancialDonation {
     donor_id: string | null;
     donor_name: string;
     amount: number;
-    payment_method: 'vietqr';
+    payment_method?: string;
     status: 'pending' | 'completed' | 'failed';
     transaction_code: string;
     is_anonymous: boolean;
@@ -118,7 +118,7 @@ export const donationService = {
         donorId?: string;
         donorName: string;
         amount: number;
-        paymentMethod: 'vietqr';
+        // paymentMethod removed, only VietQR is used
         isAnonymous: boolean;
         message?: string;
     }) {
@@ -131,7 +131,7 @@ export const donationService = {
                     donor_id: data.donorId || null,
                     donor_name: data.isAnonymous ? 'Ẩn danh' : data.donorName,
                     amount: data.amount,
-                    payment_method: data.paymentMethod,
+                    payment_method: 'vietqr',
                     status: 'pending',
                     transaction_code: transactionCode,
                     is_anonymous: data.isAnonymous,
@@ -143,8 +143,26 @@ export const donationService = {
             if (error) throw error;
             return donation;
         } catch (error) {
-            console.error('[DonationService] Error creating donation:', error);
+            console.error('[DonationService] Error creating donation:', (error as any).message, (error as any).details);
             throw error;
+        }
+    },
+
+    /**
+     * Lấy trạng thái quyên góp
+     */
+    async getDonationStatus(donationId: string) {
+        try {
+            const { data, error } = await supabase
+                .from('financial_donations')
+                .select('status')
+                .eq('id', donationId)
+                .single();
+            if (error) throw error;
+            return data.status;
+        } catch (error) {
+            console.error('[DonationService] Error getting donation status:', error);
+            return null;
         }
     },
 
