@@ -24,22 +24,12 @@ export async function GET(
 
         const { userId } = await params;
 
-        // Optional: filter by campaignId
-        const { searchParams } = new URL(req.url);
-        const campaignId = searchParams.get('campaignId');
-
-        // Build query
-        let query = supabaseAdmin
+        // Get all screening logs for this user (daily screening is user-level, not campaign-specific)
+        const { data: logs, error } = await supabaseAdmin
             .from('screening_logs')
             .select('*')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
-
-        if (campaignId) {
-            query = query.eq('campaign_id', campaignId);
-        }
-
-        const { data: logs, error } = await query;
 
         if (error) {
             console.error('Error fetching screening logs:', error);
