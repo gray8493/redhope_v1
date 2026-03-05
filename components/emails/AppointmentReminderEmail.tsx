@@ -89,7 +89,7 @@ export const AppointmentReminderEmail = ({
 
                         <Section style={btnSection}>
                             <Link
-                                href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://redhope-two.vercel.app'}/requests`}
+                                href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://redhope.io.vn'}/requests`}
                                 style={{ ...button, backgroundColor: accentColor }}
                             >
                                 Xem đường đi & Chi tiết
@@ -104,7 +104,7 @@ export const AppointmentReminderEmail = ({
                             © 2026 RedHope - Cùng nhau cứu người.
                         </Text>
                         <Text style={footerText}>
-                            <Link href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://redhope-two.vercel.app'}/settings/notifications`} style={unsubscribeLink}>
+                            <Link href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://redhope.io.vn'}/settings/notifications`} style={unsubscribeLink}>
                                 Hủy đăng ký nhận email
                             </Link>
                         </Text>

@@ -80,6 +80,20 @@ const QUESTION_LABELS: Record<string, string> = {
     "15": "Tiền sử dị ứng",
 };
 
+// Mapping value code → Vietnamese label for choice answers (question 1-10)
+const ANSWER_VALUE_LABELS: Record<string, Record<string, string>> = {
+    "1": { very_good: "Rất khỏe mạnh, tràn đầy năng lượng", normal: "Bình thường, không có vấn đề gì", mild_tired: "Hơi mệt mỏi hoặc đau đầu nhẹ", sick: "Đang bị ốm / sốt / cảm cúm" },
+    "2": { no_meds: "Không dùng bất kỳ loại thuốc nào", supplement: "Vitamin / thực phẩm chức năng", painkiller: "Thuốc giảm đau / hạ sốt thông thường", antibiotics: "Thuốc kháng sinh / thuốc kê đơn" },
+    "3": { none: "Không có bệnh lý nào", cured: "Đã được điều trị khỏi hoàn toàn", monitoring: "Đang theo dõi / chưa xác định rõ", has_disease: "Có (HIV, Viêm gan B/C, Giang mai...)" },
+    "4": { never: "Chưa từng hiến máu", over_12w: "Hơn 12 tuần trước", "8_12w": "Từ 8 - 12 tuần trước", under_8w: "Dưới 8 tuần trước" },
+    "5": { none: "Không có", over_6m: "Có, hơn 6 tháng trước", "3_6m": "Có, từ 3-6 tháng trước", under_3m: "Có, dưới 3 tháng trước" },
+    "6": { stable: "Ổn định (90/60 - 140/90 mmHg)", low_mild: "Hơi thấp nhưng không triệu chứng", low: "Thấp, hay chóng mặt khi đứng", high: "Cao, đang uống thuốc huyết áp" },
+    "7": { na: "Không áp dụng / Không liên quan", stopped: "Đã ngừng cho con bú hơn 6 tháng", breastfeeding: "Đang cho con bú", pregnant: "Đang mang thai" },
+    "8": { above_50: "Trên 50kg", "45_50": "Từ 45 - 50kg", "42_45": "Từ 42 - 45kg", below_42: "Dưới 42kg" },
+    "9": { none: "Không có", over_7d: "Có, hơn 7 ngày trước", "3_7d": "Có, trong vòng 3-7 ngày", under_3d: "Có, trong vòng 3 ngày" },
+    "10": { no: "Không, ở tại nơi cư trú ổn định", safe_area: "Có đi nhưng không phải vùng dịch", near_risk: "Có đi qua vùng lân cận vùng dịch", risk_area: "Có, đã ở vùng có Sốt rét / Zika / Dengue" },
+};
+
 const SEVERITY_COLORS: Record<string, string> = {
     safe: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20",
     mild: "text-blue-600 bg-blue-50 dark:bg-blue-900/20",
@@ -258,7 +272,11 @@ export function DonorScreeningModal({ open, onClose, userId, userName, campaignI
                                     {Object.entries(details.answers).map(([key, answer]: [string, any]) => {
                                         const isChoice = parseInt(key) <= 10;
                                         const severity = answer?.severity;
-                                        const value = typeof answer === 'object' ? (answer?.value || '') : answer;
+                                        const rawValue = typeof answer === 'object' ? (answer?.value || '') : answer;
+                                        // Display Vietnamese label for choice answers, raw text for text answers
+                                        const displayValue = isChoice && ANSWER_VALUE_LABELS[key]?.[rawValue]
+                                            ? ANSWER_VALUE_LABELS[key][rawValue]
+                                            : rawValue;
 
                                         return (
                                             <div key={key} className="flex items-start gap-3 p-2.5 bg-slate-50 dark:bg-slate-800/20 rounded-lg">
@@ -270,7 +288,7 @@ export function DonorScreeningModal({ open, onClose, userId, userName, campaignI
                                                         {QUESTION_LABELS[key] || `Câu ${key}`}
                                                     </p>
                                                     <p className="text-xs text-slate-700 dark:text-slate-300 font-medium break-words">
-                                                        {value}
+                                                        {displayValue}
                                                     </p>
                                                 </div>
                                                 {isChoice && severity && (
