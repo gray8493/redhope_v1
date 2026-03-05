@@ -226,7 +226,7 @@ export default function KioskPage() {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+                    <div className="flex-1 overflow-y-auto p-3 space-y-1.5 no-scrollbar">
                         {waitingList.map((reg, index) => {
                             const isCI = reg.status?.toLowerCase() === 'checked-in';
                             return (

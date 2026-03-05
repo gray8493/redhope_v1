@@ -758,7 +758,7 @@ export default function ScreeningPage() {
                                                 </h2>
                                             </div>
                                             <div className="flex-1 relative pl-4 border-l border-slate-100 dark:border-slate-800 min-w-0 hidden md:block">
-                                                <div className="max-h-[100px] overflow-y-auto pr-2 custom-scrollbar">
+                                                <div className="max-h-[100px] overflow-y-auto pr-2">
                                                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed">
                                                         {aiResult.analysis}
                                                     </p>

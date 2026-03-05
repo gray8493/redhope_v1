@@ -65,7 +65,7 @@ export function Sidebar() {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 flex flex-col gap-1 p-3 overflow-y-auto overflow-x-hidden">
+            <nav className="flex-1 flex flex-col gap-1 p-3 overflow-y-auto overflow-x-hidden no-scrollbar">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                     const Icon = item.icon;

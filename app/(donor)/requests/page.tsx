@@ -831,7 +831,7 @@ export default function RequestsPage() {
                                 </div>
                             </div>
 
-                            <div className="p-3.5 sm:p-4 md:p-6 flex flex-col gap-3 sm:gap-5 overflow-y-auto custom-scrollbar flex-1 min-w-0">
+                            <div className="p-3.5 sm:p-4 md:p-6 flex flex-col gap-3 sm:gap-5 overflow-y-auto flex-1 min-w-0">
                                 {/* Key Info Grid */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                                     <div className="p-2.5 sm:p-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl sm:rounded-2xl flex items-start gap-2.5 sm:gap-3">

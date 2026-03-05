@@ -234,7 +234,7 @@ export default function DonatePage() {
         <div className="flex h-full w-full flex-row overflow-hidden bg-slate-50 dark:bg-[#0f0a19] font-sans text-slate-900 dark:text-blue-50">
             <Sidebar />
 
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative no-scrollbar">
                 <TopNav title="" />
 
                 <main className="flex-1 py-4 md:py-8">
@@ -402,7 +402,7 @@ export default function DonatePage() {
                                         <p className="text-sm text-red-900 mt-1 dark:text-red-300">Top nhà hảo tâm</p>
                                     </div>
 
-                                    <div className="flex-1 overflow-y-auto">
+                                    <div className="flex-1 overflow-y-auto no-scrollbar">
                                         {loading ? (
                                             [1, 2, 3, 4, 5].map((i) => (
                                                 <div key={i} className="p-4 flex items-center gap-4 border-b border-red-100 dark:border-red-900/30">
@@ -473,7 +473,7 @@ export default function DonatePage() {
             {showVietQRModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
                     <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={handleCloseModal}></div>
-                    <div className="bg-white dark:bg-[#1c162e] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-[#1c162e] w-full max-w-md rounded-3xl overflow-hidden relative z-10 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto no-scrollbar">
 
                         {/* Header */}
                         <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-center text-white relative">

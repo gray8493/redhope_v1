@@ -99,7 +99,7 @@ function SearchableSelect({
                             className="h-8 border-none focus-visible:ring-0 bg-transparent p-0 text-sm"
                         />
                     </div>
-                    <div className="flex-1 overflow-y-auto p-1 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-1 no-scrollbar">
                         {filteredOptions.length === 0 ? (
                             <div className="p-4 text-center text-sm text-slate-500">{emptyText}</div>
                         ) : (
@@ -278,24 +278,7 @@ export function LocationSelector({
                 </div>
             )}
 
-            <style jsx global>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #e2e8f0;
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: #cbd5e1;
-                }
-                .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #334155;
-                }
-            `}</style>
+
         </div>
     );
 }
