@@ -418,12 +418,13 @@ export default function CampaignDetailsPage() {
         const volume = registration.blood_volume || 350;
         const donorId = registration.user_id;
         const hospitalId = campaign.hospital_id;
+        const fullName = registration.user?.full_name || 'Người hiến ẩn danh';
 
         try {
             // Is this a mock record?
             if (!regId.startsWith('reg-')) {
                 // 1. Tạo bản ghi hiến máu và kích hoạt email + cộng điểm (qua bloodService)
-                await bloodService.completeDonation(regId, donorId, hospitalId, volume);
+                await bloodService.completeDonation(regId, donorId, fullName, hospitalId, volume);
             } else {
                 console.log("Demo/Mock mode: skipping backend call for", regId);
             }

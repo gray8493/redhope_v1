@@ -53,7 +53,7 @@ export default function KioskPage() {
         return () => clearInterval(interval);
     }, [fetchData]);
 
-    const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const siteUrl = 'https://redhope.io.vn';
     const checkinUrl = campaignId ? `${siteUrl}/checkin?campaignId=${campaignId}` : '';
 
     const waitingList = registrations

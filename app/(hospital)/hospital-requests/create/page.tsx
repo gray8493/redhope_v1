@@ -107,6 +107,10 @@ const TEMPLATES = [
     }
 ];
 
+const MaterialIcon = ({ name, className = "" }: { name: string, className?: string }) => (
+    <span className={`material-symbols-outlined ${className}`}>{name}</span>
+);
+
 export default function CreateRequestPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -365,10 +369,6 @@ export default function CreateRequestPage() {
                 : [...prev, type]
         );
     };
-
-    const MaterialIcon = ({ name, className = "" }: { name: string, className?: string }) => (
-        <span className={`material-symbols-outlined ${className}`}>{name}</span>
-    );
 
     return (
         <div className="flex flex-col w-full min-h-full font-sans text-slate-900 antialiased text-left">

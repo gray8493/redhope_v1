@@ -10,6 +10,10 @@ import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
+const MaterialIcon = ({ name, className = "" }: { name: string, className?: string }) => (
+    <span className={`material-symbols-outlined ${className}`}>{name}</span>
+);
+
 function SettingsContent() {
     const { user, profile, refreshUser } = useAuth();
     const searchParams = useSearchParams();
@@ -299,10 +303,6 @@ function SettingsContent() {
             }
         }
     };
-
-    const MaterialIcon = ({ name, className = "" }: { name: string, className?: string }) => (
-        <span className={`material-symbols-outlined ${className}`}>{name}</span>
-    );
 
     return (
         <>
