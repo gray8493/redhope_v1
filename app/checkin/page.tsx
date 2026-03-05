@@ -175,7 +175,13 @@ export default function CheckinPage() {
                             onSubmit={handleCheckin}
                         />
                     )}
-                    {state === 'no_campaign' && <ErrorCard icon="error" title="Không tìm thấy chiến dịch" message="Mã QR không hợp lệ hoặc chiến dịch không tồn tại." />}
+                    {state === 'no_campaign' && (
+                        <ErrorCard
+                            icon="error"
+                            title="Không tìm thấy chiến dịch"
+                            message={campaignId ? `Chiến dịch với ID "${campaignId}" không tồn tại hoặc đã bị xóa.` : "Không tìm thấy mã chiến dịch (campaignId) trong địa chỉ URL."}
+                        />
+                    )}
                     {state === 'campaign_not_active' && <ErrorCard icon="event_busy" title="Chiến dịch chưa hoạt động" message={`Chiến dịch "${campaign?.name}" hiện không hoạt động.`} />}
                     {state === 'not_registered' && <ErrorCard icon="person_off" title="Chưa đăng ký" message={`Không tìm thấy đăng ký cho chiến dịch "${campaign?.name}".`} />}
                     {state === 'already_checked_in' && <AlreadyCheckedInCard appointment={appointment} campaign={campaign} />}
