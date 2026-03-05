@@ -64,10 +64,10 @@ export const campaignService = {
                 .from('campaigns')
                 .select('*, hospital:users(full_name, hospital_name, city, district), appointments(*)')
                 .eq('id', id)
-                .maybeSingle();
+                .limit(1);
 
             if (error) throw error;
-            return normalizeCampaignStatus(data);
+            return normalizeCampaignStatus(data && data.length > 0 ? data[0] : null);
         } catch (error: any) {
             console.error('[CampaignService] Error in getById:', error.message || error.details || error);
             throw error;
@@ -617,22 +617,23 @@ export const campaignService = {
     async checkInRegistration(registrationId: string, campaignId: string) {
         try {
             // 1. Get current max queue number for this campaign
-            const { data: maxQueue, error: countError } = await supabase
+            const { data: queueData, error: countError } = await supabase
                 .from('appointments')
                 .select('queue_number')
                 .eq('campaign_id', campaignId)
                 .not('queue_number', 'is', null)
                 .order('queue_number', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .limit(1);
+
+            if (countError) throw countError;
 
             let nextSTT = 1;
-            if (maxQueue && maxQueue.queue_number) {
-                nextSTT = maxQueue.queue_number + 1;
+            if (queueData && queueData.length > 0 && queueData[0].queue_number) {
+                nextSTT = queueData[0].queue_number + 1;
             }
 
             // 2. Update status and queue_number
-            const { data, error } = await supabase
+            const { data: updateData, error: updateError } = await supabase
                 .from('appointments')
                 .update({
                     status: 'Checked-in',
@@ -640,11 +641,12 @@ export const campaignService = {
                     check_in_time: new Date().toISOString()
                 })
                 .eq('id', registrationId)
-                .select()
-                .single();
+                .select();
 
-            if (error) throw error;
-            return data;
+            if (updateError) throw updateError;
+            if (!updateData || updateData.length === 0) throw new Error("Không thể cập nhật thông tin check-in.");
+
+            return updateData[0];
         } catch (error: any) {
             console.error('[CampaignService] Error in checkInRegistration:', error.message || error);
             throw error;
