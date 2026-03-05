@@ -63,10 +63,8 @@ ai-test*.log
 /playwright/.cache/
 /playwright/.auth/
 #Docs
-docs/main_flow.md
 .agent/plan.md
 #Test
-tests/
 tests/e2e
 test/unit
 #Supabase

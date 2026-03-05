@@ -221,11 +221,13 @@ export const campaignService = {
 
             // If it's Cancelled, reactivate it
             if (existing.status === 'Cancelled') {
+                const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).single();
                 const { data, error } = await supabase
                     .from('appointments')
                     .update({
                         status: 'Booked',
-                        scheduled_time: new Date().toISOString()
+                        scheduled_time: new Date().toISOString(),
+                        full_name: userData?.full_name
                     })
                     .eq('id', existing.id)
                     .select()
@@ -244,13 +246,15 @@ export const campaignService = {
         }
 
         // 2. Create new record if none exists
+        const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).single();
         const { data, error } = await supabase
             .from('appointments')
             .insert({
                 user_id: userId,
                 blood_request_id: requestId,
                 status: 'Booked',
-                scheduled_time: new Date().toISOString()
+                scheduled_time: new Date().toISOString(),
+                full_name: userData?.full_name
             })
             .select()
             .single();
@@ -334,11 +338,13 @@ export const campaignService = {
 
             // If it's Cancelled, reactivate it
             if (existing.status === 'Cancelled') {
+                const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).single();
                 const { data, error } = await supabase
                     .from('appointments')
                     .update({
                         status: 'Booked',
-                        scheduled_time: new Date().toISOString()
+                        scheduled_time: new Date().toISOString(),
+                        full_name: userData?.full_name
                     })
                     .eq('id', existing.id)
                     .select()
@@ -357,13 +363,15 @@ export const campaignService = {
         }
 
         // 2. Create new record if none exists
+        const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).single();
         const { data, error } = await supabase
             .from('appointments')
             .insert({
                 user_id: userId,
                 campaign_id: campaignId,
                 status: 'Booked',
-                scheduled_time: new Date().toISOString()
+                scheduled_time: new Date().toISOString(),
+                full_name: userData?.full_name
             })
             .select()
             .single();
