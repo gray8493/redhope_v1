@@ -19,7 +19,9 @@ import {
     XCircle,
     Navigation,
     Map as MapIcon,
-    ChevronDown
+    ChevronDown,
+    Calendar,
+    Search
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
@@ -102,6 +104,7 @@ export default function RequestsPage() {
     const [screeningStatus, setScreeningStatus] = useState<'not_done' | 'passed' | 'failed'>('not_done');
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [itemToCancel, setItemToCancel] = useState<any | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Dynamic Location Filters
     const [selectedCity, setSelectedCity] = useState<string>("");
@@ -375,6 +378,19 @@ export default function RequestsPage() {
         if (activeFilter === "Chiến dịch") return item.type === 'campaign';
 
         return true;
+    }).filter(item => {
+        // Search filter
+        if (!searchQuery.trim()) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+            (item.title || '').toLowerCase().includes(query) ||
+            (item.name || '').toLowerCase().includes(query) ||
+            (item.description || '').toLowerCase().includes(query) ||
+            (item.location_name || '').toLowerCase().includes(query) ||
+            (item.hospital?.hospital_name || '').toLowerCase().includes(query) ||
+            (item.hospital?.city || '').toLowerCase().includes(query) ||
+            (item.hospital?.district || '').toLowerCase().includes(query)
+        );
     });
 
     // Pagination logic
@@ -571,15 +587,15 @@ export default function RequestsPage() {
             <div className="flex h-full w-full flex-row overflow-hidden bg-[#f6f6f8] dark:bg-[#161121] font-sans text-[#120e1b] dark:text-white">
                 <Sidebar />
                 <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
-                    <TopNav title="Yêu cầu hiến máu" />
+                    <TopNav title="Danh sách chiến dịch" />
                     <main className="flex-1 py-4 md:py-8">
                         <div className="flex flex-col w-full max-w-[1440px] mx-auto flex-1 px-4 sm:px-5 md:px-10 min-w-0">
                             {/* Page Heading */}
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-4 mb-4 md:mb-6 min-w-0">
                                 <div className="flex flex-col gap-1 md:gap-2 min-w-0">
-                                    <h1 className="text-[#120e1b] dark:text-white text-lg sm:text-2xl md:text-4xl font-black tracking-tight">Yêu cầu hiến máu</h1>
+                                    <h1 className="text-[#120e1b] dark:text-white text-lg sm:text-2xl md:text-4xl font-black tracking-tight">Sứ mệnh những giọt máu hồng</h1>
                                     <p className="text-[#654d99] dark:text-[#a594c9] text-xs sm:text-sm md:text-base font-normal leading-normal max-w-2xl">
-                                        Nhu cầu khẩn cấp từ các cơ sở y tế trong khu vực của bạn.
+                                        Chọn một hành trình phù hợp để trao tặng món quà sự sống.
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto min-w-0">
@@ -609,6 +625,18 @@ export default function RequestsPage() {
                                 </div>
                             </div>
 
+                            {/* Search Bar */}
+                            <div className="relative w-full sm:max-w-md mb-4 sm:mb-6">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                                    className="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#1c162e] border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm transition-all outline-none shadow-sm placeholder:text-slate-400 font-medium"
+                                    placeholder="Tìm kiếm chiến dịch theo tên, địa điểm, bệnh viện..."
+                                />
+                            </div>
+
                             {/* Filter Chips & Location Selector */}
                             <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-8 min-w-0">
                                 <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -622,34 +650,18 @@ export default function RequestsPage() {
                                             {f}
                                         </Button>
                                     ))}
-                                    <Button variant="outline" className="h-9 md:h-11 gap-2 rounded-xl bg-white dark:bg-[#1c162d] border-slate-200 dark:border-slate-800 whitespace-nowrap">
-                                        <span className="text-sm font-bold">Lọc thêm</span>
-                                    </Button>
                                 </div>
 
                                 {activeFilter === "Gần tôi" && (
                                     <Card className="border-none shadow-sm dark:bg-[#1c162e] rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
-                                        <CardContent className="p-4">
-                                            <div className="flex flex-col md:flex-row items-end gap-4">
-                                                <LocationSelector
-                                                    className="flex-1 grid-cols-1 md:grid-cols-2 gap-4"
-                                                    defaultCity={selectedCity || profile?.city}
-                                                    defaultDistrict={selectedDistrict}
-                                                    onCityChange={setSelectedCity}
-                                                    onDistrictChange={setSelectedDistrict}
-                                                />
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-slate-400 font-bold h-10 px-4"
-                                                    onClick={() => {
-                                                        setSelectedCity(profile?.city || "");
-                                                        setSelectedDistrict("");
-                                                    }}
-                                                >
-                                                    Đặt lại vị trí
-                                                </Button>
-                                            </div>
+                                        <CardContent className="p-3 sm:p-4">
+                                            <LocationSelector
+                                                className="w-full grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"
+                                                defaultCity={selectedCity || profile?.city}
+                                                defaultDistrict={selectedDistrict}
+                                                onCityChange={setSelectedCity}
+                                                onDistrictChange={setSelectedDistrict}
+                                            />
                                         </CardContent>
                                     </Card>
                                 )}
@@ -678,7 +690,7 @@ export default function RequestsPage() {
                                             <Card
                                                 key={request.id}
                                                 onClick={() => setSelectedRequest(request)}
-                                                className="flex flex-col overflow-hidden hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer group bg-white dark:bg-[#1c162d] border-[#ebe7f3] dark:border-[#2d263d] rounded-2xl h-full"
+                                                className="flex flex-col overflow-hidden hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer group bg-white dark:bg-[#1c162d] border-slate-300 dark:border-slate-600 rounded-2xl h-full p-0 gap-0"
                                             >
                                                 {/* Header Image Section */}
                                                 <div
@@ -714,19 +726,23 @@ export default function RequestsPage() {
                                                         </span>
                                                     </div>
 
-                                                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium line-clamp-3 leading-relaxed mb-4 flex-1">
+                                                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium line-clamp-3 leading-relaxed mb-4 flex-1">
                                                         {request.description || "Hỗ trợ cộng đồng bằng cách hiến máu tại sự kiện này."}
                                                     </p>
 
                                                     {request.type === 'campaign' && (
-                                                        <div className="mb-4 flex items-center gap-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-1 rounded-md w-fit uppercase">
-                                                            <Clock className="w-3 h-3" />
-                                                            {new Date(request.start_time).toLocaleDateString('vi-VN')}
+                                                        <div className="mb-0 flex flex-wrap gap-1.5">
+                                                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1.5 rounded-md w-fit">
+                                                                <Calendar className="w-3 h-3" />
+                                                                {new Date(request.start_time).toLocaleDateString('vi-VN')}
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/30 px-2.5 py-1.5 rounded-md w-fit">
+                                                                <Clock className="w-3 h-3" />
+                                                                {new Date(request.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - {new Date(request.end_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
                                                         </div>
                                                     )}
 
-                                                    {/* Divider */}
-                                                    <div className="h-px w-full bg-slate-100 dark:bg-slate-800 mb-4"></div>
 
                                                     {/* Footer Info */}
                                                     <div className="flex items-center justify-between mt-auto">
@@ -736,10 +752,10 @@ export default function RequestsPage() {
                                                                 {request.location_name || request.hospital?.hospital_name || request.hospital?.address || "Địa điểm chưa xác định"}
                                                             </span>
                                                         </div>
-                                                        <div className="flex items-center gap-1 shrink-0">
-                                                            <span className="text-[#0065FF] text-xs font-black whitespace-nowrap">
-                                                                Chi tiết →
-                                                            </span>
+                                                         <div className="shrink-0">
+                                                            <Button className="h-8 md:h-9 bg-[#0065FF] hover:bg-[#0052cc] text-white font-bold rounded-xl px-4 text-[11px] md:text-xs shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-95">
+                                                                Đăng ký ngay
+                                                            </Button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -793,7 +809,7 @@ export default function RequestsPage() {
             <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
                 <DialogContent className="sm:max-w-lg max-h-[90vh] sm:max-h-[90vh] h-[100dvh] sm:h-auto flex flex-col p-0 overflow-hidden bg-white dark:bg-[#1c162e] border-0 gap-0 sm:rounded-xl rounded-none donor-layout-zoom">
                     <VisuallyHidden>
-                        <DialogTitle>Chi tiết yêu cầu hiến máu</DialogTitle>
+                        <DialogTitle>Đăng ký yêu cầu hiến máu</DialogTitle>
                     </VisuallyHidden>
                     {selectedRequest && (
                         <>
@@ -905,7 +921,7 @@ export default function RequestsPage() {
                                 <div>
                                     <h3 className="font-black text-[#120e1b] dark:text-white text-sm uppercase tracking-wider flex items-center gap-2 mb-3">
                                         <div className="w-1 h-4 bg-[#0065FF] rounded-full"></div>
-                                        Thông tin chi tiết
+                                        Thông tin đăng ký
                                     </h3>
                                     <div className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line bg-slate-50 dark:bg-slate-900/30 p-4 sm:p-5 rounded-2xl border border-slate-100 dark:border-slate-800/50">
                                         {selectedRequest.description || "Chưa có mô tả chi tiết cho chương trình này."}

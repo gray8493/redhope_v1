@@ -372,9 +372,9 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
                         // Desktop: toggle collapsible sidebar
                         window.dispatchEvent(new CustomEvent('toggle-sidebar'));
                     }}
-                    className="text-slate-500"
+                    className="text-slate-800 dark:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 size-10"
                 >
-                    <Menu className="w-5 h-5" />
+                    <Menu className="w-6 h-6" />
                 </Button>
                 <h2 className="text-slate-900 dark:text-white text-base md:text-xl font-bold truncate">{title}</h2>
             </div>

@@ -657,9 +657,9 @@ export default function CampaignDetailsPage() {
                 ['booked', 'checked-in'].includes(r.status?.toLowerCase())
             );
 
-            // 4. Set to 'Deferred' (Hủy hồ sơ)
+            // 4. Set to 'Cancelled' (Hủy hồ sơ)
             await Promise.all(pendingRegs.map((r: any) =>
-                campaignService.updateRegistrationStatus(r.id, 'Deferred')
+                campaignService.updateRegistrationStatus(r.id, 'Cancelled')
             ));
 
             const updated = await campaignService.getById(campaignId as string);
@@ -739,7 +739,7 @@ export default function CampaignDetailsPage() {
     const isCampaignEnded = ['completed', 'cancelled', 'ended', 'closed'].includes(campaign.status?.toLowerCase());
 
     return (
-        <main className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-w-0">
             {/* Header */}
 
 
@@ -1601,6 +1601,6 @@ export default function CampaignDetailsPage() {
                 userName={screeningModal.userName}
                 campaignId={campaignId}
             />
-        </main>
+        </div>
     );
 }

@@ -51,6 +51,9 @@ interface DonorInfo {
     weight: number;
     height: number;
     health_history: string;
+    citizen_id?: string;
+    occupation?: string;
+    organization?: string;
 }
 
 interface Props {
@@ -287,7 +290,7 @@ export function DonorScreeningModal({ open, onClose, userId, userName, campaignI
                                                     <p className="text-[10px] font-semibold text-slate-400 mb-0.5">
                                                         {QUESTION_LABELS[key] || `Câu ${key}`}
                                                     </p>
-                                                    <p className="text-xs text-slate-700 dark:text-slate-300 font-medium break-words">
+                                                    <p className="text-xs text-slate-700 dark:text-slate-300 font-medium wrap-break-word">
                                                         {displayValue}
                                                     </p>
                                                 </div>
@@ -305,32 +308,26 @@ export function DonorScreeningModal({ open, onClose, userId, userName, campaignI
 
                         {/* Donor Profile */}
                         {donor && (
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-                                <h4 className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-3">
-                                    <User className="size-3.5 text-slate-500" />
+                            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                                <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-4">
+                                    <User className="size-4 text-slate-500 fill-slate-100 dark:fill-slate-800" />
                                     Hồ sơ Người hiến
                                 </h4>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {[
-                                        { label: "Nhóm máu", value: donor.blood_group },
-                                        { label: "Giới tính", value: donor.gender === 'male' ? 'Nam' : donor.gender === 'female' ? 'Nữ' : donor.gender },
+                                        { label: "Nhóm máu", value: donor.blood_group || '—' },
+                                        { label: "Giới tính", value: donor.gender === 'male' ? 'Nam' : donor.gender === 'female' ? 'Nữ' : donor.gender || '—' },
                                         { label: "Cân nặng", value: donor.weight ? `${donor.weight} kg` : '—' },
-                                        { label: "Chiều cao", value: donor.height ? `${donor.height} cm` : '—' },
+                                        { label: "Nghề nghiệp", value: donor.occupation || '—' },
                                         { label: "Ngày sinh", value: donor.dob ? format(new Date(donor.dob), 'dd/MM/yyyy') : '—' },
-                                        { label: "SĐT", value: donor.phone || '—' },
+                                        { label: "Số điện thoại", value: donor.phone || '—' },
                                     ].map((item, i) => (
-                                        <div key={i} className="flex justify-between p-2 bg-slate-50 dark:bg-slate-800/20 rounded-lg">
-                                            <span className="text-[10px] text-slate-400 font-medium">{item.label}</span>
-                                            <span className="text-xs text-slate-700 dark:text-slate-300 font-semibold">{item.value || '—'}</span>
+                                        <div key={i} className="flex justify-between items-center p-3 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-white dark:border-white/5">
+                                            <span className="text-xs text-slate-500 font-medium">{item.label}</span>
+                                            <span className="text-xs text-slate-900 dark:text-slate-200 font-bold">{item.value}</span>
                                         </div>
                                     ))}
                                 </div>
-                                {donor.health_history && (
-                                    <div className="mt-2 p-2.5 bg-slate-50 dark:bg-slate-800/20 rounded-lg">
-                                        <p className="text-[10px] text-slate-400 font-medium mb-1">Tiền sử sức khỏe</p>
-                                        <p className="text-xs text-slate-700 dark:text-slate-300">{donor.health_history}</p>
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>

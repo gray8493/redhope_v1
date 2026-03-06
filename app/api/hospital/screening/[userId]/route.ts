@@ -39,7 +39,7 @@ export async function GET(
         // Also fetch donor basic info
         const { data: donorProfile } = await supabaseAdmin
             .from('users')
-            .select('id, full_name, email, phone, blood_group, dob, gender, weight, height, health_history')
+            .select('id, full_name, email, phone, blood_group, dob, gender, weight, height, health_history, citizen_id, occupation, organization')
             .eq('id', userId)
             .single();
 
