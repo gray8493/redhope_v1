@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
     ClipboardCheck,
     BrainCircuit,
@@ -465,7 +465,7 @@ export default function ScreeningPage() {
                             const isCompleted = currentIndex > i;
 
                             // Can navigate between survey <-> result when test is done
-                            const canClick = aiResult !== null 
+                            const canClick = aiResult !== null
                                 && !isActive
                                 && s.id !== 'analyzing'
                                 && step !== 'analyzing';
@@ -491,11 +491,10 @@ export default function ScreeningPage() {
                                             }`}>
                                             <s.icon className="size-3.5 sm:size-4" />
                                         </div>
-                                        <span className={`text-xs font-semibold hidden sm:inline transition-colors ${
-                                            isActive ? 'text-blue-600' 
-                                            : canClick ? 'text-blue-500 hover:text-blue-600' 
-                                            : 'text-slate-400'
-                                        }`}>
+                                        <span className={`text-xs font-semibold hidden sm:inline transition-colors ${isActive ? 'text-blue-600'
+                                            : canClick ? 'text-blue-500 hover:text-blue-600'
+                                                : 'text-slate-400'
+                                            }`}>
                                             {s.label}
                                         </span>
                                     </button>
@@ -589,65 +588,65 @@ export default function ScreeningPage() {
 
                                     {/* Questions */}
                                     {CHOICE_QUESTIONS.map((q, idx) => (
-                                        <>
-                                        {/* Motivational quote after every 3rd question */}
-                                        {idx > 0 && idx % 3 === 0 && (
-                                            <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-rose-50/80 to-blue-50/80 dark:from-rose-950/10 dark:to-blue-950/10 rounded-lg border border-rose-100/50 dark:border-rose-900/20">
-                                                <span className="text-base">{MOTIVATIONAL_QUOTES[(idx + 2) % MOTIVATIONAL_QUOTES.length].emoji}</span>
-                                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium italic leading-relaxed">
-                                                    {MOTIVATIONAL_QUOTES[(idx + 2) % MOTIVATIONAL_QUOTES.length].text}
-                                                </p>
-                                            </div>
-                                        )}
-                                        <div
-                                            key={q.id}
-                                            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
-                                        >
-                                            {/* Question Header */}
-                                            <div className="flex items-start gap-2.5 p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800/60">
-                                                <span className="flex-none size-6 rounded-md bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 flex items-center justify-center text-xs font-black mt-0.5">
-                                                    {idx + 1}
-                                                </span>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="text-sm sm:text-base font-semibold text-slate-800 dark:text-white leading-snug">{q.text}</h4>
-                                                    <span className="inline-flex items-center gap-1 mt-1 text-[10px] sm:text-xs text-slate-400 font-medium">
-                                                        <q.icon className="size-3" />
-                                                        {q.category}
-                                                    </span>
+                                        <React.Fragment key={q.id}>
+                                            {/* Motivational quote after every 3rd question */}
+                                            {idx > 0 && idx % 3 === 0 && (
+                                                <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-rose-50/80 to-blue-50/80 dark:from-rose-950/10 dark:to-blue-950/10 rounded-lg border border-rose-100/50 dark:border-rose-900/20">
+                                                    <span className="text-base">{MOTIVATIONAL_QUOTES[(idx + 2) % MOTIVATIONAL_QUOTES.length].emoji}</span>
+                                                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium italic leading-relaxed">
+                                                        {MOTIVATIONAL_QUOTES[(idx + 2) % MOTIVATIONAL_QUOTES.length].text}
+                                                    </p>
                                                 </div>
-                                                {answers[q.id] && (
-                                                    <CheckCircle className="size-4 text-blue-500 flex-none mt-0.5" />
-                                                )}
-                                            </div>
+                                            )}
+                                            <div
+                                                key={`question-${q.id}`}
+                                                className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+                                            >
+                                                {/* Question Header */}
+                                                <div className="flex items-start gap-2.5 p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800/60">
+                                                    <span className="flex-none size-6 rounded-md bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 flex items-center justify-center text-xs font-black mt-0.5">
+                                                        {idx + 1}
+                                                    </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-sm sm:text-base font-semibold text-slate-800 dark:text-white leading-snug">{q.text}</h4>
+                                                        <span className="inline-flex items-center gap-1 mt-1 text-[10px] sm:text-xs text-slate-400 font-medium">
+                                                            <q.icon className="size-3" />
+                                                            {q.category}
+                                                        </span>
+                                                    </div>
+                                                    {answers[q.id] && (
+                                                        <CheckCircle className="size-4 text-blue-500 flex-none mt-0.5" />
+                                                    )}
+                                                </div>
 
-                                            {/* 4 Options Grid */}
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 p-2 sm:p-3">
-                                                {q.options.map((opt) => {
-                                                    const isSelected = answers[q.id]?.value === opt.value;
-                                                    return (
-                                                        <button
-                                                            key={opt.value}
-                                                            onClick={() => handleAnswer(q.id, opt.value, opt.severity)}
-                                                            className={`group relative flex items-center gap-2 p-2.5 sm:p-3 rounded-lg text-left transition-all duration-200 ${isSelected
-                                                                ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500 ring-2 ring-blue-500/10'
-                                                                : 'bg-slate-50/50 dark:bg-slate-800/30 border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                                                                }`}
-                                                        >
-                                                            <div className={`flex-none size-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
-                                                                ? 'border-blue-500 bg-blue-500'
-                                                                : 'border-slate-300 dark:border-slate-600'
-                                                                }`}>
-                                                                {isSelected && <div className="size-1.5 rounded-full bg-white" />}
-                                                            </div>
-                                                            <span className={`flex-1 min-w-0 text-sm font-medium leading-snug ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400'}`}>
-                                                                {opt.label}
-                                                            </span>
-                                                        </button>
-                                                    );
-                                                })}
+                                                {/* 4 Options Grid */}
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 p-2 sm:p-3">
+                                                    {q.options.map((opt) => {
+                                                        const isSelected = answers[q.id]?.value === opt.value;
+                                                        return (
+                                                            <button
+                                                                key={opt.value}
+                                                                onClick={() => handleAnswer(q.id, opt.value, opt.severity)}
+                                                                className={`group relative flex items-center gap-2 p-2.5 sm:p-3 rounded-lg text-left transition-all duration-200 ${isSelected
+                                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500 ring-2 ring-blue-500/10'
+                                                                    : 'bg-slate-50/50 dark:bg-slate-800/30 border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                                                    }`}
+                                                            >
+                                                                <div className={`flex-none size-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
+                                                                    ? 'border-blue-500 bg-blue-500'
+                                                                    : 'border-slate-300 dark:border-slate-600'
+                                                                    }`}>
+                                                                    {isSelected && <div className="size-1.5 rounded-full bg-white" />}
+                                                                </div>
+                                                                <span className={`flex-1 min-w-0 text-sm font-medium leading-snug ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400'}`}>
+                                                                    {opt.label}
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
-                                        </div>
-                                        </>
+                                        </React.Fragment>
                                     ))}
 
                                     {/* Next to Text section */}
