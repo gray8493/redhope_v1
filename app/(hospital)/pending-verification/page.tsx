@@ -98,7 +98,7 @@ export default function PendingVerificationPage() {
                             {currentStatus.icon}
                         </div>
                         <div>
-                            <h1 className={`text-xl font-black tracking-tight ${currentStatus.color}`}>{currentStatus.title}</h1>
+                            <h2 className={`text-xl font-black tracking-tight ${currentStatus.color}`}>{currentStatus.title}</h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{currentStatus.desc}</p>
                         </div>
                     </div>
