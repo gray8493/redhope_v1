@@ -745,8 +745,7 @@ function SettingsContent() {
                 <MiniFooter />
             </main>
 
-            <style dangerouslySetInnerHTML={{
-                __html: `
+            <style>{`
                 .material-symbols-outlined {
                     font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
                 }
@@ -770,7 +769,7 @@ function SettingsContent() {
                 .dark input[type="range"]::-webkit-slider-thumb {
                     border-color: #1E293B;
                 }
-            `}} />
+            `}</style>
         </>
     );
 }

@@ -145,7 +145,7 @@ describe('LoginPage', () => {
         render(<LoginPage />);
 
         await act(async () => {
-            fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), {
+            fireEvent.change(screen.getByPlaceholderText(/hero@redhope.io.vn/i), {
                 target: { value: 'donor@test.com' },
             });
             fireEvent.change(screen.getByPlaceholderText(/••••••••/i), {
@@ -171,7 +171,7 @@ describe('LoginPage', () => {
         render(<LoginPage />);
 
         await act(async () => {
-            fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), {
+            fireEvent.change(screen.getByPlaceholderText(/hero@redhope.io.vn/i), {
                 target: { value: 'error@test.com' },
             });
             fireEvent.change(screen.getByPlaceholderText(/••••••••/i), {

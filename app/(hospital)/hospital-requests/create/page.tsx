@@ -777,8 +777,7 @@ export default function CreateRequestPage() {
             </main>
 
             {/* Global Styled JSX for UI consistency */}
-            <style dangerouslySetInnerHTML={{
-                __html: `
+            <style>{`
                 .quill-wrapper .ql-toolbar {
                     border-top: none !important;
                     border-left: none !important;
@@ -813,7 +812,7 @@ export default function CreateRequestPage() {
                 .fill-1 {
                     font-variation-settings: 'FILL' 1 !important;
                 }
-            `}} />
+            `}</style>
         </div>
     );
 }

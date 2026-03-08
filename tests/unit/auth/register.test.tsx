@@ -85,7 +85,7 @@ describe('RegisterPage', () => {
         fireEvent.change(screen.getByPlaceholderText(/Nguyễn Văn A/i), {
             target: { value: 'Test Donor' },
         });
-        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), {
+        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.io.vn/i), {
             target: { value: 'donor@test.com' },
         });
         fireEvent.change(screen.getAllByPlaceholderText(/••••••••/i)[0], {
@@ -138,7 +138,7 @@ describe('RegisterPage', () => {
         fireEvent.change(screen.getByPlaceholderText(/Tên bệnh viện của bạn/i), {
             target: { value: 'Test Hospital' },
         });
-        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), {
+        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.io.vn/i), {
             target: { value: 'hospital@test.com' },
         });
         fireEvent.change(screen.getAllByPlaceholderText(/••••••••/i)[0], {
@@ -174,7 +174,7 @@ describe('RegisterPage', () => {
         fireEvent.change(screen.getByPlaceholderText(/Nguyễn Văn A/i), {
             target: { value: 'Test User' },
         });
-        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), {
+        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.io.vn/i), {
             target: { value: 'test@test.com' },
         });
         fireEvent.change(screen.getAllByPlaceholderText(/••••••••/i)[0], {
@@ -203,7 +203,7 @@ describe('RegisterPage', () => {
         render(<RegisterPage />);
 
         fireEvent.change(screen.getByPlaceholderText(/Nguyễn Văn A/i), { target: { value: 'Test' } });
-        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), { target: { value: 'existing@test.com' } });
+        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.io.vn/i), { target: { value: 'existing@test.com' } });
         fireEvent.change(screen.getAllByPlaceholderText(/••••••••/i)[0], { target: { value: 'password123' } });
         fireEvent.change(screen.getAllByPlaceholderText(/••••••••/i)[1], { target: { value: 'password123' } });
         fireEvent.click(screen.getByLabelText(/Tôi đồng ý với Điều khoản & Chính sách/i));

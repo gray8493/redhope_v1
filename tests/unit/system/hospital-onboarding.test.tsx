@@ -129,7 +129,7 @@ describe('Luồng Bắt buộc Hoàn thiện Hồ sơ Bệnh viện (Hospital Ma
 
         render(<LoginPage />);
 
-        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), { target: { value: 'vinh@hospital.com' } });
+        fireEvent.change(screen.getByPlaceholderText(/hero@redhope.io.vn/i), { target: { value: 'vinh@hospital.com' } });
         fireEvent.change(screen.getAllByPlaceholderText(/••••••••/i)[0], { target: { value: 'password' } });
 
         fireEvent.click(screen.getByRole('button', { name: /Đăng nhập ngay/i }));

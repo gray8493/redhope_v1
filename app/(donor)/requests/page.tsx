@@ -143,7 +143,6 @@ export default function RequestsPage() {
     }, [searchParams, requests]);
 
     // Auto Check-in Logic
-    // Auto Check-in Logic
     useEffect(() => {
         const campaignId = searchParams.get('campaignId');
 
@@ -752,7 +751,7 @@ export default function RequestsPage() {
                                                                 {request.location_name || request.hospital?.hospital_name || request.hospital?.address || "Địa điểm chưa xác định"}
                                                             </span>
                                                         </div>
-                                                         <div className="shrink-0">
+                                                        <div className="shrink-0">
                                                             <Button className="h-8 md:h-9 bg-[#0065FF] hover:bg-[#0052cc] text-white font-bold rounded-xl px-4 text-[11px] md:text-xs shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-95">
                                                                 Đăng ký ngay
                                                             </Button>

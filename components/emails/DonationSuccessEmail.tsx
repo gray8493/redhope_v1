@@ -57,7 +57,7 @@ export const DonationSuccessEmail = ({
                     </Text>
 
                     <Section style={btnContainer}>
-                        <Link style={button} href="https://redhope.io.vn/rewards">
+                        <Link style={button} href="redhope.io.vn/rewards">
                             Đổi quà tặng ngay
                         </Link>
                     </Section>

@@ -42,8 +42,9 @@ describe('Donation Completion Notification System', () => {
             error: null,
         });
 
+        const fullName = 'Test User';
         // 1. Thực hiện hoàn thành hiến máu
-        await bloodService.completeDonation(appointmentId, donorId, hospitalId, volumeMl);
+        await bloodService.completeDonation(appointmentId, donorId, fullName, hospitalId, volumeMl);
 
         // Đợi background fetch
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -78,8 +79,7 @@ describe('Donation Completion Notification System', () => {
         // Giả lập API mail bị lỗi
         (global.fetch as jest.Mock).mockRejectedValue(new Error('Internal Server Error'));
 
-        // Hàm này sẽ không throw error vì fetch được bọc trong .catch()
-        const result = await bloodService.completeDonation('a', 'b', 'c', 450);
+        const result = await bloodService.completeDonation('a', 'b', 'fullname', 'c', 450);
 
         expect(result.success).toBe(true);
 

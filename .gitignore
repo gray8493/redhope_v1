@@ -64,9 +64,15 @@ ai-test*.log
 /playwright/.auth/
 #Docs
 .agent/plan.md
-#Test
+#Test   
+tests/
+test_result/
+test_output/
+test_current/
+test_log/
+
 tests/e2e
-test/unit
+tests/unit
 #Supabase
 .supabase
 .agent

@@ -189,7 +189,7 @@ describe('hospitalService', () => {
 
             const createCall = (userService.create as jest.Mock).mock.calls[0][0];
             expect(createCall.email).toContain('hospital_');
-            expect(createCall.email).toContain('@redhope.vn');
+            expect(createCall.email).toContain('@redhope.io.vn');
         });
 
         test('should use "Hospital" as default full_name', async () => {

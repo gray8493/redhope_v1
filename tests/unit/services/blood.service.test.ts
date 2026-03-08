@@ -45,6 +45,7 @@ describe('bloodService', () => {
             const result = await bloodService.completeDonation(
                 'apt-1',
                 'donor-1',
+                'Test User',
                 'hospital-1',
                 450
             );
@@ -54,6 +55,7 @@ describe('bloodService', () => {
                 expect.objectContaining({
                     appointment_id: 'apt-1',
                     donor_id: 'donor-1',
+                    full_name: 'Test User',
                     hospital_id: 'hospital-1',
                     volume_ml: 450,
                 })
@@ -68,7 +70,7 @@ describe('bloodService', () => {
                 error: null
             });
 
-            await bloodService.completeDonation('apt-1', 'donor-1', 'hospital-1', 450);
+            await bloodService.completeDonation('apt-1', 'donor-1', 'Test User', 'hospital-1', 450);
 
             // Wait for async fetch
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -89,7 +91,7 @@ describe('bloodService', () => {
             const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
             await expect(
-                bloodService.completeDonation('apt-1', 'donor-1', 'hospital-1', 450)
+                bloodService.completeDonation('apt-1', 'donor-1', 'Test User', 'hospital-1', 450)
             ).rejects.toEqual(dbError);
 
             consoleSpy.mockRestore();
@@ -105,7 +107,7 @@ describe('bloodService', () => {
 
             const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-            const result = await bloodService.completeDonation('apt-1', 'donor-1', 'hospital-1', 450);
+            const result = await bloodService.completeDonation('apt-1', 'donor-1', 'Test User', 'hospital-1', 450);
 
             expect(result.success).toBe(true);
 

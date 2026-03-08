@@ -108,7 +108,7 @@ describe('Hệ thống Xác thực (Authentication System)', () => {
 
             // Điền thông tin
             fireEvent.change(screen.getByPlaceholderText(/Tên bệnh viện của bạn/i), { target: { value: 'Test Hospital' } });
-            fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), { target: { value: 'hospital@test.com' } });
+            fireEvent.change(screen.getByPlaceholderText(/hero@redhope.io.vn/i), { target: { value: 'hospital@test.com' } });
 
             const passwordInputs = screen.getAllByPlaceholderText(/••••••••/i);
             fireEvent.change(passwordInputs[0], { target: { value: 'Password123!' } });
@@ -163,7 +163,7 @@ describe('Hệ thống Xác thực (Authentication System)', () => {
                 maybeSingle: mockMaybeSingle,
             });
 
-            fireEvent.change(screen.getByPlaceholderText(/hero@redhope.vn/i), { target: { value: 'admin@test.com' } });
+            fireEvent.change(screen.getByPlaceholderText(/hero@redhope.io.vn/i), { target: { value: 'admin@test.com' } });
             fireEvent.change(screen.getByPlaceholderText(/••••••••/i), { target: { value: 'admin123' } });
 
             fireEvent.click(screen.getByRole('button', { name: /Đăng nhập ngay/i }));

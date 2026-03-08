@@ -1,14 +1,24 @@
 import { screeningService } from '@/services/screening.service';
 import { supabase } from '@/lib/supabase';
 
-jest.mock('@/lib/supabase', () => ({
-    supabase: {
-        auth: {
-            getUser: jest.fn(),
-            updateUser: jest.fn(),
+jest.mock('@/lib/supabase', () => {
+    const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null })
+    };
+    return {
+        supabase: {
+            auth: {
+                getUser: jest.fn(),
+                updateUser: jest.fn(),
+            },
+            from: jest.fn().mockReturnValue(mockQueryBuilder),
         },
-    },
-}));
+    };
+});
 
 describe('screeningService', () => {
     beforeEach(() => {

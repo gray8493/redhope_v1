@@ -75,16 +75,13 @@ describe('campaignService.checkInRegistration', () => {
                     return {
                         update: jest.fn().mockReturnValue({
                             eq: jest.fn().mockReturnValue({
-                                select: jest.fn().mockReturnValue({
-                                    single: jest.fn().mockResolvedValue({
-                                        data: {
-                                            id: 'appointment-1',
-                                            status: 'Checked-in',
-                                            queue_number: 1,
-                                            check_in_time: '2026-02-23T09:00:00Z',
-                                        },
-                                        error: null,
-                                    }),
+                                select: jest.fn().mockResolvedValue({
+                                    data: [{
+                                        id: 'appointment-1',
+                                        status: 'Checked-in',
+                                        queue_number: 1,
+                                        check_in_time: '2026-02-23T09:00:00Z',
+                                    }], error: null
                                 }),
                             }),
                         }),
@@ -132,16 +129,13 @@ describe('campaignService.checkInRegistration', () => {
                     return {
                         update: jest.fn().mockReturnValue({
                             eq: jest.fn().mockReturnValue({
-                                select: jest.fn().mockReturnValue({
-                                    single: jest.fn().mockResolvedValue({
-                                        data: {
-                                            id: 'appointment-6',
-                                            status: 'Checked-in',
-                                            queue_number: 6, // STT tiếp theo
-                                            check_in_time: '2026-02-23T09:05:00Z',
-                                        },
-                                        error: null,
-                                    }),
+                                select: jest.fn().mockResolvedValue({
+                                    data: [{
+                                        id: 'appointment-6',
+                                        status: 'Checked-in',
+                                        queue_number: 6, // STT tiếp theo
+                                        check_in_time: '2026-02-23T09:05:00Z',
+                                    }], error: null
                                 }),
                             }),
                         }),
@@ -185,11 +179,9 @@ describe('campaignService.checkInRegistration', () => {
                     return {
                         update: jest.fn().mockReturnValue({
                             eq: jest.fn().mockReturnValue({
-                                select: jest.fn().mockReturnValue({
-                                    single: jest.fn().mockResolvedValue({
-                                        data: null,
-                                        error: { message: 'Constraint violation', code: '23514' },
-                                    }),
+                                select: jest.fn().mockResolvedValue({
+                                    data: null,
+                                    error: { message: 'Constraint violation', code: '23514' },
                                 }),
                             }),
                         }),
@@ -209,16 +201,13 @@ describe('campaignService.checkInRegistration', () => {
     test('gọi đúng bảng appointments và truyền đúng tham số', async () => {
         const updateMock = jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({
-                        data: {
-                            id: 'apt-test',
-                            status: 'Checked-in',
-                            queue_number: 1,
-                            check_in_time: '2026-02-23T09:00:00Z',
-                        },
-                        error: null,
-                    }),
+                select: jest.fn().mockResolvedValue({
+                    data: [{
+                        id: 'apt-test',
+                        status: 'Checked-in',
+                        queue_number: 1,
+                        check_in_time: '2026-02-23T09:00:00Z',
+                    }], error: null
                 }),
             }),
         });

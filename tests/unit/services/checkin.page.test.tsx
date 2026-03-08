@@ -144,7 +144,7 @@ describe('CheckinPage', () => {
         submitIdentifier('0999999999');
 
         await waitFor(() => {
-            expect(screen.getByText(/Không tìm thấy đăng ký nào/)).toBeInTheDocument();
+            expect(screen.getByText(/Thông tin không khớp với bất kỳ đăng ký nào/)).toBeInTheDocument();
         });
     });
 
