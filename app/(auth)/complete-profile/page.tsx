@@ -7,7 +7,10 @@ import {
     Droplet,
     Calendar,
     ArrowRight,
-    Loader2
+    Loader2,
+    Briefcase,
+    Building2,
+    CreditCard
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -36,6 +39,9 @@ function DonorProfileContent() {
         blood_group: "O+",
         gender: "Nam",
         dob: "",
+        citizen_id: "",
+        occupation: "",
+        organization: "",
         city: "",
         district: "",
         address: ""
@@ -82,35 +88,28 @@ function DonorProfileContent() {
 
         try {
             // Validate Age >= 18
-            if (formData.dob) {
-                const parts = formData.dob.split('-');
-                if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) {
-                    setError("Vui lòng chọn đầy đủ ngày, tháng, năm sinh.");
-                    setSubmitting(false);
-                    return;
-                }
-
-                const birthDate = new Date(formData.dob);
-                if (isNaN(birthDate.getTime())) {
-                    setError("Ngày sinh không hợp lệ.");
-                    setSubmitting(false);
-                    return;
-                }
-
-                const today = new Date();
-                let age = today.getFullYear() - birthDate.getFullYear();
-                const m = today.getMonth() - birthDate.getMonth();
-                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                    age--;
-                }
-
-                if (age < 18) {
-                    setError("Theo quy định, bạn cần đủ 18 tuổi trở lên để tham gia hiến máu.");
-                    setSubmitting(false);
-                    return;
-                }
-            } else {
+            if (!formData.dob) {
                 setError("Vui lòng nhập ngày sinh.");
+                setSubmitting(false);
+                return;
+            }
+
+            const birthDate = new Date(formData.dob);
+            if (isNaN(birthDate.getTime())) {
+                setError("Ngày sinh không hợp lệ.");
+                setSubmitting(false);
+                return;
+            }
+
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            if (age < 18) {
+                setError("Theo quy định, bạn cần đủ 18 tuổi trở lên để tham gia hiến máu.");
                 setSubmitting(false);
                 return;
             }
@@ -122,6 +121,10 @@ function DonorProfileContent() {
                 ...formData,
                 dob: formData.dob || null,
                 phone: formData.phone || null,
+                citizen_id: formData.citizen_id || null,
+
+                occupation: formData.occupation || null,
+                organization: formData.organization || null,
                 city: formData.city || null,
                 district: formData.district || null,
                 address: formData.address || null,
@@ -146,13 +149,17 @@ function DonorProfileContent() {
                 },
                 body: JSON.stringify({
                     userId: user.id,
-                    email: user.email || user.user_metadata?.email || formData.full_name, // fallback as email might be used for identification
+                    email: user.email || user.user_metadata?.email || formData.full_name,
                     fullName: cleanData.full_name,
                     role: cleanData.role,
                     phone: cleanData.phone,
                     dob: cleanData.dob,
                     gender: cleanData.gender,
                     bloodGroup: cleanData.blood_group,
+                    citizenId: cleanData.citizen_id,
+
+                    occupation: cleanData.occupation,
+                    organization: cleanData.organization,
                     city: cleanData.city,
                     district: cleanData.district,
                     address: cleanData.address
@@ -282,75 +289,17 @@ function DonorProfileContent() {
 
                                     <label className="flex flex-col gap-2">
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ngày sinh</span>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {/* Day */}
-                                            <div className="relative">
-                                                <select
-                                                    required
-                                                    className="w-full px-3 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] outline-none text-sm appearance-none"
-                                                    value={formData.dob ? formData.dob.split('-')[2] : ""}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        setFormData(prev => {
-                                                            const parts = prev.dob ? prev.dob.split('-') : ["", "", ""];
-                                                            const y = parts[0] || "";
-                                                            const m = parts[1] || "";
-                                                            return { ...prev, dob: `${y}-${m}-${val}` };
-                                                        });
-                                                    }}
-                                                >
-                                                    <option value="">Ngày</option>
-                                                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                                        <option key={d} value={d.toString().padStart(2, '0')}>{d}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
-                                            {/* Month */}
-                                            <div className="relative">
-                                                <select
-                                                    required
-                                                    className="w-full px-3 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] outline-none text-sm appearance-none"
-                                                    value={formData.dob ? formData.dob.split('-')[1] : ""}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        setFormData(prev => {
-                                                            const parts = prev.dob ? prev.dob.split('-') : ["", "", ""];
-                                                            const y = parts[0] || "";
-                                                            const d = parts[2] || "";
-                                                            return { ...prev, dob: `${y}-${val}-${d}` };
-                                                        });
-                                                    }}
-                                                >
-                                                    <option value="">Tháng</option>
-                                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                                                        <option key={m} value={m.toString().padStart(2, '0')}>Tháng {m}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
-                                            {/* Year */}
-                                            <div className="relative">
-                                                <select
-                                                    required
-                                                    className="w-full px-3 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] outline-none text-sm appearance-none"
-                                                    value={formData.dob ? formData.dob.split('-')[0] : ""}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        setFormData(prev => {
-                                                            const parts = prev.dob ? prev.dob.split('-') : ["", "", ""];
-                                                            const m = parts[1] || "";
-                                                            const d = parts[2] || "";
-                                                            return { ...prev, dob: `${val}-${m}-${d}` };
-                                                        });
-                                                    }}
-                                                >
-                                                    <option value="">Năm</option>
-                                                    {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - 16 - i).map(y => (
-                                                        <option key={y} value={y}>{y}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                                        <div className="relative">
+                                            <input
+                                                required
+                                                type="date"
+                                                name="dob"
+                                                value={formData.dob}
+                                                onChange={handleChange}
+                                                max={`${new Date().getFullYear() - 18}-12-31`}
+                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] focus:ring-2 focus:ring-[#0065FF]/20 outline-none transition-all text-sm"
+                                            />
+                                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                                         </div>
                                     </label>
 
@@ -382,6 +331,74 @@ function DonorProfileContent() {
                                                 ))}
                                             </select>
                                             <Droplet className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500 w-4 h-4" />
+                                        </div>
+                                    </label>
+
+                                    <label className="flex flex-col gap-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Số CCCD</span>
+                                        <div className="relative">
+                                            <input
+                                                required
+                                                type="text"
+                                                name="citizen_id"
+                                                value={formData.citizen_id}
+                                                onChange={handleChange}
+                                                placeholder="VD: 054012345678"
+                                                maxLength={12}
+                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] focus:ring-2 focus:ring-[#0065FF]/20 outline-none transition-all text-sm"
+                                            />
+                                            <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                        </div>
+                                    </label>
+
+                                </div>
+
+                                <hr className="border-[#cfd7e7] dark:border-gray-800" />
+
+                                {/* Section 2: Occupation */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="col-span-1 md:col-span-2">
+                                        <h3 className="text-lg font-bold mb-1 text-gray-900 dark:text-white">Nghề nghiệp & Đơn vị</h3>
+                                        <p className="text-[#4c669a] dark:text-gray-400 text-sm">Giúp kết nối với các chiến dịch hiến máu phù hợp tại nơi bạn học tập hoặc làm việc.</p>
+                                    </div>
+
+                                    <label className="flex flex-col gap-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Nghề nghiệp</span>
+                                        <div className="relative">
+                                            <select
+                                                name="occupation"
+                                                value={formData.occupation}
+                                                onChange={handleChange}
+                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] outline-none text-sm appearance-none"
+                                            >
+                                                <option value="">-- Chọn nghề nghiệp --</option>
+                                                <option value="Sinh viên">Sinh viên / Học sinh</option>
+                                                <option value="Nhân viên văn phòng">Nhân viên văn phòng</option>
+                                                <option value="Công nhân">Công nhân</option>
+                                                <option value="Bác sĩ / Y tá">Bác sĩ / Y tá</option>
+                                                <option value="Giáo viên">Giáo viên / Giảng viên</option>
+                                                <option value="Kỹ sư">Kỹ sư / IT</option>
+                                                <option value="Tự kinh doanh">Tự kinh doanh</option>
+                                                <option value="Nội trợ">Nội trợ</option>
+                                                <option value="Đã nghỉ hưu">Đã nghỉ hưu</option>
+                                                <option value="Khác">Khác</option>
+                                            </select>
+                                            <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                        </div>
+                                    </label>
+
+                                    <label className="flex flex-col gap-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Đơn vị tổ chức</span>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                name="organization"
+                                                value={formData.organization}
+                                                onChange={handleChange}
+                                                placeholder="VD: Đại học FPT, Công ty Samsung..."
+                                                className="w-full pl-11 pr-4 py-3 rounded-lg border border-[#cfd7e7] dark:border-gray-700 dark:bg-[#1a2332] dark:text-white focus:border-[#0065FF] focus:ring-2 focus:ring-[#0065FF]/20 outline-none transition-all text-sm"
+                                            />
+                                            <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                                         </div>
                                     </label>
                                 </div>

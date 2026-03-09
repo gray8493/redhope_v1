@@ -107,6 +107,10 @@ const TEMPLATES = [
     }
 ];
 
+const MaterialIcon = ({ name, className = "" }: { name: string, className?: string }) => (
+    <span className={`material-symbols-outlined ${className}`}>{name}</span>
+);
+
 export default function CreateRequestPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -365,10 +369,6 @@ export default function CreateRequestPage() {
                 : [...prev, type]
         );
     };
-
-    const MaterialIcon = ({ name, className = "" }: { name: string, className?: string }) => (
-        <span className={`material-symbols-outlined ${className}`}>{name}</span>
-    );
 
     return (
         <div className="flex flex-col w-full min-h-full font-sans text-slate-900 antialiased text-left">
@@ -777,8 +777,7 @@ export default function CreateRequestPage() {
             </main>
 
             {/* Global Styled JSX for UI consistency */}
-            <style dangerouslySetInnerHTML={{
-                __html: `
+            <style>{`
                 .quill-wrapper .ql-toolbar {
                     border-top: none !important;
                     border-left: none !important;
@@ -813,7 +812,7 @@ export default function CreateRequestPage() {
                 .fill-1 {
                     font-variation-settings: 'FILL' 1 !important;
                 }
-            `}} />
+            `}</style>
         </div>
     );
 }

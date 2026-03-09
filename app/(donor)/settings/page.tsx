@@ -228,26 +228,26 @@ export default function SettingsPage() {
     };
 
     const handleSaveNotifications = async () => {
+        if (!user) return;
         setIsSaving(true);
         const loadingToast = toast.loading("Đang lưu cấu hình thông báo...");
 
         try {
-            // Save to localStorage
-            localStorage.setItem(`donor_notifications_${user?.id}`, JSON.stringify({
-                email: emailAlert,
-                emergency: emergencyAlert
-            }));
+            await userService.upsert(user.id, {
+                email_notifications: emailAlert,
+                emergency_notifications: emergencyAlert,
+            } as any);
 
-            await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API call
+            if (refreshUser) await refreshUser();
 
             toast.success("Thành công!", {
                 id: loadingToast,
                 description: "Cấu hình thông báo đã được cập nhật."
             });
-        } catch (error) {
+        } catch (error: any) {
             toast.error("Lỗi", {
                 id: loadingToast,
-                description: "Không thể lưu cấu hình thông báo."
+                description: error.message || "Không thể lưu cấu hình thông báo."
             });
         } finally {
             setIsSaving(false);

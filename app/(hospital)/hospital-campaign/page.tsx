@@ -766,7 +766,7 @@ export default function CampaignManagementPage() {
                         </div>
 
                         {/* Body */}
-                        <div className="p-4 md:p-8 space-y-5 md:space-y-6 flex-1 overflow-y-auto custom-scrollbar">
+                        <div className="p-4 md:p-8 space-y-5 md:space-y-6 flex-1 overflow-y-auto">
                             <div className="space-y-4">
                                 {/* Image Upload */}
                                 <div className="flex flex-col gap-1.5">

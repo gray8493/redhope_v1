@@ -63,12 +63,16 @@ ai-test*.log
 /playwright/.cache/
 /playwright/.auth/
 #Docs
-docs/main_flow.md
 .agent/plan.md
-#Test
+#Test   
 tests/
+test_result/
+test_output/
+test_current/
+test_log/
+
 tests/e2e
-test/unit
+tests/unit
 #Supabase
 .supabase
 .agent
@@ -77,5 +81,5 @@ test/unit
 *.md
 *.log
 #Playwright
-    playwright-report
-    test-results
+playwright-report
+test-results

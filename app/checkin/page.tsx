@@ -35,6 +35,8 @@ export default function CheckinPage() {
 
     // Step 1: Load campaign info
     const loadCampaign = useCallback(async () => {
+        console.log('[CheckIn] Identified campaignId from URL:', campaignId);
+
         if (!campaignId) {
             setState('no_campaign');
             return;
@@ -42,6 +44,7 @@ export default function CheckinPage() {
 
         try {
             const camp = await campaignService.getById(campaignId);
+            console.log('[CheckIn] Campaign data fetched:', camp);
             if (!camp) {
                 setState('no_campaign');
                 return;
@@ -91,15 +94,25 @@ export default function CheckinPage() {
 
             // Find matching user by phone or email
             const normalizedInput = trimmed.toLowerCase();
+            const inputDigits = trimmed.replace(/\D/g, ''); // Lấy chỉ chữ số
+
             const userAppointment = registrations?.find((r: any) => {
-                const phone = r.user?.phone?.trim() || '';
+                const rawPhone = r.user?.phone || '';
+                const phoneDigits = rawPhone.replace(/\D/g, ''); // Lấy chỉ chữ số
                 const email = r.user?.email?.trim().toLowerCase() || '';
-                return phone === trimmed || email === normalizedInput;
+
+                // So khớp linh hoạt: Email hoặc SĐT (chỉ so khớp chữ số cuối để tránh lỗi mã vùng)
+                const matchesEmail = email === normalizedInput;
+                const matchesPhone = phoneDigits.length >= 9 && inputDigits.length >= 9 &&
+                    (phoneDigits.endsWith(inputDigits) || inputDigits.endsWith(phoneDigits));
+
+                return matchesEmail || matchesPhone;
             });
 
             if (!userAppointment) {
+                console.log('[CheckIn] No matching registration found for:', trimmed);
                 setState('identify');
-                setIdentifierError('Không tìm thấy đăng ký nào với thông tin này. Vui lòng kiểm tra lại SĐT hoặc email.');
+                setIdentifierError('Thông tin không khớp với bất kỳ đăng ký nào trong chiến dịch này.');
                 return;
             }
 
@@ -162,7 +175,13 @@ export default function CheckinPage() {
                             onSubmit={handleCheckin}
                         />
                     )}
-                    {state === 'no_campaign' && <ErrorCard icon="error" title="Không tìm thấy chiến dịch" message="Mã QR không hợp lệ hoặc chiến dịch không tồn tại." />}
+                    {state === 'no_campaign' && (
+                        <ErrorCard
+                            icon="error"
+                            title="Không tìm thấy chiến dịch"
+                            message={campaignId ? `Chiến dịch với ID "${campaignId}" không tồn tại hoặc đã bị xóa.` : "Không tìm thấy mã chiến dịch (campaignId) trong địa chỉ URL."}
+                        />
+                    )}
                     {state === 'campaign_not_active' && <ErrorCard icon="event_busy" title="Chiến dịch chưa hoạt động" message={`Chiến dịch "${campaign?.name}" hiện không hoạt động.`} />}
                     {state === 'not_registered' && <ErrorCard icon="person_off" title="Chưa đăng ký" message={`Không tìm thấy đăng ký cho chiến dịch "${campaign?.name}".`} />}
                     {state === 'already_checked_in' && <AlreadyCheckedInCard appointment={appointment} campaign={campaign} />}

@@ -83,7 +83,6 @@ export default function CampaignManagementPage() {
                     target: campaign.target_units || 0,
                     city: campaign.city || 'Chưa cập nhật',
                     district: campaign.district || '',
-                    type: campaign.type || 'Cộng đồng',
                     rawStatus: campaign.status
                 };
             });
@@ -135,7 +134,6 @@ export default function CampaignManagementPage() {
         target_units: "",
         city: "",
         district: "",
-        type: "Định kỳ",
         status: "draft"
     });
 
@@ -171,7 +169,6 @@ export default function CampaignManagementPage() {
             target_units: campaign.target.toString(),
             city: campaign.city || "",
             district: campaign.district || "",
-            type: campaign.type || "Định kỳ",
             status: campaign.rawStatus || "draft"
         });
         setEditingId(campaign.id);
@@ -233,7 +230,6 @@ export default function CampaignManagementPage() {
                 target_units: target,
                 city: newCampaign.city,
                 district: newCampaign.district,
-                type: newCampaign.type,
                 status: newCampaign.status
             };
 
@@ -266,7 +262,6 @@ export default function CampaignManagementPage() {
             target_units: "",
             city: "",
             district: "",
-            type: "Định kỳ",
             status: "draft"
         });
         setIsModalOpen(true);
@@ -616,19 +611,6 @@ export default function CampaignManagementPage() {
                                         <option value="draft">Sắp diễn ra (Nháp)</option>
                                         <option value="active">Đang diễn ra</option>
                                         <option value="ended">Đã kết thúc</option>
-                                    </select>
-                                </div>
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-bold text-gray-700">Loại chiến dịch</label>
-                                    <select
-                                        value={newCampaign.type}
-                                        onChange={(e) => setNewCampaign({ ...newCampaign, type: e.target.value })}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#0065FF]/20 focus:border-[#0065FF] transition-all"
-                                    >
-                                        <option value="Khẩn cấp">Khẩn cấp</option>
-                                        <option value="Định kỳ">Định kỳ</option>
-                                        <option value="Lễ hội">Lễ hội</option>
-                                        <option value="Cộng đồng">Cộng đồng</option>
                                     </select>
                                 </div>
                             </div>

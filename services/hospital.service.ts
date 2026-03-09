@@ -75,7 +75,7 @@ export const hospitalService = {
     async create(hospitalData: Partial<User>): Promise<User> {
         return userService.create({
             full_name: hospitalData.hospital_name || 'Hospital',
-            email: `hospital_${Date.now()}@redhope.vn`,
+            email: `hospital_${Date.now()}@redhope.io.vn`,
             role: 'hospital',
             hospital_name: hospitalData.hospital_name,
             hospital_address: hospitalData.hospital_address,

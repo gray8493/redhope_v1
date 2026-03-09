@@ -64,10 +64,10 @@ export const campaignService = {
                 .from('campaigns')
                 .select('*, hospital:users(full_name, hospital_name, city, district, phone, email), appointments(*)')
                 .eq('id', id)
-                .maybeSingle();
+                .limit(1);
 
             if (error) throw error;
-            return normalizeCampaignStatus(data);
+            return normalizeCampaignStatus(data && data.length > 0 ? data[0] : null);
         } catch (error: any) {
             console.error('[CampaignService] Error in getById:', error.message || error.details || error);
             throw error;
@@ -182,6 +182,24 @@ export const campaignService = {
     },
 
     async registerToBloodRequest(userId: string, requestId: string) {
+        // 0. Check cooldown 3 tháng
+        const { data: lastDonation } = await supabase
+            .from('donation_records')
+            .select('verified_at')
+            .eq('donor_id', userId)
+            .order('verified_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (lastDonation?.verified_at) {
+            const diffDays = Math.floor((Date.now() - new Date(lastDonation.verified_at).getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays < 84) {
+                const nextDate = new Date(lastDonation.verified_at);
+                nextDate.setDate(nextDate.getDate() + 84);
+                throw new Error(`Bạn cần đợi đủ 3 tháng sau lần hiến máu gần nhất. Ngày đủ điều kiện: ${nextDate.toLocaleDateString('vi-VN')}.`);
+            }
+        }
+
         // 1. Check for any existing record for this user and blood request
         const { data: existing } = await supabase
             .from('appointments')
@@ -203,11 +221,13 @@ export const campaignService = {
 
             // If it's Cancelled, reactivate it
             if (existing.status === 'Cancelled') {
+                const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).single();
                 const { data, error } = await supabase
                     .from('appointments')
                     .update({
                         status: 'Booked',
-                        scheduled_time: new Date().toISOString()
+                        scheduled_time: new Date().toISOString(),
+                        full_name: userData?.full_name
                     })
                     .eq('id', existing.id)
                     .select()
@@ -226,13 +246,15 @@ export const campaignService = {
         }
 
         // 2. Create new record if none exists
+        const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).single();
         const { data, error } = await supabase
             .from('appointments')
             .insert({
                 user_id: userId,
                 blood_request_id: requestId,
                 status: 'Booked',
-                scheduled_time: new Date().toISOString()
+                scheduled_time: new Date().toISOString(),
+                full_name: userData?.full_name
             })
             .select()
             .single();
@@ -277,6 +299,24 @@ export const campaignService = {
     },
 
     async registerToCampaign(userId: string, campaignId: string) {
+        // 0. Check cooldown 3 tháng
+        const { data: lastDonation } = await supabase
+            .from('donation_records')
+            .select('verified_at')
+            .eq('donor_id', userId)
+            .order('verified_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (lastDonation?.verified_at) {
+            const diffDays = Math.floor((Date.now() - new Date(lastDonation.verified_at).getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays < 84) {
+                const nextDate = new Date(lastDonation.verified_at);
+                nextDate.setDate(nextDate.getDate() + 84);
+                throw new Error(`Bạn cần đợi đủ 3 tháng sau lần hiến máu gần nhất. Ngày đủ điều kiện: ${nextDate.toLocaleDateString('vi-VN')}.`);
+            }
+        }
+
         // 1. Check for any existing record for this user and campaign
         const { data: existing } = await supabase
             .from('appointments')
@@ -298,11 +338,13 @@ export const campaignService = {
 
             // If it's Cancelled, reactivate it
             if (existing.status === 'Cancelled') {
+                const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).single();
                 const { data, error } = await supabase
                     .from('appointments')
                     .update({
                         status: 'Booked',
-                        scheduled_time: new Date().toISOString()
+                        scheduled_time: new Date().toISOString(),
+                        full_name: userData?.full_name
                     })
                     .eq('id', existing.id)
                     .select()
@@ -321,13 +363,15 @@ export const campaignService = {
         }
 
         // 2. Create new record if none exists
+        const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).single();
         const { data, error } = await supabase
             .from('appointments')
             .insert({
                 user_id: userId,
                 campaign_id: campaignId,
                 status: 'Booked',
-                scheduled_time: new Date().toISOString()
+                scheduled_time: new Date().toISOString(),
+                full_name: userData?.full_name
             })
             .select()
             .single();
@@ -538,6 +582,33 @@ export const campaignService = {
 
     async deleteCampaign(id: string) {
         try {
+            // 1. Lấy danh sách appointment IDs thuộc campaign này
+            const { data: appointments } = await supabase
+                .from('appointments')
+                .select('id')
+                .eq('campaign_id', id);
+
+            if (appointments && appointments.length > 0) {
+                const appointmentIds = appointments.map(a => a.id);
+
+                // 2. Xóa donation_records liên kết với các appointments
+                const { error: donationError } = await supabase
+                    .from('donation_records')
+                    .delete()
+                    .in('appointment_id', appointmentIds);
+
+                if (donationError) throw donationError;
+
+                // 3. Xóa appointments
+                const { error: apptError } = await supabase
+                    .from('appointments')
+                    .delete()
+                    .eq('campaign_id', id);
+
+                if (apptError) throw apptError;
+            }
+
+            // 4. Xóa campaign
             const { error } = await supabase
                 .from('campaigns')
                 .delete()
@@ -554,22 +625,23 @@ export const campaignService = {
     async checkInRegistration(registrationId: string, campaignId: string) {
         try {
             // 1. Get current max queue number for this campaign
-            const { data: maxQueue, error: countError } = await supabase
+            const { data: queueData, error: countError } = await supabase
                 .from('appointments')
                 .select('queue_number')
                 .eq('campaign_id', campaignId)
                 .not('queue_number', 'is', null)
                 .order('queue_number', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .limit(1);
+
+            if (countError) throw countError;
 
             let nextSTT = 1;
-            if (maxQueue && maxQueue.queue_number) {
-                nextSTT = maxQueue.queue_number + 1;
+            if (queueData && queueData.length > 0 && queueData[0].queue_number) {
+                nextSTT = queueData[0].queue_number + 1;
             }
 
             // 2. Update status and queue_number
-            const { data, error } = await supabase
+            const { data: updateData, error: updateError } = await supabase
                 .from('appointments')
                 .update({
                     status: 'Checked-in',
@@ -577,11 +649,12 @@ export const campaignService = {
                     check_in_time: new Date().toISOString()
                 })
                 .eq('id', registrationId)
-                .select()
-                .single();
+                .select();
 
-            if (error) throw error;
-            return data;
+            if (updateError) throw updateError;
+            if (!updateData || updateData.length === 0) throw new Error("Không thể cập nhật thông tin check-in.");
+
+            return updateData[0];
         } catch (error: any) {
             console.error('[CampaignService] Error in checkInRegistration:', error.message || error);
             throw error;

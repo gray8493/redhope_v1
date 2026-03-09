@@ -6,13 +6,14 @@ export const bloodService = {
      * Xác nhận hiến máu thành công. 
      * DB Trigger sẽ tự động cộng điểm và cập nhật trạng thái appointment.
      */
-    completeDonation: async (appointmentId: string, donorId: string, hospitalId: string, volumeMl: number) => {
+    completeDonation: async (appointmentId: string, donorId: string, fullName: string, hospitalId: string, volumeMl: number) => {
         try {
             const { data, error } = await supabase
                 .from('donation_records')
                 .insert({
                     appointment_id: appointmentId,
                     donor_id: donorId,
+                    full_name: fullName,
                     hospital_id: hospitalId,
                     volume_ml: volumeMl,
                     verified_at: new Date().toISOString()

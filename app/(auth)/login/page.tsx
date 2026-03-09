@@ -201,7 +201,7 @@ export default function LoginPage() {
                       id="email"
                       type="email"
                       className="pl-12 py-6 rounded-2xl bg-gray-50/50 border-gray-200 focus:ring-4 focus:ring-[#0065FF]/10 focus:border-[#0065FF] transition-all font-medium text-base"
-                      placeholder="hero@redhope.vn"
+                      placeholder="hero@redhope.io.vn"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}

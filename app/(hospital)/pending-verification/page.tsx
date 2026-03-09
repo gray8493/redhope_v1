@@ -98,7 +98,7 @@ export default function PendingVerificationPage() {
                             {currentStatus.icon}
                         </div>
                         <div>
-                            <h1 className={`text-xl font-black tracking-tight ${currentStatus.color}`}>{currentStatus.title}</h1>
+                            <h2 className={`text-xl font-black tracking-tight ${currentStatus.color}`}>{currentStatus.title}</h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{currentStatus.desc}</p>
                         </div>
                     </div>
@@ -119,7 +119,7 @@ export default function PendingVerificationPage() {
                             <div className="grid grid-cols-1 gap-3">
                                 <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                                     <Mail className="w-4 h-4 text-slate-400" />
-                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">admin@redhope.vn</span>
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">admin@redhope.io.vn</span>
                                 </div>
                                 <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                                     <MessageCircle className="w-4 h-4 text-green-500" />

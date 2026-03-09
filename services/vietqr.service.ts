@@ -38,8 +38,8 @@ export interface VietQRPayload {
 
 // Cấu hình tài khoản nhận tiền của RedHope (có thể chuyển ra env)
 export const REDHOPE_BANK_CONFIG: VietQRConfig = {
-    bankCode: 'VCB',
-    accountNumber: '123456789012',
+    bankCode: 'MB',
+    accountNumber: '0837474615',
     accountName: 'REDHOPE VN',
 };
 

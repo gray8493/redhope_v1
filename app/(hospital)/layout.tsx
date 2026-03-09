@@ -66,7 +66,7 @@ function HospitalLayoutContent({
     }
 
     return (
-        <div className="hospital-layout-zoom flex bg-[#f6f6f8] dark:bg-[#161121] overflow-hidden h-screen">
+        <div className="flex bg-[#f6f6f8] dark:bg-[#161121] overflow-hidden h-screen">
             {/* Sidebar */}
             <HospitalSidebar />
 
@@ -77,14 +77,15 @@ function HospitalLayoutContent({
             />
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0 h-full">
                 {/* Header */}
                 <AdminHeader title={headerTitle} />
 
-                {/* Scrollable Page Content */}
-                <main className="flex-1 overflow-y-auto">
-                    {children}
-                </main>
+                <div className="flex flex-1 flex-col overflow-hidden hospital-layout-zoom">
+                    <main className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-950">
+                        {children}
+                    </main>
+                </div>
             </div>
         </div>
     );
@@ -97,13 +98,21 @@ export default function HospitalLayout({
 }) {
     return (
         <SidebarProvider>
-            <style>{`
+            <HospitalLayoutContent>{children}</HospitalLayoutContent>
+            <style jsx global>{`
                 .hospital-layout-zoom {
                     zoom: 0.875;
-                    height: calc(100vh / 0.875);
+                    min-height: 114.3vh;
+                    background-color: #f8fafc;
+                }
+                .dark .hospital-layout-zoom {
+                    background-color: #020617;
+                }
+                /* Adjust fixed sidebar height to fill the gap */
+                aside.fixed.h-screen {
+                    height: 114.3vh !important;
                 }
             `}</style>
-            <HospitalLayoutContent>{children}</HospitalLayoutContent>
         </SidebarProvider>
     );
 }

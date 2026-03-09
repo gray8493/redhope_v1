@@ -34,6 +34,8 @@ export interface User {
     dob: string | null;            // date
     gender: string | null;         // varchar
     current_points: number | null; // int
+    occupation: string | null;     // varchar - Nghề nghiệp
+    organization: string | null;   // varchar - Đơn vị tổ chức
 
     // Hospital specific fields
     hospital_name: string | null;
@@ -76,6 +78,8 @@ export interface InsertUser {
     dob?: string | null;
     gender?: string | null;
     current_points?: number | null;
+    occupation?: string | null;
+    organization?: string | null;
 
     hospital_name?: string | null;
     license_number?: string | null;
@@ -111,6 +115,8 @@ export interface UpdateUser {
     dob?: string | null;
     gender?: string | null;
     current_points?: number | null;
+    occupation?: string | null;
+    organization?: string | null;
 
     hospital_name?: string | null;
     license_number?: string | null;

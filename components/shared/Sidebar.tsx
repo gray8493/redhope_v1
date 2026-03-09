@@ -65,7 +65,7 @@ export function Sidebar() {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 flex flex-col gap-1 p-3 overflow-y-auto overflow-x-hidden">
+            <nav className="flex-1 flex flex-col gap-1 p-3 overflow-y-auto overflow-x-hidden no-scrollbar">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                     const Icon = item.icon;
@@ -96,27 +96,6 @@ export function Sidebar() {
                 })}
             </nav>
 
-            {/* Toggle Button */}
-            <div className="p-3 border-t border-slate-100 dark:border-slate-800">
-                <button
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className={cn(
-                        "flex items-center gap-3 w-full rounded-xl py-2.5 transition-all duration-200",
-                        "text-slate-400 hover:text-[#0065FF] hover:bg-[#0065FF]/5",
-                        isExpanded ? "px-3" : "px-0 justify-center"
-                    )}
-                    title={isExpanded ? "Thu gọn" : "Mở rộng"}
-                >
-                    {isExpanded ? (
-                        <>
-                            <ChevronsLeft className="w-5 h-5 flex-shrink-0" />
-                            <span className="text-sm font-medium whitespace-nowrap">Thu gọn</span>
-                        </>
-                    ) : (
-                        <ChevronsRight className="w-5 h-5 flex-shrink-0" />
-                    )}
-                </button>
-            </div>
         </aside>
     );
 }

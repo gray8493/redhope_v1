@@ -20,15 +20,58 @@ const geistMono = Geist_Mono({
 });
 
 export const viewport = {
-  themeColor: "#6324eb",
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
 };
 
 export const metadata: Metadata = {
-  title: "RedHope - Hệ thống Hiến máu",
+  metadataBase: new URL('https://redhope.io.vn'),
+  title: {
+    default: "RedHope - Hệ thống Hiến máu Tình nguyện",
+    template: "%s | RedHope"
+  },
   description: "Nền tảng kết nối cộng đồng hiến máu tình nguyện. Đăng ký hiến máu, theo dõi chiến dịch và nhận thông báo mới nhất.",
+  keywords: ["hiến máu", "tình nguyện", "redhope", "bệnh viện", "cứu người", "huyết học", "donate blood"],
+  authors: [{ name: "RedHope Team" }],
+  creator: "RedHope",
+  openGraph: {
+    title: "RedHope - Hệ thống Hiến máu Tình nguyện",
+    description: "Kết nối mạng lưới người hiến máu và bệnh viện trong thời gian thực, vì một cộng đồng khỏe mạnh hơn.",
+    url: 'https://redhope.io.vn',
+    siteName: 'RedHope',
+    images: [
+      {
+        url: '/homepage.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'RedHope - Mạng lưới Hiến máu',
+      },
+    ],
+    locale: 'vi_VN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "RedHope - Hệ thống Hiến máu Tình nguyện",
+    description: "Kết nối mạng lưới người hiến máu và bệnh viện trong thời gian thực.",
+    images: ['/homepage.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: 'https://redhope.io.vn',
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

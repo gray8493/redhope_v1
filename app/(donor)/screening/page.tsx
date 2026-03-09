@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
     ClipboardCheck,
     BrainCircuit,
@@ -25,7 +25,8 @@ import {
     Scissors,
     ChevronRight,
     ChevronLeft,
-    Send
+    Send,
+    Heart
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
@@ -251,6 +252,20 @@ const TEXT_QUESTIONS: TextQuestion[] = [
 
 const ALL_QUESTIONS: Question[] = [...CHOICE_QUESTIONS, ...TEXT_QUESTIONS];
 
+/* ─────────────── CÂU ĐỘNG LỰC NHÂN VĂN ─────────────── */
+const MOTIVATIONAL_QUOTES = [
+    { text: "Mỗi giọt máu bạn hiến có thể cứu sống đến 3 người.", emoji: "❤️" },
+    { text: "Bạn không chỉ hiến máu — bạn đang trao tặng hy vọng sống.", emoji: "🌟" },
+    { text: "Người hùng không cần áo choàng, chỉ cần một trái tim sẵn lòng.", emoji: "💪" },
+    { text: "Một hành động nhỏ của bạn, nhưng là cả thế giới với ai đó.", emoji: "🌍" },
+    { text: "Cảm ơn bạn đã dành thời gian cho sự sống của người khác.", emoji: "🙏" },
+    { text: "Máu không thể sản xuất, chỉ có thể được trao tặng từ trái tim.", emoji: "💉" },
+    { text: "Hiến máu an toàn, cứu người vô giá.", emoji: "🩸" },
+    { text: "Sức khỏe của bạn là món quà quý giá nhất để chia sẻ.", emoji: "🎁" },
+    { text: "Đâu đó ngoài kia, có người đang chờ đợi giọt máu của bạn.", emoji: "⏳" },
+    { text: "Hôm nay bạn cho đi, ngày mai ai đó được sống tiếp.", emoji: "☀️" },
+];
+
 /* ─────────── Severity Badge Component ─────────── */
 function SeverityDot({ severity }: { severity: string }) {
     const colors: Record<string, string> = {
@@ -368,7 +383,7 @@ export default function ScreeningPage() {
     const generateAiAnalysis = async () => {
         try {
             if (!user?.id) return;
-            const result = await aiService.analyzeScreening(answers, user.id);
+            const result = await aiService.analyzeScreening(answers, user.id, campaignId || undefined);
             setAiResult(result);
             if (user?.id) {
                 const dbStatus = result.status === 'eligible' ? 'passed' : 'failed';
@@ -426,7 +441,7 @@ export default function ScreeningPage() {
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="Sàng lọc Sức khỏe AI" />
 
-                <main className="flex-1 w-full max-w-3xl mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6">
+                <main className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6">
 
                     {/* ── Back Button ── */}
                     <button
@@ -443,31 +458,72 @@ export default function ScreeningPage() {
                             { id: 'survey', label: 'Khảo sát', icon: ClipboardCheck },
                             { id: 'analyzing', label: 'Phân tích', icon: BrainCircuit },
                             { id: 'result', label: 'Kết quả', icon: HeartPulse }
-                        ].map((s, i, arr) => (
-                            <div key={s.id} className="flex items-center gap-2 sm:gap-3">
-                                <div className="flex items-center gap-1.5">
-                                    <div className={`size-7 sm:size-8 rounded-lg flex items-center justify-center transition-all duration-300 ${step === s.id
-                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20 scale-105'
-                                        : ['survey', 'analyzing', 'result'].indexOf(step) > i
-                                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
-                                        }`}>
-                                        <s.icon className="size-3.5 sm:size-4" />
-                                    </div>
-                                    <span className={`text-[10px] sm:text-xs font-semibold hidden sm:inline ${step === s.id ? 'text-blue-600' : 'text-slate-400'}`}>
-                                        {s.label}
-                                    </span>
+                        ].map((s, i, arr) => {
+                            const stepOrder = ['survey', 'analyzing', 'result'];
+                            const currentIndex = stepOrder.indexOf(step);
+                            const isActive = step === s.id;
+                            const isCompleted = currentIndex > i;
+
+                            // Can navigate between survey <-> result when test is done
+                            const canClick = aiResult !== null
+                                && !isActive
+                                && s.id !== 'analyzing'
+                                && step !== 'analyzing';
+
+                            const handleStepClick = () => {
+                                if (!canClick) return;
+                                if (s.id === 'survey') setStep('survey');
+                                if (s.id === 'result') setStep('result');
+                            };
+
+                            return (
+                                <div key={s.id} className="flex items-center gap-2 sm:gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={handleStepClick}
+                                        className={`flex items-center gap-1.5 outline-none ${canClick ? 'cursor-pointer' : 'cursor-default'}`}
+                                    >
+                                        <div className={`size-7 sm:size-8 rounded-lg flex items-center justify-center transition-all duration-300 ${isActive
+                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20 scale-105'
+                                            : isCompleted || canClick
+                                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                                            }`}>
+                                            <s.icon className="size-3.5 sm:size-4" />
+                                        </div>
+                                        <span className={`text-xs font-semibold hidden sm:inline transition-colors ${isActive ? 'text-blue-600'
+                                            : canClick ? 'text-blue-500 hover:text-blue-600'
+                                                : 'text-slate-400'
+                                            }`}>
+                                            {s.label}
+                                        </span>
+                                    </button>
+                                    {i < arr.length - 1 && (
+                                        <div className={`w-6 sm:w-10 h-px ${currentIndex > i ? 'bg-blue-300 dark:bg-blue-800' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                                    )}
                                 </div>
-                                {i < arr.length - 1 && (
-                                    <div className={`w-6 sm:w-10 h-px ${['survey', 'analyzing', 'result'].indexOf(step) > i ? 'bg-blue-300 dark:bg-blue-800' : 'bg-slate-200 dark:bg-slate-700'}`} />
-                                )}
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {/* ═══════════ SURVEY STEP ═══════════ */}
                     {step === "survey" && (
                         <div className="animate-in fade-in duration-300 space-y-4">
+
+                            {/* ── Motivational Banner ── */}
+                            <div className="relative overflow-hidden bg-gradient-to-r from-blue-50 via-white to-rose-50 dark:from-blue-950/30 dark:via-slate-900 dark:to-rose-950/20 rounded-xl border border-blue-100 dark:border-blue-900/30 p-4 sm:p-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-none size-10 rounded-xl bg-gradient-to-br from-rose-400 to-red-500 flex items-center justify-center shadow-md shadow-rose-500/20">
+                                        <Heart className="size-5 text-white fill-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 leading-relaxed italic">
+                                            "{MOTIVATIONAL_QUOTES[Math.floor(Date.now() / 60000) % MOTIVATIONAL_QUOTES.length].text}"
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 mt-1 font-medium">Sứ mệnh RedHope — Kết nối giọt máu hồng</p>
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* ── Tab Selector ── */}
                             <div className="flex bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-1 shadow-sm">
@@ -511,7 +567,7 @@ export default function ScreeningPage() {
                                         style={{ width: `${((choiceCount + textCount) / ALL_QUESTIONS.length) * 100}%` }}
                                     />
                                 </div>
-                                <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">
+                                <span className="text-xs font-bold text-slate-400 whitespace-nowrap">
                                     {choiceCount + textCount}/{ALL_QUESTIONS.length} câu
                                 </span>
                             </div>
@@ -525,61 +581,72 @@ export default function ScreeningPage() {
                                             <Activity className="size-4 text-blue-600" />
                                         </div>
                                         <div>
-                                            <h3 className="text-sm font-bold text-slate-800 dark:text-white">Kiểm tra Chỉ số Sức khỏe</h3>
-                                            <p className="text-[10px] text-slate-400">Chọn đáp án phù hợp nhất với tình trạng của bạn</p>
+                                            <h3 className="text-base font-bold text-slate-800 dark:text-white">Kiểm tra Chỉ số Sức khỏe</h3>
+                                            <p className="text-xs text-slate-400">Chọn đáp án phù hợp nhất với tình trạng của bạn</p>
                                         </div>
                                     </div>
 
                                     {/* Questions */}
                                     {CHOICE_QUESTIONS.map((q, idx) => (
-                                        <div
-                                            key={q.id}
-                                            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
-                                        >
-                                            {/* Question Header */}
-                                            <div className="flex items-start gap-2.5 p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800/60">
-                                                <span className="flex-none size-5 rounded-md bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 flex items-center justify-center text-[9px] font-black mt-0.5">
-                                                    {idx + 1}
-                                                </span>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-white leading-snug">{q.text}</h4>
-                                                    <span className="inline-flex items-center gap-1 mt-1 text-[9px] text-slate-400 font-medium">
-                                                        <q.icon className="size-2.5" />
-                                                        {q.category}
-                                                    </span>
+                                        <React.Fragment key={q.id}>
+                                            {/* Motivational quote after every 3rd question */}
+                                            {idx > 0 && idx % 3 === 0 && (
+                                                <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-rose-50/80 to-blue-50/80 dark:from-rose-950/10 dark:to-blue-950/10 rounded-lg border border-rose-100/50 dark:border-rose-900/20">
+                                                    <span className="text-base">{MOTIVATIONAL_QUOTES[(idx + 2) % MOTIVATIONAL_QUOTES.length].emoji}</span>
+                                                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium italic leading-relaxed">
+                                                        {MOTIVATIONAL_QUOTES[(idx + 2) % MOTIVATIONAL_QUOTES.length].text}
+                                                    </p>
                                                 </div>
-                                                {answers[q.id] && (
-                                                    <CheckCircle className="size-4 text-blue-500 flex-none mt-0.5" />
-                                                )}
-                                            </div>
+                                            )}
+                                            <div
+                                                key={`question-${q.id}`}
+                                                className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+                                            >
+                                                {/* Question Header */}
+                                                <div className="flex items-start gap-2.5 p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800/60">
+                                                    <span className="flex-none size-6 rounded-md bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-800 flex items-center justify-center text-xs font-black mt-0.5">
+                                                        {idx + 1}
+                                                    </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-sm sm:text-base font-semibold text-slate-800 dark:text-white leading-snug">{q.text}</h4>
+                                                        <span className="inline-flex items-center gap-1 mt-1 text-[10px] sm:text-xs text-slate-400 font-medium">
+                                                            <q.icon className="size-3" />
+                                                            {q.category}
+                                                        </span>
+                                                    </div>
+                                                    {answers[q.id] && (
+                                                        <CheckCircle className="size-4 text-blue-500 flex-none mt-0.5" />
+                                                    )}
+                                                </div>
 
-                                            {/* 4 Options Grid */}
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 p-2 sm:p-3">
-                                                {q.options.map((opt) => {
-                                                    const isSelected = answers[q.id]?.value === opt.value;
-                                                    return (
-                                                        <button
-                                                            key={opt.value}
-                                                            onClick={() => handleAnswer(q.id, opt.value, opt.severity)}
-                                                            className={`group relative flex items-center gap-2 p-2.5 sm:p-3 rounded-lg text-left transition-all duration-200 ${isSelected
-                                                                ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500 ring-2 ring-blue-500/10'
-                                                                : 'bg-slate-50/50 dark:bg-slate-800/30 border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                                                                }`}
-                                                        >
-                                                            <div className={`flex-none size-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
-                                                                ? 'border-blue-500 bg-blue-500'
-                                                                : 'border-slate-300 dark:border-slate-600'
-                                                                }`}>
-                                                                {isSelected && <div className="size-1.5 rounded-full bg-white" />}
-                                                            </div>
-                                                            <span className={`flex-1 min-w-0 text-xs font-medium leading-snug ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400'}`}>
-                                                                {opt.label}
-                                                            </span>
-                                                        </button>
-                                                    );
-                                                })}
+                                                {/* 4 Options Grid */}
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 p-2 sm:p-3">
+                                                    {q.options.map((opt) => {
+                                                        const isSelected = answers[q.id]?.value === opt.value;
+                                                        return (
+                                                            <button
+                                                                key={opt.value}
+                                                                onClick={() => handleAnswer(q.id, opt.value, opt.severity)}
+                                                                className={`group relative flex items-center gap-2 p-2.5 sm:p-3 rounded-lg text-left transition-all duration-200 ${isSelected
+                                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500 ring-2 ring-blue-500/10'
+                                                                    : 'bg-slate-50/50 dark:bg-slate-800/30 border-2 border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                                                    }`}
+                                                            >
+                                                                <div className={`flex-none size-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
+                                                                    ? 'border-blue-500 bg-blue-500'
+                                                                    : 'border-slate-300 dark:border-slate-600'
+                                                                    }`}>
+                                                                    {isSelected && <div className="size-1.5 rounded-full bg-white" />}
+                                                                </div>
+                                                                <span className={`flex-1 min-w-0 text-sm font-medium leading-snug ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400'}`}>
+                                                                    {opt.label}
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
-                                        </div>
+                                        </React.Fragment>
                                     ))}
 
                                     {/* Next to Text section */}
@@ -587,7 +654,7 @@ export default function ScreeningPage() {
                                         <div className="flex justify-center pt-2">
                                             <button
                                                 onClick={() => setActiveTab("text")}
-                                                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20 active:scale-95"
+                                                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20 active:scale-95"
                                             >
                                                 Tiếp tục phần Tự luận
                                             </button>
@@ -599,21 +666,29 @@ export default function ScreeningPage() {
                             {/* ═══ PHẦN TỰ LUẬN ═══ */}
                             {activeTab === "text" && (
                                 <div className="space-y-3">
+                                    {/* Motivational quote for text section */}
+                                    <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-amber-50/80 to-rose-50/80 dark:from-amber-950/10 dark:to-rose-950/10 rounded-xl border border-amber-100/50 dark:border-amber-900/20">
+                                        <span className="text-lg">🌻</span>
+                                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                                            Mỗi câu trả lời chân thực của bạn giúp chúng tôi đảm bảo an toàn cho cả bạn và người nhận máu. <span className="text-rose-500 font-semibold">Cảm ơn bạn rất nhiều!</span>
+                                        </p>
+                                    </div>
+
                                     {/* Section Header */}
                                     <div className="flex items-center gap-2.5 px-1">
                                         <div className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                             <HeartPulse className="size-4 text-slate-500" />
                                         </div>
                                         <div>
-                                            <h3 className="text-sm font-bold text-slate-800 dark:text-white">Thông tin Sức khỏe Chi tiết</h3>
-                                            <p className="text-[10px] text-slate-400">Mô tả cụ thể để AI phân tích chính xác hơn</p>
+                                            <h3 className="text-base font-bold text-slate-800 dark:text-white">Thông tin Sức khỏe Chi tiết</h3>
+                                            <p className="text-xs text-slate-400">Mô tả cụ thể để AI phân tích chính xác hơn</p>
                                         </div>
                                     </div>
 
                                     {!choiceAnswered && (
                                         <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
                                             <AlertCircle className="size-3.5 text-slate-500 flex-none" />
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                                                 Hãy hoàn thành phần Trắc nghiệm trước để có kết quả chính xác nhất.
                                             </p>
                                         </div>
@@ -626,13 +701,13 @@ export default function ScreeningPage() {
                                             className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm"
                                         >
                                             <div className="flex items-start gap-2.5 p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800/60">
-                                                <span className="flex-none size-5 rounded-md bg-slate-600 dark:bg-slate-400 text-white dark:text-slate-900 flex items-center justify-center text-[9px] font-black mt-0.5">
+                                                <span className="flex-none size-6 rounded-md bg-slate-600 dark:bg-slate-400 text-white dark:text-slate-900 flex items-center justify-center text-xs font-black mt-0.5">
                                                     {idx + 1}
                                                 </span>
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-white leading-snug">{q.text}</h4>
-                                                    <span className="inline-flex items-center gap-1 mt-1 text-[9px] text-slate-400 font-medium">
-                                                        <q.icon className="size-2.5" />
+                                                    <h4 className="text-sm sm:text-base font-semibold text-slate-800 dark:text-white leading-snug">{q.text}</h4>
+                                                    <span className="inline-flex items-center gap-1 mt-1 text-[10px] sm:text-xs text-slate-400 font-medium">
+                                                        <q.icon className="size-3" />
                                                         {q.category}
                                                     </span>
                                                 </div>
@@ -642,13 +717,13 @@ export default function ScreeningPage() {
                                             </div>
                                             <div className="p-3 sm:p-4">
                                                 {q.hint && (
-                                                    <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium mb-2 flex items-center gap-1">
-                                                        <Info className="size-2.5" />
+                                                    <p className="text-xs text-blue-500 dark:text-blue-400 font-medium mb-2 flex items-center gap-1">
+                                                        <Info className="size-3" />
                                                         {q.hint}
                                                     </p>
                                                 )}
                                                 <textarea
-                                                    className="w-full h-24 sm:h-28 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 text-xs sm:text-sm text-slate-800 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                                                    className="w-full h-28 sm:h-32 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 text-sm text-slate-800 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
                                                     placeholder={q.placeholder}
                                                     value={answers[q.id]?.value || ""}
                                                     onChange={(e) => handleAnswer(q.id, e.target.value)}
@@ -758,7 +833,7 @@ export default function ScreeningPage() {
                                                 </h2>
                                             </div>
                                             <div className="flex-1 relative pl-4 border-l border-slate-100 dark:border-slate-800 min-w-0 hidden md:block">
-                                                <div className="max-h-[100px] overflow-y-auto pr-2 custom-scrollbar">
+                                                <div className="max-h-[100px] overflow-y-auto pr-2">
                                                     <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed">
                                                         {aiResult.analysis}
                                                     </p>
