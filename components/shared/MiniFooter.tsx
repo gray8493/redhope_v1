@@ -9,7 +9,7 @@ const MiniFooter = ({ className = "" }: MiniFooterProps) => {
 
     return (
         <footer
-            className={`mt-auto border-t border-red-100 dark:border-red-900/30 bg-white dark:bg-[#1c162e] py-3 px-4 md:px-10 text-center ${className}`}
+            className={`mt-auto border-t border-red-100 dark:border-red-900/30 bg-white dark:bg-[#1c162e] pt-3 pb-[80px] md:pb-3 px-4 md:px-10 text-center ${className}`}
             style={{ zoom: 1.25 }}
         >
             <p className="text-gray-500 dark:text-gray-400 text-sm">

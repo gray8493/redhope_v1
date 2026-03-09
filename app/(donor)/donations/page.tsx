@@ -214,8 +214,8 @@ export default function DonationsPage() {
                                 <div className="relative w-full">
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <button className="absolute left-0 top-0 bottom-0 pl-3 md:pl-4 pr-2 flex items-center group z-10 w-10 outline-none text-blue-600 group-hover:text-blue-800 transition-colors text-xs font-bold">
-                                                📅
+                                            <button className="absolute left-0 top-0 bottom-0 pl-3 md:pl-4 pr-2 flex items-center group z-10 w-10 outline-none text-blue-600 group-hover:text-blue-800 transition-colors">
+                                                <CalendarIcon className="w-5 h-5" />
                                             </button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-auto p-0" align="start">

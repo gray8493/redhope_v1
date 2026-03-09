@@ -165,7 +165,25 @@ export function BloodDropChatbot() {
                                 ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-tl-sm shadow-sm'
                                 : 'bg-gradient-to-r from-red-600 to-red-700 text-white rounded-tr-sm'
                                 }`}>
-                                <p className="text-sm whitespace-pre-line">{message.text}</p>
+                                <div className="text-sm">
+                                    {message.text.split('\n').map((line, i) => {
+                                        // Replace bullet points '* ' with '• '
+                                        let formattedLine = line.replace(/^\s*\*\s+/, '• ');
+                                        // Split by **bold**
+                                        const parts = formattedLine.split(/(\*\*.*?\*\*)/g);
+                                        return (
+                                            <span key={i}>
+                                                {parts.map((part, j) => {
+                                                    if (part.startsWith('**') && part.endsWith('**')) {
+                                                        return <strong key={j} className="font-bold">{part.slice(2, -2)}</strong>;
+                                                    }
+                                                    return <span key={j}>{part}</span>;
+                                                })}
+                                                {i < message.text.split('\n').length - 1 && <br />}
+                                            </span>
+                                        );
+                                    })}
+                                </div>
                                 <p className={`text-[10px] mt-1 ${message.isBot ? 'text-slate-400' : 'text-white/70'}`}>
                                     {message.timestamp.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                 </p>

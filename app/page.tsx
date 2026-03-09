@@ -44,7 +44,7 @@ const Page = async () => {
         <Navbar />
         <main>
           {/* ========== HERO SECTION ========== */}
-          <section className="relative bg-bg-light overflow-hidden pt-6 pb-4 md:pt-20 md:pb-32">
+          <section className="relative bg-bg-light overflow-hidden pt-6 pb-4 md:pt-8 md:pb-8">
             {/* Background blobs/gradients */}
             <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-blue-100/50 rounded-full blur-3xl opacity-60"></div>
             <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[500px] h-[500px] bg-red-50/50 rounded-full blur-3xl opacity-60"></div>
@@ -98,7 +98,7 @@ const Page = async () => {
           </section>
 
           {/* ========== STATS SECTION ========== */}
-          <section className="py-5 md:py-8 bg-white md:-mt-16 md:relative md:z-20">
+          <section className="py-4 md:py-4 bg-white md:relative md:z-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                 {/* Stat 1 */}
@@ -140,7 +140,7 @@ const Page = async () => {
               </div>
 
               {/* Trusted By Strip */}
-              <div className="mt-2 md:mt-16 border-t border-slate-300 pt-2 md:pt-10">
+              <div className="mt-2 md:mt-4 border-t border-slate-300 pt-2 md:pt-4">
                 <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 lg:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
                   <span className="text-[10px] md:text-xs font-extrabold text-gray-400 tracking-widest uppercase w-full md:w-auto text-center mb-2 md:mb-0">Tin dùng bởi</span>
                   <div className="flex items-center gap-2 text-sm md:text-lg font-bold text-slate-700">
@@ -163,9 +163,9 @@ const Page = async () => {
           </section>
 
           {/* ========== FEATURES SECTION ========== */}
-          <section className="py-6 md:py-24 bg-bg-light">
+          <section className="py-5 md:py-8 bg-bg-light">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center max-w-3xl mx-auto mb-6 md:mb-16">
+              <div className="text-center max-w-3xl mx-auto mb-4 md:mb-6">
                 <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4">Một nền tảng, Ba giải pháp</h2>
                 <p className="text-sm md:text-lg text-gray-600">Mạng lưới thông minh của chúng tôi tối ưu hóa quy trình cho mọi người, từ người hiến máu cá nhân đến quản trị viên y tế.</p>
               </div>
@@ -225,9 +225,9 @@ const Page = async () => {
           </section>
 
           {/* ========== TESTIMONIALS SECTION ========== */}
-          <section className="py-6 md:py-24 bg-gray-50/50">
+          <section className="py-5 md:py-8 bg-gray-50/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="mb-6 md:mb-16">
+              <div className="mb-4 md:mb-6">
                 <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4">Tiếng nói từ cộng đồng</h2>
                 <p className="text-sm md:text-lg text-gray-600">Lắng nghe chia sẻ từ các bệnh viện và người hiến máu sử dụng REDHOPE mỗi ngày.</p>
               </div>
@@ -272,7 +272,7 @@ const Page = async () => {
           </section>
 
           {/* ========== CALL TO ACTION SECTION ========== */}
-          <section className="py-6 md:py-20 px-4">
+          <section className="py-5 md:py-6 px-4">
             <div className="max-w-7xl mx-auto">
               <div className="bg-primary rounded-[2rem] md:rounded-[2.5rem] px-6 py-10 md:p-20 text-center relative overflow-hidden shadow-2xl shadow-blue-900/20">
                 <div className="absolute top-0 right-0 p-12 opacity-10">
