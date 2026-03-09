@@ -14,7 +14,10 @@ import {
     Monitor,
     Check,
     X,
-    Loader2
+    Loader2,
+    Gift,
+    Copy,
+    PartyPopper
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
@@ -34,11 +37,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
     Dialog,
+    DialogContent,
     DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
 import { voucherService } from "@/services/voucher.service";
 import { pointService } from "@/services/point.service";
+import { QRCodeSVG } from "qrcode.react";
+
 
 // Define reward categories
 type Category = "all" | "food" | "shopping" | "health" | "history";
@@ -100,6 +106,8 @@ export default function RewardsPage() {
     const [rewardToRedeem, setRewardToRedeem] = useState<RewardItem | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isRedeeming, setIsRedeeming] = useState(false);
+    const [successVoucher, setSuccessVoucher] = useState<{ code: string; partnerName: string; points: number } | null>(null);
+    const [isCopied, setIsCopied] = useState(false);
 
     const userPoints = profile?.current_points || 0;
 
@@ -189,11 +197,12 @@ export default function RewardsPage() {
 
         setIsRedeeming(true);
         try {
-            await pointService.redeemVoucher(user.id, rewardToRedeem.id);
-            setAlertMessage({
-                type: "success",
-                title: "Đổi quà thành công!",
-                description: "Mã voucher đã được lưu vào lịch sử đổi quà. Bạn có thể sử dụng mã này để đổi quà."
+            const result = await pointService.redeemVoucher(user.id, rewardToRedeem.id);
+            const redemptionCode = result?.redemption?.redemption_code || "---";
+            setSuccessVoucher({
+                code: redemptionCode,
+                partnerName: rewardToRedeem.name,
+                points: rewardToRedeem.points
             });
             await refreshUser();
             await fetchRewards();
@@ -208,8 +217,13 @@ export default function RewardsPage() {
             setIsRedeeming(false);
             setIsConfirmOpen(false);
             setRewardToRedeem(null);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+    };
+
+    const handleCopyCode = (code: string) => {
+        navigator.clipboard.writeText(code);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
     };
 
     useEffect(() => {
@@ -468,6 +482,72 @@ export default function RewardsPage() {
                 </AlertDialogContent>
             </AlertDialog>
 
+            {/* SUCCESS POPUP */}
+            <Dialog open={!!successVoucher} onOpenChange={(open) => { if (!open) setSuccessVoucher(null); }}>
+                <DialogContent className="bg-white dark:bg-[#1c162e] border-[#ebe7f3] dark:border-[#2d263d] max-w-sm w-[90%] md:w-full p-0 overflow-hidden rounded-2xl">
+                    <DialogTitle className="sr-only">Đổi quà thành công</DialogTitle>
+                    {/* Header gradient */}
+                    <div className="relative bg-gradient-to-br from-[#0065FF] to-[#6B46FF] px-4 md:px-6 py-4 text-white text-center overflow-hidden">
+                        <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10"></div>
+                        <div className="absolute -bottom-4 -left-4 w-24 h-24 rounded-full bg-white/10"></div>
+                        <div className="relative z-10">
+                            <h2 className="text-lg md:text-xl font-black tracking-tight">Chúc mừng bạn!</h2>
+                            <p className="text-white/80 text-xs md:text-sm mt-0.5">Đã đổi quà thành công</p>
+                        </div>
+                    </div>
+
+                    <div className="px-4 md:px-6 py-4 md:py-5 space-y-3 md:space-y-4">
+                        {/* Reward info */}
+                        <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2 text-[#654d99] dark:text-[#a594c9]">
+                                <Gift className="w-4 h-4" />
+                                <span>Ưu đãi</span>
+                            </div>
+                            <span className="font-bold text-[#120e1b] dark:text-white">{successVoucher?.partnerName}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-[#654d99] dark:text-[#a594c9]">Điểm đã dùng</span>
+                            <span className="font-bold text-[#0065FF]">-{successVoucher?.points.toLocaleString()} pts</span>
+                        </div>
+
+                        {/* Promo Code Box */}
+                        <div className="mt-2 rounded-xl border-2 border-dashed border-[#0065FF]/40 bg-[#0065FF]/5 dark:bg-[#0065FF]/10 p-4 flex flex-col items-center">
+                            <p className="text-xs font-bold text-[#654d99] dark:text-[#a594c9] uppercase tracking-widest text-center mb-4">Quét QR hoặc Sao Chép Mã</p>
+                            
+                            {/* QR Code */}
+                            {successVoucher?.code && (
+                                <div className="bg-white p-2 rounded-xl shadow-sm mb-3">
+                                    <QRCodeSVG 
+                                        value={successVoucher.code} 
+                                        size={120}
+                                        bgColor={"#ffffff"}
+                                        fgColor={"#000000"}
+                                        level={"Q"}
+                                        includeMargin={false}
+                                    />
+                                </div>
+                            )}
+
+                            <div className="flex items-center gap-2 w-full justify-center">
+                                <code className="text-center text-base sm:text-sm font-black tracking-widest text-[#0065FF] uppercase select-all bg-white dark:bg-[#1c162e] py-1.5 px-3 rounded-lg border border-[#ebe7f3] dark:border-[#2d263d]">
+                                    {successVoucher?.code}
+                                </code>
+                                <button
+                                    onClick={() => successVoucher && handleCopyCode(successVoucher.code)}
+                                    className="flex items-center justify-center p-2 rounded-lg bg-[#0065FF] text-white hover:bg-[#0052CC] transition-all active:scale-95 shrink-0 h-[36px] w-[36px]"
+                                    title="Sao chép mã"
+                                >
+                                    {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-center text-[#654d99] dark:text-[#a594c9] pb-1">
+                            Mã này cũng được lưu trong <span className="font-semibold text-[#0065FF] cursor-pointer hover:underline" onClick={() => { setSuccessVoucher(null); setActiveTab("history"); }}>lịch sử đổi quà</span> của bạn.
+                        </p>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
         </div>
     );

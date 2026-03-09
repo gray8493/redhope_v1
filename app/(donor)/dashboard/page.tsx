@@ -33,7 +33,8 @@ export default function DashboardPage() {
     const [nextDonationDate, setNextDonationDate] = useState<Date | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const firstName = user?.user_metadata?.full_name?.split(' ').pop() || user?.email?.split('@')[0] || "người bạn";
+    const fullName = profile?.full_name || user?.user_metadata?.full_name || "";
+    const displayName = fullName.trim() ? fullName.trim() : "người bạn";
     const isVerified = profile?.is_verified || false;
     const currentPoints = profile?.current_points || 0;
 
@@ -80,7 +81,7 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-3 md:gap-6 text-left">
                         <div className="flex flex-col sm:flex-row sm:flex-wrap justify-between items-start sm:items-end gap-3 md:gap-4">
                             <div className="flex flex-col gap-1">
-                                <h1 className="text-slate-900 dark:text-white text-xl sm:text-3xl md:text-4xl font-black tracking-tight">Chào {firstName}!</h1>
+                                <h1 className="text-slate-900 dark:text-white text-xl sm:text-3xl md:text-4xl font-black tracking-tight">Chào {displayName}!</h1>
                                 <p className="text-slate-500 text-xs sm:text-sm font-medium">Hôm nay là một ngày tuyệt vời để chia sẻ sự sống.</p>
                             </div>
                             <div className="flex items-center gap-2 sm:gap-3">

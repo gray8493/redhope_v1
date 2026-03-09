@@ -130,7 +130,7 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
 
     const displayName = userRole === 'hospital' && hospitalInfo?.name
         ? hospitalInfo.name
-        : (userProfile?.full_name || authUser?.user_metadata?.full_name || authUser?.email || "Người dùng");
+        : (userProfile?.full_name || authUser?.user_metadata?.full_name || "Người dùng");
 
     const userEmail = userRole === 'hospital' && hospitalInfo?.email
         ? hospitalInfo.email

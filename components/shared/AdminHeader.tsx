@@ -59,7 +59,7 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
       : 'A';
   };
 
-  const displayName = userProfile?.full_name || authUser?.user_metadata?.full_name || authUser?.email || "Người dùng";
+  const displayName = userProfile?.full_name || authUser?.user_metadata?.full_name || "Người dùng";
   const userEmail = authUser?.email || "";
   const displayRole = userRole === 'admin' ? "Quản trị viên" : (userRole === 'hospital' ? "Bệnh viện" : "Đối tác");
 
@@ -329,7 +329,7 @@ export default function AdminHeader({ title = "Hệ thống Quản trị" }: Adm
           )}
         </div>
 
-        <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+        <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
 
         {/* User Menu */}
         <div className="relative" ref={userRef}>
