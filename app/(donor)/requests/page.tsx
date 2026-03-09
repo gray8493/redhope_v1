@@ -19,7 +19,11 @@ import {
     XCircle,
     Navigation,
     Map as MapIcon,
-    ChevronDown
+    ChevronDown,
+    Calendar,
+    Search,
+    Mail,
+    MessageCircle
 } from "lucide-react";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TopNav } from "@/components/shared/TopNav";
@@ -34,6 +38,14 @@ import {
     DialogClose,
     DialogTitle,
 } from "@/components/ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
     Pagination,
@@ -984,9 +996,48 @@ export default function RequestsPage() {
                                         >
                                             <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">Chỉ đường</span>
                                         </Button>
-                                        <Button variant="outline" className="flex-1 h-10 sm:h-11 p-0 rounded-xl border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 gap-2">
-                                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">Gọi điện</span>
-                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className="flex-1 h-10 sm:h-11 p-0 rounded-xl border-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 gap-2">
+                                                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">Liên hệ</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-64 rounded-xl border-slate-200 dark:border-slate-800 p-2 shadow-2xl bg-white dark:bg-[#1c162e]">
+                                                <DropdownMenuLabel className="text-[11px] text-slate-400 uppercase tracking-widest font-black p-1 mb-1">Thông tin liên hệ</DropdownMenuLabel>
+                                                <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 mb-2" />
+                                                
+                                                {selectedRequest.hospital?.phone && (
+                                                    <div className="p-2 mb-1 rounded-lg flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-slate-100 dark:border-slate-800/60">
+                                                        <div className="bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400 p-1.5 rounded-md shrink-0">
+                                                            <Phone className="w-4 h-4" />
+                                                        </div>
+                                                        <div className="flex flex-col overflow-hidden">
+                                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Số điện thoại</span>
+                                                            <span className="text-[11px] font-medium text-slate-500 truncate select-all">{selectedRequest.hospital.phone}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {(selectedRequest.hospital?.email || selectedRequest.hospital?.contact_email) && (
+                                                    <div className="p-2 rounded-lg flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-slate-100 dark:border-slate-800/60">
+                                                        <div className="bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400 p-1.5 rounded-md shrink-0">
+                                                            <Mail className="w-4 h-4" />
+                                                        </div>
+                                                        <div className="flex flex-col overflow-hidden">
+                                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Email</span>
+                                                            <span className="text-[11px] font-medium text-slate-500 truncate select-all">{selectedRequest.hospital?.email || selectedRequest.hospital?.contact_email}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {!selectedRequest.hospital?.phone && !selectedRequest.hospital?.email && !selectedRequest.hospital?.contact_email && (
+                                                    <div className="p-4 text-center text-slate-500 dark:text-slate-400">
+                                                        <AlertCircle className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                                                        <p className="text-xs font-medium">Đối tác chưa cung cấp thông tin liên hệ.</p>
+                                                    </div>
+                                                )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
                             </div>

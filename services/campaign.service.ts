@@ -42,7 +42,7 @@ export const campaignService = {
         try {
             let query = supabase
                 .from('campaigns')
-                .select('*, hospital:users(full_name, hospital_name), appointments(*)')
+                .select('*, hospital:users(full_name, hospital_name, phone, email), appointments(*)')
                 .order('start_time', { ascending: false });
 
             if (hospitalId) {
@@ -62,7 +62,7 @@ export const campaignService = {
         try {
             const { data, error } = await supabase
                 .from('campaigns')
-                .select('*, hospital:users(full_name, hospital_name, city, district), appointments(*)')
+                .select('*, hospital:users(full_name, hospital_name, city, district, phone, email), appointments(*)')
                 .eq('id', id)
                 .maybeSingle();
 
@@ -77,7 +77,7 @@ export const campaignService = {
     async getActive(hospitalId?: string) {
         let query = supabase
             .from('campaigns')
-            .select('*, hospital:users(full_name, hospital_name, city, district, address), appointments(*)')
+            .select('*, hospital:users(full_name, hospital_name, city, district, address, phone, email), appointments(*)')
             .eq('status', 'active')
             .order('start_time', { ascending: true });
 
@@ -97,7 +97,7 @@ export const campaignService = {
     async getRequests(hospitalId?: string) {
         let query = supabase
             .from('blood_requests')
-            .select('*, hospital:users(full_name, hospital_name, city, district, address)')
+            .select('*, hospital:users(full_name, hospital_name, city, district, address, phone, email)')
             .eq('status', 'Open')
             .order('created_at', { ascending: false });
 

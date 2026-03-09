@@ -110,7 +110,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white font-sans relative">
+    <div className="min-h-screen h-full flex flex-col bg-white font-sans relative">
       {/* Back to Home Button - Top Left of the whole page */}
       <Link
         href="/"
@@ -230,15 +230,17 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#0065FF] hover:bg-transparent transition-colors z-20"
-                    >
-                      {showPassword ? "Ẩn" : "Hiện"}
-                    </Button>
+                    <div className="absolute inset-y-0 right-0 pr-2 flex items-center z-20">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-gray-400 hover:text-[#0065FF] hover:bg-transparent transition-colors rounded-full"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
