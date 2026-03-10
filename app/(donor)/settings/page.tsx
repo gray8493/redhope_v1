@@ -182,7 +182,7 @@ export default function SettingsPage() {
                 if (updateData[key] === undefined) delete updateData[key];
             });
 
-            await userService.upsert(user.id, updateData as any);
+            await userService.update(user.id, updateData as any);
             if (refreshUser) await refreshUser();
 
             toast.success("Đã lưu thành công!", {
@@ -233,7 +233,7 @@ export default function SettingsPage() {
         const loadingToast = toast.loading("Đang lưu cấu hình thông báo...");
 
         try {
-            await userService.upsert(user.id, {
+            await userService.update(user.id, {
                 email_notifications: emailAlert,
                 emergency_notifications: emergencyAlert,
             } as any);

@@ -27,18 +27,21 @@ export async function POST(request: Request) {
         const userId = authUser.id;
 
         if (!email) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+            return NextResponse.json({ error: 'Missing required fields: email' }, { status: 400 });
         }
 
         // SECURITY: Force role based on existing DB record or default to 'donor'
         // Users CANNOT self-assign roles - only admin can promote
         const { data: existingUser } = await supabaseAdmin
             .from('users')
-            .select('role')
+            .select('role, full_name')
             .eq('id', userId)
             .maybeSingle();
 
         const safeRole = existingUser?.role || 'donor';
+
+        // Ensure full_name is never null to satisfy DB constraint
+        const safeFullName = fullName || existingUser?.full_name || email.split('@')[0] || 'Unknown User';
 
         // Insert into users table using Admin client to bypass RLS
         const { data, error } = await supabaseAdmin
@@ -46,7 +49,7 @@ export async function POST(request: Request) {
             .upsert({
                 id: userId,
                 email,
-                full_name: fullName,
+                full_name: safeFullName,
                 role: safeRole,
                 phone: phone || null,
                 dob: dob || null,
@@ -64,11 +67,12 @@ export async function POST(request: Request) {
             .single();
 
         if (error) {
+            console.error('[API] Upsert error:', error);
             if (error.message?.includes('duplicate key') || error.message?.includes('users_email_key')) {
                 return NextResponse.json({ error: 'Email này đã có người đăng ký. Vui lòng sử dụng email khác.' }, { status: 409 });
             }
 
-            return NextResponse.json({ error: 'Database error' }, { status: 500 });
+            return NextResponse.json({ error: 'Database error: ' + error.message }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, user: data });

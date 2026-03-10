@@ -95,7 +95,7 @@ function SettingsContent() {
                 role: 'hospital' as const
             };
 
-            await userService.upsert(user.id, profileData);
+            await userService.update(user.id, profileData as any);
 
             // 2. Save to LocalStorage (Legacy/State preservation)
             try {
@@ -205,7 +205,7 @@ function SettingsContent() {
 
         try {
             // 1. Save to Database
-            await userService.upsert(user.id, {
+            await userService.update(user.id, {
                 email_notifications: emailAlert,
                 emergency_notifications: newDonorAlert
                 // shortfallThreshold could be added as well if we add the column

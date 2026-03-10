@@ -107,10 +107,17 @@ export const userService = {
 
     // Upsert user (Update or Create)
     async upsert(id: string, data: InsertUser): Promise<User> {
+        // Defensive check: Ensure full_name is never null/empty if it's being inserted/upserted
+        const finalData = {
+            ...data,
+            id,
+            full_name: data.full_name || (data as any).hospital_name || data.email?.split('@')[0] || `User_${id.slice(0, 8)}`
+        };
+
         const { data: result, error } = await supabase
             .from('users')
             .upsert(
-                { ...data, id },
+                finalData,
                 { onConflict: 'id' } // Upsert based on primary ID to prevent cross-account overwrites
             )
             .select()
