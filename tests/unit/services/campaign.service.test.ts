@@ -239,6 +239,19 @@ describe('campaignService.createCampaign', () => {
         // Email should still be sent
         expect(global.fetch).toHaveBeenCalled();
     });
+
+    test('should throw error when end_time is before start_time', async () => {
+        const campaignData = {
+            name: 'Invalid Dates Campaign',
+            start_time: '2026-03-01T17:00:00Z',
+            end_time: '2026-03-01T08:00:00Z',
+        };
+
+        await expect(campaignService.createCampaign(campaignData))
+            .rejects.toThrow('Thời gian kết thúc phải sau thời gian bắt đầu');
+
+        expect(supabase.from).not.toHaveBeenCalled();
+    });
 });
 
 describe('campaignService.deleteCampaign', () => {
