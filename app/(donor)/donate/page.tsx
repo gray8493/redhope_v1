@@ -245,7 +245,7 @@ export default function DonatePage() {
                             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                             <div className="flex flex-col gap-2 md:gap-4 max-w-2xl relative z-10">
                                 <h1 className="text-xl sm:text-2xl md:text-5xl font-black leading-tight">Chung tay vì cộng đồng</h1>
-                                <p className="text-white/90 text-sm md:text-lg font-medium hidden sm:block">
+                                <p className="text-white/90 text-sm md:text-lg font-medium">
                                     Mỗi đóng góp của bạn, dù nhỏ nhất, cũng góp phần duy trì hoạt động hiến máu tình nguyện và cứu sống hàng ngàn bệnh nhân mỗi năm.
                                 </p>
                                 <div className="flex flex-wrap gap-2 md:gap-4 mt-1 md:mt-2">
@@ -448,7 +448,7 @@ export default function DonatePage() {
                                 </div>
 
                                 {/* Motivation Card */}
-                                <div className="bg-gradient-to-br from-red-900 to-red-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+                                <div className="bg-gradient-to-br from-red-900 to-red-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden shrink-0">
                                     <div className="absolute -right-4 -bottom-4 opacity-20">
                                         <Heart className="w-24 h-24 fill-current" />
                                     </div>

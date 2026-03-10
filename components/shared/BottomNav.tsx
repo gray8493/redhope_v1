@@ -8,6 +8,7 @@ import {
     LayoutDashboard,
     History,
     Award,
+    Heart,
     Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ const tabs = [
     { href: "/requests", icon: Search, label: "Yêu cầu" },
     { href: "/dashboard", icon: LayoutDashboard, label: "Tổng quan" },
     { href: "/donations", icon: History, label: "Lịch sử" },
+    { href: "/donate", icon: Heart, label: "Quyên góp" },
     { href: "/rewards", icon: Award, label: "Đổi quà" },
     { href: "/settings", icon: Settings, label: "Cài đặt" },
 ];
@@ -67,7 +69,7 @@ export function BottomNav() {
                                 key={tab.href}
                                 href={tab.href}
                                 className={cn(
-                                    "flex flex-col items-center justify-center gap-0.5 py-2 px-3 min-w-[56px] min-h-[52px] transition-all duration-200 relative",
+                                    "flex flex-col items-center justify-center gap-0.5 py-2 px-1.5 min-w-[50px] min-h-[52px] transition-all duration-200 relative",
                                     isActive
                                         ? "text-[#0065FF]"
                                         : "text-slate-400 dark:text-slate-500 active:text-slate-600"
