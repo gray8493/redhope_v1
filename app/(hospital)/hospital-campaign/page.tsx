@@ -291,6 +291,14 @@ export default function CampaignManagementPage() {
             const startStr = `${editFormData.date}T${editFormData.start_time}:00`;
             const endStr = `${editFormData.date}T${editFormData.end_time}:00`;
 
+            const startDate = new Date(startStr);
+            const endDate = new Date(endStr);
+
+            if (endDate <= startDate) {
+                toast.error('Thời gian kết thúc phải sau thời gian bắt đầu');
+                return;
+            }
+
             // Embed image logic and status logic
             let finalDesc = editFormData.description;
             if (editFormData.status === 'paused') {

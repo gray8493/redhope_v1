@@ -129,7 +129,8 @@ export const userService = {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Lỗi khi xóa người dùng: ${response.statusText}`);
+            const detailedMsg = errorData.message || errorData.details || errorData.error || response.statusText;
+            throw new Error(`Lỗi khi xóa người dùng: ${detailedMsg}`);
         }
     },
 

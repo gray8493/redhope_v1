@@ -289,6 +289,11 @@ export default function CreateRequestPage() {
             const [endH, endM] = endTime.split(':').map(Number);
             endDateTime.setHours(endH, endM, 0, 0);
 
+            if (!isDraft && endDateTime <= startDateTime) {
+                toast.error("Thời gian kết thúc phải sau thời gian bắt đầu");
+                return;
+            }
+
             // Construct payload for Supabase 'campaigns' table
             const payload = {
                 hospital_id: user.id,

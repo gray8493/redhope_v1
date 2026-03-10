@@ -220,6 +220,14 @@ export default function CampaignManagementPage() {
             return;
         }
 
+        // Validate dates
+        const start = new Date(newCampaign.start_time);
+        const end = newCampaign.end_time ? new Date(newCampaign.end_time) : start;
+        if (end < start) {
+            setInputError("Ngày kết thúc không được trước ngày bắt đầu");
+            return;
+        }
+
         try {
             setLoading(true);
             const campaignData = {

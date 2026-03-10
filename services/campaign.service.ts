@@ -111,6 +111,15 @@ export const campaignService = {
     },
 
     async createCampaign(campaignData: any) {
+        // Validation: end_time must be after start_time
+        if (campaignData.start_time && campaignData.end_time) {
+            const start = new Date(campaignData.start_time);
+            const end = new Date(campaignData.end_time);
+            if (end <= start) {
+                throw new Error('Thời gian kết thúc phải sau thời gian bắt đầu');
+            }
+        }
+
         const { data, error } = await supabase
             .from('campaigns')
             .insert(campaignData)
@@ -159,6 +168,15 @@ export const campaignService = {
     },
 
     async updateCampaign(id: string, campaignData: any) {
+        // Validation: end_time must be after start_time
+        if (campaignData.start_time && campaignData.end_time) {
+            const start = new Date(campaignData.start_time);
+            const end = new Date(campaignData.end_time);
+            if (end <= start) {
+                throw new Error('Thời gian kết thúc phải sau thời gian bắt đầu');
+            }
+        }
+
         const { data, error } = await supabase
             .from('campaigns')
             .update(campaignData)
