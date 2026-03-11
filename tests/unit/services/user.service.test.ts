@@ -118,7 +118,7 @@ describe('userService', () => {
     describe('getById', () => {
         test('should return user when found', async () => {
             const mockUser = { id: 'user-1', full_name: 'Test User' };
-            mockSupabaseQuery.single.mockResolvedValue({ data: mockUser, error: null });
+            mockSupabaseQuery.maybeSingle.mockResolvedValue({ data: mockUser, error: null });
 
             const result = await userService.getById('user-1');
 
@@ -127,9 +127,9 @@ describe('userService', () => {
         });
 
         test('should return null when user not found', async () => {
-            mockSupabaseQuery.single.mockResolvedValue({
+            mockSupabaseQuery.maybeSingle.mockResolvedValue({
                 data: null,
-                error: { code: 'PGRST116' },
+                error: null,
             });
 
             const result = await userService.getById('non-existent');
@@ -332,7 +332,7 @@ describe('userService', () => {
             (supabase.rpc as jest.Mock).mockResolvedValue({ data: null, error: null });
 
             const updatedUser = { id: 'user-1', current_points: 200 };
-            mockSupabaseQuery.single.mockResolvedValue({ data: updatedUser, error: null });
+            mockSupabaseQuery.maybeSingle.mockResolvedValue({ data: updatedUser, error: null });
 
             const result = await userService.addPoints('user-1', 100);
 

@@ -58,7 +58,6 @@ export const userService = {
             .maybeSingle(); // Better for handling non-existent rows
 
         if (error) throw error;
-        if (!data) throw new Error("User record not found to update.");
         return data;
     },
 
@@ -116,9 +115,10 @@ export const userService = {
             .update(data)
             .eq('id', id)
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
+        if (!result) throw new Error("User record not found to update.");
         return result;
     },
 
