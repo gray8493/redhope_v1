@@ -73,7 +73,7 @@ export const hospitalService = {
 
     // Note: Creating a hospital now means creating a user with 'hospital' role
     async create(hospitalData: Partial<User>): Promise<User> {
-        return (userService as any).create({
+        return userService.create({
             full_name: hospitalData.hospital_name || 'Hospital',
             email: `hospital_${Date.now()}@redhope.io.vn`,
             role: 'hospital',
@@ -82,7 +82,7 @@ export const hospitalService = {
             license_number: hospitalData.license_number,
             is_verified: hospitalData.is_verified || false,
             verification_status: 'pending'
-        } as any);
+        });
     },
 
     async update(id: string, updates: UpdateUser): Promise<User> {

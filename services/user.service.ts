@@ -62,6 +62,18 @@ export const userService = {
         return data;
     },
 
+    // Get user by email
+    async getByEmail(email: string): Promise<User | null> {
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (error) throw error;
+        return (data || null) as User | null;
+    },
+
     // Upsert user (Update or Create)
     async upsert(id: string, data: InsertUser): Promise<User> {
         // Defensive check: Ensure full_name is never null/empty if it's being inserted/upserted
@@ -82,6 +94,31 @@ export const userService = {
 
         if (error) throw error;
         if (!result) throw new Error("Failed to upsert user record.");
+        return result;
+    },
+
+    // Create user
+    async create(data: InsertUser): Promise<User> {
+        const { data: result, error } = await supabase
+            .from('users')
+            .insert(data)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return result;
+    },
+
+    // Update user
+    async update(id: string, data: UpdateUser): Promise<User> {
+        const { data: result, error } = await supabase
+            .from('users')
+            .update(data)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
         return result;
     },
 

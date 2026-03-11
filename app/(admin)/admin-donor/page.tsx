@@ -109,7 +109,7 @@ export default function DonorManagementPage() {
                     return;
                 }
 
-                const newUser = await (userService as any).create({
+                const newUser = await userService.create({
                     full_name: currentUser.full_name as string,
                     email: currentUser.email as string,
                     role: 'donor',
@@ -129,7 +129,7 @@ export default function DonorManagementPage() {
                     return;
                 }
 
-                const updatedUser = await (userService as any).update(currentUser.id, {
+                const updatedUser = await userService.update(currentUser.id, {
                     full_name: currentUser.full_name,
                     email: currentUser.email,
                     blood_group: currentUser.blood_group || undefined,
