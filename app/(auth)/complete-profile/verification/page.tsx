@@ -103,11 +103,11 @@ export default function VerificationProfilePage() {
             console.log("Attempting upsert for userId:", userId, "with data:", cleanData);
 
             try {
-                await userService.upsert(userId, cleanData);
+                await (userService as any).upsert(userId, cleanData);
             } catch (upsertErr: any) {
                 console.warn("Upsert failed, trying update instead:", upsertErr?.message || upsertErr);
                 // Fallback: Try direct update instead
-                await userService.update(userId, cleanData);
+                await (userService as any).update(userId, cleanData);
             }
 
             // 2. Refresh Auth Context to update is_verified status globally
