@@ -43,6 +43,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { voucherService } from "@/services/voucher.service";
 import { pointService } from "@/services/point.service";
+import { bloodService } from "@/services/blood.service";
 import { QRCodeSVG } from "qrcode.react";
 
 
@@ -119,6 +120,18 @@ export default function RewardsPage() {
     const [isCopied, setIsCopied] = useState(false);
 
     const userPoints = profile?.current_points || 0;
+    const [donationCount, setDonationCount] = useState<number>(0);
+    const [savedLives, setSavedLives] = useState<number>(0);
+
+    // Fetch số lần hiến máu thực tế từ DB
+    useEffect(() => {
+        if (!user?.id) return;
+        bloodService.getDonorStats(user.id).then((records) => {
+            const count = records.length;
+            setDonationCount(count);
+            setSavedLives(count * 3); // Mỗi lần hiến cứu được ~3 người
+        }).catch(() => {});
+    }, [user?.id]);
 
     const fetchRewards = useCallback(async () => {
         setLoadingRewards(true);
@@ -276,26 +289,26 @@ export default function RewardsPage() {
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-4 md:mb-8 text-left">
-                            <div className="flex flex-col min-w-0 gap-1 md:gap-2 rounded-xl p-3 md:p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
+                            <div className="flex flex-col min-w-0 gap-1 md:gap-2 rounded-xl p-2.5 md:p-4 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
                                 <div className="flex items-center gap-1.5 md:gap-2 text-[#0065FF]">
                                     <Wallet className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
                                     <p className="text-[#120e1b] dark:text-white text-[10px] sm:text-xs md:text-base font-medium truncate">Điểm hiện có</p>
                                 </div>
                                 <p className="text-[#120e1b] dark:text-white tracking-light text-xl sm:text-2xl md:text-3xl font-black leading-tight truncate">{userPoints.toLocaleString()}</p>
                             </div>
-                            <div className="flex flex-col min-w-0 gap-1 md:gap-2 rounded-xl p-3 md:p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
+                            <div className="flex flex-col min-w-0 gap-1 md:gap-2 rounded-xl p-2.5 md:p-4 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm">
                                 <div className="flex items-center gap-1.5 md:gap-2 text-[#0065FF]">
                                     <Heart className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
                                     <p className="text-[#120e1b] dark:text-white text-[10px] sm:text-xs md:text-base font-medium truncate">Lần hiến máu</p>
                                 </div>
-                                <p className="text-[#120e1b] dark:text-white tracking-light text-xl sm:text-2xl md:text-3xl font-black leading-tight truncate">2</p>
+                                <p className="text-[#120e1b] dark:text-white tracking-light text-xl sm:text-2xl md:text-3xl font-black leading-tight truncate">{donationCount}</p>
                             </div>
-                            <div className="flex flex-col min-w-0 gap-1 md:gap-2 rounded-xl p-3 md:p-6 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm col-span-2 sm:col-span-1">
+                            <div className="flex flex-col min-w-0 gap-1 md:gap-2 rounded-xl p-2.5 md:p-4 bg-white dark:bg-[#1c162e] border border-[#ebe7f3] dark:border-[#2d263d] shadow-sm col-span-2 sm:col-span-1">
                                 <div className="flex items-center gap-1.5 md:gap-2 text-[#0065FF]">
                                     <Users className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
                                     <p className="text-[#120e1b] dark:text-white text-[10px] sm:text-xs md:text-base font-medium truncate">Người được cứu</p>
                                 </div>
-                                <p className="text-[#120e1b] dark:text-white tracking-light text-xl sm:text-2xl md:text-3xl font-black leading-tight truncate">6</p>
+                                <p className="text-[#120e1b] dark:text-white tracking-light text-xl sm:text-2xl md:text-3xl font-black leading-tight truncate">{savedLives}</p>
                             </div>
                         </div>
 
