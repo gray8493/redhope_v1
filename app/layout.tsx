@@ -29,16 +29,16 @@ export const viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://redhope.io.vn'),
   title: {
-    default: "RedHope - Hệ thống Hiến máu Tình nguyện",
+    default: "RedHope - Hệ thống Hiến máu Thông minh & Kết nối Bệnh viện",
     template: "%s | RedHope"
   },
-  description: "Nền tảng kết nối cộng đồng hiến máu tình nguyện. Đăng ký hiến máu, theo dõi chiến dịch và nhận thông báo mới nhất.",
-  keywords: ["hiến máu", "tình nguyện", "redhope", "bệnh viện", "cứu người", "huyết học", "donate blood"],
+  description: "RedHope kết nối người hiến máu và bệnh viện trong thời gian thực. Theo dõi chiến dịch hiến máu, quản lý hồ sơ và nhận thông báo khẩn cấp để cứu sống nhiều người hơn.",
+  keywords: ["hiến máu", "tình nguyện", "redhope", "kết nối bệnh viện", "hiến máu nhân đạo", "huyết học truyền máu", "đặt lịch hiến máu"],
   authors: [{ name: "RedHope Team" }],
   creator: "RedHope",
   openGraph: {
-    title: "RedHope - Hệ thống Hiến máu Tình nguyện",
-    description: "Kết nối mạng lưới người hiến máu và bệnh viện trong thời gian thực, vì một cộng đồng khỏe mạnh hơn.",
+    title: "RedHope - Hệ thống Hiến máu Thông minh & Kết nối Bệnh viện",
+    description: "Nền tảng công nghệ kết nối mạng lưới người hiến máu và cơ sở y tế trong thời gian thực, vì một cộng đồng khỏe mạnh và bình an.",
     url: 'https://redhope.io.vn',
     siteName: 'RedHope',
     images: [
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
         url: '/homepage.jpg',
         width: 1200,
         height: 630,
-        alt: 'RedHope - Mạng lưới Hiến máu',
+        alt: 'RedHope - Mạng lưới Hiến máu Thông minh',
       },
     ],
     locale: 'vi_VN',
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "RedHope - Hệ thống Hiến máu Tình nguyện",
+    title: "RedHope - Hệ thống Hiến máu Thông minh",
     description: "Kết nối mạng lưới người hiến máu và bệnh viện trong thời gian thực.",
     images: ['/homepage.jpg'],
   },
@@ -88,6 +88,27 @@ export const metadata: Metadata = {
   },
 };
 
+// JSON-LD Schema
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "RedHope",
+  "url": "https://redhope.io.vn",
+  "logo": "https://redhope.io.vn/icons/icon-192x192.png",
+  "description": "Hệ thống kết nối người hiến máu và bệnh viện thông minh, hoạt động theo thời gian thực tại Việt Nam.",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "",
+    "contactType": "customer service",
+    "areaServed": "VN",
+    "availableLanguage": "Vietnamese"
+  },
+  "sameAs": [
+    "https://facebook.com/redhope",
+    "https://twitter.com/redhope"
+  ]
+};
+
 import { AuthProvider } from "@/context/AuthContext";
 import { MobileSidebar } from "@/components/shared/MobileSidebar";
 import { BottomNav } from "@/components/shared/BottomNav";
@@ -108,6 +129,10 @@ export default function RootLayout({
           <MobileSidebar />
           <BottomNav />
           <Toaster position="top-center" richColors />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
         </AuthProvider>
       </body>
     </html>
