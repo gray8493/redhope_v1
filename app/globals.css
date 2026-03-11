@@ -230,3 +230,15 @@ body {
 .animate-scan {
   animation: scan 2.5s ease-in-out infinite;
 }
+
+/* 
+ * Fix background color of autofilled inputs recorded by browsers. 
+ * This prevents the light blue background color in Chrome when autofill is used.
+ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: inherit !important;
+}
