@@ -1,6 +1,7 @@
 // User Service - CRUD operations for users table
 import { supabase } from '@/lib/supabase';
 import { User, InsertUser, UpdateUser } from '@/lib/database.types';
+import { error } from 'console';
 
 export const userService = {
     // Get all users
@@ -49,55 +50,11 @@ export const userService = {
         return data || [];
     },
 
-    // Get user by ID
     async getById(id: string): Promise<User | null> {
         const { data, error } = await supabase
             .from('users')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (error) {
-            if (error.code === 'PGRST116') return null;
-            throw error;
-        }
-        return data;
-    },
-
-    // Get user by email - Use maybeSingle to avoid 406/404 errors when not found
-    async getByEmail(email: string): Promise<User | null> {
-        const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', email)
-            .maybeSingle(); // Returns null instead of error if not found
-
-        if (error) {
-            console.error('Error in getByEmail:', error.message || error);
-            throw error;
-        }
-        return data;
-    },
-
-    // Create new user
-    async create(user: InsertUser): Promise<User> {
-        const { data, error } = await supabase
-            .from('users')
-            .insert(user)
             .select()
-            .single();
-
-        if (error) throw error;
-        return data;
-    },
-
-    // Update user
-    async update(id: string, updates: UpdateUser): Promise<User> {
-        const { data, error } = await supabase
-            .from('users')
-            .update(updates)
             .eq('id', id)
-            .select()
             .maybeSingle(); // Better for handling non-existent rows
 
         if (error) throw error;

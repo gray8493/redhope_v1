@@ -115,6 +115,7 @@ export default function CreateRequestPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const editId = searchParams.get('id');
+    const editDraftId = searchParams.get('editDraftId'); // Từ trang bản nháp
     const { user, profile } = useAuth();
 
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -177,6 +178,58 @@ export default function CreateRequestPage() {
             }
         }
     }, [editId]);
+
+    // Load draft campaign from Supabase when editDraftId is present
+    useEffect(() => {
+        if (!editDraftId) return;
+        const loadDraft = async () => {
+            try {
+                const draft = await campaignService.getById(editDraftId);
+                if (!draft) return;
+
+                // Extract image from description if embedded
+                let draftDesc = draft.description || '';
+                let draftImg = '';
+                const imgMatch = draftDesc.match(/<div data-cover="([^"]+)"[^>]*><\/div>/);
+                if (imgMatch) {
+                    draftImg = imgMatch[1];
+                    draftDesc = draftDesc.replace(imgMatch[0], '');
+                }
+
+                // Parse blood groups
+                let bloodGroups: string[] = [];
+                if (draft.target_blood_group) {
+                    if (Array.isArray(draft.target_blood_group)) {
+                        bloodGroups = draft.target_blood_group;
+                    } else if (typeof draft.target_blood_group === 'string') {
+                        try { bloodGroups = JSON.parse(draft.target_blood_group); } catch { bloodGroups = []; }
+                    }
+                }
+
+                setCampaignName(draft.name || '');
+                setLocation(draft.location_name || '');
+                setCity(draft.city || '');
+                setDistrict(draft.district || '');
+                setTargetAmount(String(draft.target_units || ''));
+                setTargetCount(draft.target_units ? String(Math.ceil(draft.target_units / 0.8)) : '');
+                setDesc(draftDesc);
+                setImage(draftImg);
+                if (bloodGroups.length > 0) setSelectedBloodTypes(bloodGroups);
+                if (draft.start_time) {
+                    const d = new Date(draft.start_time);
+                    setSelectedDate(d);
+                    setStartTime(format(d, 'HH:mm'));
+                }
+                if (draft.end_time) {
+                    const d = new Date(draft.end_time);
+                    setEndTime(format(d, 'HH:mm'));
+                }
+            } catch (e) {
+                console.error('Failed to load draft:', e);
+            }
+        };
+        loadDraft();
+    }, [editDraftId]);
 
 
     // Logic tính toán thông minh hai chiều (Smart Insight)
@@ -339,12 +392,12 @@ export default function CreateRequestPage() {
 
             if (editId) {
                 await campaignService.updateCampaign(editId, payload);
-                try {
-                    updateCampaign(localStorageCampaign);
-                } catch (e) {
-                    // Ignore quota exceeded error
-                }
-                toast.success("Cập nhật chiến dịch thành công!");
+                try { updateCampaign(localStorageCampaign); } catch (e) { }
+                toast.success('Cập nhật chiến dịch thành công!');
+            } else if (editDraftId) {
+                // Update draft → publish or save again
+                await campaignService.updateCampaign(editDraftId, payload);
+                toast.success(isDraft ? 'Đã lưu bản nháp!' : 'Chiến dịch đã được đăng thành công!');
             } else {
                 await campaignService.createCampaign(payload);
                 try {
@@ -386,8 +439,10 @@ export default function CreateRequestPage() {
                     {/* Header Section */}
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-2">
                         <div className="flex flex-col gap-1">
-                            <h1 className="text-slate-900 text-3xl font-black tracking-tight">Tạo Yêu cầu <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0065FF] to-blue-600">Máu Mới</span></h1>
-                            <p className="text-slate-500 text-sm font-medium">Hệ thống AI sẽ tự động điều phối tới người hiến tiềm năng nhất.</p>
+                            <h1 className="text-slate-900 text-3xl font-black tracking-tight">
+                                {editDraftId ? 'Chỉnh sửa' : 'Tạo'} Yêu cầu <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0065FF] to-blue-600">{editDraftId ? 'Bản Nháp' : 'Máu Mới'}</span>
+                            </h1>
+                            <p className="text-slate-500 text-sm font-medium">{editDraftId ? 'Chỉnh sửa và đăng chiến dịch đã lưu nháp của bạn.' : 'Hệ thống AI sẽ tự động điều phối tới người hiến tiềm năng nhất.'}</p>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Mẫu nhanh:</span>
@@ -758,7 +813,7 @@ export default function CreateRequestPage() {
                                     : 'bg-gradient-to-r from-[#0065FF] to-blue-400 text-white shadow-blue-500/30 hover:shadow-blue-500/50'}`}
                             >
 
-                                Đăng Yêu cầu {isUrgent ? 'KHẨN CẤP' : 'Công khai'}
+                                Đăng {editDraftId ? 'Chiến Dịch' : (isUrgent ? 'Yêu cầu KHẨN CẤP' : 'Yêu cầu Công khai')}
                             </button>
                             <button
                                 onClick={() => handleCreate(true)}

@@ -65,7 +65,18 @@ export function RecentNotifications({ userId, role, limit = 5 }: RecentNotificat
         try {
             await notificationService.markAsRead(id);
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-            if (actionUrl) router.push(actionUrl);
+            if (actionUrl) {
+                let url = actionUrl;
+                // Donor không có trang chi tiết campaign riêng
+                if (role === 'donor' && url.startsWith('/hospital-campaign/')) {
+                    url = '/requests';
+                }
+                // Nếu URL là /donate hoặc rỗng thì chuyển tới trang thông báo
+                if (url === '/donate' || url === '') {
+                    url = '/notifications';
+                }
+                router.push(url);
+            }
         } catch (error) {
             console.error("Error marking as read:", error);
         }

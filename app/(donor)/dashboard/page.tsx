@@ -84,7 +84,7 @@ export default function DashboardPage() {
                                 <h1 className="text-slate-900 dark:text-white text-xl sm:text-3xl md:text-4xl font-black tracking-tight">Chào {displayName}!</h1>
                                 <p className="text-slate-500 text-xs sm:text-sm font-medium">Hôm nay là một ngày tuyệt vời để chia sẻ sự sống.</p>
                             </div>
-                            <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">        
                                 {!isVerified ? (
                                     <Link href="/complete-profile">
                                         <Button className="h-auto py-2 sm:py-2.5 rounded-xl bg-[#0065FF] hover:bg-[#0052CC] shadow-lg shadow-blue-500/20 font-bold text-xs sm:text-sm gap-2">

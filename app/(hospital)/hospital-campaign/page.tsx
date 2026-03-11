@@ -581,11 +581,16 @@ export default function CampaignManagementPage() {
                             const brandColor = 'text-[#0065FF]';
                             const brandBg = 'bg-[#0065FF]';
 
+                            const isDraft = campaign.status === 'draft';
+                            const cardHref = isDraft
+                                ? `/hospital-requests/create?editDraftId=${campaign.id}`
+                                : `/hospital-campaign/${campaign.id}?fromTab=${activeTab}`;
+
                             if (viewMode === 'list') {
                                 return (
                                     <Link
                                         key={campaign.id}
-                                        href={`/hospital-campaign/${campaign.id}?fromTab=${activeTab}`}
+                                        href={cardHref}
                                         className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group flex flex-col sm:flex-row h-auto sm:h-28"
                                     >
                                         {/* Left: Mini Image/Gradient */}
@@ -641,8 +646,8 @@ export default function CampaignManagementPage() {
                                             </div>
 
                                             <div className="hidden sm:block ml-8 pr-4">
-                                                <div className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-blue-100 dark:border-slate-800 bg-blue-50/50 dark:bg-slate-800/50 ${brandColor} text-[9px] font-black uppercase tracking-wider opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500`}>
-                                                    Chi tiết →
+                                                <div className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border ${isDraft ? 'border-amber-200 bg-amber-50/50 text-amber-600' : `border-blue-100 dark:border-slate-800 bg-blue-50/50 dark:bg-slate-800/50 ${brandColor}`} text-[9px] font-black uppercase tracking-wider opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500`}>
+                                                    {isDraft ? 'Chỉnh sửa & Đăng →' : 'Chi tiết →'}
                                                 </div>
                                             </div>
                                         </div>
@@ -653,8 +658,8 @@ export default function CampaignManagementPage() {
                             return (
                                 <Link
                                     key={campaign.id}
-                                    href={`/hospital-campaign/${campaign.id}?fromTab=${activeTab}`}
-                                    className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all group flex flex-col h-full"
+                                    href={cardHref}
+                                    className={`bg-white dark:bg-slate-900 rounded-xl overflow-hidden border shadow-sm hover:shadow-lg transition-all group flex flex-col h-full ${isDraft ? 'border-amber-200 dark:border-amber-800/40 hover:border-amber-400' : 'border-slate-200 dark:border-slate-800'}`}
                                 >
                                     <div className="relative h-40 bg-slate-200 dark:bg-slate-800">
                                         {(campaign.image || campaign.image_url || (campaign.description?.match(/<div data-cover="([^"]+)"/) || [])[1]) ? (
@@ -710,8 +715,8 @@ export default function CampaignManagementPage() {
                                             <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
                                                 <Users className="w-3 h-3" /> {completed}/{registered}
                                             </span>
-                                            <div className={`flex items-center gap-1 text-[11px] font-black ${brandColor} group-hover:gap-2.5 transition-all duration-300 uppercase tracking-tight`}>
-                                                Chi tiết →
+                                            <div className={`flex items-center gap-1 text-[11px] font-black group-hover:gap-2.5 transition-all duration-300 uppercase tracking-tight ${isDraft ? 'text-amber-500' : brandColor}`}>
+                                                {isDraft ? 'Chỉnh sửa & Đăng →' : 'Chi tiết →'}
                                             </div>
                                         </div>
                                     </div>

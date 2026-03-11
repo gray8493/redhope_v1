@@ -18,10 +18,16 @@ const Navbar = () => {
 
 
                     <div className="flex items-center gap-2">
+                        {/* Desktop: Đăng nhập dạng text */}
                         <Link href="/login" className="hidden sm:block text-gray-900 font-medium px-4 py-2 hover:bg-gray-50 rounded-full transition-colors text-sm md:text-base">
                             Đăng nhập
                         </Link>
-                        <Link href="/register" className="bg-primary text-white px-4 md:px-6 py-2 md:py-2.5 rounded-full font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40 text-sm md:text-base">
+                        {/* Mobile: Đăng nhập dạng nút nổi bật */}
+                        <Link href="/login" className="sm:hidden bg-primary text-white px-4 py-2 rounded-full font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40 text-sm">
+                            Đăng nhập
+                        </Link>
+                        {/* Desktop only: Đăng ký */}
+                        <Link href="/register" className="hidden sm:block bg-primary text-white px-4 md:px-6 py-2 md:py-2.5 rounded-full font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40 text-sm md:text-base">
                             Đăng ký
                         </Link>
                         <button

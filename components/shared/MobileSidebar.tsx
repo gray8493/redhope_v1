@@ -97,7 +97,7 @@ export function MobileSidebar() {
     const landingItems = [
         { href: '/', icon: LayoutDashboard, label: 'Trang chủ' },
         { href: '/login', icon: Users, label: 'Đăng nhập' },
-        { href: '/register', icon: Heart, label: 'Tạo tài khỏan mới' },
+        { href: '/register', icon: Heart, label: 'Đăng ký tài khoản' },
     ];
 
     const isLandingPage = pathname === '/';
