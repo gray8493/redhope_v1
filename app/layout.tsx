@@ -91,7 +91,7 @@ export const metadata: Metadata = {
 import { AuthProvider } from "@/context/AuthContext";
 import { MobileSidebar } from "@/components/shared/MobileSidebar";
 import { BottomNav } from "@/components/shared/BottomNav";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayout({
   children,
