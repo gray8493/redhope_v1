@@ -6,6 +6,7 @@ import { PlayIcon, HeartPulse, Users, Hospital, Droplet, ArrowRight, Quote } fro
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion/Animations';
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
@@ -52,7 +53,7 @@ const Page = async () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-12 lg:gap-8 items-center">
                 {/* Text Content */}
-                <div className="max-w-2xl">
+                <FadeIn delay={0.1} className="max-w-2xl">
                   <Badge variant="outline" className="px-3 py-1 bg-blue-50 border-blue-100 text-primary uppercase mb-6 gap-2">
                     <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                     Mạng lưới hoạt động thời gian thực
@@ -77,10 +78,10 @@ const Page = async () => {
                       </Link>
                     </Button>
                   </div>
-                </div>
+                </FadeIn>
 
                 {/* Hero Image Area */}
-                <div className="relative mt-0 md:mt-12 lg:mt-0">
+                <FadeIn delay={0.3} className="relative mt-0 md:mt-12 lg:mt-0">
                   <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/50">
                     <div className="bg-slate-200 aspect-[4/3] w-full object-cover relative">
                       <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/10 to-transparent"></div>
@@ -92,7 +93,7 @@ const Page = async () => {
                     </div>
                   </div>
                   <div className="absolute -z-10 top-1/2 right-1/2 translate-x-1/2 translate-y-1/2 w-[110%] h-[110%] bg-gradient-to-br from-blue-100 to-transparent rounded-full opacity-50 blur-2xl"></div>
-                </div>
+                </FadeIn>
               </div>
             </div>
           </section>
@@ -100,44 +101,50 @@ const Page = async () => {
           {/* ========== STATS SECTION ========== */}
           <section className="py-4 md:py-4 bg-white md:relative md:z-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+              <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                 {/* Stat 1 */}
-                <Card className="p-1 md:p-2 border-slate-300 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden rounded-2xl">
-                  <CardContent className="flex items-center gap-4 md:gap-5 pt-4 md:pt-6">
-                    <div className="bg-blue-50 p-3 md:p-3.5 rounded-xl shrink-0">
-                      <HeartPulse className="w-6 h-6 md:w-8 md:h-8 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider mb-0.5">Người được cứu</p>
-                      <h3 className="text-2xl md:text-3xl font-black text-slate-900">{stats.saved.toLocaleString()}+</h3>
-                    </div>
-                  </CardContent>
-                </Card>
+                <StaggerItem>
+                  <Card className="h-full p-1 md:p-2 border-slate-300 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden rounded-2xl">
+                    <CardContent className="flex items-center gap-4 md:gap-5 pt-4 md:pt-6">
+                      <div className="bg-blue-50 p-3 md:p-3.5 rounded-xl shrink-0">
+                        <HeartPulse className="w-6 h-6 md:w-8 md:h-8 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider mb-0.5">Người được cứu</p>
+                        <h3 className="text-2xl md:text-3xl font-black text-slate-900">{stats.saved.toLocaleString()}+</h3>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </StaggerItem>
                 {/* Stat 2 */}
-                <Card className="p-1 md:p-2 border-slate-300 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden rounded-2xl">
-                  <CardContent className="flex items-center gap-4 md:gap-5 pt-4 md:pt-6">
-                    <div className="bg-red-50 p-3 md:p-3.5 rounded-xl shrink-0">
-                      <Users className="w-6 h-6 md:w-8 md:h-8 text-accent-red" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider mb-0.5">Người hiến</p>
-                      <h3 className="text-2xl md:text-3xl font-black text-slate-900">{stats.donors.toLocaleString()}+</h3>
-                    </div>
-                  </CardContent>
-                </Card>
+                <StaggerItem>
+                  <Card className="h-full p-1 md:p-2 border-slate-300 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden rounded-2xl">
+                    <CardContent className="flex items-center gap-4 md:gap-5 pt-4 md:pt-6">
+                      <div className="bg-red-50 p-3 md:p-3.5 rounded-xl shrink-0">
+                        <Users className="w-6 h-6 md:w-8 md:h-8 text-accent-red" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider mb-0.5">Người hiến</p>
+                        <h3 className="text-2xl md:text-3xl font-black text-slate-900">{stats.donors.toLocaleString()}+</h3>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </StaggerItem>
                 {/* Stat 3 */}
-                <Card className="p-1 md:p-2 border-slate-300 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden rounded-2xl sm:col-span-2 md:col-span-1">
-                  <CardContent className="flex items-center gap-4 md:gap-5 pt-4 md:pt-6">
-                    <div className="bg-blue-50 p-3 md:p-3.5 rounded-xl shrink-0">
-                      <Hospital className="w-6 h-6 md:w-8 md:h-8 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider mb-0.5">Bệnh viện</p>
-                      <h3 className="text-2xl md:text-3xl font-black text-slate-900">{stats.hospitals.toLocaleString()}+</h3>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                <StaggerItem className="sm:col-span-2 md:col-span-1">
+                  <Card className="h-full p-1 md:p-2 border-slate-300 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden rounded-2xl">
+                    <CardContent className="flex items-center gap-4 md:gap-5 pt-4 md:pt-6">
+                      <div className="bg-blue-50 p-3 md:p-3.5 rounded-xl shrink-0">
+                        <Hospital className="w-6 h-6 md:w-8 md:h-8 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider mb-0.5">Bệnh viện</p>
+                        <h3 className="text-2xl md:text-3xl font-black text-slate-900">{stats.hospitals.toLocaleString()}+</h3>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </StaggerItem>
+              </StaggerContainer>
 
               {/* Trusted By Strip */}
               <div className="mt-2 md:mt-4 border-t border-slate-300 pt-2 md:pt-4">
@@ -165,12 +172,12 @@ const Page = async () => {
           {/* ========== FEATURES SECTION ========== */}
           <section className="py-5 md:py-8 bg-bg-light">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center max-w-3xl mx-auto mb-4 md:mb-6">
+              <FadeIn className="text-center max-w-3xl mx-auto mb-4 md:mb-6">
                 <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4">Một nền tảng, Ba giải pháp</h2>
                 <p className="text-sm md:text-lg text-gray-600">Mạng lưới thông minh của chúng tôi tối ưu hóa quy trình cho mọi người, từ người hiến máu cá nhân đến quản trị viên y tế.</p>
-              </div>
+              </FadeIn>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Feature Cards */}
                 {[
                   {
@@ -201,38 +208,40 @@ const Page = async () => {
                     accent: "text-indigo-600"
                   }
                 ].map((feat, i) => (
-                  <Card key={i} className="hover:shadow-card-hover transition-all duration-300 border-slate-300 group rounded-[1.5rem] md:rounded-[2rem] overflow-hidden">
-                    <CardContent className="p-5 md:p-8">
-                      <div className={`w-12 h-12 md:w-14 md:h-14 bg-${feat.color}-50 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform`}>
-                        <feat.icon className={`w-6 h-6 md:w-7 md:h-7 ${feat.accent}`} />
-                      </div>
-                      <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3">
-                        <Link href={feat.link}>{feat.title}</Link>
-                      </h3>
-                      <p className="text-[13px] md:text-base text-gray-500 leading-relaxed mb-4 md:mb-8">
-                        {feat.desc}
-                      </p>
-                      <Button asChild variant="link" className={`p-0 h-auto font-bold ${feat.accent} group-hover:gap-2 transition-all`}>
-                        <Link href={feat.link}>
-                          {feat.cta}
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <StaggerItem key={i}>
+                    <Card className="h-full hover:shadow-card-hover transition-all duration-300 border-slate-300 group rounded-[1.5rem] md:rounded-[2rem] overflow-hidden">
+                      <CardContent className="p-5 md:p-8">
+                        <div className={`w-12 h-12 md:w-14 md:h-14 bg-${feat.color}-50 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform`}>
+                          <feat.icon className={`w-6 h-6 md:w-7 md:h-7 ${feat.accent}`} />
+                        </div>
+                        <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3">
+                          <Link href={feat.link}>{feat.title}</Link>
+                        </h3>
+                        <p className="text-[13px] md:text-base text-gray-500 leading-relaxed mb-4 md:mb-8">
+                          {feat.desc}
+                        </p>
+                        <Button asChild variant="link" className={`p-0 h-auto font-bold ${feat.accent} group-hover:gap-2 transition-all`}>
+                          <Link href={feat.link}>
+                            {feat.cta}
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </StaggerItem>
                 ))}
-              </div>
+              </StaggerContainer>
             </div>
           </section>
 
           {/* ========== TESTIMONIALS SECTION ========== */}
           <section className="py-5 md:py-8 bg-gray-50/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="mb-4 md:mb-6">
+              <FadeIn className="mb-4 md:mb-6">
                 <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4">Tiếng nói từ cộng đồng</h2>
                 <p className="text-sm md:text-lg text-gray-600">Lắng nghe chia sẻ từ các bệnh viện và người hiến máu sử dụng REDHOPE mỗi ngày.</p>
-              </div>
+              </FadeIn>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {[
                   {
                     quote: "Nền tảng REDHOPE đã giảm thời gian đáp ứng yêu cầu máu khẩn cấp tới 60%. Nó thực sự là vị cứu tinh cho đơn vị chấn thương của chúng tôi.",
@@ -249,32 +258,34 @@ const Page = async () => {
                     color: "green"
                   }
                 ].map((t, i) => (
-                  <Card key={i} className="bg-white border-slate-300 relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden">
-                    <CardContent className="p-5 md:p-8">
-                      <Quote className="absolute top-4 md:top-8 right-4 md:right-8 w-8 md:w-12 h-8 md:h-12 text-blue-100 rotate-180" />
-                      <p className="text-sm md:text-lg text-gray-700 italic mb-5 md:mb-8 relative z-10 font-medium leading-relaxed">
-                        "{t.quote}"
-                      </p>
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-full bg-${t.color}-100 flex items-center justify-center text-${t.color}-600 font-bold`}>
-                          {t.initials}
+                  <StaggerItem key={i}>
+                    <Card className="h-full bg-white border-slate-300 relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden">
+                      <CardContent className="p-5 md:p-8">
+                        <Quote className="absolute top-4 md:top-8 right-4 md:right-8 w-8 md:w-12 h-8 md:h-12 text-blue-100 rotate-180" />
+                        <p className="text-sm md:text-lg text-gray-700 italic mb-5 md:mb-8 relative z-10 font-medium leading-relaxed">
+                          "{t.quote}"
+                        </p>
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-full bg-${t.color}-100 flex items-center justify-center text-${t.color}-600 font-bold`}>
+                            {t.initials}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-gray-900">{t.author}</h4>
+                            <p className="text-sm text-gray-500">{t.role}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="font-bold text-gray-900">{t.author}</h4>
-                          <p className="text-sm text-gray-500">{t.role}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </StaggerItem>
                 ))}
-              </div>
+              </StaggerContainer>
             </div>
           </section>
 
           {/* ========== CALL TO ACTION SECTION ========== */}
           <section className="py-5 md:py-6 px-4">
             <div className="max-w-7xl mx-auto">
-              <div className="bg-primary rounded-[2rem] md:rounded-[2.5rem] px-6 py-10 md:p-20 text-center relative overflow-hidden shadow-2xl shadow-blue-900/20">
+              <FadeIn className="bg-primary rounded-[2rem] md:rounded-[2.5rem] px-6 py-10 md:p-20 text-center relative overflow-hidden shadow-2xl shadow-blue-900/20">
                 <div className="absolute top-0 right-0 p-12 opacity-10">
                   <svg width="200" height="200" viewBox="0 0 24 24" fill="white">
                     <rect x="2" y="2" width="20" height="20" rx="5" />
@@ -298,7 +309,7 @@ const Page = async () => {
                     </Button>
                   </div>
                 </div>
-              </div>
+              </FadeIn>
             </div>
           </section>
         </main>
