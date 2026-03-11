@@ -160,6 +160,7 @@ export interface Voucher {
     point_cost: number | null;
     stock_quantity?: number | null;
     status: VoucherStatus | null;
+    category?: string | null;
     expires_at?: string | null;
     created_at?: string;
 }
@@ -173,6 +174,7 @@ export interface InsertVoucher {
     point_cost?: number;
     stock_quantity?: number;
     status?: VoucherStatus;
+    category?: string;
     expires_at?: string;
 }
 
@@ -185,6 +187,7 @@ export interface UpdateVoucher {
     point_cost?: number;
     stock_quantity?: number;
     status?: VoucherStatus;
+    category?: string;
     expires_at?: string;
 }
 

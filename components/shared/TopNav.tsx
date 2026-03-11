@@ -328,9 +328,18 @@ export function TopNav({ title = "Tổng quan" }: TopNavProps) {
             // Close dropdown
             setShowNotifications(false);
 
-            // Navigate if has action_url
+            // Navigate nếu có action_url, và fallback khi URL dẫn tới /donate
             if (notification.action_url) {
-                router.push(notification.action_url);
+                let url = notification.action_url;
+                if (userRole === 'donor' && url.startsWith('/hospital-campaign/')) {
+                    // Donor không có trang chi tiết campaign riêng, đưa về trang danh sách chiến dịch
+                    url = '/requests';
+                }
+                // Nếu URL hiện tại là /donate (hoặc trống) thì chuyển tới trang thông báo
+                if (url === '/donate' || url === '') {
+                    url = '/notifications';
+                }
+                router.push(url);
             }
         } catch (error) {
             console.error('Error handling notification click:', error);

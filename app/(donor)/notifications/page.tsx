@@ -84,7 +84,16 @@ export default function NotificationsPage() {
             }
 
             if (notification.action_url) {
-                router.push(notification.action_url);
+                let url = notification.action_url;
+                // Nếu action_url trỏ tới trang hospital, map sang trang donor tương ứng
+                if (url.startsWith('/hospital-campaign/')) {
+                    url = '/requests';
+                }
+                // Nếu action_url là /donate hoặc rỗng → ở lại trang thông báo, không redirect
+                if (url === '/donate' || url === '') {
+                    return;
+                }
+                router.push(url);
             }
         } catch (error) {
             console.error('Error handling notification click:', error);
@@ -107,19 +116,19 @@ export default function NotificationsPage() {
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden relative">
                 <TopNav title="Thông báo" />
 
-                <div className="max-w-4xl mx-auto p-4 sm:p-5 md:p-6 space-y-4 md:space-y-6">
-                    <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
-                        <Link href="/dashboard" className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-700 dark:text-slate-300 font-bold">
+                <div className="w-full px-3 sm:px-5 md:px-8 py-3 md:py-4 space-y-3 md:space-y-4">
+                    <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                        <Link href="/dashboard" className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-700 dark:text-slate-300 font-bold">
                             ←
                         </Link>
-                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <Bell className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
+                        <h1 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Bell className="w-5 h-5 text-blue-600" />
                             Tất cả thông báo
                         </h1>
                     </div>
 
                     {/* Filters */}
-                    <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-slate-200 dark:border-[#2d263d] p-3 md:p-4 flex flex-col sm:flex-row gap-3 md:gap-4">
+                    <div className="bg-white dark:bg-[#1c162e] rounded-xl border border-slate-200 dark:border-[#2d263d] p-2.5 md:p-3 flex flex-col sm:flex-row gap-2 md:gap-3">
                         <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                             <button
                                 onClick={() => setFilter('all')}
@@ -162,7 +171,7 @@ export default function NotificationsPage() {
                                     <div
                                         key={item.id}
                                         onClick={() => handleNotificationClick(item)}
-                                        className={`p-3 sm:p-4 md:p-6 hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors flex gap-3 md:gap-4 cursor-pointer ${item.unread ? 'bg-blue-600/5' : ''}`}
+                                        className={`p-3 sm:p-4 hover:bg-slate-50 dark:hover:bg-[#251e36] transition-colors flex gap-3 cursor-pointer ${item.unread ? 'bg-blue-600/5' : ''}`}
                                     >
                                         <div className={`size-10 md:size-12 rounded-full ${item.bg} flex items-center justify-center flex-shrink-0`}>
                                             <item.icon className={`w-5 h-5 md:w-6 md:h-6 ${item.color}`} />
