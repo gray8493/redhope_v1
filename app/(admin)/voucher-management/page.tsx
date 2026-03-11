@@ -72,7 +72,7 @@ export default function VoucherManagementPage() {
                     name: v.title || v.partner_name || 'Unnamed Voucher',
                     points: v.point_cost || 0,
                     stock: v.stock_quantity || 100,
-                    category: 'All', // Mock
+                    category: (v as any).category || 'Chung',
                     expiryDate: expiry,
                     image: v.image_url || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=200'
                 };
@@ -132,7 +132,7 @@ export default function VoucherManagementPage() {
             name: '',
             points: 1000,
             stock: 100,
-            category: 'Chung',
+            category: 'Mua sắm',
             status: 'Active',
             expiryDate: '',
         });
@@ -163,6 +163,7 @@ export default function VoucherManagementPage() {
                     point_cost: formData.points,
                     stock_quantity: formData.stock,
                     status: formData.status,
+                    category: formData.category,
                     expires_at: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : undefined,
                 });
 
@@ -196,12 +197,13 @@ export default function VoucherManagementPage() {
                         console.log('Attempting to create voucher with code:', uniqueCode);
 
                         created = await voucherService.create({
-                            title: formData.name, // Required field
+                            title: formData.name,
                             partner_name: formData.name,
                             point_cost: formData.points,
                             stock_quantity: formData.stock,
                             status: formData.status || 'Inactive',
                             code: uniqueCode,
+                            category: formData.category,
                             expires_at: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : undefined,
                         });
 
@@ -508,11 +510,10 @@ export default function VoucherManagementPage() {
                                         onChange={e => setFormData({ ...formData, category: e.target.value })}
                                         className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#0065FF] outline-none transition-all"
                                     >
-                                        <option value="Chung">Chung</option>
-                                        <option value="Thực phẩm & Đồ uống">Thực phẩm & Đồ uống</option>
+                                        <option value="Ăn uống">Ăn uống</option>
                                         <option value="Mua sắm">Mua sắm</option>
+                                        <option value="Sức khỏe">Sức khỏe</option>
                                         <option value="Giải trí">Giải trí</option>
-                                        <option value="Sức khỏe & Thể hình">Sức khỏe & Thể hình</option>
                                     </select>
                                 </div>
                                 <div>

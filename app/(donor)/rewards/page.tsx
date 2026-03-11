@@ -47,7 +47,7 @@ import { QRCodeSVG } from "qrcode.react";
 
 
 // Define reward categories
-type Category = "all" | "food" | "shopping" | "health" | "history";
+type Category = "all" | "food" | "shopping" | "health" | "entertainment" | "history";
 
 // Define reward item type
 interface RewardItem {
@@ -56,7 +56,7 @@ interface RewardItem {
     description: string;
     points: number;
     stock: number;
-    category: "food" | "shopping" | "health";
+    category: "food" | "shopping" | "health" | "entertainment";
     icon: React.ReactNode;
     iconColor: string;
     gradientColor: string;
@@ -64,33 +64,42 @@ interface RewardItem {
     disabled?: boolean;
 }
 
-// Helper to determine category and style based on partner name
-const getCategoryAndStyle = (name: string, index: number) => {
-    const styles = [
-        { category: "food", icon: Coffee, color: "text-[#0065FF]", gradient: "from-[#0065FF]/10" },
-        { category: "shopping", icon: ShoppingBag, color: "text-green-600", gradient: "from-green-500/10" },
-        { category: "health", icon: Activity, color: "text-blue-500", gradient: "from-blue-500/10" },
-        { category: "food", icon: Pizza, color: "text-orange-500", gradient: "from-orange-500/10" },
-        { category: "shopping", icon: Film, color: "text-[#0065FF]", gradient: "from-[#0065FF]/10" },
-        { category: "shopping", icon: Monitor, color: "text-gray-500", gradient: "from-red-500/10" },
-    ];
-    const style = styles[index % styles.length];
-    const IconComponent = style.icon;
+// Helper to map DB category string to tab key
+const mapCategoryToKey = (dbCat: string | null | undefined): "food" | "shopping" | "health" | "entertainment" => {
+    const cat = (dbCat || '').toLowerCase();
+    if (cat.includes('ăn uống') || cat.includes('thực phẩm') || cat.includes('đồ uống') || cat.includes('food')) return 'food';
+    if (cat.includes('sức khỏe') || cat.includes('thể hình') || cat.includes('health')) return 'health';
+    if (cat.includes('giải trí') || cat.includes('entertainment')) return 'entertainment';
+    return 'shopping';
+};
 
+// Helper to determine icon/style based on category
+const getCategoryAndStyle = (name: string, dbCategory: string | null | undefined, index: number) => {
+    const catKey = mapCategoryToKey(dbCategory);
+    const styleMap: Record<string, { icon: any; color: string; gradient: string }> = {
+        food: { icon: Coffee, color: 'text-[#0065FF]', gradient: 'from-[#0065FF]/10' },
+        shopping: { icon: ShoppingBag, color: 'text-green-600', gradient: 'from-green-500/10' },
+        health: { icon: Activity, color: 'text-blue-500', gradient: 'from-blue-500/10' },
+        entertainment: { icon: Film, color: 'text-purple-500', gradient: 'from-purple-500/10' },
+    };
+    const style = styleMap[catKey] || styleMap['shopping'];
+    const IconComponent = style.icon;
     return {
-        category: style.category as "food" | "shopping" | "health",
+        category: catKey,
         icon: <IconComponent className={`w-8 h-8 ${style.color}`} />,
         iconColor: style.color,
         gradientColor: style.gradient,
-        badge: index === 0 ? "PHỔ BIẾN" : undefined
+        badge: index === 0 ? 'PHỔ BIẾN' : undefined
     };
 };
+
 
 const tabs: { key: Category; label: string }[] = [
     { key: "all", label: "Tất cả" },
     { key: "food", label: "Ăn uống" },
     { key: "shopping", label: "Mua sắm" },
     { key: "health", label: "Sức khỏe" },
+    { key: "entertainment", label: "Giải trí" },
     { key: "history", label: "Lịch sử đổi" },
 ];
 
@@ -118,7 +127,7 @@ export default function RewardsPage() {
             const formattedRewards: RewardItem[] = data
                 .filter(v => v.status === 'Active' && v.stock_quantity != null && v.stock_quantity > 0)
                 .map((v, index) => {
-                    const style = getCategoryAndStyle(v.partner_name || "Unknown", index);
+                    const style = getCategoryAndStyle(v.partner_name || "Unknown", v.category, index);
                     return {
                         id: v.id,
                         name: v.partner_name || "Ưu đãi",
